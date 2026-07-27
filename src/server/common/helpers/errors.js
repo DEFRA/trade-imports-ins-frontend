@@ -30,7 +30,7 @@ export function catchAll(request, h) {
   }
 
   return h
-    .view('error/index', {
+    .view('routes/error/index', {
       pageTitle: errorMessage,
       heading: statusCode,
       message: errorMessage

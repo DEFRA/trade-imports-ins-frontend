@@ -3,6 +3,11 @@ import { vi } from 'vitest'
 import { catchAll } from './errors.js'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../constants/status-codes.js'
+import { mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+
+vi.mock('#/auth/get-oidc-config.js', () => ({
+  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
+}))
 
 describe('#errors', () => {
   let server
@@ -32,7 +37,7 @@ describe('#errors', () => {
 describe('#catchAll', () => {
   const mockErrorLogger = vi.fn()
   const mockStack = 'Mock error stack'
-  const errorPage = 'error/index'
+  const errorPage = 'routes/error/index'
   const mockRequest = (statusCode) => ({
     response: {
       isBoom: true,

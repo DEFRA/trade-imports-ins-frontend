@@ -1,0 +1,127 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+
+{% block content %}
+
+  {{ govukBackLink({
+    text: "Back",
+    href: "/address-book"
+  }) }}
+
+  {{ appHeading({ text: heading }) }}
+
+  <div class="govuk-body" data-testid="app-page-body">
+
+    {% if errorList %}
+      {{ govukErrorSummary({
+        titleText: "There is a problem",
+        errorList: errorList
+      }) }}
+    {% endif %}
+
+    <form method="post" novalidate>
+
+      {{ govukInput({
+        label: { text: "Name or organisation name" },
+        id: "name",
+        name: "name",
+        value: formValues.name,
+        classes: "govuk-!-width-two-thirds",
+        errorMessage: fieldErrors.name if fieldErrors
+      }) }}
+
+      {{ govukInput({
+        label: { text: "Address line 1" },
+        id: "addressLine1",
+        name: "addressLine1",
+        value: formValues.addressLine1,
+        classes: "govuk-!-width-two-thirds",
+        errorMessage: fieldErrors.addressLine1 if fieldErrors
+      }) }}
+
+      {{ govukInput({
+        label: { text: "Address line 2 (optional)" },
+        id: "addressLine2",
+        name: "addressLine2",
+        value: formValues.addressLine2,
+        classes: "govuk-!-width-two-thirds",
+        errorMessage: fieldErrors.addressLine2 if fieldErrors
+      }) }}
+
+      {{ govukInput({
+        label: { text: "Town or city" },
+        id: "townOrCity",
+        name: "townOrCity",
+        value: formValues.townOrCity,
+        classes: "govuk-!-width-two-thirds",
+        errorMessage: fieldErrors.townOrCity if fieldErrors
+      }) }}
+
+      {{ govukInput({
+        label: { text: "County (optional)" },
+        id: "county",
+        name: "county",
+        value: formValues.county,
+        classes: "govuk-!-width-two-thirds",
+        errorMessage: fieldErrors.county if fieldErrors
+      }) }}
+
+      {{ govukInput({
+        label: { text: "Postcode" },
+        id: "postcode",
+        name: "postcode",
+        value: formValues.postcode,
+        classes: "govuk-input--width-10",
+        errorMessage: fieldErrors.postcode if fieldErrors
+      }) }}
+
+      {{ govukSelect({
+        id: "countryCode",
+        name: "countryCode",
+        label: { text: "Country" },
+        items: [
+          { value: "", text: "Select a country" }
+        ] + countryItems,
+        value: formValues.countryCode,
+        errorMessage: fieldErrors.countryCode if fieldErrors
+      }) }}
+
+      {{ govukInput({
+        label: { text: "Telephone number" },
+        id: "phone",
+        name: "phone",
+        value: formValues.phone,
+        classes: "govuk-!-width-two-thirds",
+        errorMessage: fieldErrors.phone if fieldErrors
+      }) }}
+
+      {{ govukInput({
+        label: { text: "Email address" },
+        id: "email",
+        name: "email",
+        value: formValues.email,
+        classes: "govuk-!-width-two-thirds",
+        autocomplete: "email",
+        errorMessage: fieldErrors.email if fieldErrors
+      }) }}
+
+      <div class="govuk-button-group">
+        {{ govukButton({ text: "Save changes" }) }}
+        {{ govukButton({
+          text: "Cancel",
+          name: "cancel",
+          value: "true",
+          classes: "govuk-button--secondary"
+        }) }}
+      </div>
+
+    </form>
+
+  </div>
+
+{% endblock %}

@@ -1,0 +1,57 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+import {
+  buildCountryItems,
+  getAddressFormCountries,
+  GB_COUNTRY
+} from './address-countries.js'
+
+vi.mock('#/server/common/clients/countries-client.js', () => ({
+  countriesClient: {
+    getCountries: vi.fn()
+  }
+}))
+
+import { countriesClient } from '#/server/common/clients/countries-client.js'
+
+describe('#getAddressFormCountries', () => {
+  beforeEach(() => {
+    vi.mocked(countriesClient.getCountries).mockReset()
+  })
+
+  test('GB-prepends countries from reference data', async () => {
+    countriesClient.getCountries.mockResolvedValue([
+      { code: 'FR', name: 'France' },
+      { code: 'GB', name: 'United Kingdom duplicate' }
+    ])
+
+    const countries = await getAddressFormCountries('trace-1')
+
+    expect(countries[0]).toEqual(GB_COUNTRY)
+    expect(countries[1]).toEqual({ code: 'FR', name: 'France' })
+    expect(countries.some((c) => c.code === 'GB')).toBe(true)
+    expect(countries.filter((c) => c.code === 'GB')).toHaveLength(1)
+  })
+
+  test('throws when MDM list is empty', async () => {
+    countriesClient.getCountries.mockResolvedValue([])
+
+    await expect(getAddressFormCountries('trace-1')).rejects.toThrow(
+      'Country reference data is unavailable'
+    )
+  })
+})
+
+describe('#buildCountryItems', () => {
+  test('binds option value to country code not name', () => {
+    expect(
+      buildCountryItems([
+        { code: 'GB', name: 'United Kingdom' },
+        { code: 'FR', name: 'France' }
+      ])
+    ).toEqual([
+      { value: 'GB', text: 'United Kingdom' },
+      { value: 'FR', text: 'France' }
+    ])
+  })
+})

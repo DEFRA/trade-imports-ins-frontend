@@ -62,17 +62,21 @@ describe('context and cache', () => {
           navigation: [
             {
               current: true,
-              text: 'Home',
+              text: 'Dashboard',
               href: '/'
             },
             {
               current: false,
-              text: 'About',
-              href: '/about'
+              text: 'Address book',
+              href: '/address-book'
             }
           ],
           serviceName: 'trade-imports-ins-frontend',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          authEnabled: true,
+          userSession: {
+            isAuthenticated: false
+          }
         })
       })
 
@@ -151,17 +155,21 @@ describe('context and cache', () => {
           navigation: [
             {
               current: true,
-              text: 'Home',
+              text: 'Dashboard',
               href: '/'
             },
             {
               current: false,
-              text: 'About',
-              href: '/about'
+              text: 'Address book',
+              href: '/address-book'
             }
           ],
           serviceName: 'trade-imports-ins-frontend',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          authEnabled: true,
+          userSession: {
+            isAuthenticated: false
+          }
         })
       })
     })

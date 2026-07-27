@@ -13,6 +13,8 @@ const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
 
+const authCookieSameSite = 'Lax'
+
 convict.addFormats(convictFormatWithValidator)
 
 export const config = convict({
@@ -32,7 +34,7 @@ export const config = convict({
   port: {
     doc: 'The port to bind.',
     format: 'port',
-    default: 3000,
+    default: 3002,
     env: 'PORT'
   },
   staticCacheTimeout: {
@@ -153,7 +155,93 @@ export const config = convict({
         format: Boolean,
         default: isProduction,
         env: 'SESSION_COOKIE_SECURE'
+      },
+      sameSite: {
+        doc: 'SameSite attribute for Bell OAuth state cookie',
+        format: ['Strict', 'Lax', 'None'],
+        default: authCookieSameSite,
+        env: 'AUTH_COOKIE_SAME_SITE'
       }
+    }
+  },
+  defraId: {
+    oidcDiscoveryUrl: {
+      doc: 'Defra ID OIDC well-known configuration URL',
+      format: String,
+      default:
+        'http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration',
+      env: 'DEFRA_ID_OIDC_CONFIGURATION_URL'
+    },
+    clientId: {
+      doc: 'Defra ID client ID',
+      format: String,
+      default: 'test-client-id',
+      env: 'DEFRA_ID_CLIENT_ID',
+      nullable: false
+    },
+    clientSecret: {
+      doc: 'Defra ID client secret',
+      format: String,
+      default: 'test-secret',
+      env: 'DEFRA_ID_CLIENT_SECRET',
+      sensitive: true
+    },
+    serviceId: {
+      doc: 'Defra ID service ID',
+      format: String,
+      default: 'trade-imports-ins-frontend',
+      env: 'DEFRA_ID_SERVICE_ID'
+    },
+    policy: {
+      doc: 'Defra ID B2C policy name',
+      format: String,
+      default: 'b2c_1a_cui_cpdev_signupsigninsfi',
+      env: 'DEFRA_ID_POLICY'
+    },
+    redirectUrl: {
+      doc: 'Redirect URL after Defra ID sign-in (OIDC callback)',
+      format: String,
+      default: 'http://localhost:3002/auth/sign-in-oidc',
+      env: 'DEFRA_ID_REDIRECT_URL'
+    },
+    signOutRedirectUrl: {
+      doc: 'Redirect URL after Defra ID sign-out',
+      format: String,
+      default: 'http://localhost:3002/auth/sign-out-oidc',
+      env: 'DEFRA_ID_SIGN_OUT_REDIRECT_URL'
+    },
+    signOutHostnameRewrite: {
+      enabled: {
+        doc: 'Rewrite internal OIDC hostnames in sign-out URL for local environments',
+        format: Boolean,
+        default: !isProduction,
+        env: 'DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_ENABLED'
+      },
+      from: {
+        doc: 'OIDC hostnames list for sign-out URL re-write',
+        format: Array,
+        default: ['host.docker.internal', 'trade-imports-defra-id-stub']
+      },
+      to: {
+        doc: 'Target hostname used for sign-out OIDC URL rewrite',
+        format: String,
+        default: 'localhost',
+        env: 'DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_TO'
+      }
+    },
+    refreshTokens: {
+      doc: 'True if Defra Identity refresh tokens are enabled.',
+      format: Boolean,
+      default: true,
+      env: 'DEFRA_ID_REFRESH_TOKENS'
+    }
+  },
+  auth: {
+    enabled: {
+      doc: 'Enable authentication (Bell + session cookie)',
+      format: Boolean,
+      default: true,
+      env: 'AUTH_ENABLED'
     }
   },
   redis: {
@@ -213,6 +301,22 @@ export const config = convict({
       format: String,
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
+    }
+  },
+  tradeImportsAddressBookApi: {
+    baseUrl: {
+      doc: 'Trade Imports Address Book API base URL',
+      format: String,
+      default: 'http://localhost:8089',
+      env: 'TRADE_IMPORTS_ADDRESS_BOOK_URL'
+    }
+  },
+  tradeImportsReferenceDataApi: {
+    baseUrl: {
+      doc: 'Trade Imports Reference Data API base URL',
+      format: String,
+      default: 'http://localhost:8086',
+      env: 'TRADE_IMPORTS_REFERENCE_DATA_URL'
     }
   }
 })

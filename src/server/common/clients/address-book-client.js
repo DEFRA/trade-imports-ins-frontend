@@ -1,0 +1,82 @@
+const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
+
+import { config } from '#/config/config.js'
+import { createLogger } from '#/server/common/helpers/logging/logger.js'
+
+const addressBookBaseUrl = config.get('tradeImportsAddressBookApi.baseUrl')
+const tracingHeader = config.get('tracing.header')
+const logger = createLogger()
+
+function buildHeaders(orgId, traceId) {
+  return {
+    'Content-Type': 'application/json',
+    [ORGANISATION_ID_HEADER]: orgId,
+    [tracingHeader]: traceId ?? ''
+  }
+}
+
+async function throwOnError(response) {
+  if (response.ok) {
+    return response
+  }
+
+  const body = await response.json().catch(() => ({}))
+  const error = new Error(body.detail || response.statusText)
+  error.status = response.status
+  error.body = body
+  throw error
+}
+
+export function mapApiErrorsToFormErrors(problemBody) {
+  const errors = problemBody?.errors ?? {}
+  const errorList = Object.entries(errors).flatMap(([field, messages]) =>
+    messages.map((text) => ({ text, href: `#${field}` }))
+  )
+  const fieldErrors = Object.fromEntries(
+    Object.entries(errors).map(([field, messages]) => [
+      field,
+      { text: messages[0] }
+    ])
+  )
+  return { errorList, fieldErrors }
+}
+
+export const addressBookClient = {
+  async listAddresses(orgId, traceId, { page = 1 } = {}) {
+    const url = new URL(
+      `${addressBookBaseUrl}/organisation/${orgId}/addresses`
+    )
+    url.searchParams.set('page', String(page))
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: buildHeaders(orgId, traceId)
+    })
+
+    await throwOnError(response)
+    return response.json()
+  },
+
+  async createAddress(orgId, traceId, body) {
+    const url = `${addressBookBaseUrl}/organisation/${orgId}/addresses`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: buildHeaders(orgId, traceId),
+      body: JSON.stringify(body)
+    })
+
+    if (response.status === 400) {
+      const problem = await response.json()
+      const error = new Error(problem.detail || 'Validation failed')
+      error.status = 400
+      error.body = problem
+      throw error
+    }
+
+    await throwOnError(response)
+    return response.json()
+  }
+}
+
+export { ORGANISATION_ID_HEADER, throwOnError }

@@ -1,0 +1,59 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block content %}
+
+  {{ appHeading({ text: heading }) }}
+
+  <div class="govuk-body" data-testid="app-page-body">
+
+    {% if successBanner %}
+      {{ govukNotificationBanner({
+        type: "success",
+        titleText: "Success",
+        html: successBanner
+      }) }}
+    {% endif %}
+
+    {% if errorList %}
+      {{ govukErrorSummary({
+        titleText: "There is a problem",
+        errorList: errorList
+      }) }}
+    {% endif %}
+
+    <p class="govuk-body">Manage addresses used across import and export services.</p>
+
+    <div class="govuk-!-margin-bottom-6">
+      {{ govukButton({
+        text: "Add a new address",
+        href: "/address-book/add"
+      }) }}
+    </div>
+
+    {% if isEmpty %}
+      <p class="govuk-body">You have no addresses yet.</p>
+    {% elif tableRows.length %}
+      {{ govukTable({
+        head: {
+          rows: [[
+            { text: "Name" },
+            { text: "Address" },
+            { text: "Country" }
+          ]]
+        },
+        rows: tableRows
+      }) }}
+
+      {% if pagination %}
+        {{ govukPagination(pagination) }}
+      {% endif %}
+    {% endif %}
+
+  </div>
+
+{% endblock %}

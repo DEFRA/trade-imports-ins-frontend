@@ -16,9 +16,18 @@ vi.mock('ioredis', () => ({
 }))
 
 describe('#buildRedisClient', () => {
+  beforeAll(() => {
+    vi.stubEnv('REDIS_HOST', '127.0.0.1')
+  })
+
+  afterAll(() => {
+    vi.unstubAllEnvs()
+  })
+
   describe('When Redis Single InstanceCache is requested', () => {
     beforeEach(() => {
-      buildRedisClient(config.get('redis'))
+      vi.clearAllMocks()
+      buildRedisClient({ ...config.get('redis'), host: '127.0.0.1' })
     })
 
     test('Should instantiate a single Redis client', () => {
@@ -33,12 +42,14 @@ describe('#buildRedisClient', () => {
 
   describe('When a Redis Cluster is requested', () => {
     beforeEach(() => {
+      vi.clearAllMocks()
       buildRedisClient({
         ...config.get('redis'),
-        useSingleInstanceCache: false,
+        host: '127.0.0.1',
+        username: 'redis-user',
+        password: 'pass',
         useTLS: true,
-        username: 'user',
-        password: 'pass'
+        useSingleInstanceCache: false
       })
     })
 
@@ -48,8 +59,13 @@ describe('#buildRedisClient', () => {
         {
           dnsLookup: expect.any(Function),
           keyPrefix: 'trade-imports-ins-frontend:',
-          redisOptions: { db: 0, password: 'pass', tls: {}, username: 'user' },
-          slotsRefreshTimeout: 10000
+          slotsRefreshTimeout: 10000,
+          redisOptions: {
+            db: 0,
+            username: 'redis-user',
+            password: 'pass',
+            tls: {}
+          }
         }
       )
     })
