@@ -11,6 +11,15 @@ vi.mock('#/auth/get-oidc-config.js', () => ({
 
 vi.mock('#/server/common/clients/address-book-client.js')
 
+vi.mock('#/server/common/clients/countries-client.js', () => ({
+  countriesClient: {
+    getCountries: vi.fn().mockResolvedValue([
+      { code: 'GB', name: 'United Kingdom' },
+      { code: 'FR', name: 'France' }
+    ])
+  }
+}))
+
 describe('#addressBookListController', () => {
   let server
 
@@ -78,6 +87,7 @@ describe('#addressBookListController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('You have no addresses yet')
     expect(result).toContain('Add a new address')
+    expect(result).not.toContain('No addresses match')
   })
 
   test('renders numbered pagination when more than one page', async () => {
@@ -98,5 +108,85 @@ describe('#addressBookListController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('govuk-pagination')
     expect(result).toContain('?page=2')
+  })
+
+  test('forwards search query and resolves country name to countryCode', async () => {
+    addressBookClient.listAddresses.mockResolvedValue({
+      items: [
+        {
+          id: '1',
+          name: 'Paris Depot',
+          addressLine1: '1 Rue de Rivoli',
+          townOrCity: 'Paris',
+          postcode: '75001',
+          countryCode: 'FR'
+        }
+      ],
+      page: 1,
+      pageSize: 25,
+      totalItems: 1,
+      totalPages: 1
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book?q=France',
+      auth: sessionAuth('list-search-country')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(addressBookClient.listAddresses).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({ q: 'France', countryCode: 'FR' })
+    )
+    expect(result).toContain('Paris Depot')
+    expect(result).toContain('value="France"')
+  })
+
+  test('shows no-results state distinct from empty state when search has no matches', async () => {
+    addressBookClient.listAddresses.mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 25,
+      totalItems: 0,
+      totalPages: 0
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book?q=zzznomatch',
+      auth: sessionAuth('list-no-results')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('No addresses match "zzznomatch"')
+    expect(result).toContain('Clear search')
+    expect(result).not.toContain('You have no addresses yet')
+    expect(result).toContain('value="zzznomatch"')
+  })
+
+  test('pagination preserves the active search term', async () => {
+    addressBookClient.listAddresses.mockResolvedValue({
+      items: [{ id: '1', name: 'Green Farm', addressLine1: '1 Road', countryCode: 'GB' }],
+      page: 2,
+      pageSize: 25,
+      totalItems: 30,
+      totalPages: 2
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book?q=green&countryCode=GB&page=2',
+      auth: sessionAuth('list-search-page-2')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('?q=green&amp;countryCode=GB')
+    expect(addressBookClient.listAddresses).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({ q: 'green', countryCode: 'GB', page: 2 })
+    )
   })
 })

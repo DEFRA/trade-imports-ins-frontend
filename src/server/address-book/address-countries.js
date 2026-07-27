@@ -21,4 +21,25 @@ export function buildCountryItems(countries) {
   }))
 }
 
+/**
+ * Resolves a search term to an ISO alpha-2 country code when it matches an MDM country name
+ * (cv-048 FE-resolve). Comparison is case-insensitive on the full trimmed term.
+ *
+ * @param {string|undefined} q the user's search term
+ * @param {{ code: string, name: string }[]} countries the MDM country list
+ * @returns {string|undefined} the alpha-2 code when matched, otherwise undefined
+ */
+export function resolveCountryCodeFromSearchTerm(q, countries) {
+  const term = q?.trim()
+  if (!term) {
+    return undefined
+  }
+
+  const normalized = term.toLowerCase()
+  const match = countries.find(
+    (country) => country.name.toLowerCase() === normalized
+  )
+  return match?.code
+}
+
 export { GB_COUNTRY }

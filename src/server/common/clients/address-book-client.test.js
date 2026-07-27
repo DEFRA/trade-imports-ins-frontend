@@ -61,6 +61,28 @@ describe('#addressBookClient', () => {
       expect(result.items[0].addressLine1).toBe('1 Road')
       expect(scope.isDone()).toBe(true)
     })
+
+    test('forwards q and countryCode query params', async () => {
+      const scope = nock('http://localhost:8089')
+        .get(`/organisation/${orgId}/addresses`)
+        .query({ page: '1', q: 'France', countryCode: 'FR' })
+        .matchHeader(ORGANISATION_ID_HEADER, orgId)
+        .reply(200, {
+          items: [],
+          page: 1,
+          pageSize: 25,
+          totalItems: 0,
+          totalPages: 0
+        })
+
+      await addressBookClient.listAddresses(orgId, traceId, {
+        page: 1,
+        q: 'France',
+        countryCode: 'FR'
+      })
+
+      expect(scope.isDone()).toBe(true)
+    })
   })
 
   describe('createAddress', () => {

@@ -42,11 +42,17 @@ export function mapApiErrorsToFormErrors(problemBody) {
 }
 
 export const addressBookClient = {
-  async listAddresses(orgId, traceId, { page = 1 } = {}) {
+  async listAddresses(orgId, traceId, { page = 1, q, countryCode } = {}) {
     const url = new URL(
       `${addressBookBaseUrl}/organisation/${orgId}/addresses`
     )
     url.searchParams.set('page', String(page))
+    if (q) {
+      url.searchParams.set('q', q)
+    }
+    if (countryCode) {
+      url.searchParams.set('countryCode', countryCode)
+    }
 
     const response = await fetch(url.toString(), {
       method: 'GET',

@@ -37,6 +37,31 @@ describe('#address-book-helper', () => {
     expect(buildAddressBookQueryString({ page: 1 })).toBe('')
   })
 
+  test('buildAddressBookQueryString preserves search terms', () => {
+    expect(
+      buildAddressBookQueryString({ q: 'green', countryCode: 'GB', page: 2 })
+    ).toBe('?q=green&countryCode=GB&page=2')
+  })
+
+  test('buildPaginationLinks preserves active search terms', () => {
+    const pagination = buildPaginationLinks(
+      {
+        page: 2,
+        pageSize: 25,
+        totalItems: 30,
+        totalPages: 2
+      },
+      { q: 'green', countryCode: 'GB' }
+    )
+
+    expect(pagination.previous.href).toBe(
+      '/address-book?q=green&countryCode=GB'
+    )
+    expect(pagination.items[1].href).toBe(
+      '/address-book?q=green&countryCode=GB&page=2'
+    )
+  })
+
   test('mapAddressRows maps list rows', () => {
     expect(
       mapAddressRows([

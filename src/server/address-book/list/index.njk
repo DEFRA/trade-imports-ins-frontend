@@ -4,6 +4,7 @@
 {% from "govuk/components/pagination/macro.njk" import govukPagination %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
 
 {% block content %}
 
@@ -28,6 +29,24 @@
 
     <p class="govuk-body">Manage addresses used across import and export services.</p>
 
+    <form method="get" action="/address-book" class="govuk-!-margin-bottom-6">
+      {{ govukInput({
+        label: {
+          text: "Search addresses",
+          hint: "Search by name, town or city, postcode or country"
+        },
+        id: "q",
+        name: "q",
+        type: "search",
+        value: q,
+        classes: "govuk-!-width-two-thirds"
+      }) }}
+      {{ govukButton({
+        text: "Search",
+        classes: "govuk-!-margin-left-2"
+      }) }}
+    </form>
+
     <div class="govuk-!-margin-bottom-6">
       {{ govukButton({
         text: "Add a new address",
@@ -37,6 +56,11 @@
 
     {% if isEmpty %}
       <p class="govuk-body">You have no addresses yet.</p>
+    {% elif noSearchResults %}
+      <p class="govuk-body">No addresses match "{{ q }}".</p>
+      <p class="govuk-body">
+        <a class="govuk-link" href="/address-book">Clear search</a>
+      </p>
     {% elif tableRows.length %}
       {{ govukTable({
         head: {

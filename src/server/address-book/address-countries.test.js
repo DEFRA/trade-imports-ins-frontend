@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import {
   buildCountryItems,
   getAddressFormCountries,
+  resolveCountryCodeFromSearchTerm,
   GB_COUNTRY
 } from './address-countries.js'
 
@@ -53,5 +54,23 @@ describe('#buildCountryItems', () => {
       { value: 'GB', text: 'United Kingdom' },
       { value: 'FR', text: 'France' }
     ])
+  })
+})
+
+describe('#resolveCountryCodeFromSearchTerm', () => {
+  const countries = [
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'FR', name: 'France' }
+  ]
+
+  test('returns alpha-2 code for a case-insensitive country name match', () => {
+    expect(resolveCountryCodeFromSearchTerm('France', countries)).toBe('FR')
+    expect(resolveCountryCodeFromSearchTerm('france', countries)).toBe('FR')
+  })
+
+  test('returns undefined when the term does not match a country name', () => {
+    expect(resolveCountryCodeFromSearchTerm('Paris', countries)).toBeUndefined()
+    expect(resolveCountryCodeFromSearchTerm('', countries)).toBeUndefined()
+    expect(resolveCountryCodeFromSearchTerm(undefined, countries)).toBeUndefined()
   })
 })

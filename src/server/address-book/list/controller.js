@@ -9,6 +9,10 @@ import { createLogger } from '#/server/common/helpers/logging/logger.js'
 import { getSessionValue } from '#/server/common/helpers/session-helpers.js'
 import { sessionKeys } from '#/server/common/constants/session-keys.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
+import {
+  getAddressFormCountries,
+  resolveCountryCodeFromSearchTerm
+} from '#/server/address-book/address-countries.js'
 
 const logger = createLogger()
 const VIEW = 'address-book/list/index'
@@ -32,6 +36,8 @@ export const listController = {
     const traceId = getTraceId() ?? ''
     const orgId = request.auth.credentials.organisationId
     const page = parsePage(request.query.page)
+    const q = request.query.q?.trim() ?? ''
+    const hasSearch = Boolean(q)
     const successBanner = getSessionValue(
       request,
       sessionKeys.addressBookSuccess,
@@ -39,8 +45,15 @@ export const listController = {
     )
 
     try {
+      const countries = await getAddressFormCountries(traceId)
+      const resolvedCountryCode =
+        request.query.countryCode?.trim() ||
+        resolveCountryCodeFromSearchTerm(q, countries)
+
       const response = await addressBookClient.listAddresses(orgId, traceId, {
-        page
+        page,
+        q: hasSearch ? q : undefined,
+        countryCode: resolvedCountryCode
       })
 
       const pagination = {
@@ -51,16 +64,24 @@ export const listController = {
       }
 
       const addresses = mapAddressRows(response.items ?? [])
-      const isEmpty = response.totalItems === 0
+      const isEmpty = response.totalItems === 0 && !hasSearch
+      const noSearchResults = response.totalItems === 0 && hasSearch
 
       return h.view(VIEW, {
         pageTitle: PAGE_TITLE,
         heading: PAGE_TITLE,
         addresses,
         tableRows: buildTableRows(addresses),
-        pagination: buildPaginationLinks(pagination),
+        pagination: buildPaginationLinks(pagination, {
+          q: hasSearch ? q : undefined,
+          countryCode: resolvedCountryCode
+        }),
         paginationMeta: pagination,
+        q,
+        countryCode: resolvedCountryCode,
+        hasSearch,
         isEmpty,
+        noSearchResults,
         successBanner
       })
     } catch (err) {
@@ -73,7 +94,11 @@ export const listController = {
           tableRows: [],
           pagination: null,
           paginationMeta: null,
+          q,
+          countryCode: undefined,
+          hasSearch,
           isEmpty: false,
+          noSearchResults: false,
           successBanner,
           errorList: [
             { text: 'Something went wrong loading your address book' }

@@ -1,8 +1,14 @@
 /**
- * Builds a query string for address book list pagination.
+ * Builds a query string for address book list pagination and search.
  */
-export function buildAddressBookQueryString({ page } = {}) {
+export function buildAddressBookQueryString({ page, q, countryCode } = {}) {
   const params = new URLSearchParams()
+  if (q) {
+    params.set('q', q)
+  }
+  if (countryCode) {
+    params.set('countryCode', countryCode)
+  }
   if (page && page > 1) {
     params.set('page', String(page))
   }
@@ -22,10 +28,11 @@ function normalizePageNumber(page, totalPages) {
  */
 export function buildPaginationLinks(
   pagination,
-  { baseUrl = '/address-book' } = {}
+  { baseUrl = '/address-book', q, countryCode } = {}
 ) {
   const { totalPages, pageSize, totalItems } = pagination
   const page = normalizePageNumber(pagination.page, totalPages)
+  const queryArgs = { q, countryCode }
 
   if (totalPages <= 1) {
     return null
@@ -41,13 +48,13 @@ export function buildPaginationLinks(
 
   if (page > 1) {
     model.previous = {
-      href: `${baseUrl}${buildAddressBookQueryString({ page: page - 1 })}`
+      href: `${baseUrl}${buildAddressBookQueryString({ ...queryArgs, page: page - 1 })}`
     }
   }
 
   if (page < totalPages) {
     model.next = {
-      href: `${baseUrl}${buildAddressBookQueryString({ page: page + 1 })}`
+      href: `${baseUrl}${buildAddressBookQueryString({ ...queryArgs, page: page + 1 })}`
     }
   }
 
@@ -55,7 +62,7 @@ export function buildPaginationLinks(
     const number = index + 1
     return {
       number: String(number),
-      href: `${baseUrl}${buildAddressBookQueryString({ page: number })}`,
+      href: `${baseUrl}${buildAddressBookQueryString({ ...queryArgs, page: number })}`,
       current: number === page
     }
   })
