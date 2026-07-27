@@ -87,6 +87,79 @@ describe('#addressBookClient', () => {
     })
   })
 
+  describe('getAddress', () => {
+    test('GETs by-id path with organisation header', async () => {
+      const addressId = '665f1c2ab3e4d51a2c9d0e77'
+      const scope = nock('http://localhost:8089')
+        .get(`/organisation/${orgId}/addresses/${addressId}`)
+        .matchHeader(ORGANISATION_ID_HEADER, orgId)
+        .matchHeader('x-cdp-request-id', traceId)
+        .reply(200, {
+          id: addressId,
+          name: 'Highland Livestock Ltd',
+          addressLine1: '14 Drover\'s Way',
+          townOrCity: 'Inverness',
+          postcode: 'IV2 3JH',
+          countryCode: 'GB',
+          phone: '+44 1463 234567',
+          email: 'exports@example.com',
+          deleted: false
+        })
+
+      const result = await addressBookClient.getAddress(orgId, traceId, addressId)
+
+      expect(result.name).toBe('Highland Livestock Ltd')
+      expect(result.deleted).toBe(false)
+      expect(scope.isDone()).toBe(true)
+    })
+  })
+
+  describe('updateAddress', () => {
+    test('PUTs camelCase body with org header and returns updated address', async () => {
+      const addressId = '665f1c2ab3e4d51a2c9d0e77'
+      const body = {
+        name: 'Highland Livestock Ltd',
+        addressLine1: '14 Drover\'s Way',
+        addressLine2: '',
+        townOrCity: 'Inverness',
+        county: '',
+        postcode: 'IV2 3JH',
+        countryCode: 'GB',
+        phone: '+44 1463 234567',
+        email: 'exports@example.com'
+      }
+
+      const scope = nock('http://localhost:8089')
+        .put(`/organisation/${orgId}/addresses/${addressId}`, body)
+        .matchHeader(ORGANISATION_ID_HEADER, orgId)
+        .reply(200, { id: addressId, ...body })
+
+      const result = await addressBookClient.updateAddress(
+        orgId,
+        traceId,
+        addressId,
+        body
+      )
+
+      expect(result.id).toBe(addressId)
+      expect(scope.isDone()).toBe(true)
+    })
+  })
+
+  describe('deleteAddress', () => {
+    test('DELETEs by-id path with organisation header', async () => {
+      const addressId = '665f1c2ab3e4d51a2c9d0e77'
+      const scope = nock('http://localhost:8089')
+        .delete(`/organisation/${orgId}/addresses/${addressId}`)
+        .matchHeader(ORGANISATION_ID_HEADER, orgId)
+        .reply(204)
+
+      await addressBookClient.deleteAddress(orgId, traceId, addressId)
+
+      expect(scope.isDone()).toBe(true)
+    })
+  })
+
   describe('mapApiErrorsToFormErrors', () => {
     test('maps camelCase problem errors to form errors', () => {
       const result = mapApiErrorsToFormErrors({

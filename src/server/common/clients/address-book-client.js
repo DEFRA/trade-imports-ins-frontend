@@ -76,6 +76,50 @@ export const addressBookClient = {
 
     await throwOnError(response)
     return response.json()
+  },
+
+  async getAddress(orgId, traceId, id) {
+    const url = `${addressBookBaseUrl}/organisation/${orgId}/addresses/${id}`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: buildHeaders(orgId, traceId)
+    })
+
+    await throwOnError(response)
+    return response.json()
+  },
+
+  async updateAddress(orgId, traceId, id, body) {
+    const url = `${addressBookBaseUrl}/organisation/${orgId}/addresses/${id}`
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: buildHeaders(orgId, traceId),
+      body: JSON.stringify(body)
+    })
+
+    if (response.status === 400) {
+      const problem = await response.json()
+      const error = new Error(problem.detail || 'Validation failed')
+      error.status = 400
+      error.body = problem
+      throw error
+    }
+
+    await throwOnError(response)
+    return response.json()
+  },
+
+  async deleteAddress(orgId, traceId, id) {
+    const url = `${addressBookBaseUrl}/organisation/${orgId}/addresses/${id}`
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: buildHeaders(orgId, traceId)
+    })
+
+    await throwOnError(response)
   }
 }
 

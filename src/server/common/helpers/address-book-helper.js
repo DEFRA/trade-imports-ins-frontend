@@ -69,6 +69,18 @@ export function buildAddressLine(address) {
     .join(', ')
 }
 
+export function buildFullAddress(address) {
+  return [
+    address.addressLine1,
+    address.addressLine2,
+    address.townOrCity,
+    address.county,
+    address.postcode
+  ]
+    .filter(Boolean)
+    .join(', ')
+}
+
 export function mapAddressRows(items) {
   return items.map((address) => ({
     id: address.id,
