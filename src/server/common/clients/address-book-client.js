@@ -1,11 +1,9 @@
 const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
 import { config } from '#/config/config.js'
-import { createLogger } from '#/server/common/helpers/logging/logger.js'
 
 const addressBookBaseUrl = config.get('tradeImportsAddressBookApi.baseUrl')
 const tracingHeader = config.get('tracing.header')
-const logger = createLogger()
 
 function buildHeaders(orgId, traceId) {
   return {
