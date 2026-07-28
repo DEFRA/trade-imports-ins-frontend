@@ -3,6 +3,7 @@ import { getTraceId } from '@defra/hapi-tracing'
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 import {
   buildPaginationLinks,
+  buildResultsLabel,
   mapAddressRows
 } from '#/server/common/helpers/address-book-helper.js'
 import { createLogger } from '#/server/common/helpers/logging/logger.js'
@@ -27,8 +28,12 @@ export function buildTableRows(addresses) {
   return addresses.map((address) => [
     { text: address.name },
     { text: address.addressLine },
-    { text: address.countryCode }
+    { text: address.countryName }
   ])
+}
+
+function buildCountryNameMap(countries) {
+  return Object.fromEntries(countries.map((country) => [country.code, country.name]))
 }
 
 export const listController = {
@@ -63,7 +68,8 @@ export const listController = {
         totalPages: response.totalPages
       }
 
-      const addresses = mapAddressRows(response.items ?? [])
+      const countryNames = buildCountryNameMap(countries)
+      const addresses = mapAddressRows(response.items ?? [], countryNames)
       const isEmpty = response.totalItems === 0 && !hasSearch
       const noSearchResults = response.totalItems === 0 && hasSearch
 
@@ -72,6 +78,7 @@ export const listController = {
         heading: PAGE_TITLE,
         addresses,
         tableRows: buildTableRows(addresses),
+        resultsLabel: buildResultsLabel(pagination),
         pagination: buildPaginationLinks(pagination, {
           q: hasSearch ? q : undefined,
           countryCode: resolvedCountryCode
@@ -92,6 +99,7 @@ export const listController = {
           heading: PAGE_TITLE,
           addresses: [],
           tableRows: [],
+          resultsLabel: null,
           pagination: null,
           paginationMeta: null,
           q,

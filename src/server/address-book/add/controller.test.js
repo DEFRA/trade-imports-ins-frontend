@@ -47,8 +47,18 @@ describe('#addressBookAddController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('Add address details')
+    expect(result).toContain('Enter address details')
+    expect(result).toContain('Enter contact details')
     expect(result).toContain('Name or organisation name')
+    expect(result).toContain('Postcode or Zip code')
+    expect(result).toContain('Phone number')
+    expect(result).toContain(
+      'For international numbers include the country code'
+    )
+    expect(result).toContain('Save and continue')
+    expect(result).toContain('Cancel and return to address book')
     expect(result).not.toContain('operator')
+    expect(result).not.toContain('Save changes')
   })
 
   test('GET renders country select options from reference data', async () => {

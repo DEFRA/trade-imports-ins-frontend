@@ -4,14 +4,7 @@
 {% from "govuk/components/select/macro.njk" import govukSelect %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 
-{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
-
 {% block content %}
-
-  {{ govukBackLink({
-    text: "Back",
-    href: "/address-book"
-  }) }}
 
   {{ appHeading({ text: heading }) }}
 
@@ -26,12 +19,13 @@
 
     <form method="post" novalidate>
 
+      <h2 class="govuk-heading-m">Enter address details</h2>
+
       {{ govukInput({
         label: { text: "Name or organisation name" },
         id: "name",
         name: "name",
         value: formValues.name,
-        classes: "govuk-!-width-two-thirds",
         errorMessage: fieldErrors.name if fieldErrors
       }) }}
 
@@ -40,7 +34,6 @@
         id: "addressLine1",
         name: "addressLine1",
         value: formValues.addressLine1,
-        classes: "govuk-!-width-two-thirds",
         errorMessage: fieldErrors.addressLine1 if fieldErrors
       }) }}
 
@@ -49,7 +42,6 @@
         id: "addressLine2",
         name: "addressLine2",
         value: formValues.addressLine2,
-        classes: "govuk-!-width-two-thirds",
         errorMessage: fieldErrors.addressLine2 if fieldErrors
       }) }}
 
@@ -58,7 +50,7 @@
         id: "townOrCity",
         name: "townOrCity",
         value: formValues.townOrCity,
-        classes: "govuk-!-width-two-thirds",
+        classes: "govuk-!-width-one-half",
         errorMessage: fieldErrors.townOrCity if fieldErrors
       }) }}
 
@@ -67,16 +59,16 @@
         id: "county",
         name: "county",
         value: formValues.county,
-        classes: "govuk-!-width-two-thirds",
+        classes: "govuk-!-width-one-half",
         errorMessage: fieldErrors.county if fieldErrors
       }) }}
 
       {{ govukInput({
-        label: { text: "Postcode" },
+        label: { text: "Postcode or Zip code" },
         id: "postcode",
         name: "postcode",
         value: formValues.postcode,
-        classes: "govuk-input--width-10",
+        classes: "govuk-!-width-one-half",
         errorMessage: fieldErrors.postcode if fieldErrors
       }) }}
 
@@ -86,32 +78,37 @@
         label: { text: "Country" },
         items: countryItems,
         value: formValues.countryCode,
+        classes: "govuk-!-width-one-half",
         errorMessage: fieldErrors.countryCode if fieldErrors
       }) }}
 
-      {{ govukInput({
-        label: { text: "Telephone number" },
-        id: "phone",
-        name: "phone",
-        value: formValues.phone,
-        classes: "govuk-!-width-two-thirds",
-        errorMessage: fieldErrors.phone if fieldErrors
-      }) }}
+      <h2 class="govuk-heading-m">Enter contact details</h2>
 
       {{ govukInput({
         label: { text: "Email address" },
         id: "email",
         name: "email",
         value: formValues.email,
-        classes: "govuk-!-width-two-thirds",
         autocomplete: "email",
         errorMessage: fieldErrors.email if fieldErrors
       }) }}
 
+      {{ govukInput({
+        label: { text: "Phone number" },
+        id: "phone",
+        name: "phone",
+        value: formValues.phone,
+        classes: "govuk-!-width-one-half",
+        hint: {
+          text: "For international numbers include the country code"
+        },
+        errorMessage: fieldErrors.phone if fieldErrors
+      }) }}
+
       <div class="govuk-button-group">
-        {{ govukButton({ text: "Save changes" }) }}
+        {{ govukButton({ text: "Save and continue" }) }}
         {{ govukButton({
-          text: "Cancel",
+          text: "Cancel and return to address book",
           name: "cancel",
           value: "true",
           classes: "govuk-button--secondary"

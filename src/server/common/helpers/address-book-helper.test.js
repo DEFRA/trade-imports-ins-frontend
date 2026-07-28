@@ -4,6 +4,7 @@ import {
   buildAddressBookQueryString,
   buildAddressLine,
   buildPaginationLinks,
+  buildResultsLabel,
   mapAddressRows
 } from './address-book-helper.js'
 
@@ -16,6 +17,37 @@ describe('#address-book-helper', () => {
         postcode: 'IV2 3JH'
       })
     ).toBe("14 Drover's Way, Inverness, IV2 3JH")
+  })
+
+  test('buildResultsLabel formats the current page range', () => {
+    expect(
+      buildResultsLabel({
+        page: 1,
+        pageSize: 8,
+        totalItems: 24,
+        totalPages: 3
+      })
+    ).toBe('Showing 1-8 of 24')
+
+    expect(
+      buildResultsLabel({
+        page: 2,
+        pageSize: 25,
+        totalItems: 30,
+        totalPages: 2
+      })
+    ).toBe('Showing 26-30 of 30')
+  })
+
+  test('buildResultsLabel returns null when there are no results', () => {
+    expect(
+      buildResultsLabel({
+        page: 1,
+        pageSize: 25,
+        totalItems: 0,
+        totalPages: 0
+      })
+    ).toBeNull()
   })
 
   test('buildPaginationLinks returns numbered pages from API metadata', () => {
@@ -62,24 +94,28 @@ describe('#address-book-helper', () => {
     )
   })
 
-  test('mapAddressRows maps list rows', () => {
+  test('mapAddressRows maps list rows with country names', () => {
     expect(
-      mapAddressRows([
-        {
-          id: '1',
-          name: 'Farm',
-          addressLine1: '1 Road',
-          townOrCity: 'Town',
-          postcode: 'AB1 2CD',
-          countryCode: 'GB'
-        }
-      ])
+      mapAddressRows(
+        [
+          {
+            id: '1',
+            name: 'Farm',
+            addressLine1: '1 Road',
+            townOrCity: 'Town',
+            postcode: 'AB1 2CD',
+            countryCode: 'GB'
+          }
+        ],
+        { GB: 'United Kingdom' }
+      )
     ).toEqual([
       {
         id: '1',
         name: 'Farm',
         addressLine: '1 Road, Town, AB1 2CD',
-        countryCode: 'GB'
+        countryCode: 'GB',
+        countryName: 'United Kingdom'
       }
     ])
   })

@@ -65,9 +65,11 @@ describe('#addressBookListController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('Address book')
+    expect(result).toContain('Showing 1-1 of 1')
     expect(result).toContain('Highland Livestock Ltd')
     expect(result).toContain('14 Drover&#39;s Way, Inverness, IV2 3JH')
-    expect(result).toContain('GB')
+    expect(result).toContain('United Kingdom')
+    expect(result).not.toContain('>GB<')
     expect(result).toContain('Add a new address')
     expect(result).not.toContain('operator')
   })
@@ -112,6 +114,7 @@ describe('#addressBookListController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('govuk-pagination')
+    expect(result).toContain('Showing 26-30 of 30')
     expect(result).toContain('?page=2')
   })
 
@@ -146,6 +149,7 @@ describe('#addressBookListController', () => {
       expect.objectContaining({ q: 'France', countryCode: 'FR' })
     )
     expect(result).toContain('Paris Depot')
+    expect(result).toContain('France')
     expect(result).toContain('value="France"')
   })
 

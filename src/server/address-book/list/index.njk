@@ -16,7 +16,10 @@
       {{ govukNotificationBanner({
         type: "success",
         titleText: "Success",
-        html: successBanner
+        html: successBanner,
+        attributes: {
+          id: "address-book-success-banner"
+        }
       }) }}
     {% endif %}
 
@@ -62,14 +65,18 @@
         <a class="govuk-link" href="/address-book">Clear search</a>
       </p>
     {% elif tableRows.length %}
+      {% if resultsLabel %}
+        <p class="govuk-body govuk-!-margin-bottom-4" data-testid="address-book-results-label">
+          {{ resultsLabel }}
+        </p>
+      {% endif %}
+
       {{ govukTable({
-        head: {
-          rows: [[
-            { text: "Name" },
-            { text: "Address" },
-            { text: "Country" }
-          ]]
-        },
+        head: [
+          { text: "Name" },
+          { text: "Address" },
+          { text: "Country" }
+        ],
         rows: tableRows
       }) }}
 

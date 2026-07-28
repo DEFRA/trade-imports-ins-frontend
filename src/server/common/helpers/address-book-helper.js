@@ -24,6 +24,22 @@ function normalizePageNumber(page, totalPages) {
 }
 
 /**
+ * Builds a results range label for the current page, e.g. "Showing 1-8 of 24".
+ */
+export function buildResultsLabel(pagination) {
+  const { pageSize, totalItems, totalPages } = pagination
+  if (totalItems < 1) {
+    return null
+  }
+
+  const page = normalizePageNumber(pagination.page, totalPages || 1)
+  const from = (page - 1) * pageSize + 1
+  const to = Math.min(page * pageSize, totalItems)
+
+  return `Showing ${from}-${to} of ${totalItems}`
+}
+
+/**
  * Builds numbered govukPagination links from API pagination metadata.
  */
 export function buildPaginationLinks(
@@ -88,11 +104,12 @@ export function buildFullAddress(address) {
     .join(', ')
 }
 
-export function mapAddressRows(items) {
+export function mapAddressRows(items, countryNames = {}) {
   return items.map((address) => ({
     id: address.id,
     name: address.name,
     addressLine: buildAddressLine(address),
-    countryCode: address.countryCode
+    countryCode: address.countryCode,
+    countryName: countryNames[address.countryCode] ?? address.countryCode
   }))
 }
