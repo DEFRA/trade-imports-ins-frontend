@@ -83,9 +83,7 @@
         id: "countryCode",
         name: "countryCode",
         label: { text: "Country" },
-        items: [
-          { value: "", text: "Select a country" }
-        ] + countryItems,
+        items: countryItems,
         value: formValues.countryCode,
         errorMessage: fieldErrors.countryCode if fieldErrors
       }) }}

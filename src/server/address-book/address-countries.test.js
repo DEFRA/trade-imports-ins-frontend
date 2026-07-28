@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import {
   buildCountryItems,
+  buildCountrySelectItems,
   getAddressFormCountries,
   resolveCountryCodeFromSearchTerm,
   GB_COUNTRY
@@ -40,6 +41,21 @@ describe('#getAddressFormCountries', () => {
     await expect(getAddressFormCountries('trace-1')).rejects.toThrow(
       'Country reference data is unavailable'
     )
+  })
+})
+
+describe('#buildCountrySelectItems', () => {
+  test('prepends the placeholder option for govukSelect', () => {
+    expect(
+      buildCountrySelectItems([
+        { code: 'GB', name: 'United Kingdom' },
+        { code: 'FR', name: 'France' }
+      ])
+    ).toEqual([
+      { value: '', text: 'Select a country' },
+      { value: 'GB', text: 'United Kingdom' },
+      { value: 'FR', text: 'France' }
+    ])
   })
 })
 

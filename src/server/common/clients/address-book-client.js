@@ -15,13 +15,23 @@ function buildHeaders(orgId, traceId) {
   }
 }
 
+function errorMessageFromBody(body, response) {
+  return (
+    body.detail ||
+    body.message ||
+    body.title ||
+    response.statusText ||
+    `HTTP ${response.status}`
+  )
+}
+
 async function throwOnError(response) {
   if (response.ok) {
     return response
   }
 
   const body = await response.json().catch(() => ({}))
-  const error = new Error(body.detail || response.statusText)
+  const error = new Error(errorMessageFromBody(body, response))
   error.status = response.status
   error.body = body
   throw error

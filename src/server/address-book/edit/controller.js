@@ -7,7 +7,7 @@ import {
 } from '#/server/common/clients/address-book-client.js'
 import { buildAddressSchema } from '../address-schema.js'
 import {
-  buildCountryItems,
+  buildCountrySelectItems,
   getAddressFormCountries
 } from '../address-countries.js'
 import { createLogger } from '#/server/common/helpers/logging/logger.js'
@@ -68,7 +68,7 @@ async function renderEditForm(h, { id, formValues, traceId, errorList, fieldErro
     buildViewModel({
       id,
       formValues,
-      countryItems: buildCountryItems(countries),
+      countryItems: buildCountrySelectItems(countries),
       errorList,
       fieldErrors
     })
@@ -91,7 +91,7 @@ export const editController = {
           buildViewModel({
             id,
             formValues: addressToFormValues(address),
-            countryItems: buildCountryItems(countries)
+            countryItems: buildCountrySelectItems(countries)
           })
         )
       } catch (err) {

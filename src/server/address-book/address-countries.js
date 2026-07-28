@@ -21,6 +21,13 @@ export function buildCountryItems(countries) {
   }))
 }
 
+export function buildCountrySelectItems(countries) {
+  return [
+    { value: '', text: 'Select a country' },
+    ...buildCountryItems(countries)
+  ]
+}
+
 /**
  * Resolves a search term to an ISO alpha-2 country code when it matches an MDM country name
  * (cv-048 FE-resolve). Comparison is case-insensitive on the full trimmed term.

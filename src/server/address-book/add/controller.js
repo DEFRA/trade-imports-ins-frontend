@@ -6,7 +6,7 @@ import {
 } from '#/server/common/clients/address-book-client.js'
 import { buildAddressSchema } from '../address-schema.js'
 import {
-  buildCountryItems,
+  buildCountrySelectItems,
   getAddressFormCountries
 } from '../address-countries.js'
 import { createLogger } from '#/server/common/helpers/logging/logger.js'
@@ -70,7 +70,7 @@ export const addController = {
           VIEW,
           buildViewModel({
             formValues: emptyFormValues(),
-            countryItems: buildCountryItems(countries)
+            countryItems: buildCountrySelectItems(countries)
           })
         )
       } catch (err) {
@@ -100,7 +100,7 @@ export const addController = {
 
       try {
         const countries = await getAddressFormCountries(traceId)
-        const countryItems = buildCountryItems(countries)
+        const countryItems = buildCountrySelectItems(countries)
         const mdmCodes = countries.map((country) => country.code)
         const schema = buildAddressSchema(mdmCodes)
 
@@ -147,7 +147,7 @@ export const addController = {
               VIEW,
               buildViewModel({
                 formValues,
-                countryItems: buildCountryItems(countries),
+                countryItems: buildCountrySelectItems(countries),
                 errorList: formattedErrors.errorList,
                 fieldErrors: formattedErrors.fieldErrors
               })
@@ -161,7 +161,7 @@ export const addController = {
           .view(VIEW, {
             ...buildViewModel({
               formValues,
-              countryItems: buildCountryItems(countries)
+              countryItems: buildCountrySelectItems(countries)
             }),
             errorList: [{ text: 'Something went wrong saving the address' }]
           })

@@ -48,6 +48,20 @@ describe('#addressBookAddController', () => {
     expect(result).not.toContain('operator')
   })
 
+  test('GET renders country select options from reference data', async () => {
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book/add',
+      auth: sessionAuth('add-get-countries')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('value="GB"')
+    expect(result).toContain('United Kingdom')
+    expect(result).toContain('value="FR"')
+    expect(result).toContain('France')
+  })
+
   test('POST creates address and redirects with success banner', async () => {
     addressBookClient.createAddress.mockResolvedValue({
       id: '665f1c2ab3e4d51a2c9d0e77',

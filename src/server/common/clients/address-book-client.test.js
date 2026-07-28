@@ -182,6 +182,24 @@ describe('#addressBookClient', () => {
     })
   })
 
+  describe('error handling', () => {
+    test('surfaces Spring Boot 404 message when detail is absent', async () => {
+      nock('http://localhost:8089')
+        .get(`/organisation/${orgId}/addresses`)
+        .query({ page: '1' })
+        .reply(404, {
+          message: 'No static resource organisation/5900001/addresses.'
+        })
+
+      await expect(
+        addressBookClient.listAddresses(orgId, traceId)
+      ).rejects.toMatchObject({
+        message: 'No static resource organisation/5900001/addresses.',
+        status: 404
+      })
+    })
+  })
+
   describe('mapApiErrorsToFormErrors', () => {
     test('maps camelCase problem errors to form errors', () => {
       const result = mapApiErrorsToFormErrors({
