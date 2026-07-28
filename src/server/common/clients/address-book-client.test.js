@@ -89,7 +89,7 @@ describe('#addressBookClient', () => {
     test('POSTs camelCase body with org header and returns created address', async () => {
       const body = {
         name: 'Highland Livestock Ltd',
-        addressLine1: '14 Drover\'s Way',
+        addressLine1: "14 Drover's Way",
         townOrCity: 'Inverness',
         postcode: 'IV2 3JH',
         countryCode: 'GB',
@@ -119,7 +119,7 @@ describe('#addressBookClient', () => {
         .reply(200, {
           id: addressId,
           name: 'Highland Livestock Ltd',
-          addressLine1: '14 Drover\'s Way',
+          addressLine1: "14 Drover's Way",
           townOrCity: 'Inverness',
           postcode: 'IV2 3JH',
           countryCode: 'GB',
@@ -128,7 +128,11 @@ describe('#addressBookClient', () => {
           deleted: false
         })
 
-      const result = await addressBookClient.getAddress(orgId, traceId, addressId)
+      const result = await addressBookClient.getAddress(
+        orgId,
+        traceId,
+        addressId
+      )
 
       expect(result.name).toBe('Highland Livestock Ltd')
       expect(result.deleted).toBe(false)
@@ -141,7 +145,7 @@ describe('#addressBookClient', () => {
       const addressId = '665f1c2ab3e4d51a2c9d0e77'
       const body = {
         name: 'Highland Livestock Ltd',
-        addressLine1: '14 Drover\'s Way',
+        addressLine1: "14 Drover's Way",
         addressLine2: '',
         townOrCity: 'Inverness',
         county: '',

@@ -7,7 +7,7 @@ const MDM_CODES = ['GB', 'FR', 'DE']
 function validAddress(overrides = {}) {
   return {
     name: 'Highland Livestock Ltd',
-    addressLine1: '14 Drover\'s Way',
+    addressLine1: "14 Drover's Way",
     addressLine2: 'Unit 3',
     townOrCity: 'Inverness',
     county: 'Highland',
@@ -50,8 +50,9 @@ describe('#buildAddressSchema', () => {
   })
 
   test('enforces email format and accepts free-string phone', () => {
-    const emailError = schema.validate(validAddress({ email: 'not-an-email' }))
-      .error
+    const emailError = schema.validate(
+      validAddress({ email: 'not-an-email' })
+    ).error
     expect(emailError?.details[0].path[0]).toBe('email')
 
     const phoneOk = schema.validate(validAddress({ phone: 'call the office' }))

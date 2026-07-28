@@ -48,7 +48,13 @@ function payloadToFormValues(payload) {
   }
 }
 
-function buildViewModel({ id, formValues, countryItems, errorList, fieldErrors }) {
+function buildViewModel({
+  id,
+  formValues,
+  countryItems,
+  errorList,
+  fieldErrors
+}) {
   return {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
@@ -60,7 +66,10 @@ function buildViewModel({ id, formValues, countryItems, errorList, fieldErrors }
   }
 }
 
-async function renderEditForm(h, { id, formValues, traceId, errorList, fieldErrors }) {
+async function renderEditForm(
+  h,
+  { id, formValues, traceId, errorList, fieldErrors }
+) {
   const countries = await getAddressFormCountries(traceId).catch(() => [])
 
   return h.view(
@@ -99,7 +108,10 @@ export const editController = {
           throw Boom.notFound()
         }
 
-        logger.error({ err, traceId, orgId, id }, 'Failed to load address for edit')
+        logger.error(
+          { err, traceId, orgId, id },
+          'Failed to load address for edit'
+        )
         throw Boom.internal()
       }
     }
@@ -127,13 +139,15 @@ export const editController = {
 
         if (error) {
           const formattedErrors = formatValidationErrors(error)
-          return (await renderEditForm(h, {
-            id,
-            formValues,
-            traceId,
-            errorList: formattedErrors.errorList,
-            fieldErrors: formattedErrors.fieldErrors
-          })).code(statusCodes.badRequest)
+          return (
+            await renderEditForm(h, {
+              id,
+              formValues,
+              traceId,
+              errorList: formattedErrors.errorList,
+              fieldErrors: formattedErrors.fieldErrors
+            })
+          ).code(statusCodes.badRequest)
         }
 
         const updated = await addressBookClient.updateAddress(
@@ -157,22 +171,26 @@ export const editController = {
 
         if (err.status === 400 && err.body?.errors) {
           const formattedErrors = mapApiErrorsToFormErrors(err.body)
-          return (await renderEditForm(h, {
-            id,
-            formValues,
-            traceId,
-            errorList: formattedErrors.errorList,
-            fieldErrors: formattedErrors.fieldErrors
-          })).code(statusCodes.badRequest)
+          return (
+            await renderEditForm(h, {
+              id,
+              formValues,
+              traceId,
+              errorList: formattedErrors.errorList,
+              fieldErrors: formattedErrors.fieldErrors
+            })
+          ).code(statusCodes.badRequest)
         }
 
         logger.error({ err, traceId, orgId, id }, 'Failed to update address')
-        return (await renderEditForm(h, {
-          id,
-          formValues,
-          traceId,
-          errorList: [{ text: 'Something went wrong saving the address' }]
-        })).code(statusCodes.internalServerError)
+        return (
+          await renderEditForm(h, {
+            id,
+            formValues,
+            traceId,
+            errorList: [{ text: 'Something went wrong saving the address' }]
+          })
+        ).code(statusCodes.internalServerError)
       }
     }
   }

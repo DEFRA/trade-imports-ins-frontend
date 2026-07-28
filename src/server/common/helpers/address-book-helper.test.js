@@ -11,11 +11,11 @@ describe('#address-book-helper', () => {
   test('buildAddressLine composes addressLine1, townOrCity and postcode', () => {
     expect(
       buildAddressLine({
-        addressLine1: '14 Drover\'s Way',
+        addressLine1: "14 Drover's Way",
         townOrCity: 'Inverness',
         postcode: 'IV2 3JH'
       })
-    ).toBe('14 Drover\'s Way, Inverness, IV2 3JH')
+    ).toBe("14 Drover's Way, Inverness, IV2 3JH")
   })
 
   test('buildPaginationLinks returns numbered pages from API metadata', () => {

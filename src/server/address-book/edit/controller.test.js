@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { sessionAuth, mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import {
+  sessionAuth,
+  mockOidcConfig
+} from '#/server/common/test-helpers/mock-auth.js'
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 import { countriesClient } from '#/server/common/clients/countries-client.js'
 
@@ -23,7 +26,7 @@ const mockCountries = [
 const mockAddress = {
   id: addressId,
   name: 'Highland Livestock Ltd',
-  addressLine1: '14 Drover\'s Way',
+  addressLine1: "14 Drover's Way",
   addressLine2: 'Unit 2',
   townOrCity: 'Inverness',
   county: 'Highland',
@@ -36,7 +39,7 @@ const mockAddress = {
 
 const validPayload = {
   name: 'Highland Livestock Ltd',
-  addressLine1: '14 Drover\'s Way',
+  addressLine1: "14 Drover's Way",
   addressLine2: '',
   townOrCity: 'Inverness',
   county: '',

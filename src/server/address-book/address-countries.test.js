@@ -87,6 +87,8 @@ describe('#resolveCountryCodeFromSearchTerm', () => {
   test('returns undefined when the term does not match a country name', () => {
     expect(resolveCountryCodeFromSearchTerm('Paris', countries)).toBeUndefined()
     expect(resolveCountryCodeFromSearchTerm('', countries)).toBeUndefined()
-    expect(resolveCountryCodeFromSearchTerm(undefined, countries)).toBeUndefined()
+    expect(
+      resolveCountryCodeFromSearchTerm(undefined, countries)
+    ).toBeUndefined()
   })
 })

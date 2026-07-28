@@ -32,7 +32,10 @@ export const deleteController = {
           throw Boom.notFound()
         }
 
-        logger.error({ err, traceId, orgId, id }, 'Failed to load address for delete')
+        logger.error(
+          { err, traceId, orgId, id },
+          'Failed to load address for delete'
+        )
         throw Boom.internal()
       }
     }

@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { sessionAuth, mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import {
+  sessionAuth,
+  mockOidcConfig
+} from '#/server/common/test-helpers/mock-auth.js'
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 
 vi.mock('#/auth/get-oidc-config.js', () => ({
@@ -42,7 +45,7 @@ describe('#addressBookListController', () => {
         {
           id: '1',
           name: 'Highland Livestock Ltd',
-          addressLine1: '14 Drover\'s Way',
+          addressLine1: "14 Drover's Way",
           townOrCity: 'Inverness',
           postcode: 'IV2 3JH',
           countryCode: 'GB'
@@ -92,7 +95,9 @@ describe('#addressBookListController', () => {
 
   test('renders numbered pagination when more than one page', async () => {
     addressBookClient.listAddresses.mockResolvedValue({
-      items: [{ id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }],
+      items: [
+        { id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }
+      ],
       page: 2,
       pageSize: 25,
       totalItems: 30,
@@ -168,7 +173,14 @@ describe('#addressBookListController', () => {
 
   test('pagination preserves the active search term', async () => {
     addressBookClient.listAddresses.mockResolvedValue({
-      items: [{ id: '1', name: 'Green Farm', addressLine1: '1 Road', countryCode: 'GB' }],
+      items: [
+        {
+          id: '1',
+          name: 'Green Farm',
+          addressLine1: '1 Road',
+          countryCode: 'GB'
+        }
+      ],
       page: 2,
       pageSize: 25,
       totalItems: 30,

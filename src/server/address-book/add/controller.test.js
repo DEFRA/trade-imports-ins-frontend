@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { sessionAuth, mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import {
+  sessionAuth,
+  mockOidcConfig
+} from '#/server/common/test-helpers/mock-auth.js'
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 import { countriesClient } from '#/server/common/clients/countries-client.js'
 
@@ -74,7 +77,7 @@ describe('#addressBookAddController', () => {
       auth: sessionAuth('add-post-success'),
       payload: {
         name: 'Highland Livestock Ltd',
-        addressLine1: '14 Drover\'s Way',
+        addressLine1: "14 Drover's Way",
         townOrCity: 'Inverness',
         postcode: 'IV2 3JH',
         countryCode: 'GB',

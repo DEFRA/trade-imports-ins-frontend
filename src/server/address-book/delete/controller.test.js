@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { sessionAuth, mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import {
+  sessionAuth,
+  mockOidcConfig
+} from '#/server/common/test-helpers/mock-auth.js'
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 
 vi.mock('#/auth/get-oidc-config.js', () => ({
@@ -16,7 +19,7 @@ const addressId = '665f1c2ab3e4d51a2c9d0e77'
 const mockAddress = {
   id: addressId,
   name: 'Highland Livestock Ltd',
-  addressLine1: '14 Drover\'s Way',
+  addressLine1: "14 Drover's Way",
   townOrCity: 'Inverness',
   postcode: 'IV2 3JH',
   countryCode: 'GB',

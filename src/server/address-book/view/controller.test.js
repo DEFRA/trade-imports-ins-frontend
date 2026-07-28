@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { sessionAuth, mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import {
+  sessionAuth,
+  mockOidcConfig
+} from '#/server/common/test-helpers/mock-auth.js'
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 import { buildRows } from './controller.js'
 
@@ -17,7 +20,7 @@ const addressId = '665f1c2ab3e4d51a2c9d0e77'
 const mockAddress = {
   id: addressId,
   name: 'Highland Livestock Ltd',
-  addressLine1: '14 Drover\'s Way',
+  addressLine1: "14 Drover's Way",
   addressLine2: 'Unit 2',
   townOrCity: 'Inverness',
   county: 'Highland',
@@ -41,7 +44,7 @@ describe('#buildRows', () => {
     ])
     expect(rows[0].value.text).toBe('Highland Livestock Ltd')
     expect(rows[1].value.text).toBe(
-      '14 Drover\'s Way, Unit 2, Inverness, Highland, IV2 3JH'
+      "14 Drover's Way, Unit 2, Inverness, Highland, IV2 3JH"
     )
     expect(rows[2].value.text).toBe('GB')
     expect(rows[3].value.text).toBe('+44 1463 234567')
@@ -76,7 +79,9 @@ describe('#addressBookViewController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('Highland Livestock Ltd')
-    expect(result).toContain('14 Drover&#39;s Way, Unit 2, Inverness, Highland, IV2 3JH')
+    expect(result).toContain(
+      '14 Drover&#39;s Way, Unit 2, Inverness, Highland, IV2 3JH'
+    )
     expect(result).toContain('exports@example.com')
     expect(result).toContain(`/address-book/${addressId}/edit`)
     expect(result).toContain(`/address-book/${addressId}/delete`)
