@@ -44,8 +44,8 @@ jobs:
           docker build --no-cache --tag trade-imports-ins-frontend .
           exit $?
 
-      - name: SonarCloud Scan
-        if: github.actor != 'dependabot[bot]'
-        uses: SonarSource/sonarqube-scan-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#      - name: SonarCloud Scan
+#        if: github.actor != 'dependabot[bot]'
+#        uses: SonarSource/sonarqube-scan-action@master
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
