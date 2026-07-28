@@ -107,6 +107,7 @@ DEFRA_ID_CLIENT_ID=8c5e0bd-8223-4908-a5aa-c9c1d7cddaac
 DEFRA_ID_CLIENT_SECRET=test_value
 DEFRA_ID_SERVICE_ID=aeaa0a80-15f3-48b2-8bd7-0e02874b3d32
 DEFRA_ID_POLICY=b2c_1a_cui_cpdev_signupsigninsfi
+```
 
 ### Git hooks
 
