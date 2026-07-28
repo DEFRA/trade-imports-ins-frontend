@@ -33,7 +33,9 @@ export function buildTableRows(addresses) {
 }
 
 function buildCountryNameMap(countries) {
-  return Object.fromEntries(countries.map((country) => [country.code, country.name]))
+  return Object.fromEntries(
+    countries.map((country) => [country.code, country.name])
+  )
 }
 
 export const listController = {
