@@ -2,7 +2,10 @@ import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { sessionAuth, mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import {
+  sessionAuth,
+  mockOidcConfig
+} from '#/server/common/test-helpers/mock-auth.js'
 import { config } from '#/config/config.js'
 import { countriesClient } from '#/server/common/clients/countries-client.js'
 

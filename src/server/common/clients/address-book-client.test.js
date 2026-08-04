@@ -186,7 +186,11 @@ describe('#addressBookClient', () => {
           deleted: false
         })
 
-      await addressBookClient.getAddress(orgWithSpecialChars, traceId, addressId)
+      await addressBookClient.getAddress(
+        orgWithSpecialChars,
+        traceId,
+        addressId
+      )
 
       expect(scope.isDone()).toBe(true)
     })

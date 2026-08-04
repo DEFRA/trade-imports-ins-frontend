@@ -12,7 +12,10 @@ vi.mock('#/auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-vi.mock('#/server/common/clients/address-book-client.js', () => import('#/server/common/clients/__mocks__/address-book-client.js'))
+vi.mock(
+  '#/server/common/clients/address-book-client.js',
+  () => import('#/server/common/clients/__mocks__/address-book-client.js')
+)
 
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
 
