@@ -5,6 +5,14 @@ import { config } from '#/config/config.js'
 const addressBookBaseUrl = config.get('tradeImportsAddressBookApi.baseUrl')
 const tracingHeader = config.get('tracing.header')
 
+function organisationAddressesUrl(orgId, addressId) {
+  const encodedOrgId = encodeURIComponent(orgId)
+  const base = `${addressBookBaseUrl}/organisation/${encodedOrgId}/addresses`
+  return addressId
+    ? `${base}/${encodeURIComponent(addressId)}`
+    : base
+}
+
 function buildHeaders(orgId, traceId) {
   return {
     'Content-Type': 'application/json',
@@ -55,7 +63,7 @@ export function mapApiErrorsToFormErrors(problemBody) {
 
 export const addressBookClient = {
   async listAddresses(orgId, traceId, { page = 1, q, countryCode } = {}) {
-    const url = new URL(`${addressBookBaseUrl}/organisation/${orgId}/addresses`)
+    const url = new URL(organisationAddressesUrl(orgId))
     url.searchParams.set('page', String(page))
     if (q) {
       url.searchParams.set('q', q)
@@ -74,7 +82,7 @@ export const addressBookClient = {
   },
 
   async createAddress(orgId, traceId, body) {
-    const url = `${addressBookBaseUrl}/organisation/${orgId}/addresses`
+    const url = organisationAddressesUrl(orgId)
 
     const response = await fetch(url, {
       method: 'POST',
@@ -95,7 +103,7 @@ export const addressBookClient = {
   },
 
   async getAddress(orgId, traceId, id) {
-    const url = `${addressBookBaseUrl}/organisation/${orgId}/addresses/${id}`
+    const url = organisationAddressesUrl(orgId, id)
 
     const response = await fetch(url, {
       method: 'GET',
@@ -107,7 +115,7 @@ export const addressBookClient = {
   },
 
   async updateAddress(orgId, traceId, id, body) {
-    const url = `${addressBookBaseUrl}/organisation/${orgId}/addresses/${id}`
+    const url = organisationAddressesUrl(orgId, id)
 
     const response = await fetch(url, {
       method: 'PUT',
@@ -128,7 +136,7 @@ export const addressBookClient = {
   },
 
   async deleteAddress(orgId, traceId, id) {
-    const url = `${addressBookBaseUrl}/organisation/${orgId}/addresses/${id}`
+    const url = organisationAddressesUrl(orgId, id)
 
     const response = await fetch(url, {
       method: 'DELETE',

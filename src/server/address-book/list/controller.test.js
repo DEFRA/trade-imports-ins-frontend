@@ -206,4 +206,17 @@ describe('#addressBookListController', () => {
       expect.objectContaining({ q: 'green', countryCode: 'GB', page: 2 })
     )
   })
+
+  test('returns 500 when listAddresses fails', async () => {
+    addressBookClient.listAddresses.mockRejectedValue(new Error('API down'))
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book',
+      auth: sessionAuth('list-500')
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toContain('Something went wrong loading your address book')
+  })
 })

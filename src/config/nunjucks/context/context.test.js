@@ -80,6 +80,27 @@ describe('context and cache', () => {
         })
       })
 
+      test('Should expose authenticated user details in userSession', () => {
+        const authenticatedRequest = {
+          path: '/address-book',
+          auth: {
+            isAuthenticated: true,
+            credentials: {
+              name: 'Andrew Farmer',
+              email: 'a.farmer@farms.com'
+            }
+          }
+        }
+
+        const authenticatedContext = contextImport.context(authenticatedRequest)
+
+        expect(authenticatedContext.userSession).toEqual({
+          isAuthenticated: true,
+          displayName: 'Andrew Farmer',
+          email: 'a.farmer@farms.com'
+        })
+      })
+
       describe('With valid asset path', () => {
         test('Should provide expected asset path', () => {
           expect(contextResult.getAssetPath('application.js')).toBe(

@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 
 import { createServer } from '#/server/server.js'
-import { mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import { mockOidcConfig, sessionAuth } from '#/server/common/test-helpers/mock-auth.js'
 
 vi.mock('#/auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
@@ -22,7 +22,8 @@ describe('#contentSecurityPolicy', () => {
   test('Should set the CSP policy header', async () => {
     const resp = await server.inject({
       method: 'GET',
-      url: '/'
+      url: '/',
+      auth: sessionAuth('csp-test')
     })
 
     expect(resp.headers['content-security-policy']).toBeDefined()

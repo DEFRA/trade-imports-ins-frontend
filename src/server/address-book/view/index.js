@@ -1,4 +1,5 @@
 import { viewController } from './controller.js'
+import { addressIdRouteOptions } from '../address-id-params.js'
 
 export const addressBookView = {
   plugin: {
@@ -8,6 +9,7 @@ export const addressBookView = {
         {
           method: 'GET',
           path: '/address-book/{id}',
+          options: addressIdRouteOptions,
           handler: viewController.handler
         }
       ])
