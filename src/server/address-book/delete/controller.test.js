@@ -61,6 +61,36 @@ describe('#addressBookDeleteController', () => {
     expect(result).not.toContain('Delete operator')
   })
 
+  test('GET returns 404 when address is not found', async () => {
+    addressBookClient.getAddress.mockRejectedValue(
+      Object.assign(new Error('Not found'), { status: 404 })
+    )
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}/delete`,
+      auth: sessionAuth('delete-get-404')
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  test('POST returns 404 when deleteAddress rejects with 404', async () => {
+    addressBookClient.getAddress.mockResolvedValue(mockAddress)
+    addressBookClient.deleteAddress.mockRejectedValue(
+      Object.assign(new Error('Not found'), { status: 404 })
+    )
+
+    const { statusCode } = await server.inject({
+      method: 'POST',
+      url: `/address-book/${addressId}/delete`,
+      auth: sessionAuth('delete-post-404'),
+      payload: {}
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
   test('Cancel returns to address details without deleting', async () => {
     const { statusCode, headers } = await server.inject({
       method: 'POST',

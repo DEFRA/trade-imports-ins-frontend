@@ -72,27 +72,25 @@ describe('refreshTokens', () => {
 
     expect(result).toEqual(payload)
 
-    const expectedQuery = [
-      `client_id=${clientId}`,
-      `client_secret=${clientSecret}`,
-      'grant_type=refresh_token',
-      `scope=openid offline_access ${clientId}`,
-      `refresh_token=${refreshToken}`,
-      `redirect_uri=${redirectUrl}`
-    ].join('&')
+    const expectedBody = new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: 'refresh_token',
+      scope: `openid offline_access ${clientId}`,
+      refresh_token: refreshToken,
+      redirect_uri: redirectUrl
+    }).toString()
 
     expect(getOidcConfigMock).toHaveBeenCalledTimes(1)
     expect(wreckPostMock).toHaveBeenCalledTimes(1)
-    expect(wreckPostMock).toHaveBeenCalledWith(
-      `${tokenEndpoint}?${expectedQuery}`,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          [tracingHeader]: traceId
-        },
-        json: true
-      }
-    )
+    expect(wreckPostMock).toHaveBeenCalledWith(tokenEndpoint, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        [tracingHeader]: traceId
+      },
+      payload: expectedBody,
+      json: true
+    })
   })
 
   test('propagates errors from Wreck.post', async () => {

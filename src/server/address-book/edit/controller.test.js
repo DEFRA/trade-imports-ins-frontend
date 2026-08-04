@@ -83,6 +83,50 @@ describe('#addressBookEditController', () => {
     expect(result).not.toContain('operator')
   })
 
+  test('GET returns 404 when address is not found', async () => {
+    addressBookClient.getAddress.mockRejectedValue(
+      Object.assign(new Error('Not found'), { status: 404 })
+    )
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}/edit`,
+      auth: sessionAuth('edit-get-404')
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  test('GET returns 404 for soft-deleted tombstones', async () => {
+    addressBookClient.getAddress.mockResolvedValue({
+      ...mockAddress,
+      deleted: true
+    })
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}/edit`,
+      auth: sessionAuth('edit-get-tombstone')
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  test('POST returns 404 when updateAddress rejects with 404', async () => {
+    addressBookClient.updateAddress.mockRejectedValue(
+      Object.assign(new Error('Not found'), { status: 404 })
+    )
+
+    const { statusCode } = await server.inject({
+      method: 'POST',
+      url: `/address-book/${addressId}/edit`,
+      auth: sessionAuth('edit-post-404'),
+      payload: validPayload
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
   test('POST updates address and redirects with success banner', async () => {
     addressBookClient.updateAddress.mockResolvedValue({
       ...mockAddress,

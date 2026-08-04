@@ -21,4 +21,8 @@ describe('getSafeRedirect', () => {
     expect(getSafeRedirect('/auth/sign-in')).toBe('/auth/sign-in')
     expect(getSafeRedirect('/some/deep/path?x=1')).toBe('/some/deep/path?x=1')
   })
+
+  test('returns "/" for protocol-relative redirects', () => {
+    expect(getSafeRedirect('//evil.com')).toBe('/')
+  })
 })

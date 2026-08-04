@@ -23,12 +23,16 @@ function errorMessageFromBody(body, response) {
   )
 }
 
+async function parseProblemBody(response) {
+  return response.json().catch(() => ({}))
+}
+
 async function throwOnError(response) {
   if (response.ok) {
     return response
   }
 
-  const body = await response.json().catch(() => ({}))
+  const body = await parseProblemBody(response)
   const error = new Error(errorMessageFromBody(body, response))
   error.status = response.status
   error.body = body
@@ -79,7 +83,7 @@ export const addressBookClient = {
     })
 
     if (response.status === 400) {
-      const problem = await response.json()
+      const problem = await parseProblemBody(response)
       const error = new Error(problem.detail || 'Validation failed')
       error.status = 400
       error.body = problem
@@ -112,7 +116,7 @@ export const addressBookClient = {
     })
 
     if (response.status === 400) {
-      const problem = await response.json()
+      const problem = await parseProblemBody(response)
       const error = new Error(problem.detail || 'Validation failed')
       error.status = 400
       error.body = problem

@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest'
 import {
   buildAddressBookQueryString,
   buildAddressLine,
+  buildFullAddress,
   buildPaginationLinks,
   buildResultsLabel,
   mapAddressRows
@@ -17,6 +18,18 @@ describe('#address-book-helper', () => {
         postcode: 'IV2 3JH'
       })
     ).toBe("14 Drover's Way, Inverness, IV2 3JH")
+  })
+
+  test('buildFullAddress includes optional addressLine2 and county', () => {
+    expect(
+      buildFullAddress({
+        addressLine1: "14 Drover's Way",
+        addressLine2: 'Unit 2',
+        townOrCity: 'Inverness',
+        county: 'Highland',
+        postcode: 'IV2 3JH'
+      })
+    ).toBe("14 Drover's Way, Unit 2, Inverness, Highland, IV2 3JH")
   })
 
   test('buildResultsLabel formats the current page range', () => {

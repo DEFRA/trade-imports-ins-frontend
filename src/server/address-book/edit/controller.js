@@ -93,6 +93,11 @@ export const editController = {
 
       try {
         const address = await addressBookClient.getAddress(orgId, traceId, id)
+
+        if (address.deleted) {
+          throw Boom.notFound()
+        }
+
         const countries = await getAddressFormCountries(traceId)
 
         return h.view(
@@ -104,6 +109,10 @@ export const editController = {
           })
         )
       } catch (err) {
+        if (err.isBoom) {
+          throw err
+        }
+
         if (err.status === statusCodes.notFound) {
           throw Boom.notFound()
         }
@@ -165,6 +174,10 @@ export const editController = {
 
         return h.redirect('/address-book')
       } catch (err) {
+        if (err.isBoom) {
+          throw err
+        }
+
         if (err.status === statusCodes.notFound) {
           throw Boom.notFound()
         }

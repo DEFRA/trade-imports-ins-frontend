@@ -1,5 +1,9 @@
 function getSafeRedirect(redirect) {
-  if (!redirect?.startsWith('/')) {
+  if (
+    !redirect?.startsWith('/') ||
+    redirect.startsWith('//') ||
+    redirect.includes('://')
+  ) {
     return '/'
   }
   return redirect

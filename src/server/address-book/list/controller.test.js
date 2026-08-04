@@ -67,6 +67,9 @@ describe('#addressBookListController', () => {
     expect(result).toContain('Address book')
     expect(result).toContain('Showing 1-1 of 1')
     expect(result).toContain('Highland Livestock Ltd')
+    expect(result).toContain(
+      'href="/address-book/1"'
+    )
     expect(result).toContain('14 Drover&#39;s Way, Inverness, IV2 3JH')
     expect(result).toContain('United Kingdom')
     expect(result).not.toContain('>GB<')

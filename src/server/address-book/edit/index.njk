@@ -71,7 +71,7 @@
       }) }}
 
       {{ govukInput({
-        label: { text: "Postcode" },
+        label: { text: "Postcode or Zip code" },
         id: "postcode",
         name: "postcode",
         value: formValues.postcode,
@@ -89,11 +89,14 @@
       }) }}
 
       {{ govukInput({
-        label: { text: "Telephone number" },
+        label: { text: "Phone number" },
         id: "phone",
         name: "phone",
         value: formValues.phone,
         classes: "govuk-!-width-two-thirds",
+        hint: {
+          text: "For international numbers include the country code"
+        },
         errorMessage: fieldErrors.phone if fieldErrors
       }) }}
 

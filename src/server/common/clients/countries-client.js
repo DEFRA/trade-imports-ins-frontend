@@ -30,7 +30,7 @@ export const countriesClient = {
       error.status = response.status
       error.statusText = response.statusText
 
-      logger.error(`Failed to get countries: ${error.message}`)
+      logger.error({ err: error, status: error.status }, 'Failed to get countries')
 
       throw error
     }

@@ -98,7 +98,50 @@ describe('#addressBookAddController', () => {
 
     expect(statusCode).toBe(statusCodes.redirect)
     expect(headers.location).toBe('/address-book')
-    expect(addressBookClient.createAddress).toHaveBeenCalledTimes(1)
+    expect(addressBookClient.createAddress).toHaveBeenCalledWith(
+      '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88',
+      expect.any(String),
+      expect.objectContaining({
+        name: 'Highland Livestock Ltd',
+        addressLine1: "14 Drover's Way",
+        townOrCity: 'Inverness',
+        postcode: 'IV2 3JH',
+        countryCode: 'GB',
+        phone: '+44 1463 234567',
+        email: 'exports@example.com'
+      })
+    )
+  })
+
+  test('POST re-renders form when API returns 400 validation errors', async () => {
+    addressBookClient.createAddress.mockRejectedValue(
+      Object.assign(new Error('Validation failed'), {
+        status: 400,
+        body: {
+          errors: {
+            email: ['Enter an email address in the correct format']
+          }
+        }
+      })
+    )
+
+    const { result, statusCode } = await server.inject({
+      method: 'POST',
+      url: '/address-book/add',
+      auth: sessionAuth('add-post-api-400'),
+      payload: {
+        name: 'Highland Livestock Ltd',
+        addressLine1: "14 Drover's Way",
+        townOrCity: 'Inverness',
+        postcode: 'IV2 3JH',
+        countryCode: 'GB',
+        phone: '+44 1463 234567',
+        email: 'bad'
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(result).toContain('Enter an email address in the correct format')
   })
 
   test('POST with invalid data re-renders form with errors', async () => {

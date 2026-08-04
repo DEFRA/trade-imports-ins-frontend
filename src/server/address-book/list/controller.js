@@ -24,9 +24,18 @@ function parsePage(queryPage) {
   return Number.isNaN(page) || page < 1 ? 1 : page
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('"', '&quot;')
+}
+
 export function buildTableRows(addresses) {
   return addresses.map((address) => [
-    { text: address.name },
+    {
+      html: `<a class="govuk-link" href="/address-book/${address.id}">${escapeHtml(address.name)}</a>`
+    },
     { text: address.addressLine },
     { text: address.countryName }
   ])

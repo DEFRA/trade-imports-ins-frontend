@@ -5,15 +5,19 @@ import { addressBookClient } from '#/server/common/clients/address-book-client.j
 import { buildFullAddress } from '#/server/common/helpers/address-book-helper.js'
 import { createLogger } from '#/server/common/helpers/logging/logger.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
+import { getAddressFormCountries } from '../address-countries.js'
 
 const logger = createLogger()
 const VIEW = 'address-book/view/index'
 
-export function buildRows(address) {
+export function buildRows(address, countryName) {
   return [
     { key: { text: 'Name' }, value: { text: address.name } },
     { key: { text: 'Address' }, value: { text: buildFullAddress(address) } },
-    { key: { text: 'Country' }, value: { text: address.countryCode } },
+    {
+      key: { text: 'Country' },
+      value: { text: countryName ?? address.countryCode }
+    },
     { key: { text: 'Telephone' }, value: { text: address.phone } },
     { key: { text: 'Email' }, value: { text: address.email } }
   ]
@@ -27,12 +31,18 @@ export const viewController = {
 
     try {
       const address = await addressBookClient.getAddress(orgId, traceId, id)
+      const countries = await getAddressFormCountries(traceId).catch(() => [])
+      const countryNames = Object.fromEntries(
+        countries.map((country) => [country.code, country.name])
+      )
+      const countryName =
+        countryNames[address.countryCode] ?? address.countryCode
 
       return h.view(VIEW, {
         pageTitle: address.name,
         heading: address.name,
         id,
-        summaryRows: buildRows(address)
+        summaryRows: buildRows(address, countryName)
       })
     } catch (err) {
       if (err.status === statusCodes.notFound) {

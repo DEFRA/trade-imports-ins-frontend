@@ -107,6 +107,39 @@ describe('#addressBookClient', () => {
       expect(result.id).toBe('665f1c2ab3e4d51a2c9d0e77')
       expect(scope.isDone()).toBe(true)
     })
+
+    test('throws 400 validation problem with status and body.errors', async () => {
+      const body = {
+        name: 'Highland Livestock Ltd',
+        addressLine1: "14 Drover's Way",
+        townOrCity: 'Inverness',
+        postcode: 'IV2 3JH',
+        countryCode: 'GB',
+        phone: '+44 1463 234567',
+        email: 'bad'
+      }
+
+      nock('http://localhost:8089')
+        .post(`/organisation/${orgId}/addresses`, body)
+        .matchHeader(ORGANISATION_ID_HEADER, orgId)
+        .reply(400, {
+          type: 'https://api.cdp.defra.cloud/problems/validation-error',
+          errors: {
+            email: ['Enter an email address in the correct format']
+          }
+        })
+
+      await expect(
+        addressBookClient.createAddress(orgId, traceId, body)
+      ).rejects.toMatchObject({
+        status: 400,
+        body: {
+          errors: {
+            email: ['Enter an email address in the correct format']
+          }
+        }
+      })
+    })
   })
 
   describe('getAddress', () => {
@@ -169,6 +202,42 @@ describe('#addressBookClient', () => {
 
       expect(result.id).toBe(addressId)
       expect(scope.isDone()).toBe(true)
+    })
+
+    test('throws 400 validation problem with status and body.errors', async () => {
+      const addressId = '665f1c2ab3e4d51a2c9d0e77'
+      const body = {
+        name: 'Highland Livestock Ltd',
+        addressLine1: "14 Drover's Way",
+        addressLine2: '',
+        townOrCity: 'Inverness',
+        county: '',
+        postcode: 'IV2 3JH',
+        countryCode: 'GB',
+        phone: '+44 1463 234567',
+        email: 'bad'
+      }
+
+      nock('http://localhost:8089')
+        .put(`/organisation/${orgId}/addresses/${addressId}`, body)
+        .matchHeader(ORGANISATION_ID_HEADER, orgId)
+        .reply(400, {
+          type: 'https://api.cdp.defra.cloud/problems/validation-error',
+          errors: {
+            email: ['Enter an email address in the correct format']
+          }
+        })
+
+      await expect(
+        addressBookClient.updateAddress(orgId, traceId, addressId, body)
+      ).rejects.toMatchObject({
+        status: 400,
+        body: {
+          errors: {
+            email: ['Enter an email address in the correct format']
+          }
+        }
+      })
     })
   })
 

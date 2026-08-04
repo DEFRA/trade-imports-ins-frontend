@@ -204,7 +204,7 @@ describe('auth plugin', () => {
         }
       })
 
-      expect(redirect).toBe('/auth/sign-in?redirect=/origin?a=1')
+      expect(redirect).toBe('/auth/sign-in?redirect=%2Forigin%3Fa%3D1')
     })
 
     test('validate returns isValid:false when session does not exist in cache', async () => {
@@ -345,6 +345,51 @@ describe('auth plugin', () => {
       expect(res).toEqual({ isValid: false })
       expect(refreshTokensMock).not.toHaveBeenCalled()
       expect(request.server.app.cache.set).not.toHaveBeenCalled()
+    })
+
+    test('validate returns isValid:false when refreshTokens rejects', async () => {
+      const options = getCookieOptions()
+      const userSession = {
+        token: 'old-token',
+        refreshToken: 'old-refresh'
+      }
+
+      const request = {
+        server: {
+          app: {
+            cache: {
+              get: vi.fn().mockResolvedValue(userSession),
+              set: vi.fn()
+            }
+          }
+        }
+      }
+
+      jwtDecodeMock.mockReturnValue({ exp: 1 })
+      jwtVerifyTimeMock.mockImplementation(() => {
+        throw new Error('token expired')
+      })
+      refreshTokensMock.mockRejectedValue(new Error('refresh failed'))
+
+      const res = await options.validate(request, { sessionId: 'session-1' })
+
+      expect(res).toEqual({ isValid: false })
+      expect(request.server.app.cache.set).not.toHaveBeenCalled()
+    })
+
+    test('redirectTo encodes the return URL query string', () => {
+      const options = getCookieOptions()
+
+      const redirect = options.redirectTo({
+        url: {
+          pathname: '/address-book',
+          search: '?q=France&page=2'
+        }
+      })
+
+      expect(redirect).toBe(
+        '/auth/sign-in?redirect=%2Faddress-book%3Fq%3DFrance%26page%3D2'
+      )
     })
   })
 })
