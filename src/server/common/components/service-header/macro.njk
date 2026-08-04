@@ -3,7 +3,7 @@
 
   Usage:
   {% from "service-header/macro.njk" import appServiceHeader %}
-  {{ appServiceHeader({ userSession: userSession }) }}
+  {{ appServiceHeader({ userSession: userSession, authEnabled: authEnabled }) }}
 #}
 {% macro appServiceHeader(params) %}
   {% set userSession = params.userSession %}

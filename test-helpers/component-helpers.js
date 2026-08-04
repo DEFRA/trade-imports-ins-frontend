@@ -28,7 +28,12 @@ Object.entries(filters).forEach(([name, filter]) => {
   nunjucksTestEnv.addFilter(name, filter)
 })
 
-export function renderComponent(componentName, params, callBlock) {
+export function renderComponent(
+  componentName,
+  params,
+  callBlock,
+  context = {}
+) {
   const macroPath = `${componentName}/macro.njk`
   const macroName = `app${
     componentName.charAt(0).toUpperCase() + camelCase(componentName.slice(1))
@@ -42,5 +47,5 @@ export function renderComponent(componentName, params, callBlock) {
     macroString += `{{- ${macroName}(${macroParams}) -}}`
   }
 
-  return load(nunjucksTestEnv.renderString(macroString, {}))
+  return load(nunjucksTestEnv.renderString(macroString, context))
 }

@@ -97,4 +97,29 @@ describe('getPermissions', () => {
       getPermissions('CRN123', 'org-1', 'token-abc')
     ).rejects.toThrow('Permissions API URLs are not configured')
   })
+
+  test('throws when RPS API does not return a person id', async () => {
+    wreckGetMock.mockResolvedValueOnce({ payload: { _data: {} } })
+
+    await expect(
+      getPermissions('CRN123', 'org-1', 'token-abc')
+    ).rejects.toThrow('RPS API did not return a person id')
+  })
+
+  test('throws when Siti Agri API does not return a role for this user', async () => {
+    wreckGetMock
+      .mockResolvedValueOnce({ payload: { _data: { id: 'person-42' } } })
+      .mockResolvedValueOnce({
+        payload: {
+          data: {
+            personRoles: [],
+            personPrivileges: []
+          }
+        }
+      })
+
+    await expect(
+      getPermissions('CRN123', 'org-1', 'token-abc')
+    ).rejects.toThrow('Siti Agri API did not return a role for this user')
+  })
 })

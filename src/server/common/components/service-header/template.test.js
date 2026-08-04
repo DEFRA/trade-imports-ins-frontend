@@ -31,6 +31,16 @@ describe('Service Header Component', () => {
     )
   })
 
+  test('hides Sign in link when authEnabled is omitted from macro params', () => {
+    const $header = renderComponent('service-header', {
+      userSession: {
+        isAuthenticated: false
+      }
+    })
+
+    expect($header('.app-service-header__link')).toHaveLength(0)
+  })
+
   test('hides Sign in link when auth is disabled', () => {
     const $header = renderComponent('service-header', {
       userSession: {

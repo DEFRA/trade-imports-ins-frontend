@@ -44,7 +44,7 @@
 {% endblock %}
 
 {% block beforeContent %}
-  {{ appServiceHeader({ userSession: userSession }) }}
+  {{ appServiceHeader({ userSession: userSession, authEnabled: authEnabled }) }}
 
   {% if breadcrumbs.length > 1 %}
     {{ govukBreadcrumbs({
