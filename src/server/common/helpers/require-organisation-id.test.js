@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-import Boom from '@hapi/boom'
 
 import { requireOrganisationId } from './require-organisation-id.js'
 

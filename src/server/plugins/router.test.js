@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 
 import { createServer } from '#/server/server.js'
 import { config } from '#/config/config.js'
