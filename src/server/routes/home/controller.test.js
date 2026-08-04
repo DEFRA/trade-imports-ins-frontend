@@ -31,6 +31,8 @@ describe('#homeController', () => {
     })
 
     expect(result).toEqual(expect.stringContaining('Dashboard |'))
+    expect(result).toContain('Sign out')
+    expect(result).toContain('/signout')
     expect(statusCode).toBe(statusCodes.ok)
   })
 })
