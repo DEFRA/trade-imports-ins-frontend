@@ -17,6 +17,7 @@ import { sessionCache } from './plugins/session-cache.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './plugins/content-security-policy.js'
+import { csrf } from './plugins/csrf.js'
 import { metrics } from '@defra/cdp-metrics'
 
 export async function createServer() {
@@ -67,6 +68,7 @@ export async function createServer() {
     nunjucksConfig,
     Scooter,
     contentSecurityPolicy,
+    csrf,
     Cookie,
     Bell,
     ...(authEnabled ? [authPlugin, authRoutes] : []),

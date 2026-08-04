@@ -24,6 +24,7 @@
     {% endif %}
 
     <form method="post" novalidate>
+      <input type="hidden" name="crumb" value="{{ crumb }}" />
 
       {{ govukInput({
         label: { text: "Name or organisation name" },

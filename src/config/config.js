@@ -12,6 +12,9 @@ const oneWeekMs = 604800000
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
+const isLocal = isDevelopment || isTest
+const isPlatform = !isLocal
+const csrfEnabled = !isTest
 
 const authCookieSameSite = 'Lax'
 
@@ -293,6 +296,20 @@ export const config = convict({
       doc: 'Use a cache and recompile templates each time',
       format: Boolean,
       default: isDevelopment
+    }
+  },
+  csrf: {
+    enabled: {
+      doc: 'Enable CSRF protection (disabled during test runs)',
+      format: Boolean,
+      default: csrfEnabled
+    },
+    cookie: {
+      secure: {
+        doc: 'Set secure flag on CSRF cookie',
+        format: Boolean,
+        default: isPlatform
+      }
     }
   },
   tracing: {

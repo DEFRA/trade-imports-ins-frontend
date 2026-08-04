@@ -50,6 +50,10 @@ export const viewController = {
         summaryRows: buildRows(address, countryName)
       })
     } catch (err) {
+      if (err.isBoom) {
+        throw err
+      }
+
       if (err.status === statusCodes.notFound) {
         throw Boom.notFound()
       }

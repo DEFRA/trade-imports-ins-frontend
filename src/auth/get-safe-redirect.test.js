@@ -29,4 +29,8 @@ describe('getSafeRedirect', () => {
   test('returns "/" for backslash open-redirect bypass', () => {
     expect(getSafeRedirect(String.raw`/\evil.com`)).toBe('/')
   })
+
+  test('returns "/" for CRLF in redirect path', () => {
+    expect(getSafeRedirect('/address-book\r\n/evil')).toBe('/')
+  })
 })

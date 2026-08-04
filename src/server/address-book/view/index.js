@@ -9,8 +9,8 @@ export const addressBookView = {
         {
           method: 'GET',
           path: '/address-book/{id}',
-          options: addressIdRouteOptions,
-          handler: viewController.handler
+          handler: viewController.handler,
+          options: addressIdRouteOptions
         }
       ])
     }

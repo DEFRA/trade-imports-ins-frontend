@@ -16,6 +16,7 @@ export { FIELD_RULES }
 
 export function buildAddressSchema(mdmCountryCodes) {
   return Joi.object({
+    crumb: Joi.string().optional().allow('', null),
     name: Joi.string().trim().required().max(255).messages({
       'string.empty': 'Enter a name',
       'any.required': 'Enter a name',

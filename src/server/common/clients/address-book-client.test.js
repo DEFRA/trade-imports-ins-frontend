@@ -171,6 +171,25 @@ describe('#addressBookClient', () => {
       expect(result.deleted).toBe(false)
       expect(scope.isDone()).toBe(true)
     })
+
+    test('encodes orgId and addressId in URL path segments', async () => {
+      const orgWithSpecialChars = 'org/id'
+      const addressId = '665f1c2ab3e4d51a2c9d0e77'
+      const scope = nock('http://localhost:8089')
+        .get(
+          `/organisation/${encodeURIComponent(orgWithSpecialChars)}/addresses/${encodeURIComponent(addressId)}`
+        )
+        .matchHeader(ORGANISATION_ID_HEADER, orgWithSpecialChars)
+        .reply(200, {
+          id: addressId,
+          name: 'Farm',
+          deleted: false
+        })
+
+      await addressBookClient.getAddress(orgWithSpecialChars, traceId, addressId)
+
+      expect(scope.isDone()).toBe(true)
+    })
   })
 
   describe('updateAddress', () => {

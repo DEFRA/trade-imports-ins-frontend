@@ -32,6 +32,10 @@ export const deleteController = {
           addressName: address.name
         })
       } catch (err) {
+        if (err.isBoom) {
+          throw err
+        }
+
         if (err.status === statusCodes.notFound) {
           throw Boom.notFound()
         }
@@ -71,6 +75,10 @@ export const deleteController = {
 
         return h.redirect('/address-book')
       } catch (err) {
+        if (err.isBoom) {
+          throw err
+        }
+
         if (err.status === statusCodes.notFound) {
           throw Boom.notFound()
         }

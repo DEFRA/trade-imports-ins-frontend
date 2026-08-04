@@ -6,7 +6,8 @@ function getSafeRedirect(redirect) {
   if (
     redirect.startsWith('//') ||
     redirect.includes('://') ||
-    redirect.includes('\\')
+    redirect.includes('\\') ||
+    /[\r\n]/.test(redirect)
   ) {
     return '/'
   }

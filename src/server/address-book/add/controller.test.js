@@ -8,12 +8,15 @@ import {
 } from '#/server/common/test-helpers/mock-auth.js'
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 import { countriesClient } from '#/server/common/clients/countries-client.js'
+import { config } from '#/config/config.js'
 
 vi.mock('#/auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-vi.mock('#/server/common/clients/address-book-client.js')
+vi.mock('#/server/common/clients/address-book-client.js', () =>
+  import('#/server/common/clients/__mocks__/address-book-client.js')
+)
 vi.mock('#/server/common/clients/countries-client.js')
 
 const mockCountries = [
@@ -21,7 +24,7 @@ const mockCountries = [
   { code: 'FR', name: 'France' }
 ]
 
-describe('#addressBookAddController', () => {
+describe.sequential('#addressBookAddController', () => {
   let server
 
   beforeAll(async () => {
@@ -34,8 +37,8 @@ describe('#addressBookAddController', () => {
   })
 
   beforeEach(() => {
+    config.set('csrf.enabled', false)
     vi.mocked(countriesClient.getCountries).mockResolvedValue(mockCountries)
-    vi.mocked(addressBookClient.createAddress).mockReset()
   })
 
   test('GET renders the add address details form', async () => {
@@ -75,7 +78,40 @@ describe('#addressBookAddController', () => {
     expect(result).toContain('France')
   })
 
+  test('POST re-renders form when API returns 400 validation errors', async () => {
+    vi.mocked(addressBookClient.createAddress).mockReset()
+    vi.mocked(addressBookClient.createAddress).mockRejectedValue({
+      status: 400,
+      body: {
+        errors: {
+          email: ['Enter an email address in the correct format']
+        }
+      },
+      message: 'Validation failed'
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'POST',
+      url: '/address-book/add',
+      auth: sessionAuth('add-post-api-400'),
+      payload: {
+        name: 'Highland Livestock Ltd',
+        addressLine1: "14 Drover's Way",
+        townOrCity: 'Inverness',
+        postcode: 'IV2 3JH',
+        countryCode: 'GB',
+        phone: '+44 1463 234567',
+        email: 'exports@example.com'
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(result).toContain('Enter an email address in the correct format')
+    expect(addressBookClient.createAddress).toHaveBeenCalled()
+  })
+
   test('POST creates address and redirects with success banner', async () => {
+    vi.mocked(addressBookClient.createAddress).mockReset()
     addressBookClient.createAddress.mockResolvedValue({
       id: '665f1c2ab3e4d51a2c9d0e77',
       name: 'Highland Livestock Ltd'
@@ -111,37 +147,6 @@ describe('#addressBookAddController', () => {
         email: 'exports@example.com'
       })
     )
-  })
-
-  test('POST re-renders form when API returns 400 validation errors', async () => {
-    addressBookClient.createAddress.mockRejectedValue(
-      Object.assign(new Error('Validation failed'), {
-        status: 400,
-        body: {
-          errors: {
-            email: ['Enter an email address in the correct format']
-          }
-        }
-      })
-    )
-
-    const { result, statusCode } = await server.inject({
-      method: 'POST',
-      url: '/address-book/add',
-      auth: sessionAuth('add-post-api-400'),
-      payload: {
-        name: 'Highland Livestock Ltd',
-        addressLine1: "14 Drover's Way",
-        townOrCity: 'Inverness',
-        postcode: 'IV2 3JH',
-        countryCode: 'GB',
-        phone: '+44 1463 234567',
-        email: 'bad'
-      }
-    })
-
-    expect(statusCode).toBe(statusCodes.badRequest)
-    expect(result).toContain('Enter an email address in the correct format')
   })
 
   test('POST with invalid data re-renders form with errors', async () => {

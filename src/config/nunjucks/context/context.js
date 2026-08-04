@@ -50,6 +50,7 @@ export function context(request) {
 
       const viteAssetPath = viteManifest?.[asset]?.file
       return `${assetPath}/${viteAssetPath ?? asset}`
-    }
+    },
+    crumb: request.plugins?.crumb ?? request.state?.crumb ?? ''
   }
 }

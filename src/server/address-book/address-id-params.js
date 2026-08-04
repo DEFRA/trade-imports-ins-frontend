@@ -1,3 +1,4 @@
+import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/
@@ -11,6 +12,9 @@ export const addressIdParams = Joi.object({
 
 export const addressIdRouteOptions = {
   validate: {
-    params: addressIdParams
+    params: addressIdParams,
+    failAction: () => {
+      throw Boom.notFound()
+    }
   }
 }

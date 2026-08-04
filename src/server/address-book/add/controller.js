@@ -137,7 +137,8 @@ export const addController = {
 
         return h.redirect('/address-book')
       } catch (err) {
-        if (err.status === 400 && err.body?.errors) {
+        const status = err?.status ?? err?.output?.statusCode
+        if (Number(status) === 400 && err.body?.errors) {
           const countries = await getAddressFormCountries(traceId).catch(
             () => []
           )

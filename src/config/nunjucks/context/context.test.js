@@ -76,7 +76,8 @@ describe('context and cache', () => {
           authEnabled: true,
           userSession: {
             isAuthenticated: false
-          }
+          },
+          crumb: ''
         })
       })
 
@@ -190,7 +191,8 @@ describe('context and cache', () => {
           authEnabled: true,
           userSession: {
             isAuthenticated: false
-          }
+          },
+          crumb: ''
         })
       })
     })

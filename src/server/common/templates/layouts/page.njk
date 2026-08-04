@@ -18,6 +18,7 @@
 {% endblock %}
 
 {% block head %}
+  <meta name="csrf-token" content="{{ crumb }}">
   <link href="{{ getAssetPath('src/client/stylesheets/application.scss') }}" rel="stylesheet">
 {% endblock %}
 

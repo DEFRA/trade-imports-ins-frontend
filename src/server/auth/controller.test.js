@@ -2,7 +2,10 @@ import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import {
+  sessionAuth,
+  mockOidcConfig
+} from '#/server/common/test-helpers/mock-auth.js'
 
 vi.mock('#/auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
@@ -47,10 +50,21 @@ describe('#authController', () => {
     expect(headers.location).toBe('/')
   })
 
-  test('GET /auth/sign-out-oidc redirects when session is cleared', async () => {
+  test('GET /auth/sign-out-oidc redirects unauthenticated users to sign-out URL', async () => {
     const { statusCode, headers } = await server.inject({
       method: 'GET',
       url: '/auth/sign-out-oidc'
+    })
+
+    expect(statusCode).toBe(statusCodes.redirect)
+    expect(headers.location).toBe('/signed-out')
+  })
+
+  test('GET /auth/sign-out-oidc clears authenticated session and redirects', async () => {
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: '/auth/sign-out-oidc',
+      auth: sessionAuth('signout-oidc-authenticated')
     })
 
     expect(statusCode).toBe(statusCodes.redirect)

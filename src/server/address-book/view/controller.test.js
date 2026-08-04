@@ -14,7 +14,7 @@ vi.mock('#/auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-vi.mock('#/server/common/clients/address-book-client.js')
+vi.mock('#/server/common/clients/address-book-client.js', () => import('#/server/common/clients/__mocks__/address-book-client.js'))
 vi.mock('#/server/common/clients/countries-client.js')
 
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
@@ -111,6 +111,32 @@ describe('#addressBookViewController', () => {
       method: 'GET',
       url: `/address-book/${addressId}`,
       auth: sessionAuth('view-not-found')
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  test('GET returns 404 for malformed address id', async () => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book/not-a-valid-id',
+      auth: sessionAuth('view-bad-id')
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(addressBookClient.getAddress).not.toHaveBeenCalled()
+  })
+
+  test('GET returns 404 for soft-deleted tombstones', async () => {
+    addressBookClient.getAddress.mockResolvedValue({
+      ...mockAddress,
+      deleted: true
+    })
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}`,
+      auth: sessionAuth('view-get-tombstone')
     })
 
     expect(statusCode).toBe(statusCodes.notFound)

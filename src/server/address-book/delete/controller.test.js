@@ -12,7 +12,7 @@ vi.mock('#/auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-vi.mock('#/server/common/clients/address-book-client.js')
+vi.mock('#/server/common/clients/address-book-client.js', () => import('#/server/common/clients/__mocks__/address-book-client.js'))
 
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
 
@@ -75,6 +75,21 @@ describe('#addressBookDeleteController', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
+  test('GET returns 404 for soft-deleted tombstones', async () => {
+    addressBookClient.getAddress.mockResolvedValue({
+      ...mockAddress,
+      deleted: true
+    })
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}/delete`,
+      auth: sessionAuth('delete-get-tombstone')
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
   test('POST returns 404 when deleteAddress rejects with 404', async () => {
     addressBookClient.getAddress.mockResolvedValue(mockAddress)
     addressBookClient.deleteAddress.mockRejectedValue(
@@ -89,6 +104,23 @@ describe('#addressBookDeleteController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  test('POST returns 404 for soft-deleted tombstones', async () => {
+    addressBookClient.getAddress.mockResolvedValue({
+      ...mockAddress,
+      deleted: true
+    })
+
+    const { statusCode } = await server.inject({
+      method: 'POST',
+      url: `/address-book/${addressId}/delete`,
+      auth: sessionAuth('delete-post-tombstone'),
+      payload: {}
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(addressBookClient.deleteAddress).not.toHaveBeenCalled()
   })
 
   test('Cancel returns to address details without deleting', async () => {
