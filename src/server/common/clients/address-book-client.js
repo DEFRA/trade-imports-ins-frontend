@@ -8,9 +8,7 @@ const tracingHeader = config.get('tracing.header')
 function organisationAddressesUrl(orgId, addressId) {
   const encodedOrgId = encodeURIComponent(orgId)
   const base = `${addressBookBaseUrl}/organisation/${encodedOrgId}/addresses`
-  return addressId
-    ? `${base}/${encodeURIComponent(addressId)}`
-    : base
+  return addressId ? `${base}/${encodeURIComponent(addressId)}` : base
 }
 
 function buildHeaders(orgId, traceId) {
