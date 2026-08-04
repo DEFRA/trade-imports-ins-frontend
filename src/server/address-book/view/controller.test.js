@@ -37,23 +37,37 @@ const mockAddress = {
 }
 
 describe('#buildRows', () => {
-  test('renders Name, Address, Country, Telephone and Email without type rows', () => {
+  test('renders each Standard Address Block field on its own row, labelled as on the edit form', () => {
     const rows = buildRows(mockAddress, 'United Kingdom')
 
     expect(rows.map((row) => row.key.text)).toEqual([
-      'Name',
-      'Address',
+      'Name or organisation name',
+      'Address line 1',
+      'Address line 2 (optional)',
+      'Town or city',
+      'County',
+      'Postcode or Zip code',
       'Country',
-      'Telephone',
-      'Email'
+      'Email address',
+      'Phone number'
     ])
-    expect(rows[0].value.text).toBe('Highland Livestock Ltd')
-    expect(rows[1].value.text).toBe(
-      "14 Drover's Way, Unit 2, Inverness, Highland, IV2 3JH"
-    )
-    expect(rows[2].value.text).toBe('United Kingdom')
-    expect(rows[3].value.text).toBe('+44 1463 234567')
-    expect(rows[4].value.text).toBe('exports@example.com')
+    expect(rows.map((row) => row.value.text)).toEqual([
+      'Highland Livestock Ltd',
+      "14 Drover's Way",
+      'Unit 2',
+      'Inverness',
+      'Highland',
+      'IV2 3JH',
+      'United Kingdom',
+      'exports@example.com',
+      '+44 1463 234567'
+    ])
+  })
+
+  test('falls back to the country code when the name cannot be resolved', () => {
+    const rows = buildRows(mockAddress, undefined)
+
+    expect(rows.find((row) => row.key.text === 'Country').value.text).toBe('GB')
   })
 })
 
@@ -88,7 +102,11 @@ describe('#addressBookViewController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('Highland Livestock Ltd')
-    expect(result).toContain(
+    expect(result).toContain('14 Drover&#39;s Way')
+    expect(result).toContain('Inverness')
+    expect(result).toContain('IV2 3JH')
+    // Each field renders on its own row, not concatenated into a single address line.
+    expect(result).not.toContain(
       '14 Drover&#39;s Way, Unit 2, Inverness, Highland, IV2 3JH'
     )
     expect(result).toContain('United Kingdom')
