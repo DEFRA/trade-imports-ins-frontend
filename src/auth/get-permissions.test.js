@@ -1,25 +1,100 @@
-import { describe, test, expect } from 'vitest'
+import { describe, expect, test, vi, beforeEach } from 'vitest'
+
 import { getPermissions } from './get-permissions.js'
 
-describe('getPermissions', () => {
-  test('returns expected role and scope for mocked data', async () => {
-    const result = await getPermissions('CRN_123', 'ORG_456', 'access-token')
+const wreckGetMock = vi.hoisted(() => vi.fn())
+const configGetMock = vi.hoisted(() => vi.fn())
+const getTraceIdMock = vi.hoisted(() => vi.fn())
 
-    expect(result).toEqual({
-      role: 'Farmer',
-      scope: ['user', 'Full permission - business']
+vi.mock('@hapi/wreck', () => ({
+  default: { get: wreckGetMock }
+}))
+
+vi.mock('#/config/config.js', () => ({
+  config: { get: configGetMock }
+}))
+
+vi.mock('@defra/hapi-tracing', () => ({
+  getTraceId: getTraceIdMock
+}))
+
+describe('getPermissions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getTraceIdMock.mockReturnValue('trace-1')
+    configGetMock.mockImplementation((key) => {
+      if (key === 'tracing.header') return 'x-cdp-request-id'
+      if (key === 'permissions.useMock') return false
+      if (key === 'permissions.rpsBaseUrl') return 'https://rps.example.com'
+      if (key === 'permissions.sitiAgriBaseUrl') {
+        return 'https://siti.example.com'
+      }
     })
   })
 
-  test('returns consistent shape (role + scope) regardless of inputs', async () => {
-    const result = await getPermissions('some-other-crn', 'some-org', 'tkn')
+  test('loads role and scope from RPS and Siti Agri when mock is disabled', async () => {
+    wreckGetMock
+      .mockResolvedValueOnce({ payload: { _data: { id: 'person-42' } } })
+      .mockResolvedValueOnce({
+        payload: {
+          data: {
+            personRoles: [{ personId: 'person-42', role: 'Agent' }],
+            personPrivileges: [
+              { personId: 'person-42', privilegeNames: ['Submit - bps'] }
+            ]
+          }
+        }
+      })
 
-    expect(result).toHaveProperty('role')
-    expect(result).toHaveProperty('scope')
-    expect(typeof result.role).toBe('string')
-    expect(Array.isArray(result.scope)).toBe(true)
+    await expect(
+      getPermissions('CRN123', 'org-1', 'token-abc')
+    ).resolves.toEqual({
+      role: 'Agent',
+      scope: ['user', 'Submit - bps']
+    })
 
-    // default scope should always be first per implementation
-    expect(result.scope[0]).toBe('user')
+    expect(wreckGetMock).toHaveBeenNthCalledWith(
+      1,
+      'https://rps.example.com/person/3337243/summary',
+      expect.objectContaining({
+        headers: {
+          crn: 'CRN123',
+          Authorization: 'token-abc',
+          'x-cdp-request-id': 'trace-1'
+        }
+      })
+    )
+    expect(wreckGetMock).toHaveBeenNthCalledWith(
+      2,
+      'https://siti.example.com/SitiAgriApi/authorisation/organisation/org-1/authorisation',
+      expect.any(Object)
+    )
+  })
+
+  test('returns CRN-scoped mock permissions when useMock is enabled', async () => {
+    configGetMock.mockImplementation((key) => {
+      if (key === 'permissions.useMock') return true
+    })
+
+    await expect(
+      getPermissions('CRN999', 'org-2', 'token-abc')
+    ).resolves.toEqual({
+      role: 'Importer',
+      scope: ['user', 'Full permission - business']
+    })
+
+    expect(wreckGetMock).not.toHaveBeenCalled()
+  })
+
+  test('throws when live APIs are required but URLs are missing', async () => {
+    configGetMock.mockImplementation((key) => {
+      if (key === 'permissions.useMock') return false
+      if (key === 'permissions.rpsBaseUrl') return null
+      if (key === 'permissions.sitiAgriBaseUrl') return null
+    })
+
+    await expect(
+      getPermissions('CRN123', 'org-1', 'token-abc')
+    ).rejects.toThrow('Permissions API URLs are not configured')
   })
 })

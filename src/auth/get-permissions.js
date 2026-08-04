@@ -1,110 +1,135 @@
-const DEFAULT_SCOPE = 'user'
+import Wreck from '@hapi/wreck'
+import { getTraceId } from '@defra/hapi-tracing'
 
-async function getPermissions(crn, organisationId, token) {
-  // Cannot be retrieved in a single call so need to make multiple calls to different APIs
-  // These calls are authenticated using the token returned from Defra Identity
-  // All APIs are accessible via a series of RESTful endpoints hosted in Crown Hosting
-  // For the purposes of this example, we will simulate these calls using mock data
-  // 1. Get personId from RPS API
-  const personId = await getPersonId({ crn, token })
-  // 2. Get roles and privileges from Siti Agri API
-  const { role, privileges } = await getRolesAndPrivileges(
-    personId,
-    organisationId,
-    { crn, token }
-  )
-  // 3. Map roles and privileges to scope
-  // An application specific permission is added to demonstrate how to add local, non-Siti Agri permissions
-  const scope = [DEFAULT_SCOPE, ...privileges]
-  // Hapi.js assumes permissions are added in a `scope` array
-  return { role, scope }
+import { config } from '#/config/config.js'
+
+const DEFAULT_SCOPE = 'user'
+const RPS_PERSON_PATH = '/person/3337243/summary'
+
+function buildAuthHeaders(crn, token) {
+  return {
+    crn,
+    Authorization: token,
+    [config.get('tracing.header')]: getTraceId() ?? ''
+  }
 }
 
-async function getPersonId(headers) {
-  // simulate call to RPS API
-  // Only id is needed for mapping roles, but other fields shown for context for what else is available
-  // Note that the path should always include person id 3337243, regardless of the actual person id
-  // This is a workaround for services outside of Crown Hosting where the person id is not known until this API call is made.Cl
-  // PATH: /person/3337243/summary
-  // METHOD: GET
-  // HEADERS:
-  //   crn: <headers.crn>
-  //   Authorization <headers.token>
+async function getPermissions(crn, organisationId, token) {
+  if (config.get('permissions.useMock')) {
+    return getMockPermissions(crn, organisationId)
+  }
 
+  const rpsBaseUrl = config.get('permissions.rpsBaseUrl')
+  const sitiAgriBaseUrl = config.get('permissions.sitiAgriBaseUrl')
+
+  if (!rpsBaseUrl || !sitiAgriBaseUrl) {
+    throw new Error('Permissions API URLs are not configured')
+  }
+
+  const personId = await fetchPersonId(rpsBaseUrl, crn, token)
+  return fetchRolesAndPrivileges(
+    sitiAgriBaseUrl,
+    personId,
+    organisationId,
+    crn,
+    token
+  )
+}
+
+async function fetchPersonId(rpsBaseUrl, crn, token) {
+  const url = `${rpsBaseUrl.replace(/\/$/, '')}${RPS_PERSON_PATH}`
+
+  const { payload } = await Wreck.get(url, {
+    headers: buildAuthHeaders(crn, token),
+    json: true
+  })
+
+  const personId = payload?._data?.id ?? payload?.id
+
+  if (!personId) {
+    throw new Error('RPS API did not return a person id')
+  }
+
+  return personId
+}
+
+async function fetchRolesAndPrivileges(
+  sitiAgriBaseUrl,
+  personId,
+  organisationId,
+  crn,
+  token
+) {
+  const url = `${sitiAgriBaseUrl.replace(/\/$/, '')}/SitiAgriApi/authorisation/organisation/${encodeURIComponent(organisationId)}/authorisation`
+
+  const { payload } = await Wreck.get(url, {
+    headers: buildAuthHeaders(crn, token),
+    json: true
+  })
+
+  const personRoles = payload?.data?.personRoles ?? []
+  const personPrivileges = payload?.data?.personPrivileges ?? []
+
+  const roleEntry = personRoles.find((entry) => entry.personId === personId)
+  const privileges = personPrivileges
+    .filter((entry) => entry.personId === personId)
+    .flatMap((entry) => entry.privilegeNames ?? [])
+
+  if (!roleEntry?.role) {
+    throw new Error('Siti Agri API did not return a role for this user')
+  }
+
+  return {
+    role: roleEntry.role,
+    scope: [DEFAULT_SCOPE, ...privileges]
+  }
+}
+
+async function getMockPermissions(crn, organisationId) {
+  const personId = await getMockPersonId(crn)
+  return getMockRolesAndPrivileges(personId, organisationId)
+}
+
+async function getMockPersonId(crn) {
   const mockResponse = {
     _data: {
-      id: '123456',
-      customerReferenceNumber: '1234567890', // crn
-      title: 'Mr',
-      firstName: 'Andrew',
-      lastName: 'Farmer',
-      landline: '01234567890',
-      mobile: '01234567890',
-      email: 'a.farmer@farms.com',
-      address: {
-        address1: 'Address line 1',
-        address2: 'Address line 2',
-        address3: 'Address line 3',
-        address4: 'Address line 4',
-        address5: 'Address line 5',
-        city: 'City',
-        county: 'County',
-        postcode: 'FA1 1RM',
-        country: 'UK'
-      },
-      doNotContact: false,
-      locked: false
+      id: `mock-person-${crn}`,
+      customerReferenceNumber: crn
     }
   }
 
   return mockResponse._data.id
 }
 
-async function getRolesAndPrivileges(personId, organisationId, { headers }) {
-  // simulate call to Siti Agri API
-  // returns all roles and privileges for so need to filter for logged in user
-  // PATH: /SitiAgriApi/authorisation/organisation/<organisationId>/authorisation
-  // METHOD: GET
-  // HEADERS:
-  //   crn: <headers.crn>
-  //   Authorization <headers.token>
-
+async function getMockRolesAndPrivileges(personId, organisationId) {
   const mockResponse = {
     data: {
       personRoles: [
         {
-          personId: '123456',
-          role: 'Farmer'
-        },
-        {
-          personId: '654321',
-          role: 'Agent'
+          personId,
+          role: 'Importer',
+          organisationId
         }
       ],
       personPrivileges: [
         {
-          personId: '123456',
+          personId,
           privilegeNames: ['Full permission - business']
-        },
-        {
-          personId: '654321',
-          privilegeNames: ['Submit - bps']
-        },
-        {
-          personId: '654321',
-          privilegeNames: ['Submit - cs agree']
         }
       ]
     }
   }
 
+  const roleEntry = mockResponse.data.personRoles.find(
+    (entry) => entry.personId === personId
+  )
+  const privileges = mockResponse.data.personPrivileges
+    .filter((entry) => entry.personId === personId)
+    .flatMap((entry) => entry.privilegeNames ?? [])
+
   return {
-    role: mockResponse.data.personRoles.find(
-      (role) => role.personId === '123456'
-    ).role,
-    privileges: mockResponse.data.personPrivileges
-      .filter((privilege) => privilege.personId === '123456')
-      .map((privilege) => privilege.privilegeNames[0])
+    role: roleEntry.role,
+    scope: [DEFAULT_SCOPE, ...privileges]
   }
 }
 

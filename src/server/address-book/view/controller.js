@@ -4,6 +4,7 @@ import { getTraceId } from '@defra/hapi-tracing'
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 import { buildFullAddress } from '#/server/common/helpers/address-book-helper.js'
 import { createLogger } from '#/server/common/helpers/logging/logger.js'
+import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 import { getAddressFormCountries } from '../address-countries.js'
 
@@ -26,7 +27,7 @@ export function buildRows(address, countryName) {
 export const viewController = {
   async handler(request, h) {
     const traceId = getTraceId() ?? ''
-    const orgId = request.auth.credentials.organisationId
+    const orgId = requireOrganisationId(request)
     const { id } = request.params
 
     try {

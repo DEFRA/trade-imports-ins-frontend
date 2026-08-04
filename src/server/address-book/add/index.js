@@ -1,4 +1,5 @@
 import { addController } from './controller.js'
+import { sessionAuthRouteOptions } from '#/server/common/constants/session-auth-route-options.js'
 
 export const addressBookAdd = {
   plugin: {
@@ -8,12 +9,14 @@ export const addressBookAdd = {
         {
           method: 'GET',
           path: '/address-book/add',
-          ...addController.get
+          handler: addController.get.handler,
+          options: sessionAuthRouteOptions
         },
         {
           method: 'POST',
           path: '/address-book/add',
-          ...addController.post
+          handler: addController.post.handler,
+          options: sessionAuthRouteOptions
         }
       ])
     }

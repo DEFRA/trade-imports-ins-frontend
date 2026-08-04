@@ -11,6 +11,7 @@ export const addressIdParams = Joi.object({
 })
 
 export const addressIdRouteOptions = {
+  auth: 'session',
   validate: {
     params: addressIdParams,
     failAction: () => {

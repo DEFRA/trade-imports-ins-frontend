@@ -29,6 +29,15 @@ export const authController = {
       }
 
       const { profile, token, refreshToken } = request.auth.credentials
+
+      if (!profile.organisationId) {
+        request.logger?.error(
+          { profile },
+          'Sign-in rejected: missing organisationId in Defra ID token'
+        )
+        return h.view('auth/unauthorised')
+      }
+
       // verify token returned from Defra Identity against public key
       try {
         await verifyToken(token)
@@ -41,11 +50,21 @@ export const authController = {
       // However, when signing in with RPA credentials, the roles only include the role name and not the permissions
       // Therefore, we need to make additional API calls to get the permissions from Siti Agri
       // These calls are authenticated using the token returned from Defra Identity
-      const { role, scope } = await getPermissions(
-        profile.crn,
-        profile.organisationId,
-        token
-      )
+      let role
+      let scope
+      try {
+        ;({ role, scope } = await getPermissions(
+          profile.crn,
+          profile.organisationId,
+          token
+        ))
+      } catch (err) {
+        request.logger?.error(
+          { err },
+          'Failed to load user permissions at sign-in'
+        )
+        return h.view('auth/unauthorised')
+      }
 
       // Store token and all useful data in the session cache
       await request.server.app.cache.set(profile.sessionId, {

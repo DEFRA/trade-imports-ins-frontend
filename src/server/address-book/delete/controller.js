@@ -5,6 +5,7 @@ import { addressBookClient } from '#/server/common/clients/address-book-client.j
 import { createLogger } from '#/server/common/helpers/logging/logger.js'
 import { setSessionValue } from '#/server/common/helpers/session-helpers.js'
 import { sessionKeys } from '#/server/common/constants/session-keys.js'
+import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 
 const logger = createLogger()
@@ -15,7 +16,7 @@ export const deleteController = {
   get: {
     async handler(request, h) {
       const traceId = getTraceId() ?? ''
-      const orgId = request.auth.credentials.organisationId
+      const orgId = requireOrganisationId(request)
       const { id } = request.params
 
       try {
@@ -51,7 +52,7 @@ export const deleteController = {
   post: {
     async handler(request, h) {
       const traceId = getTraceId() ?? ''
-      const orgId = request.auth.credentials.organisationId
+      const orgId = requireOrganisationId(request)
       const { id } = request.params
 
       if (request.payload?.cancel) {

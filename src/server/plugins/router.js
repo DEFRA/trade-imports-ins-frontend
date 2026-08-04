@@ -18,15 +18,18 @@ export const router = {
       await server.register([inert])
 
       await server.register([health])
-      await server.register([
-        home,
-        about,
-        addressBookList,
-        addressBookAdd,
-        addressBookView,
-        addressBookEdit,
-        addressBookDelete
-      ])
+
+      if (config.get('auth.enabled')) {
+        await server.register([
+          home,
+          about,
+          addressBookList,
+          addressBookAdd,
+          addressBookView,
+          addressBookEdit,
+          addressBookDelete
+        ])
+      }
 
       if (!config.get('isProduction') && !config.get('isTest')) {
         await (async () => {

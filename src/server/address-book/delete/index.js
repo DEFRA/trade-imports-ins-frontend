@@ -9,13 +9,13 @@ export const addressBookDelete = {
         {
           method: 'GET',
           path: '/address-book/{id}/delete',
-          ...deleteController.get,
+          handler: deleteController.get.handler,
           options: addressIdRouteOptions
         },
         {
           method: 'POST',
           path: '/address-book/{id}/delete',
-          ...deleteController.post,
+          handler: deleteController.post.handler,
           options: addressIdRouteOptions
         }
       ])

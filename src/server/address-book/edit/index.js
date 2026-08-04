@@ -9,13 +9,13 @@ export const addressBookEdit = {
         {
           method: 'GET',
           path: '/address-book/{id}/edit',
-          ...editController.get,
+          handler: editController.get.handler,
           options: addressIdRouteOptions
         },
         {
           method: 'POST',
           path: '/address-book/{id}/edit',
-          ...editController.post,
+          handler: editController.post.handler,
           options: addressIdRouteOptions
         }
       ])

@@ -13,6 +13,7 @@ import { createLogger } from '#/server/common/helpers/logging/logger.js'
 import { formatValidationErrors } from '#/server/common/helpers/validation-helpers.js'
 import { setSessionValue } from '#/server/common/helpers/session-helpers.js'
 import { sessionKeys } from '#/server/common/constants/session-keys.js'
+import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 
 const logger = createLogger()
@@ -90,7 +91,7 @@ export const addController = {
   post: {
     async handler(request, h) {
       const traceId = getTraceId() ?? ''
-      const orgId = request.auth.credentials.organisationId
+      const orgId = requireOrganisationId(request)
 
       if (request.payload.cancel) {
         return h.redirect('/address-book')

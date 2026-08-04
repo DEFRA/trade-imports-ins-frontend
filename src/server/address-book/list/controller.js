@@ -9,6 +9,7 @@ import {
 import { createLogger } from '#/server/common/helpers/logging/logger.js'
 import { getSessionValue } from '#/server/common/helpers/session-helpers.js'
 import { sessionKeys } from '#/server/common/constants/session-keys.js'
+import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 import {
   getAddressFormCountries,
@@ -50,7 +51,7 @@ function buildCountryNameMap(countries) {
 export const listController = {
   async handler(request, h) {
     const traceId = getTraceId() ?? ''
-    const orgId = request.auth.credentials.organisationId
+    const orgId = requireOrganisationId(request)
     const page = parsePage(request.query.page)
     const q = request.query.q?.trim() ?? ''
     const hasSearch = Boolean(q)
