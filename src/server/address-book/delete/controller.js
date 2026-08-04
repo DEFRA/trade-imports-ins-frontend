@@ -21,6 +21,10 @@ export const deleteController = {
       try {
         const address = await addressBookClient.getAddress(orgId, traceId, id)
 
+        if (address.deleted) {
+          throw Boom.notFound()
+        }
+
         return h.view(VIEW, {
           pageTitle: PAGE_TITLE,
           heading: PAGE_TITLE,
@@ -46,12 +50,17 @@ export const deleteController = {
       const orgId = request.auth.credentials.organisationId
       const { id } = request.params
 
-      if (request.payload.cancel) {
+      if (request.payload?.cancel) {
         return h.redirect(`/address-book/${id}`)
       }
 
       try {
         const address = await addressBookClient.getAddress(orgId, traceId, id)
+
+        if (address.deleted) {
+          throw Boom.notFound()
+        }
+
         await addressBookClient.deleteAddress(orgId, traceId, id)
 
         setSessionValue(

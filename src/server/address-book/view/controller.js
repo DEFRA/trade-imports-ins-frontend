@@ -31,6 +31,11 @@ export const viewController = {
 
     try {
       const address = await addressBookClient.getAddress(orgId, traceId, id)
+
+      if (address.deleted) {
+        throw Boom.notFound()
+      }
+
       const countries = await getAddressFormCountries(traceId).catch(() => [])
       const countryNames = Object.fromEntries(
         countries.map((country) => [country.code, country.name])

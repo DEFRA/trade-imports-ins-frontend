@@ -34,7 +34,7 @@ function escapeHtml(value) {
 export function buildTableRows(addresses) {
   return addresses.map((address) => [
     {
-      html: `<a class="govuk-link" href="/address-book/${address.id}">${escapeHtml(address.name)}</a>`
+      html: `<a class="govuk-link" href="/address-book/${encodeURIComponent(address.id)}"><span class="govuk-visually-hidden">View </span>${escapeHtml(address.name)}</a>`
     },
     { text: address.addressLine },
     { text: address.countryName }
