@@ -33,25 +33,7 @@ export const router = {
         ])
       }
 
-      if (!config.get('isProduction') && !config.get('isTest')) {
-        await (async () => {
-          const createViteServer = (await import('vite')).createServer
-          const vite = await createViteServer({
-            server: { middlewareMode: true },
-            appType: 'custom'
-          })
-
-          await server.register({
-            plugin: (await import('@defra/hapi-connect')).default,
-            options: {
-              path: '/public',
-              middleware: [vite.middlewares]
-            }
-          })
-        })()
-      } else {
-        server.register(serveStaticFiles)
-      }
+      await server.register([serveStaticFiles])
     }
   }
 }

@@ -15,7 +15,7 @@ const manifestPath = path.join(
 let viteManifest
 
 export function context(request) {
-  if (config.get('isProduction') && !viteManifest) {
+  if (!viteManifest) {
     try {
       viteManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
     } catch {
@@ -44,10 +44,6 @@ export function context(request) {
           isAuthenticated: false
         },
     getAssetPath(asset) {
-      if (!config.get('isProduction')) {
-        return `${assetPath}/${asset}`
-      }
-
       const viteAssetPath = viteManifest?.[asset]?.file
       return `${assetPath}/${viteAssetPath ?? asset}`
     },
