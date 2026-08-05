@@ -52,7 +52,7 @@ describe('auth plugin', () => {
         'defraId.clientId': 'test-client-id',
         'defraId.clientSecret': 'test-client-secret',
         'session.cookie.password': 'some-password-32-chars-long-000000',
-        isProduction: false,
+        'session.cookie.secure': false,
         'session.cookie.sameSite': 'Lax',
         'defraId.redirectUrl': 'http://localhost:3002/auth/sign-in-oidc',
         'defraId.serviceId': 'trade-imports-ins-frontend',
@@ -104,6 +104,28 @@ describe('auth plugin', () => {
     )
 
     expect(server.auth.default).toHaveBeenCalledWith('session')
+  })
+
+  test('getBellOptions uses session.cookie.secure for isSecure', () => {
+    configGetMock.mockImplementation((key) => {
+      const map = {
+        'defraId.clientId': 'test-client-id',
+        'defraId.clientSecret': 'test-client-secret',
+        'session.cookie.password': 'some-password-32-chars-long-000000',
+        'session.cookie.secure': false,
+        'session.cookie.sameSite': 'Lax',
+        'defraId.redirectUrl': 'http://localhost:3002/auth/sign-in-oidc',
+        'defraId.serviceId': 'trade-imports-ins-frontend',
+        'defraId.policy': 'b2c_1a_cui_cpdev_signupsigninsfi'
+      }
+      return map[key]
+    })
+
+    const bellOptions = getBellOptions(oidcConfig)
+    const cookieOptions = getCookieOptions()
+
+    expect(bellOptions.isSecure).toBe(false)
+    expect(cookieOptions.cookie.isSecure).toBe(false)
   })
 
   test('getBellOptions.location stores safe redirect and returns redirectUrl', () => {
@@ -307,7 +329,7 @@ describe('auth plugin', () => {
           'defraId.clientId': 'test-client-id',
           'defraId.clientSecret': 'test-client-secret',
           'session.cookie.password': 'some-password-32-chars-long-000000',
-          isProduction: false,
+          'session.cookie.secure': false,
           'session.cookie.sameSite': 'Lax',
           'defraId.redirectUrl': 'http://localhost:3002/auth/sign-in-oidc',
           'defraId.serviceId': 'service-123',

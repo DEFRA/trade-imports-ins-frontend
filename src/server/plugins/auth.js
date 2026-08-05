@@ -53,7 +53,7 @@ function getBellOptions(oidcConfig) {
     clientId: config.get('defraId.clientId'),
     clientSecret: config.get('defraId.clientSecret'),
     password: config.get('session.cookie.password'),
-    isSecure: config.get('isProduction'),
+    isSecure: config.get('session.cookie.secure'),
     // OAuth/OIDC redirects back from the identity provider are top-level navigations.
     // `SameSite=Strict` can prevent the Bell nonce cookie from being sent on callback,
     // which causes Bell auth to return `isAuthenticated: false`.
@@ -94,7 +94,7 @@ function getCookieOptions() {
     cookie: {
       password: config.get('session.cookie.password'),
       path: '/',
-      isSecure: config.get('isProduction')
+      isSecure: config.get('session.cookie.secure')
     },
     redirectTo: function (request) {
       const target = `${request.url.pathname}${request.url.search}`
