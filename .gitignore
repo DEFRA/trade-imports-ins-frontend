@@ -10,3 +10,9 @@ coverage
 .envrc
 tsconfig.tsbuildinfo
 .env
+lighthouse-report/
+.lighthouseci/
+chromewebdata**
+localhost**
+test-results/
+*.iml

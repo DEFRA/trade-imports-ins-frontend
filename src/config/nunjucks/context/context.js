@@ -18,17 +18,31 @@ export function context(request) {
   if (config.get('isProduction') && !viteManifest) {
     try {
       viteManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
-    } catch (error) {
+    } catch {
       logger.error(`Vite ${path.basename(manifestPath)} not found`)
     }
   }
+
+  const authData = request.auth?.isAuthenticated
+    ? request.auth.credentials
+    : null
 
   return {
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
+    authEnabled: config.get('auth.enabled'),
     breadcrumbs: [],
     navigation: buildNavigation(request),
+    userSession: authData
+      ? {
+          isAuthenticated: true,
+          displayName: authData.name || authData.email || 'User',
+          email: authData.email
+        }
+      : {
+          isAuthenticated: false
+        },
     getAssetPath(asset) {
       if (!config.get('isProduction')) {
         return `${assetPath}/${asset}`
@@ -36,6 +50,7 @@ export function context(request) {
 
       const viteAssetPath = viteManifest?.[asset]?.file
       return `${assetPath}/${viteAssetPath ?? asset}`
-    }
+    },
+    crumb: request.plugins?.crumb ?? request.state?.crumb ?? ''
   }
 }

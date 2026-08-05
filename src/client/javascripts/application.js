@@ -12,3 +12,7 @@ createAll(Checkboxes)
 createAll(ErrorSummary)
 createAll(Radios)
 createAll(SkipLink)
+
+import { initAddressBookSuccessBanner } from './address-book-success-banner.js'
+
+initAddressBookSuccessBanner()

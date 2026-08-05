@@ -91,6 +91,24 @@ Install application dependencies:
 npm install
 ```
 
+## AUTHENTICATION (trade-imports-defra-id-stub)
+
+For local cross-service development the recommended path is the workspace
+docker stack at https://github.com/DEFRA/trade-imports-animals-workspace —
+it stands the stub up alongside the frontend with the right env wiring;
+no `/etc/hosts` edits required.
+
+If running this service standalone against the stub on `localhost:3007`,
+create an env file:
+
+```
+DEFRA_ID_OIDC_CONFIGURATION_URL=http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration
+DEFRA_ID_CLIENT_ID=8c5e0bd-8223-4908-a5aa-c9c1d7cddaac
+DEFRA_ID_CLIENT_SECRET=test_value
+DEFRA_ID_SERVICE_ID=aeaa0a80-15f3-48b2-8bd7-0e02874b3d32
+DEFRA_ID_POLICY=b2c_1a_cui_cpdev_signupsigninsfi
+```
+
 ### Git hooks
 
 Install git hooks (optional)
@@ -195,8 +213,7 @@ docker compose up --build -d
 
 ### Dependabot
 
-We have added an example dependabot configuration file to the repository. You can enable it by renaming
-the [.github/example.dependabot.yml](.github/example.dependabot.yml) to `.github/dependabot.yml`
+Dependabot is configured in [.github/dependabot.yml](.github/dependabot.yml).
 
 ### SonarCloud
 

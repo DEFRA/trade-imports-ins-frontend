@@ -1,0 +1,135 @@
+import { describe, expect, test } from 'vitest'
+
+import {
+  buildAddressBookQueryString,
+  buildAddressLine,
+  buildFullAddress,
+  buildPaginationLinks,
+  buildResultsLabel,
+  mapAddressRows
+} from './address-book-helper.js'
+
+describe('#address-book-helper', () => {
+  test('buildAddressLine composes addressLine1, townOrCity and postcode', () => {
+    expect(
+      buildAddressLine({
+        addressLine1: "14 Drover's Way",
+        townOrCity: 'Inverness',
+        postcode: 'IV2 3JH'
+      })
+    ).toBe("14 Drover's Way, Inverness, IV2 3JH")
+  })
+
+  test('buildFullAddress includes optional addressLine2 and county', () => {
+    expect(
+      buildFullAddress({
+        addressLine1: "14 Drover's Way",
+        addressLine2: 'Unit 2',
+        townOrCity: 'Inverness',
+        county: 'Highland',
+        postcode: 'IV2 3JH'
+      })
+    ).toBe("14 Drover's Way, Unit 2, Inverness, Highland, IV2 3JH")
+  })
+
+  test('buildResultsLabel formats the current page range', () => {
+    expect(
+      buildResultsLabel({
+        page: 1,
+        pageSize: 8,
+        totalItems: 24,
+        totalPages: 3
+      })
+    ).toBe('Showing 1-8 of 24')
+
+    expect(
+      buildResultsLabel({
+        page: 2,
+        pageSize: 25,
+        totalItems: 30,
+        totalPages: 2
+      })
+    ).toBe('Showing 26-30 of 30')
+  })
+
+  test('buildResultsLabel returns null when there are no results', () => {
+    expect(
+      buildResultsLabel({
+        page: 1,
+        pageSize: 25,
+        totalItems: 0,
+        totalPages: 0
+      })
+    ).toBeNull()
+  })
+
+  test('buildPaginationLinks returns numbered pages from API metadata', () => {
+    const pagination = buildPaginationLinks({
+      page: 2,
+      pageSize: 25,
+      totalItems: 30,
+      totalPages: 2
+    })
+
+    expect(pagination.items).toHaveLength(2)
+    expect(pagination.items[1].current).toBe(true)
+    expect(pagination.previous.href).toBe('/address-book')
+    expect(pagination.next).toBeUndefined()
+  })
+
+  test('buildAddressBookQueryString omits page size param', () => {
+    expect(buildAddressBookQueryString({ page: 2 })).toBe('?page=2')
+    expect(buildAddressBookQueryString({ page: 1 })).toBe('')
+  })
+
+  test('buildAddressBookQueryString preserves search terms', () => {
+    expect(
+      buildAddressBookQueryString({ q: 'green', countryCode: 'GB', page: 2 })
+    ).toBe('?q=green&countryCode=GB&page=2')
+  })
+
+  test('buildPaginationLinks preserves active search terms', () => {
+    const pagination = buildPaginationLinks(
+      {
+        page: 2,
+        pageSize: 25,
+        totalItems: 30,
+        totalPages: 2
+      },
+      { q: 'green', countryCode: 'GB' }
+    )
+
+    expect(pagination.previous.href).toBe(
+      '/address-book?q=green&countryCode=GB'
+    )
+    expect(pagination.items[1].href).toBe(
+      '/address-book?q=green&countryCode=GB&page=2'
+    )
+  })
+
+  test('mapAddressRows maps list rows with country names', () => {
+    expect(
+      mapAddressRows(
+        [
+          {
+            id: '1',
+            name: 'Farm',
+            addressLine1: '1 Road',
+            townOrCity: 'Town',
+            postcode: 'AB1 2CD',
+            countryCode: 'GB'
+          }
+        ],
+        { GB: 'United Kingdom' }
+      )
+    ).toEqual([
+      {
+        id: '1',
+        name: 'Farm',
+        addressLine: '1 Road, Town, AB1 2CD',
+        countryCode: 'GB',
+        countryName: 'United Kingdom'
+      }
+    ])
+  })
+})

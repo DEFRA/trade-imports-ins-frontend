@@ -3,6 +3,12 @@ import inert from '@hapi/inert'
 import { home } from '../routes/home/index.js'
 import { about } from '../routes/about/index.js'
 import { health } from '../routes/health/index.js'
+import { addressBookList } from '../address-book/list/index.js'
+import { addressBookAdd } from '../address-book/add/index.js'
+import { addressBookView } from '../address-book/view/index.js'
+import { addressBookEdit } from '../address-book/edit/index.js'
+import { addressBookDelete } from '../address-book/delete/index.js'
+import { signout } from '../signout/index.js'
 import { serveStaticFiles } from './serve-static-files.js'
 import { config } from '#/config/config.js'
 
@@ -12,13 +18,21 @@ export const router = {
     async register(server) {
       await server.register([inert])
 
-      // Health-check route. Used by platform to check if service is running, do not remove!
       await server.register([health])
 
-      // Application specific routes, add your own routes here
-      await server.register([home, about])
+      if (config.get('auth.enabled')) {
+        await server.register([
+          home,
+          about,
+          signout,
+          addressBookList,
+          addressBookAdd,
+          addressBookView,
+          addressBookEdit,
+          addressBookDelete
+        ])
+      }
 
-      // Static assets
       if (!config.get('isProduction') && !config.get('isTest')) {
         await (async () => {
           const createViteServer = (await import('vite')).createServer

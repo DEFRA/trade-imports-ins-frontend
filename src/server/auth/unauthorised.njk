@@ -1,0 +1,9 @@
+{% extends 'layouts/page.njk' %}
+
+{% set pageTitle = "Unable to sign in" %}
+{% set mainClasses = "govuk-main-wrapper--l" %}
+
+{% block content %}
+  <h1 class="govuk-heading-l">Sorry, we are unable to sign you in.</h1>
+  <p class="govuk-body">Please <a class="govuk-link" href="/auth/sign-in">try again</a>.</p>
+{% endblock %}

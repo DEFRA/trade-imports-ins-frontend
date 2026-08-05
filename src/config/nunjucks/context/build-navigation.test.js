@@ -5,35 +5,37 @@ function mockRequest(options) {
 }
 
 describe('#buildNavigation', () => {
-  test('Should provide expected navigation details', () => {
-    expect(
-      buildNavigation(mockRequest({ path: '/non-existent-path' }))
-    ).toEqual([
-      {
-        current: false,
-        text: 'Home',
-        href: '/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
-      }
+  test('renders exactly two links with no About entry', () => {
+    const navigation = buildNavigation(mockRequest({ path: '/other' }))
+
+    expect(navigation).toHaveLength(2)
+    expect(navigation.map((item) => item.text)).toEqual([
+      'Dashboard',
+      'Address book'
     ])
+    expect(navigation.some((item) => item.text === 'About')).toBe(false)
   })
 
-  test('Should provide expected highlighted navigation details', () => {
-    expect(buildNavigation(mockRequest({ path: '/' }))).toEqual([
-      {
-        current: true,
-        text: 'Home',
-        href: '/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
-      }
-    ])
+  test('highlights Dashboard on /', () => {
+    const navigation = buildNavigation(mockRequest({ path: '/' }))
+
+    expect(navigation[0]).toEqual({
+      text: 'Dashboard',
+      href: '/',
+      current: true
+    })
+    expect(navigation[1].current).toBe(false)
+  })
+
+  test('highlights Address book when path starts with /address-book', () => {
+    const navigation = buildNavigation(
+      mockRequest({ path: '/address-book/add' })
+    )
+
+    expect(navigation[1]).toEqual({
+      text: 'Address book',
+      href: '/address-book',
+      current: true
+    })
   })
 })

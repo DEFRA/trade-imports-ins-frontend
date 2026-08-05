@@ -62,17 +62,43 @@ describe('context and cache', () => {
           navigation: [
             {
               current: true,
-              text: 'Home',
+              text: 'Dashboard',
               href: '/'
             },
             {
               current: false,
-              text: 'About',
-              href: '/about'
+              text: 'Address book',
+              href: '/address-book'
             }
           ],
           serviceName: 'trade-imports-ins-frontend',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          authEnabled: true,
+          userSession: {
+            isAuthenticated: false
+          },
+          crumb: ''
+        })
+      })
+
+      test('Should expose authenticated user details in userSession', () => {
+        const authenticatedRequest = {
+          path: '/address-book',
+          auth: {
+            isAuthenticated: true,
+            credentials: {
+              name: 'Andrew Farmer',
+              email: 'a.farmer@farms.com'
+            }
+          }
+        }
+
+        const authenticatedContext = contextImport.context(authenticatedRequest)
+
+        expect(authenticatedContext.userSession).toEqual({
+          isAuthenticated: true,
+          displayName: 'Andrew Farmer',
+          email: 'a.farmer@farms.com'
         })
       })
 
@@ -151,17 +177,22 @@ describe('context and cache', () => {
           navigation: [
             {
               current: true,
-              text: 'Home',
+              text: 'Dashboard',
               href: '/'
             },
             {
               current: false,
-              text: 'About',
-              href: '/about'
+              text: 'Address book',
+              href: '/address-book'
             }
           ],
           serviceName: 'trade-imports-ins-frontend',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          authEnabled: true,
+          userSession: {
+            isAuthenticated: false
+          },
+          crumb: ''
         })
       })
     })

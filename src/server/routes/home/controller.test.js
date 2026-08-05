@@ -1,5 +1,15 @@
+import { vi } from 'vitest'
+
 import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
+import {
+  sessionAuth,
+  mockOidcConfig
+} from '#/server/common/test-helpers/mock-auth.js'
+
+vi.mock('#/auth/get-oidc-config.js', () => ({
+  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
+}))
 
 describe('#homeController', () => {
   let server
@@ -16,10 +26,13 @@ describe('#homeController', () => {
   test('Should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/'
+      url: '/',
+      auth: sessionAuth('home-dashboard')
     })
 
-    expect(result).toEqual(expect.stringContaining('Home |'))
+    expect(result).toEqual(expect.stringContaining('Dashboard |'))
+    expect(result).toContain('Sign out')
+    expect(result).toContain('/signout')
     expect(statusCode).toBe(statusCodes.ok)
   })
 })

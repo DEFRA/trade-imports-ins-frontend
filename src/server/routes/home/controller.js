@@ -4,9 +4,9 @@
  */
 export const homeController = {
   handler(_request, h) {
-    return h.view('home/index', {
-      pageTitle: 'Home',
-      heading: 'Home'
+    return h.view('routes/home/index', {
+      pageTitle: 'Dashboard',
+      heading: 'Dashboard'
     })
   }
 }
