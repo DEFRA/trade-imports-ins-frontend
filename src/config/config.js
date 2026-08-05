@@ -247,28 +247,6 @@ export const config = convict({
       env: 'AUTH_ENABLED'
     }
   },
-  permissions: {
-    useMock: {
-      doc: 'Use simulated RPS/Siti Agri permission responses (local/test only)',
-      format: Boolean,
-      default: isLocal,
-      env: 'PERMISSIONS_USE_MOCK'
-    },
-    rpsBaseUrl: {
-      doc: 'RPS API base URL for person lookup',
-      format: String,
-      nullable: true,
-      default: null,
-      env: 'RPS_API_URL'
-    },
-    sitiAgriBaseUrl: {
-      doc: 'Siti Agri API base URL for roles and privileges',
-      format: String,
-      nullable: true,
-      default: null,
-      env: 'SITI_AGRI_API_URL'
-    }
-  },
   redis: {
     host: {
       doc: 'Redis cache host',
