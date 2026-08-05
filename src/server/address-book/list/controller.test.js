@@ -124,6 +124,65 @@ describe('#addressBookListController', () => {
     expect(result).toContain('?page=2')
   })
 
+  test('does not show clear search on the unfiltered list', async () => {
+    addressBookClient.listAddresses.mockResolvedValue({
+      items: [
+        {
+          id: '1',
+          name: 'Highland Livestock Ltd',
+          addressLine1: "14 Drover's Way",
+          townOrCity: 'Inverness',
+          postcode: 'IV2 3JH',
+          countryCode: 'GB'
+        }
+      ],
+      page: 1,
+      pageSize: 25,
+      totalItems: 1,
+      totalPages: 1
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book',
+      auth: sessionAuth('list-no-clear-search')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).not.toContain('data-testid="address-book-clear-search"')
+  })
+
+  test('shows clear search when search results are returned', async () => {
+    addressBookClient.listAddresses.mockResolvedValue({
+      items: [
+        {
+          id: '1',
+          name: 'Green Farm',
+          addressLine1: '1 Road',
+          townOrCity: 'Inverness',
+          postcode: 'IV2 3JH',
+          countryCode: 'GB'
+        }
+      ],
+      page: 1,
+      pageSize: 25,
+      totalItems: 1,
+      totalPages: 1
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book?q=green',
+      auth: sessionAuth('list-search-with-results')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('data-testid="address-book-clear-search"')
+    expect(result).toContain('Clear search</a>')
+    expect(result).toContain('Green Farm')
+    expect(result).toContain('Showing 1-1 of 1')
+  })
+
   test('forwards search query and resolves country name to countryCode', async () => {
     addressBookClient.listAddresses.mockResolvedValue({
       items: [

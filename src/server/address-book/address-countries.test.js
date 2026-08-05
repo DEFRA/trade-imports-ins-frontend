@@ -82,6 +82,9 @@ describe('#resolveCountryCodeFromSearchTerm', () => {
   test('returns alpha-2 code for a case-insensitive country name match', () => {
     expect(resolveCountryCodeFromSearchTerm('France', countries)).toBe('FR')
     expect(resolveCountryCodeFromSearchTerm('france', countries)).toBe('FR')
+    expect(resolveCountryCodeFromSearchTerm('United Kingdom', countries)).toBe(
+      'GB'
+    )
   })
 
   test('returns undefined when the term does not match a country name', () => {
