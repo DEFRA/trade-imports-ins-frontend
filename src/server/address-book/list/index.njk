@@ -71,6 +71,12 @@
         </p>
       {% endif %}
 
+      {% if hasSearch %}
+        <p class="govuk-body govuk-!-margin-bottom-4">
+          <a class="govuk-link" href="/address-book" data-testid="address-book-clear-search">Clear search</a>
+        </p>
+      {% endif %}
+
       {{ govukTable({
         head: [
           { text: "Name" },
