@@ -1,8 +1,30 @@
+import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
 
-import { signIn } from './helpers.js'
-
 const NAME_FIELD = '#name'
+
+/**
+ * Signs in via the stub-auth route (see server/auth/stub-sign-in.js) - no
+ * real Defra ID stub involved, only reachable when AUTH_STUB_MODE=true.
+ */
+async function signIn(page, { organisationId = 'stub-org-1' } = {}) {
+  await page.goto(
+    `/auth/stub-sign-in?organisationId=${encodeURIComponent(organisationId)}`
+  )
+}
+
+async function expectNoSeriousOrCriticalAxeViolations(page, pageName) {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze()
+  const seriousOrCritical = results.violations.filter(({ impact }) =>
+    ['serious', 'critical'].includes(impact)
+  )
+  expect(
+    seriousOrCritical,
+    `${pageName} has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+  ).toEqual([])
+}
 
 const validAddress = {
   name: 'Highland Livestock Ltd',
@@ -139,6 +161,13 @@ test.describe('add address', () => {
       country.getByRole('option', { name: 'United Kingdom' })
     ).toHaveCount(1)
   })
+
+  test('has no serious or critical axe violations', async ({ page }) => {
+    await signIn(page, { organisationId: 'stub-org-add-axe' })
+    await page.goto('/address-book/add')
+
+    await expectNoSeriousOrCriticalAxeViolations(page, 'Add address')
+  })
 })
 
 test.describe('add address validation', () => {
@@ -189,6 +218,22 @@ test.describe('add address validation', () => {
       'Enter an email address in the correct format',
       'email',
       'not-an-email'
+    )
+  })
+
+  test('validation error page has no serious or critical axe violations', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: 'stub-org-add-validation-axe' })
+    await page.goto('/address-book/add')
+
+    await fillValidAddress(page, { name: '' })
+    await submit(page)
+    await expect(page.getByRole('alert')).toBeVisible()
+
+    await expectNoSeriousOrCriticalAxeViolations(
+      page,
+      'Add address validation error'
     )
   })
 })
