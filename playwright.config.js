@@ -21,6 +21,7 @@ export default defineConfig({
     navigationTimeout: 15_000,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
+    video: 'off',
     ...devices['Desktop Chrome']
   },
   webServer: [

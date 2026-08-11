@@ -15,6 +15,7 @@
     "docker:dev": "npm run dev",
     "e2e:start": "NODE_ENV=development node .",
     "test:features": "npm run build:frontend && playwright test",
+    "test:playwright:ci": "npm run build:frontend && playwright test --retries=2 --forbid-only --global-timeout=300000 --reporter=list,html,github",
     "playwright:install": "playwright install --with-deps chromium",
     "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
