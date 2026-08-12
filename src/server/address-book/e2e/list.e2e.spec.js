@@ -55,7 +55,30 @@ test.describe('list and pagination', () => {
       table.getByRole('cell', { name: 'Stub Farm 1', exact: true })
     ).toBeVisible()
     await expect(
+      table.getByRole('cell', {
+        name: '1 Stub Way, Stubton, ST1 1UB',
+        exact: true
+      })
+    ).toBeVisible()
+    await expect(
+      table.getByRole('cell', { name: 'United Kingdom', exact: true })
+    ).toBeVisible()
+    await expect(
       page.getByRole('button', { name: 'Add a new address' })
+    ).toBeVisible()
+  })
+
+  test('clicking Add a new address navigates to the add form', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: ORG_DEFAULT })
+    await page.goto('/address-book')
+
+    await page.getByRole('button', { name: 'Add a new address' }).click()
+
+    await expect(page).toHaveURL(/\/address-book\/add$/)
+    await expect(
+      page.getByRole('heading', { name: 'Add address details' })
     ).toBeVisible()
   })
 

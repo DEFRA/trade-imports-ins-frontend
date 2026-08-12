@@ -41,6 +41,7 @@ async function throwOnError(response) {
   const body = await parseProblemBody(response)
   const error = new Error(errorMessageFromBody(body, response))
   error.status = response.status
+  error.statusText = response.statusText
   error.body = body
   throw error
 }
@@ -92,6 +93,7 @@ export const addressBookClient = {
       const problem = await parseProblemBody(response)
       const error = new Error(problem.detail || 'Validation failed')
       error.status = 400
+      error.statusText = response.statusText
       error.body = problem
       throw error
     }
@@ -125,6 +127,7 @@ export const addressBookClient = {
       const problem = await parseProblemBody(response)
       const error = new Error(problem.detail || 'Validation failed')
       error.status = 400
+      error.statusText = response.statusText
       error.body = problem
       throw error
     }
