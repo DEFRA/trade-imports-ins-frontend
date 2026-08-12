@@ -7,7 +7,9 @@ import Scooter from '@hapi/scooter'
 import { router } from './plugins/router.js'
 import { authPlugin } from './plugins/auth.js'
 import { authRoutes } from './auth/index.js'
+import { stubSignInRoutes } from './auth/stub-sign-in.js'
 import { config } from '#/config/config.js'
+import { isAuthStubMode } from './common/services/mode.js'
 import { pulse } from './plugins/pulse.js'
 import { catchAll } from './common/helpers/errors.js'
 import { nunjucksConfig } from '#/config/nunjucks/nunjucks.js'
@@ -71,7 +73,9 @@ export async function createServer() {
     csrf,
     Cookie,
     Bell,
-    ...(authEnabled ? [authPlugin, authRoutes] : []),
+    ...(authEnabled
+      ? [authPlugin, isAuthStubMode() ? stubSignInRoutes : authRoutes]
+      : []),
     router
   ])
 

@@ -49,3 +49,39 @@ jobs:
 #        uses: SonarSource/sonarqube-scan-action@master
 #        env:
 #          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # This Playwright suite boots the app itself with INS_MODE=stub and
+  # AUTH_STUB_MODE=true, so it needs no workspace stack. Kept out of
+  # pr-validator so a browser run does not sit in front of the other checks.
+  playwright:
+    name: Frontend Playwright suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install the Playwright browser
+        run: npm run playwright:install
+
+      - name: Run the Playwright suite
+        run: npm run test:playwright:ci
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ins-frontend-playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

@@ -1,0 +1,43 @@
+import { config } from '#/config/config.js'
+import { createLogger } from '#/server/common/helpers/logging/logger.js'
+
+const tradeImportsReferenceDataUrl = config.get(
+  'tradeImportsReferenceDataApi.baseUrl'
+)
+const tracingHeader = config.get('tracing.header')
+const logger = createLogger()
+
+export const countriesClient = {
+  async getCountries(traceId, blocks) {
+    const url = new URL(`${tradeImportsReferenceDataUrl}/countries`)
+
+    if (blocks?.length) {
+      for (const block of blocks) {
+        url.searchParams.append('blocks', block)
+      }
+    }
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        [tracingHeader]: traceId
+      }
+    })
+
+    if (!response.ok) {
+      const error = new Error('Failed to get countries')
+      error.status = response.status
+      error.statusText = response.statusText
+
+      logger.error(
+        { err: error, status: error.status },
+        'Failed to get countries'
+      )
+
+      throw error
+    }
+
+    return response.json()
+  }
+}

@@ -15,4 +15,6 @@ lighthouse-report/
 chromewebdata**
 localhost**
 test-results/
+playwright-report/
+.playwright/
 *.iml
