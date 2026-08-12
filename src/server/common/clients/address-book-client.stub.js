@@ -21,7 +21,10 @@ function buildSeedAddress(index) {
     townOrCity: 'Stubton',
     county: '',
     postcode: 'ST1 1UB',
-    countryCode: 'GB'
+    countryCode: 'GB',
+    email: `stub-farm-${index}@example.com`,
+    phone: '01234567890',
+    deleted: false
   }
 }
 

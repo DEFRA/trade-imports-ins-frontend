@@ -20,6 +20,29 @@ const authCookieSameSite = 'Lax'
 
 convict.addFormats(convictFormatWithValidator)
 
+// convict's built-in Boolean format coerces any string other than exactly
+// 'false' to true (e.g. a typo like 'flase' silently enables the flag), so
+// security/environment-gating flags use this stricter format instead - it
+// only accepts an actual boolean, or the literal strings 'true'/'false' from
+// an env var, and fails config.validate() on anything else.
+convict.addFormat({
+  name: 'strict-boolean',
+  validate(val) {
+    if (typeof val !== 'boolean') {
+      throw new Error("must be 'true' or 'false'")
+    }
+  },
+  coerce(val) {
+    if (val === 'true') {
+      return true
+    }
+    if (val === 'false') {
+      return false
+    }
+    return val
+  }
+})
+
 export const config = convict({
   serviceVersion: {
     doc: 'The service version, this variable is injected into your docker container in CDP environments',
@@ -248,7 +271,7 @@ export const config = convict({
     },
     stubMode: {
       doc: 'Skip the real Defra ID OIDC exchange and locally sign a stub session instead. Auth is still enforced - only the external OIDC round-trip is bypassed. Ignored outside non-production (see isAuthStubMode).',
-      format: Boolean,
+      format: 'strict-boolean',
       default: false,
       env: 'AUTH_STUB_MODE'
     }

@@ -105,7 +105,13 @@ function getCookieOptions() {
     },
     redirectTo: function (request) {
       const target = `${request.url.pathname}${request.url.search}`
-      return `/auth/sign-in?redirect=${encodeURIComponent(target)}`
+      // In auth.stubMode, authRoutes (and its /auth/sign-in route) is never
+      // registered - server.js registers stubSignInRoutes instead, so an
+      // unauthenticated request must be sent to /auth/stub-sign-in or it 404s.
+      const signInPath = isAuthStubMode()
+        ? '/auth/stub-sign-in'
+        : '/auth/sign-in'
+      return `${signInPath}?redirect=${encodeURIComponent(target)}`
     },
     validate: async function (request, session) {
       const userSession = await request.server.app.cache.get(session.sessionId)

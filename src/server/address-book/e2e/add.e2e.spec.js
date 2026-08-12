@@ -1,7 +1,19 @@
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
 
-const NAME_FIELD = '#name'
+const NAME_LABEL = 'Name or organisation name'
+
+const fieldLabels = {
+  name: NAME_LABEL,
+  addressLine1: 'Address line 1',
+  addressLine2: 'Address line 2 (optional)',
+  townOrCity: 'Town or city',
+  county: 'County (optional)',
+  postcode: 'Postcode or Zip code',
+  countryCode: 'Country',
+  phone: 'Phone number',
+  email: 'Email address'
+}
 
 /**
  * Signs in via the stub-auth route (see server/auth/stub-sign-in.js) - no
@@ -39,7 +51,7 @@ const validAddress = {
 }
 
 async function setFieldValue(page, field, value) {
-  const control = page.locator(`#${field}`)
+  const control = page.getByLabel(fieldLabels[field])
   if (field === 'countryCode') {
     await control.selectOption(value)
   } else {
@@ -60,13 +72,14 @@ const errorLink = (page, message) =>
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
 
-async function expectErrorFocusOn(page, message, field, expectedValue) {
+async function expectErrorFocusOn(page, message, label, expectedValue) {
   await expect(page).toHaveURL(/\/address-book\/add$/)
   const link = errorLink(page, message)
   await expect(link).toBeVisible()
   await link.click()
-  await expect(page.locator(`#${field}`)).toBeFocused()
-  await expect(page.locator(`#${field}`)).toHaveValue(expectedValue)
+  const control = page.getByLabel(label)
+  await expect(control).toBeFocused()
+  await expect(control).toHaveValue(expectedValue)
 }
 
 // [field, label, "enter a ..." error]. Address Line 2 and County are optional
@@ -181,8 +194,8 @@ test.describe('add address validation', () => {
       await fillValidAddress(page, { [field]: '' })
       await submit(page)
 
-      await expectErrorFocusOn(page, error, field, '')
-      await expect(page.locator(NAME_FIELD)).toHaveValue(
+      await expectErrorFocusOn(page, error, label, '')
+      await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
         field === 'name' ? '' : validAddress.name
       )
     })
@@ -199,8 +212,8 @@ test.describe('add address validation', () => {
       await fillValidAddress(page, { [field]: value })
       await submit(page)
 
-      await expectErrorFocusOn(page, error, field, value)
-      await expect(page.locator(NAME_FIELD)).toHaveValue(
+      await expectErrorFocusOn(page, error, label, value)
+      await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
         field === 'name' ? value : validAddress.name
       )
     })
@@ -216,7 +229,7 @@ test.describe('add address validation', () => {
     await expectErrorFocusOn(
       page,
       'Enter an email address in the correct format',
-      'email',
+      fieldLabels.email,
       'not-an-email'
     )
   })
@@ -270,9 +283,7 @@ test.describe('cancel', () => {
     await signIn(page, { organisationId: 'stub-org-add-cancel' })
     await page.goto('/address-book/add')
 
-    await page
-      .getByLabel('Name or organisation name')
-      .fill('Should not be saved')
+    await page.getByLabel(NAME_LABEL).fill('Should not be saved')
 
     await page
       .getByRole('button', { name: 'Cancel and return to address book' })

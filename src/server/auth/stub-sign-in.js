@@ -1,6 +1,14 @@
+import crypto from 'node:crypto'
+
 import Jwt from '@hapi/jwt'
 
-const STUB_TOKEN_SECRET = 'ins-frontend-stub-auth-local-signing-key'
+import { getSafeRedirect } from '#/auth/get-safe-redirect.js'
+
+// Generated once per process rather than hardcoded - this token is only ever
+// decoded (never verified against a known key) by the session validator, so
+// the secret has no real security value, but a random one avoids committing
+// a static credential-shaped string to source.
+const STUB_TOKEN_SECRET = crypto.randomBytes(32).toString('hex')
 const STUB_SESSION_TTL_SECONDS = 4 * 60 * 60
 
 const DEFAULT_STUB_USER = {
@@ -53,7 +61,7 @@ export const stubSignInRoutes = {
 
           request.cookieAuth.set({ sessionId })
 
-          return h.redirect(request.query.redirect ?? '/')
+          return h.redirect(getSafeRedirect(request.query.redirect))
         }
       })
     }
