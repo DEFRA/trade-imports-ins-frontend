@@ -5,7 +5,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     clearMocks: true,
-    exclude: [...configDefaults.exclude, '**/*.e2e.spec.js'],
+    exclude: [...configDefaults.exclude, '**/*.fit.spec.js'],
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',

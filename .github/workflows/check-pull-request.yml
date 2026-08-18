@@ -54,7 +54,7 @@ jobs:
   # AUTH_STUB_MODE=true, so it needs no workspace stack. Kept out of
   # pr-validator so a browser run does not sit in front of the other checks.
   playwright:
-    name: Frontend Playwright suite
+    name: FIT Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -74,7 +74,7 @@ jobs:
         run: npm run playwright:install
 
       - name: Run the Playwright suite
-        run: npm run test:playwright:ci
+        run: npm run test:fit:ci
 
       - name: Upload Playwright report
         if: always()
