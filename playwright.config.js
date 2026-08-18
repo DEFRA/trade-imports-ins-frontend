@@ -10,7 +10,7 @@ const port = Number(process.env.PORT ?? 3050)
 
 export default defineConfig({
   testDir: './src/server/address-book',
-  testMatch: '**/*.e2e.spec.js',
+  testMatch: '**/*.fit.spec.js',
   fullyParallel: true,
   timeout: 60_000,
   expect: { timeout: 10_000 },
@@ -26,7 +26,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'npm run e2e:start',
+      command: 'npm run fit:start',
       url: `http://localhost:${port}/health`,
       env: {
         PORT: String(port),
