@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test'
 
-import { signIn } from './address-form.js'
+import {
+  expectNoSeriousOrCriticalAxeViolations,
+  signIn
+} from './address-form.js'
 
 // The stub seeds one address per organisation at a deterministic id
 // (address-book-client.stub.js), so a spec can address it directly.
@@ -58,6 +61,28 @@ test.describe('view address', () => {
     ])
   })
 
+  test('offers Edit and Delete for the address being viewed', async ({
+    page
+  }) => {
+    await openSeedAddress(page, 'stub-org-view-actions')
+
+    // govukButton with an href renders an anchor with role="button", so these
+    // are buttons in the accessibility tree rather than links.
+    const edit = page.getByRole('button', { name: 'Edit' })
+    const remove = page.getByRole('button', { name: 'Delete' })
+
+    await expect(edit).toBeVisible()
+    await expect(edit).toHaveAttribute(
+      'href',
+      `/address-book/${SEED_ADDRESS_ID}/edit`
+    )
+    await expect(remove).toBeVisible()
+    await expect(remove).toHaveAttribute(
+      'href',
+      `/address-book/${SEED_ADDRESS_ID}/delete`
+    )
+  })
+
   test('Back returns to the address book', async ({ page }) => {
     await openSeedAddress(page, 'stub-org-view-back')
 
@@ -67,5 +92,11 @@ test.describe('view address', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: 'Address book' })
     ).toBeVisible()
+  })
+
+  test('has no serious or critical axe violations', async ({ page }) => {
+    await openSeedAddress(page, 'stub-org-view-axe')
+
+    await expectNoSeriousOrCriticalAxeViolations(page, 'Address details')
   })
 })
