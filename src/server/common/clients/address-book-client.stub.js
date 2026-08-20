@@ -10,11 +10,20 @@
  */
 const PAGE_SIZE = 25
 
+// Every /address-book/{id} route validates its param as a Mongo ObjectId and
+// 404s on a mismatch (address-id-params.js), so stub ids have to be 24 hex
+// characters or the view, edit and delete pages are unreachable in stub mode.
+const OBJECT_ID_LENGTH = 24
+
 const store = new Map()
+
+function newObjectId() {
+  return crypto.randomUUID().replaceAll('-', '').slice(0, OBJECT_ID_LENGTH)
+}
 
 function buildSeedAddress(index) {
   return {
-    id: `stub-address-${index}`,
+    id: String(index).padStart(OBJECT_ID_LENGTH, '0'),
     name: `Stub Farm ${index}`,
     addressLine1: `${index} Stub Way`,
     addressLine2: '',
@@ -67,7 +76,7 @@ export const addressBookClient = {
 
   async createAddress(orgId, _traceId, body) {
     const all = seedFor(orgId)
-    const created = { id: `stub-created-${crypto.randomUUID()}`, ...body }
+    const created = { id: newObjectId(), ...body }
     all.push(created)
     return created
   },

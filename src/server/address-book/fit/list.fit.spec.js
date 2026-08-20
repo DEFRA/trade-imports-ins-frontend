@@ -1,19 +1,13 @@
-import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
+
+import {
+  expectNoSeriousOrCriticalAxeViolations,
+  signIn
+} from './address-form.js'
 
 const ORG_DEFAULT = 'stub-org-1'
 const ORG_EMPTY = 'stub-org-empty'
 const ORG_PAGINATED = 'stub-org-paginated'
-
-/**
- * Signs in via the stub-auth route (see server/auth/stub-sign-in.js) - no
- * real Defra ID stub involved, only reachable when AUTH_STUB_MODE=true.
- */
-async function signIn(page, { organisationId = ORG_DEFAULT } = {}) {
-  await page.goto(
-    `/auth/stub-sign-in?organisationId=${encodeURIComponent(organisationId)}`
-  )
-}
 
 test.describe('navigation', () => {
   test('Dashboard and Address book links are visible and navigate correctly', async ({
@@ -86,16 +80,7 @@ test.describe('list and pagination', () => {
     await signIn(page, { organisationId: ORG_DEFAULT })
     await page.goto('/address-book')
 
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-      .analyze()
-    const seriousOrCritical = results.violations.filter(({ impact }) =>
-      ['serious', 'critical'].includes(impact)
-    )
-    expect(
-      seriousOrCritical,
-      `Address book list has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
-    ).toEqual([])
+    await expectNoSeriousOrCriticalAxeViolations(page, 'Address book list')
   })
 
   test('paginates when there are more than 25 addresses', async ({ page }) => {
