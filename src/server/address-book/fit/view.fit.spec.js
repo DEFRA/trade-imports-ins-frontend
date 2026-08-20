@@ -7,6 +7,11 @@ import { signIn } from './address-form.js'
 const SEED_ADDRESS_NAME = 'Stub Farm 1'
 const SEED_ADDRESS_ID = '000000000000000000000001'
 
+async function openSeedAddress(page, organisationId) {
+  await signIn(page, { organisationId })
+  await page.goto(`/address-book/${SEED_ADDRESS_ID}`)
+}
+
 test.describe('view address', () => {
   test('clicking View on a row opens that address details page', async ({
     page
@@ -21,6 +26,46 @@ test.describe('view address', () => {
     )
     await expect(
       page.getByRole('heading', { level: 1, name: SEED_ADDRESS_NAME })
+    ).toBeVisible()
+  })
+
+  test('lists every Standard Address Block field against its label', async ({
+    page
+  }) => {
+    await openSeedAddress(page, 'stub-org-view-rows')
+
+    await expect(page.getByRole('term')).toHaveText([
+      'Name or organisation name',
+      'Address line 1',
+      'Address line 2 (optional)',
+      'Town or city',
+      'County',
+      'Postcode or Zip code',
+      'Country',
+      'Email address',
+      'Phone number'
+    ])
+    await expect(page.getByRole('definition')).toHaveText([
+      SEED_ADDRESS_NAME,
+      '1 Stub Way',
+      '',
+      'Stubton',
+      '',
+      'ST1 1UB',
+      'United Kingdom',
+      'stub-farm-1@example.com',
+      '01234567890'
+    ])
+  })
+
+  test('Back returns to the address book', async ({ page }) => {
+    await openSeedAddress(page, 'stub-org-view-back')
+
+    await page.getByRole('link', { name: 'Back' }).click()
+
+    await expect(page).toHaveURL(/\/address-book$/)
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Address book' })
     ).toBeVisible()
   })
 })
