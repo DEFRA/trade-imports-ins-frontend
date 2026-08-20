@@ -4,11 +4,7 @@ import {
   expectNoSeriousOrCriticalAxeViolations,
   signIn
 } from './address-form.js'
-
-// The stub seeds one address per organisation at a deterministic id
-// (address-book-client.stub.js), so a spec can address it directly.
-const SEED_ADDRESS_NAME = 'Stub Farm 1'
-const SEED_ADDRESS_ID = '000000000000000000000001'
+import { SEED_ADDRESS_ID, SEED_ADDRESS_NAME } from './seed-address.js'
 
 async function openSeedAddress(page, organisationId) {
   await signIn(page, { organisationId })
