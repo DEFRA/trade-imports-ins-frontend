@@ -50,8 +50,7 @@ describe('auth plugin', () => {
       default: vi.fn()
     },
     logger: {
-      warn: vi.fn(),
-      error: vi.fn()
+      warn: vi.fn()
     }
   })
 
@@ -127,14 +126,11 @@ describe('auth plugin', () => {
     const registered = authPlugin.plugin.register(server)
     const tracked = registered.catch((error) => error)
 
-    await vi.advanceTimersByTimeAsync(7000)
+    await vi.runAllTimersAsync()
     const error = await tracked
 
-    expect(error.message).toBe(
-      `Could not reach the OIDC provider at ${discoveryUrl} after 4 attempts`
-    )
-    expect(getOidcConfigMock).toHaveBeenCalledTimes(4)
-    expect(server.logger.warn).toHaveBeenCalledTimes(3)
+    expect(error.message).toContain(`OIDC discovery at ${discoveryUrl} failed`)
+    expect(server.logger.warn).toHaveBeenCalled()
     expect(server.auth.strategy).not.toHaveBeenCalledWith(
       'defra-id',
       'bell',

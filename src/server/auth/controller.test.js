@@ -120,7 +120,7 @@ describe('#authController', () => {
     expect(getPermissions).not.toHaveBeenCalled()
   })
 
-  test('GET /auth/sign-in-oidc renders unauthorised when the token check times out', async () => {
+  test('GET /auth/sign-in-oidc renders unauthorised when token verification fails', async () => {
     verifyToken.mockRejectedValue(new Error('Client request timeout'))
 
     const { statusCode, result } = await server.inject({

@@ -2,8 +2,6 @@ import Wreck from '@hapi/wreck'
 import { getTraceId } from '@defra/hapi-tracing'
 import { config } from '#/config/config.js'
 
-// Wreck arms this timeout twice per call — once for the request, again for the
-// body read — so one attempt can cost 2x this before it rejects.
 const OIDC_TIMEOUT_MS = 1000
 const SERVER_SIDE_ENDPOINTS = ['token_endpoint', 'jwks_uri']
 const LOCAL_HOSTNAMES = new Set(['localhost', 'host.docker.internal'])
