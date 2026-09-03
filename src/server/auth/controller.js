@@ -42,7 +42,10 @@ export const authController = {
       try {
         await verifyToken(token)
       } catch (err) {
-        request.logger?.error({ err }, 'Token verification failed for sign-in')
+        request.logger?.error(
+          { err },
+          'Token verification failed for /auth/sign-in-oidc'
+        )
         return h.view('auth/unauthorised')
       }
 
