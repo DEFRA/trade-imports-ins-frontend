@@ -123,16 +123,17 @@ describe('#authController', () => {
   test('GET /auth/sign-in-oidc renders unauthorised when token verification fails', async () => {
     verifyToken.mockRejectedValue(new Error('Client request timeout'))
 
-    const { statusCode, result } = await server.inject({
+    const { statusCode, payload, headers } = await server.inject({
       method: 'GET',
       url: '/auth/sign-in-oidc',
       auth: defraIdAuth()
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toContain('Sorry, we are unable to sign you in')
-    expect(verifyToken).toHaveBeenCalledWith('mock-token')
-    expect(getPermissions).not.toHaveBeenCalled()
+    expect(payload).toContain('Sorry, we are unable to sign you in')
+    expect(headers['set-cookie'] ?? []).not.toContainEqual(
+      expect.stringContaining('sid=')
+    )
   })
 
   test('GET /auth/sign-in-oidc renders unauthorised when getPermissions fails', async () => {

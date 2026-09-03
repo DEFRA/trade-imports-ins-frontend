@@ -102,8 +102,8 @@ describe('getOidcConfigWithRetry', () => {
     expect(error.message).toBe(
       `OIDC discovery at ${discoveryUrl} failed after 4 attempts`
     )
+    expect(error.cause.code).toBe('ETIMEDOUT')
     expect(wreckGetMock).toHaveBeenCalledTimes(4)
     expect(logger.warn).toHaveBeenCalledTimes(3)
-    expect(error.cause.code).toBe('ETIMEDOUT')
   })
 })
