@@ -3,6 +3,9 @@ import { getTraceId } from '@defra/hapi-tracing'
 import { getOidcConfig } from './get-oidc-config.js'
 import { config } from '#/config/config.js'
 
+// Armed twice per call; higher than OIDC_TIMEOUT_MS for the provider's crypto.
+const TOKEN_ENDPOINT_TIMEOUT_MS = 3000
+
 async function refreshTokens(refreshToken) {
   const { token_endpoint: url } = await getOidcConfig()
 
@@ -21,7 +24,8 @@ async function refreshTokens(refreshToken) {
       [config.get('tracing.header')]: getTraceId() ?? ''
     },
     payload: payload.toString(),
-    json: true
+    json: true,
+    timeout: TOKEN_ENDPOINT_TIMEOUT_MS
   })
 
   // Payload will include both a new access token and a new refresh token

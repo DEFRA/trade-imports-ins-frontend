@@ -89,7 +89,8 @@ describe('refreshTokens', () => {
         [tracingHeader]: traceId
       },
       payload: expectedBody,
-      json: true
+      json: true,
+      timeout: 3000
     })
   })
 
