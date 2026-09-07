@@ -1,17 +1,103 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
 
 {% block content %}
+
   {{ appHeading({
     text: heading,
     caption: "trade-imports-ins-frontend"
   }) }}
 
-  <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <div class="govuk-body" data-testid="app-page-body">
-        <p></p>
-      </div>
-    </div>
+  <div class="govuk-body" data-testid="app-page-body">
+
+    {% if errorList %}
+      {{ govukErrorSummary({
+        titleText: "There is a problem",
+        errorList: errorList
+      }) }}
+    {% endif %}
+
+    <form method="get" action="/" class="govuk-!-margin-bottom-6">
+      {{ govukInput({
+        label: {
+          text: "Search by notification reference"
+        },
+        id: "referenceNumber",
+        name: "referenceNumber",
+        type: "search",
+        value: referenceNumber,
+        classes: "govuk-!-width-two-thirds"
+      }) }}
+      {{ govukButton({
+        text: "Search",
+        classes: "govuk-!-margin-left-2"
+      }) }}
+    </form>
+
+    {% if tableRows.length %}
+      <form method="get" action="/" class="govuk-!-margin-bottom-6">
+        <input type="hidden" name="referenceNumber" value="{{ referenceNumber }}" />
+        {{ govukSelect({
+          id: "sort",
+          name: "sort",
+          label: {
+            text: "Sort by"
+          },
+          items: sortOptions
+        }) }}
+        {{ govukButton({
+          text: "Update sort",
+          classes: "govuk-button--secondary"
+        }) }}
+      </form>
+    {% endif %}
+
+    {% if isEmpty %}
+      <p class="govuk-body" data-testid="dashboard-empty">There are no notifications yet.</p>
+      {{ govukButton({
+        text: "Start a new notification",
+        href: startNewNotificationHref
+      }) }}
+    {% elif noSearchResults %}
+      <p class="govuk-body" data-testid="dashboard-no-results">No notifications found</p>
+      <p class="govuk-body">
+        <a class="govuk-link" href="/">Clear search</a>
+      </p>
+    {% elif tableRows.length %}
+      {% if resultsLabel %}
+        <p class="govuk-body govuk-!-margin-bottom-4" data-testid="dashboard-results-label">
+          {{ resultsLabel }}
+        </p>
+      {% endif %}
+
+      {% if hasSearch %}
+        <p class="govuk-body govuk-!-margin-bottom-4">
+          <a class="govuk-link" href="/" data-testid="dashboard-clear-search">Clear search</a>
+        </p>
+      {% endif %}
+
+      {{ govukTable({
+        head: [
+          { text: "Reference number" },
+          { text: "Status" },
+          { text: "Origin country" },
+          { text: "Commodity" },
+          { text: "Arrival date" },
+          { html: '<span class="govuk-visually-hidden">Action</span>' }
+        ],
+        rows: tableRows
+      }) }}
+
+      {% if pagination %}
+        {{ govukPagination(pagination) }}
+      {% endif %}
+    {% endif %}
+
   </div>
 
 {% endblock %}

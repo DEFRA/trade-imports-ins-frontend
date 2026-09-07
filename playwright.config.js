@@ -1,15 +1,16 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * Playwright config for the Address book feature coverage.
- * Fully self-contained - both INS_MODE=stub (Address Book + Reference Data
- * clients) and AUTH_STUB_MODE=true (skip the real Defra ID OIDC exchange) are
- * set for the webServer below, so no other service needs to be running.
+ * Playwright config for this app's feature coverage (address book, dashboard).
+ * Fully self-contained - both INS_MODE=stub (Address Book + Reference Data +
+ * INS Backend clients) and AUTH_STUB_MODE=true (skip the real Defra ID OIDC
+ * exchange) are set for the webServer below, so no other service needs to be
+ * running.
  */
 const port = Number(process.env.PORT ?? 3050)
 
 export default defineConfig({
-  testDir: './src/server/address-book',
+  testDir: './src/server',
   testMatch: '**/*.fit.spec.js',
   fullyParallel: true,
   timeout: 60_000,
