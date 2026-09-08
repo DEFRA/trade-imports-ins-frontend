@@ -40,6 +40,14 @@ function buildCountryNameMap(countries) {
   )
 }
 
+function buildSortOptions(sort) {
+  return SORT_OPTIONS.map((option) => ({
+    value: option.value,
+    text: option.text,
+    selected: option.value === sort
+  }))
+}
+
 export function buildTableRows(notifications) {
   return notifications.map((notification) => [
     { text: notification.referenceNumber },
@@ -91,11 +99,7 @@ export const homeController = {
         tableRows: buildTableRows(notifications),
         resultsLabel: buildResultsLabel(pagination),
         pagination: buildPaginationLinks(pagination, { sort, referenceNumber }),
-        sortOptions: SORT_OPTIONS.map((option) => ({
-          value: option.value,
-          text: option.text,
-          selected: option.value === sort
-        })),
+        sortOptions: buildSortOptions(sort),
         referenceNumber,
         hasSearch,
         isEmpty,
@@ -112,7 +116,7 @@ export const homeController = {
           tableRows: [],
           resultsLabel: null,
           pagination: null,
-          sortOptions: SORT_OPTIONS,
+          sortOptions: buildSortOptions(sort),
           referenceNumber,
           hasSearch,
           isEmpty: false,
