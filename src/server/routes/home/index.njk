@@ -23,6 +23,7 @@
     {% endif %}
 
     <form method="get" action="/" class="govuk-!-margin-bottom-6">
+      <input type="hidden" name="sort" value="{{ sort }}" />
       {{ govukInput({
         label: {
           text: "Search by notification reference"
