@@ -14,7 +14,7 @@ const NOTIFICATIONS = [
     referenceNumber: 'GBN-AG-26-000001',
     status: 'SUBMITTED',
     originCountry: 'FR',
-    commodity: null,
+    commodity: 'Cattle',
     arrivalDate: '2026-09-10T00:00:00Z',
     lastUpdated: '2026-09-05T09:00:00Z'
   },
