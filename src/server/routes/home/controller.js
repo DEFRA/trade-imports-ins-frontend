@@ -27,6 +27,13 @@ function parseSort(querySort) {
   return SORT_VALUES.has(querySort) ? querySort : DEFAULT_SORT
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('"', '&quot;')
+}
+
 function buildCountryNameMap(countries) {
   return Object.fromEntries(
     countries.map((country) => [country.code, country.name])
@@ -41,7 +48,7 @@ export function buildTableRows(notifications) {
     { text: notification.commodity },
     { text: notification.arrivalDate },
     {
-      html: `<a class="govuk-link" href="${notification.href}">View<span class="govuk-visually-hidden"> ${notification.referenceNumber}</span></a>`
+      html: `<a class="govuk-link" href="${notification.href}">View<span class="govuk-visually-hidden"> ${escapeHtml(notification.referenceNumber)}</span></a>`
     }
   ])
 }
