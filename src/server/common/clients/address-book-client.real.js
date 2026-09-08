@@ -1,6 +1,7 @@
 const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
 import { config } from '#/config/config.js'
+import { parseProblemBody, throwOnError } from './http-client.js'
 
 const addressBookBaseUrl = config.get('tradeImportsAddressBookApi.baseUrl')
 const tracingHeader = config.get('tracing.header')
@@ -17,33 +18,6 @@ function buildHeaders(orgId, traceId) {
     [ORGANISATION_ID_HEADER]: orgId,
     [tracingHeader]: traceId ?? ''
   }
-}
-
-function errorMessageFromBody(body, response) {
-  return (
-    body.detail ||
-    body.message ||
-    body.title ||
-    response.statusText ||
-    `HTTP ${response.status}`
-  )
-}
-
-async function parseProblemBody(response) {
-  return response.json().catch(() => ({}))
-}
-
-async function throwOnError(response) {
-  if (response.ok) {
-    return response
-  }
-
-  const body = await parseProblemBody(response)
-  const error = new Error(errorMessageFromBody(body, response))
-  error.status = response.status
-  error.statusText = response.statusText
-  error.body = body
-  throw error
 }
 
 export function mapApiErrorsToFormErrors(problemBody) {
