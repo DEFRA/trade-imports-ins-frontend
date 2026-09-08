@@ -1,6 +1,10 @@
 import { format, isValid, parseISO } from 'date-fns'
 
 import { config } from '#/config/config.js'
+import {
+  buildPaginationLinks as buildSharedPaginationLinks,
+  buildResultsLabel as buildSharedResultsLabel
+} from './pagination-helper.js'
 
 const LIST_DATE_FORMAT = 'd MMM yyyy'
 const DASHBOARD_PATH = '/'
@@ -46,25 +50,12 @@ export function buildDashboardQueryString({
   return query ? `?${query}` : ''
 }
 
-function normalizePageNumber(page, totalPages) {
-  if (totalPages < 1) {
-    return 1
-  }
-  return Math.min(Math.max(page, 1), totalPages)
-}
-
 /** Builds a results range label for the current page, e.g. "Showing 1-25 of 40". */
 export function buildResultsLabel(pagination) {
-  const { size, totalElements, totalPages } = pagination
-  if (totalElements < 1) {
-    return null
-  }
-
-  const page = normalizePageNumber(pagination.page, totalPages || 1)
-  const from = (page - 1) * size + 1
-  const to = Math.min(page * size, totalElements)
-
-  return `Showing ${from}-${to} of ${totalElements}`
+  return buildSharedResultsLabel(pagination, {
+    sizeField: 'size',
+    totalField: 'totalElements'
+  })
 }
 
 /** Builds numbered govukPagination links from the backend's pagination metadata. */
@@ -72,44 +63,13 @@ export function buildPaginationLinks(
   pagination,
   { sort, referenceNumber } = {}
 ) {
-  const { totalPages, size, totalElements } = pagination
-  const page = normalizePageNumber(pagination.page, totalPages)
-  const queryArgs = { sort, referenceNumber }
-
-  if (totalPages <= 1) {
-    return null
-  }
-
-  const model = {
-    results: {
-      from: (page - 1) * size + 1,
-      to: Math.min(page * size, totalElements),
-      count: totalElements
-    }
-  }
-
-  if (page > 1) {
-    model.previous = {
-      href: `${DASHBOARD_PATH}${buildDashboardQueryString({ ...queryArgs, page: page - 1 })}`
-    }
-  }
-
-  if (page < totalPages) {
-    model.next = {
-      href: `${DASHBOARD_PATH}${buildDashboardQueryString({ ...queryArgs, page: page + 1 })}`
-    }
-  }
-
-  model.items = Array.from({ length: totalPages }, (_, index) => {
-    const number = index + 1
-    return {
-      number: String(number),
-      href: `${DASHBOARD_PATH}${buildDashboardQueryString({ ...queryArgs, page: number })}`,
-      current: number === page
-    }
+  return buildSharedPaginationLinks(pagination, {
+    sizeField: 'size',
+    totalField: 'totalElements',
+    basePath: DASHBOARD_PATH,
+    queryArgs: { sort, referenceNumber },
+    buildQueryString: buildDashboardQueryString
   })
-
-  return model
 }
 
 /**
