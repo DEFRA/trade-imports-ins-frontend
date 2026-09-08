@@ -85,20 +85,23 @@ describe('#homeController', () => {
 
   test('notifications from more than one status all appear in the same list (AC2)', async () => {
     insBackendClient.listNotifications.mockResolvedValue(
-      pageOf([
-        {
-          referenceNumber: 'GBN-AG-26-000001',
-          status: 'SUBMITTED',
-          originCountry: 'GB',
-          arrivalDate: '2026-09-10T00:00:00Z'
-        },
-        {
-          referenceNumber: 'GBN-AG-26-000002',
-          status: 'DRAFT',
-          originCountry: 'GB',
-          arrivalDate: '2026-09-11T00:00:00Z'
-        }
-      ], { totalElements: 2, totalPages: 1 })
+      pageOf(
+        [
+          {
+            referenceNumber: 'GBN-AG-26-000001',
+            status: 'SUBMITTED',
+            originCountry: 'GB',
+            arrivalDate: '2026-09-10T00:00:00Z'
+          },
+          {
+            referenceNumber: 'GBN-AG-26-000002',
+            status: 'DRAFT',
+            originCountry: 'GB',
+            arrivalDate: '2026-09-11T00:00:00Z'
+          }
+        ],
+        { totalElements: 2, totalPages: 1 }
+      )
     )
 
     const { result } = await server.inject({
@@ -152,7 +155,9 @@ describe('#homeController', () => {
       auth: sessionAuth('dashboard-draft-link')
     })
 
-    expect(result).toContain('href="http://localhost:3000/notifications/GBN-AG-26-000002"')
+    expect(result).toContain(
+      'href="http://localhost:3000/notifications/GBN-AG-26-000002"'
+    )
     expect(result).not.toContain('notification-view')
   })
 

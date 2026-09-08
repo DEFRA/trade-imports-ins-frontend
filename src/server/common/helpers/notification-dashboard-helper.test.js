@@ -60,7 +60,12 @@ describe('#buildResultsLabel', () => {
 describe('#buildPaginationLinks', () => {
   test('returns null for a single page', () => {
     expect(
-      buildPaginationLinks({ page: 1, size: 25, totalElements: 3, totalPages: 1 })
+      buildPaginationLinks({
+        page: 1,
+        size: 25,
+        totalElements: 3,
+        totalPages: 1
+      })
     ).toBeNull()
   })
 
@@ -169,7 +174,13 @@ describe('#mapNotificationRows', () => {
 
   test('falls back to the raw country code when no name is known', () => {
     const [row] = mapNotificationRows(
-      [{ referenceNumber: 'GBN-AG-26-000001', status: 'DRAFT', originCountry: 'ZZ' }],
+      [
+        {
+          referenceNumber: 'GBN-AG-26-000001',
+          status: 'DRAFT',
+          originCountry: 'ZZ'
+        }
+      ],
       {}
     )
 

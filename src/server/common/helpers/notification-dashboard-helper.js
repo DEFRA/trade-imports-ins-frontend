@@ -27,7 +27,11 @@ export function formatDisplayDate(value) {
  * referenceNumber, page) so search/sort/pagination round-trip each other's
  * state rather than clobbering it.
  */
-export function buildDashboardQueryString({ page, sort, referenceNumber } = {}) {
+export function buildDashboardQueryString({
+  page,
+  sort,
+  referenceNumber
+} = {}) {
   const params = new URLSearchParams()
   if (referenceNumber) {
     params.set('referenceNumber', referenceNumber)
@@ -64,7 +68,10 @@ export function buildResultsLabel(pagination) {
 }
 
 /** Builds numbered govukPagination links from the backend's pagination metadata. */
-export function buildPaginationLinks(pagination, { sort, referenceNumber } = {}) {
+export function buildPaginationLinks(
+  pagination,
+  { sort, referenceNumber } = {}
+) {
   const { totalPages, size, totalElements } = pagination
   const page = normalizePageNumber(pagination.page, totalPages)
   const queryArgs = { sort, referenceNumber }
@@ -133,9 +140,14 @@ export function mapNotificationRows(notifications, countryNames = {}) {
     referenceNumber: notification.referenceNumber,
     status: notification.status,
     originCountry:
-      countryNames[notification.originCountry] ?? notification.originCountry ?? '',
+      countryNames[notification.originCountry] ??
+      notification.originCountry ??
+      '',
     commodity: notification.commodity ?? '',
     arrivalDate: formatDisplayDate(notification.arrivalDate),
-    href: buildNotificationLink(notification.status, notification.referenceNumber)
+    href: buildNotificationLink(
+      notification.status,
+      notification.referenceNumber
+    )
   }))
 }

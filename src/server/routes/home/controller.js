@@ -111,9 +111,7 @@ export const homeController = {
           isEmpty: false,
           noSearchResults: false,
           startNewNotificationHref: buildStartNewNotificationLink(),
-          errorList: [
-            { text: 'Something went wrong loading the dashboard' }
-          ]
+          errorList: [{ text: 'Something went wrong loading the dashboard' }]
         })
         .code(statusCodes.internalServerError)
     }

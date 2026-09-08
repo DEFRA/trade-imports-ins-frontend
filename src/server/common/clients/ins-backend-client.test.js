@@ -55,7 +55,11 @@ describe('#insBackendClient', () => {
     test('forwards sort and referenceNumber query params', async () => {
       const scope = nock('http://localhost:8090')
         .get('/notifications')
-        .query({ page: '2', sort: 'arrivalDate,asc', referenceNumber: 'GBN-AG-26-000002' })
+        .query({
+          page: '2',
+          sort: 'arrivalDate,asc',
+          referenceNumber: 'GBN-AG-26-000002'
+        })
         .reply(200, {
           content: [],
           page: 2,
@@ -79,8 +83,20 @@ describe('#insBackendClient', () => {
         .get('/notifications')
         .query({ page: '1' })
         .reply(function replyFn() {
-          expect(this.req.headers['trade-imports-organisation-id']).toBeUndefined()
-          return [200, { content: [], page: 1, size: 25, numberOfElements: 0, totalElements: 0, totalPages: 0 }]
+          expect(
+            this.req.headers['trade-imports-organisation-id']
+          ).toBeUndefined()
+          return [
+            200,
+            {
+              content: [],
+              page: 1,
+              size: 25,
+              numberOfElements: 0,
+              totalElements: 0,
+              totalPages: 0
+            }
+          ]
         })
 
       await insBackendClient.listNotifications(traceId, { page: 1 })
