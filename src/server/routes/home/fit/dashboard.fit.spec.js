@@ -35,6 +35,11 @@ test.describe('dashboard', () => {
     await expect(
       page.getByRole('cell', { name: 'GBN-AG-26-000004', exact: true })
     ).toHaveCount(0)
+  })
+
+  test('has no serious or critical axe violations', async ({ page }) => {
+    await signIn(page)
+    await page.goto('/')
 
     await expectNoSeriousOrCriticalAxeViolations(page, 'dashboard')
   })
