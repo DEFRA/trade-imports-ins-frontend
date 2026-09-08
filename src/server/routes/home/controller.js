@@ -95,7 +95,6 @@ export const homeController = {
       return h.view(VIEW, {
         pageTitle: PAGE_TITLE,
         heading: PAGE_TITLE,
-        notifications,
         tableRows: buildTableRows(notifications),
         resultsLabel: buildResultsLabel(pagination),
         pagination: buildPaginationLinks(pagination, { sort, referenceNumber }),
@@ -112,7 +111,6 @@ export const homeController = {
         .view(VIEW, {
           pageTitle: PAGE_TITLE,
           heading: PAGE_TITLE,
-          notifications: [],
           tableRows: [],
           resultsLabel: null,
           pagination: null,
