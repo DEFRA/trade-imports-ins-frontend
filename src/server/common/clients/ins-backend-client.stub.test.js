@@ -4,56 +4,18 @@ import { insBackendClient } from './ins-backend-client.stub.js'
 
 describe('#insBackendClient (stub)', () => {
   describe('listNotifications sorting', () => {
-    test('sorts by arrivalDate,desc (newest first) — the default', async () => {
+    test.each([
+      ['arrivalDate,desc', ['agg-stub-2', 'agg-stub-1', 'agg-stub-3']],
+      ['arrivalDate,asc', ['agg-stub-3', 'agg-stub-1', 'agg-stub-2']],
+      ['lastUpdated,desc', ['agg-stub-3', 'agg-stub-1', 'agg-stub-2']],
+      ['lastUpdated,asc', ['agg-stub-2', 'agg-stub-1', 'agg-stub-3']]
+    ])('sorts by %s', async (sort, expectedOrder) => {
       const { content } = await insBackendClient.listNotifications('trace', {
         page: 1,
-        sort: 'arrivalDate,desc'
+        sort
       })
 
-      expect(content.map((n) => n.aggregateId)).toEqual([
-        'agg-stub-2',
-        'agg-stub-1',
-        'agg-stub-3'
-      ])
-    })
-
-    test('sorts by arrivalDate,asc (oldest first)', async () => {
-      const { content } = await insBackendClient.listNotifications('trace', {
-        page: 1,
-        sort: 'arrivalDate,asc'
-      })
-
-      expect(content.map((n) => n.aggregateId)).toEqual([
-        'agg-stub-3',
-        'agg-stub-1',
-        'agg-stub-2'
-      ])
-    })
-
-    test('sorts by lastUpdated,desc (newest first)', async () => {
-      const { content } = await insBackendClient.listNotifications('trace', {
-        page: 1,
-        sort: 'lastUpdated,desc'
-      })
-
-      expect(content.map((n) => n.aggregateId)).toEqual([
-        'agg-stub-3',
-        'agg-stub-1',
-        'agg-stub-2'
-      ])
-    })
-
-    test('sorts by lastUpdated,asc (oldest first)', async () => {
-      const { content } = await insBackendClient.listNotifications('trace', {
-        page: 1,
-        sort: 'lastUpdated,asc'
-      })
-
-      expect(content.map((n) => n.aggregateId)).toEqual([
-        'agg-stub-2',
-        'agg-stub-1',
-        'agg-stub-3'
-      ])
+      expect(content.map((n) => n.aggregateId)).toEqual(expectedOrder)
     })
 
     test('falls back to the arrivalDate,desc default when sort is omitted', async () => {
