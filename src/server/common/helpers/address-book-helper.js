@@ -1,3 +1,8 @@
+import {
+  buildPaginationLinks as buildSharedPaginationLinks,
+  buildResultsLabel as buildSharedResultsLabel
+} from './pagination-helper.js'
+
 /**
  * Builds a query string for address book list pagination and search.
  */
@@ -16,27 +21,14 @@ export function buildAddressBookQueryString({ page, q, countryCode } = {}) {
   return query ? `?${query}` : ''
 }
 
-function normalizePageNumber(page, totalPages) {
-  if (totalPages < 1) {
-    return 1
-  }
-  return Math.min(Math.max(page, 1), totalPages)
-}
-
 /**
  * Builds a results range label for the current page, e.g. "Showing 1-8 of 24".
  */
 export function buildResultsLabel(pagination) {
-  const { pageSize, totalItems, totalPages } = pagination
-  if (totalItems < 1) {
-    return null
-  }
-
-  const page = normalizePageNumber(pagination.page, totalPages || 1)
-  const from = (page - 1) * pageSize + 1
-  const to = Math.min(page * pageSize, totalItems)
-
-  return `Showing ${from}-${to} of ${totalItems}`
+  return buildSharedResultsLabel(pagination, {
+    sizeField: 'pageSize',
+    totalField: 'totalItems'
+  })
 }
 
 /**
@@ -46,44 +38,13 @@ export function buildPaginationLinks(
   pagination,
   { baseUrl = '/address-book', q, countryCode } = {}
 ) {
-  const { totalPages, pageSize, totalItems } = pagination
-  const page = normalizePageNumber(pagination.page, totalPages)
-  const queryArgs = { q, countryCode }
-
-  if (totalPages <= 1) {
-    return null
-  }
-
-  const model = {
-    results: {
-      from: (page - 1) * pageSize + 1,
-      to: Math.min(page * pageSize, totalItems),
-      count: totalItems
-    }
-  }
-
-  if (page > 1) {
-    model.previous = {
-      href: `${baseUrl}${buildAddressBookQueryString({ ...queryArgs, page: page - 1 })}`
-    }
-  }
-
-  if (page < totalPages) {
-    model.next = {
-      href: `${baseUrl}${buildAddressBookQueryString({ ...queryArgs, page: page + 1 })}`
-    }
-  }
-
-  model.items = Array.from({ length: totalPages }, (_, index) => {
-    const number = index + 1
-    return {
-      number: String(number),
-      href: `${baseUrl}${buildAddressBookQueryString({ ...queryArgs, page: number })}`,
-      current: number === page
-    }
+  return buildSharedPaginationLinks(pagination, {
+    sizeField: 'pageSize',
+    totalField: 'totalItems',
+    basePath: baseUrl,
+    queryArgs: { q, countryCode },
+    buildQueryString: buildAddressBookQueryString
   })
-
-  return model
 }
 
 export function buildAddressLine(address) {

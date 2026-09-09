@@ -372,6 +372,22 @@ export const config = convict({
       default: 'http://localhost:8086',
       env: 'TRADE_IMPORTS_REFERENCE_DATA_URL'
     }
+  },
+  tradeImportsInsBackendApi: {
+    baseUrl: {
+      doc: 'Trade Imports INS Backend API base URL',
+      format: String,
+      default: 'http://localhost:8090',
+      env: 'TRADE_IMPORTS_INS_BACKEND_URL'
+    }
+  },
+  tradeImportsAnimalsFrontend: {
+    baseUrl: {
+      doc: "Trade Imports Animals Frontend base URL. Browser-visible — used to build deep links the trader's own browser navigates to, so it must resolve outside the Docker network (unlike the server-side API base URLs above).",
+      format: String,
+      default: 'http://localhost:3000',
+      env: 'TRADE_IMPORTS_ANIMALS_FRONTEND_URL'
+    }
   }
 })
 
