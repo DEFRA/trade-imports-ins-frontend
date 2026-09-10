@@ -43,4 +43,28 @@ describe('journey-registry', () => {
       'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
     )
   })
+
+  test('buildReturnUrl strips a trailing slash from the animals base URL', () => {
+    config.set('tradeImportsAnimalsFrontend.baseUrl', 'http://localhost:3000/')
+
+    const url = buildReturnUrl({
+      journeyType: JOURNEY_TYPES.GBN_AG,
+      notificationId: 'GBN-AG-26-4F7K2P',
+      fulfilmentId: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+    })
+
+    expect(url).toBe(
+      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+    )
+  })
+
+  test('buildReturnUrl throws for an unregistered journey type', () => {
+    expect(() =>
+      buildReturnUrl({
+        journeyType: 'not-a-journey',
+        notificationId: 'GBN-AG-26-4F7K2P',
+        fulfilmentId: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+      })
+    ).toThrow('Unknown journey type "not-a-journey"')
+  })
 })
