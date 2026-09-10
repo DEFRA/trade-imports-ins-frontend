@@ -103,6 +103,9 @@ const renderAddForm = (
     )
     .code(statusCode)
 
+const loadCountryItems = async (traceId) =>
+  buildCountrySelectItems(await getAddressFormCountries(traceId).catch(() => []))
+
 async function submitAddress(request, h, { traceId, handshake, orgId, formValues }) {
   try {
     const countries = await getAddressFormCountries(traceId)
@@ -143,13 +146,12 @@ async function submitAddress(request, h, { traceId, handshake, orgId, formValues
   } catch (err) {
     const status = err?.status ?? err?.output?.statusCode
     if (Number(status) === 400 && err.body?.errors) {
-      const countries = await getAddressFormCountries(traceId).catch(() => [])
       const formattedErrors = mapApiErrorsToFormErrors(err.body)
       return renderAddForm(
         h,
         {
           formValues,
-          countryItems: buildCountrySelectItems(countries),
+          countryItems: await loadCountryItems(traceId),
           errorList: formattedErrors.errorList,
           fieldErrors: formattedErrors.fieldErrors,
           handshake
@@ -159,12 +161,11 @@ async function submitAddress(request, h, { traceId, handshake, orgId, formValues
     }
 
     logger.error({ err, traceId, orgId }, 'Failed to create address')
-    const countries = await getAddressFormCountries(traceId).catch(() => [])
     return renderAddForm(
       h,
       {
         formValues,
-        countryItems: buildCountrySelectItems(countries),
+        countryItems: await loadCountryItems(traceId),
         errorList: [{ text: 'Something went wrong saving the address' }],
         handshake
       },
