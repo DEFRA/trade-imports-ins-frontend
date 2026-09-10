@@ -9,6 +9,7 @@ import {
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 import { countriesClient } from '#/server/common/clients/countries-client.js'
 import { config } from '#/config/config.js'
+import { JOURNEY_TYPES } from '../journey-registry.js'
 
 vi.mock('#/auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
@@ -39,8 +40,17 @@ describe.sequential('#addressBookAddController', () => {
 
   beforeEach(() => {
     config.set('csrf.enabled', false)
+    config.set('tradeImportsAnimalsFrontend.baseUrl', 'http://localhost:3000')
     vi.mocked(countriesClient.getCountries).mockResolvedValue(mockCountries)
   })
+
+  const handshakeQuery =
+    '?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+  const handshakeFields = {
+    'journey-type': 'gbn-ag',
+    'notification-id': 'GBN-AG-26-4F7K2P',
+    'fulfilment-id': '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+  }
 
   test('GET renders the add address details form', async () => {
     const { result, statusCode } = await server.inject({
@@ -168,6 +178,72 @@ describe.sequential('#addressBookAddController', () => {
 
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
+    expect(addressBookClient.createAddress).not.toHaveBeenCalled()
+  })
+
+  test('GET with handshake query renders the add form', async () => {
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/add${handshakeQuery}`,
+      auth: sessionAuth('add-get-handshake')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('Add address details')
+  })
+
+  test('GET refuses an unrecognised journey type', async () => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book/add?journey-type=not-a-journey&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',
+      auth: sessionAuth('add-get-unknown-journey')
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  test('POST handshake save redirects to animals with the new address id', async () => {
+    vi.mocked(addressBookClient.createAddress).mockReset()
+    addressBookClient.createAddress.mockResolvedValue({
+      id: '665f1c2ab3e4d51a2c9d0e77',
+      name: 'Highland Livestock Ltd'
+    })
+
+    const post = await server.inject({
+      method: 'POST',
+      url: '/address-book/add',
+      auth: sessionAuth('add-post-handshake-session'),
+      payload: {
+        ...handshakeFields,
+        name: 'Highland Livestock Ltd',
+        addressLine1: "14 Drover's Way",
+        townOrCity: 'Inverness',
+        postcode: 'IV2 3JH',
+        countryCode: 'GB',
+        phone: '+44 1463 234567',
+        email: 'exports@example.com'
+      }
+    })
+
+    expect(post.statusCode).toBe(statusCodes.redirect)
+    expect(post.headers.location).toBe(
+      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&addressId=665f1c2ab3e4d51a2c9d0e77'
+    )
+    expect(JOURNEY_TYPES.GBN_AG).toBe('gbn-ag')
+  })
+
+  test('POST handshake cancel returns to animals without creating an address', async () => {
+    const post = await server.inject({
+      method: 'POST',
+      url: '/address-book/add',
+      auth: sessionAuth('add-post-handshake-cancel'),
+      payload: { cancel: 'true', ...handshakeFields }
+    })
+
+    expect(post.statusCode).toBe(statusCodes.redirect)
+    expect(post.headers.location).toBe(
+      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+    )
     expect(addressBookClient.createAddress).not.toHaveBeenCalled()
   })
 
