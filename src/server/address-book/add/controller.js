@@ -15,6 +15,11 @@ import { setSessionValue } from '#/server/common/helpers/session-helpers.js'
 import { sessionKeys } from '#/server/common/constants/session-keys.js'
 import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
+import { buildReturnUrl } from '../journey-registry.js'
+import {
+  resolveHandshakeContext,
+  syncHandshakeContext
+} from '../handshake-context.js'
 
 const logger = createLogger()
 const VIEW = 'address-book/add/index'
@@ -48,21 +53,43 @@ function payloadToFormValues(payload) {
   }
 }
 
-function buildViewModel({ formValues, countryItems, errorList, fieldErrors }) {
+function buildViewModel({
+  formValues,
+  countryItems,
+  errorList,
+  fieldErrors,
+  handshakeContext
+}) {
   return {
     pageTitle: PAGE_TITLE,
     heading: PAGE_TITLE,
     formValues,
     countryItems,
     errorList,
-    fieldErrors
+    fieldErrors,
+    handshakeContext
   }
+}
+
+const redirectAfterAdd = (h, handshake, created) => {
+  if (handshake) {
+    return h.redirect(buildReturnUrl(handshake, { addressId: created.id }))
+  }
+  return h.redirect('/address-book')
+}
+
+const redirectAfterCancel = (h, handshake) => {
+  if (handshake) {
+    return h.redirect(buildReturnUrl(handshake))
+  }
+  return h.redirect('/address-book')
 }
 
 export const addController = {
   get: {
     async handler(request, h) {
       const traceId = getTraceId() ?? ''
+      const handshake = syncHandshakeContext(request)
 
       try {
         const countries = await getAddressFormCountries(traceId)
@@ -71,7 +98,8 @@ export const addController = {
           VIEW,
           buildViewModel({
             formValues: emptyFormValues(),
-            countryItems: buildCountrySelectItems(countries)
+            countryItems: buildCountrySelectItems(countries),
+            handshakeContext: handshake
           })
         )
       } catch (err) {
@@ -80,7 +108,8 @@ export const addController = {
           .view(VIEW, {
             ...buildViewModel({
               formValues: emptyFormValues(),
-              countryItems: []
+              countryItems: [],
+              handshakeContext: handshake
             }),
             errorList: [{ text: 'Something went wrong loading the form' }]
           })
@@ -91,12 +120,13 @@ export const addController = {
   post: {
     async handler(request, h) {
       const traceId = getTraceId() ?? ''
-      const orgId = requireOrganisationId(request)
+      const handshake = resolveHandshakeContext(request)
 
       if (request.payload.cancel) {
-        return h.redirect('/address-book')
+        return redirectAfterCancel(h, handshake)
       }
 
+      const orgId = requireOrganisationId(request)
       const formValues = payloadToFormValues(request.payload)
 
       try {
@@ -118,7 +148,8 @@ export const addController = {
                 formValues,
                 countryItems,
                 errorList: formattedErrors.errorList,
-                fieldErrors: formattedErrors.fieldErrors
+                fieldErrors: formattedErrors.fieldErrors,
+                handshakeContext: handshake
               })
             )
             .code(statusCodes.badRequest)
@@ -130,13 +161,15 @@ export const addController = {
           value
         )
 
-        setSessionValue(
-          request,
-          sessionKeys.addressBookSuccess,
-          `${created.name} added to your address book`
-        )
+        if (!handshake) {
+          setSessionValue(
+            request,
+            sessionKeys.addressBookSuccess,
+            `${created.name} added to your address book`
+          )
+        }
 
-        return h.redirect('/address-book')
+        return redirectAfterAdd(h, handshake, created)
       } catch (err) {
         const status = err?.status ?? err?.output?.statusCode
         if (Number(status) === 400 && err.body?.errors) {
@@ -151,7 +184,8 @@ export const addController = {
                 formValues,
                 countryItems: buildCountrySelectItems(countries),
                 errorList: formattedErrors.errorList,
-                fieldErrors: formattedErrors.fieldErrors
+                fieldErrors: formattedErrors.fieldErrors,
+                handshakeContext: handshake
               })
             )
             .code(statusCodes.badRequest)
@@ -163,7 +197,8 @@ export const addController = {
           .view(VIEW, {
             ...buildViewModel({
               formValues,
-              countryItems: buildCountrySelectItems(countries)
+              countryItems: buildCountrySelectItems(countries),
+              handshakeContext: handshake
             }),
             errorList: [{ text: 'Something went wrong saving the address' }]
           })
