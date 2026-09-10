@@ -85,6 +85,94 @@ const redirectAfterCancel = (h, handshake) => {
   return h.redirect('/address-book')
 }
 
+const renderAddForm = (
+  h,
+  { formValues, countryItems, errorList, fieldErrors, handshake },
+  statusCode
+) =>
+  h
+    .view(
+      VIEW,
+      buildViewModel({
+        formValues,
+        countryItems,
+        errorList,
+        fieldErrors,
+        handshakeContext: handshake
+      })
+    )
+    .code(statusCode)
+
+async function submitAddress(request, h, { traceId, handshake, orgId, formValues }) {
+  try {
+    const countries = await getAddressFormCountries(traceId)
+    const countryItems = buildCountrySelectItems(countries)
+    const mdmCodes = countries.map((country) => country.code)
+    const schema = buildAddressSchema(mdmCodes)
+
+    const { error, value } = schema.validate(formValues, {
+      abortEarly: false
+    })
+
+    if (error) {
+      const formattedErrors = formatValidationErrors(error)
+      return renderAddForm(
+        h,
+        {
+          formValues,
+          countryItems,
+          errorList: formattedErrors.errorList,
+          fieldErrors: formattedErrors.fieldErrors,
+          handshake
+        },
+        statusCodes.badRequest
+      )
+    }
+
+    const created = await addressBookClient.createAddress(orgId, traceId, value)
+
+    if (!handshake) {
+      setSessionValue(
+        request,
+        sessionKeys.addressBookSuccess,
+        `${created.name} added to your address book`
+      )
+    }
+
+    return redirectAfterAdd(h, handshake, created)
+  } catch (err) {
+    const status = err?.status ?? err?.output?.statusCode
+    if (Number(status) === 400 && err.body?.errors) {
+      const countries = await getAddressFormCountries(traceId).catch(() => [])
+      const formattedErrors = mapApiErrorsToFormErrors(err.body)
+      return renderAddForm(
+        h,
+        {
+          formValues,
+          countryItems: buildCountrySelectItems(countries),
+          errorList: formattedErrors.errorList,
+          fieldErrors: formattedErrors.fieldErrors,
+          handshake
+        },
+        statusCodes.badRequest
+      )
+    }
+
+    logger.error({ err, traceId, orgId }, 'Failed to create address')
+    const countries = await getAddressFormCountries(traceId).catch(() => [])
+    return renderAddForm(
+      h,
+      {
+        formValues,
+        countryItems: buildCountrySelectItems(countries),
+        errorList: [{ text: 'Something went wrong saving the address' }],
+        handshake
+      },
+      statusCodes.internalServerError
+    )
+  }
+}
+
 export const addController = {
   get: {
     async handler(request, h) {
@@ -129,81 +217,12 @@ export const addController = {
       const orgId = requireOrganisationId(request)
       const formValues = payloadToFormValues(request.payload)
 
-      try {
-        const countries = await getAddressFormCountries(traceId)
-        const countryItems = buildCountrySelectItems(countries)
-        const mdmCodes = countries.map((country) => country.code)
-        const schema = buildAddressSchema(mdmCodes)
-
-        const { error, value } = schema.validate(formValues, {
-          abortEarly: false
-        })
-
-        if (error) {
-          const formattedErrors = formatValidationErrors(error)
-          return h
-            .view(
-              VIEW,
-              buildViewModel({
-                formValues,
-                countryItems,
-                errorList: formattedErrors.errorList,
-                fieldErrors: formattedErrors.fieldErrors,
-                handshakeContext: handshake
-              })
-            )
-            .code(statusCodes.badRequest)
-        }
-
-        const created = await addressBookClient.createAddress(
-          orgId,
-          traceId,
-          value
-        )
-
-        if (!handshake) {
-          setSessionValue(
-            request,
-            sessionKeys.addressBookSuccess,
-            `${created.name} added to your address book`
-          )
-        }
-
-        return redirectAfterAdd(h, handshake, created)
-      } catch (err) {
-        const status = err?.status ?? err?.output?.statusCode
-        if (Number(status) === 400 && err.body?.errors) {
-          const countries = await getAddressFormCountries(traceId).catch(
-            () => []
-          )
-          const formattedErrors = mapApiErrorsToFormErrors(err.body)
-          return h
-            .view(
-              VIEW,
-              buildViewModel({
-                formValues,
-                countryItems: buildCountrySelectItems(countries),
-                errorList: formattedErrors.errorList,
-                fieldErrors: formattedErrors.fieldErrors,
-                handshakeContext: handshake
-              })
-            )
-            .code(statusCodes.badRequest)
-        }
-
-        logger.error({ err, traceId, orgId }, 'Failed to create address')
-        const countries = await getAddressFormCountries(traceId).catch(() => [])
-        return h
-          .view(VIEW, {
-            ...buildViewModel({
-              formValues,
-              countryItems: buildCountrySelectItems(countries),
-              handshakeContext: handshake
-            }),
-            errorList: [{ text: 'Something went wrong saving the address' }]
-          })
-          .code(statusCodes.internalServerError)
-      }
+      return submitAddress(request, h, {
+        traceId,
+        handshake,
+        orgId,
+        formValues
+      })
     }
   }
 }
