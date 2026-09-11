@@ -114,7 +114,7 @@
       <div class="govuk-button-group">
         {{ govukButton({ text: "Save and continue" }) }}
         {{ govukButton({
-          text: "Cancel and return to address book",
+          text: "Cancel and return to address page" if handshakeContext else "Cancel and return to address book",
           name: "cancel",
           value: "true",
           classes: "govuk-button--secondary"

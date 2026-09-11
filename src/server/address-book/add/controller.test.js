@@ -239,6 +239,8 @@ describe.sequential('#addressBookAddController', () => {
     expect(result).toContain('value="gbn-ag"')
     expect(result).toContain('name="notification-id"')
     expect(result).toContain('name="fulfilment-id"')
+    expect(result).toContain('Cancel and return to address page')
+    expect(result).not.toContain('Cancel and return to address book')
   })
 
   test('POST handshake save redirects to animals with the new address id', async () => {
