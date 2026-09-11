@@ -19,6 +19,11 @@
 
     <form method="post" novalidate>
       <input type="hidden" name="crumb" value="{{ crumb }}" />
+      {% if handshakeContext %}
+        <input type="hidden" name="journey-type" value="{{ handshakeContext.journeyType }}" />
+        <input type="hidden" name="notification-id" value="{{ handshakeContext.notificationId }}" />
+        <input type="hidden" name="fulfilment-id" value="{{ handshakeContext.fulfilmentId }}" />
+      {% endif %}
 
       <h2 class="govuk-heading-m">Enter address details</h2>
 
@@ -109,7 +114,7 @@
       <div class="govuk-button-group">
         {{ govukButton({ text: "Save and continue" }) }}
         {{ govukButton({
-          text: "Cancel and return to address book",
+          text: "Cancel and return to address page" if handshakeContext else "Cancel and return to address book",
           name: "cancel",
           value: "true",
           classes: "govuk-button--secondary"

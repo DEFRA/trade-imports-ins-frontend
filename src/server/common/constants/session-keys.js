@@ -1,3 +1,4 @@
 export const sessionKeys = {
-  addressBookSuccess: 'addressBookSuccess'
+  addressBookSuccess: 'addressBookSuccess',
+  addressBookHandshake: 'addressBookHandshake'
 }
