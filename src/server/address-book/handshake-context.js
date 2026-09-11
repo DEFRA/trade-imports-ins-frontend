@@ -77,13 +77,25 @@ export const readHandshakePayload = (payload) => {
   }
 }
 
+const validatedSessionContext = (request) => {
+  const fromSession = loadHandshakeContext(request)
+  if (!fromSession) {
+    return null
+  }
+  if (!isKnownJourneyType(fromSession.journeyType)) {
+    storeHandshakeContext(request, null)
+    return null
+  }
+  return fromSession
+}
+
 export const resolveHandshakeContext = (request) => {
   const fromPayload = readHandshakePayload(request.payload)
   if (fromPayload) {
     storeHandshakeContext(request, fromPayload)
     return fromPayload
   }
-  return loadHandshakeContext(request)
+  return validatedSessionContext(request)
 }
 
 export const syncHandshakeContext = (request) => {
