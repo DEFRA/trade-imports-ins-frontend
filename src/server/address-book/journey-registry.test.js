@@ -58,6 +58,22 @@ describe('journey-registry', () => {
     )
   })
 
+  test('buildReturnUrl URI-encodes opaque ids that contain reserved characters', () => {
+    config.set('tradeImportsAnimalsFrontend.baseUrl', 'http://localhost:3000')
+    const notificationId = 'GBN-AG/26?x'
+    const fulfilmentId = '9ad1&b=c/d'
+
+    const url = buildReturnUrl({
+      journeyType: JOURNEY_TYPES.GBN_AG,
+      notificationId,
+      fulfilmentId
+    })
+
+    expect(url).toBe(
+      `http://localhost:3000/notifications/${encodeURIComponent(notificationId)}/address-return?fulfilment-id=${encodeURIComponent(fulfilmentId)}`
+    )
+  })
+
   test('buildReturnUrl throws for an unregistered journey type', () => {
     expect(() =>
       buildReturnUrl({

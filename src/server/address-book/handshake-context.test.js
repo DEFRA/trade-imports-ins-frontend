@@ -161,6 +161,24 @@ describe('resolveHandshakeContext', () => {
 
     expect(resolveHandshakeContext(request)).toEqual(validContext)
   })
+
+  test('clears and ignores a session whose journey type is no longer registered', () => {
+    const request = mockRequest(
+      {},
+      { name: 'Farm' },
+      {
+        [sessionKeys.addressBookHandshake]: {
+          ...validContext,
+          journeyType: 'retired-journey'
+        }
+      }
+    )
+
+    expect(resolveHandshakeContext(request)).toBeNull()
+    expect(request.yar.clear).toHaveBeenCalledWith(
+      sessionKeys.addressBookHandshake
+    )
+  })
 })
 
 describe('syncHandshakeContext', () => {
