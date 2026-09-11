@@ -152,7 +152,9 @@ export const config = convict({
       name: {
         doc: 'server side session cache name',
         format: String,
-        default: 'session',
+        // localhost cookies are host-scoped (not port-scoped) — keep INS distinct
+        // from animals-frontend when both run on localhost during development.
+        default: isDevelopment ? 'ins-session' : 'session',
         env: 'SESSION_CACHE_NAME'
       },
       ttl: {
@@ -266,7 +268,7 @@ export const config = convict({
     cookieName: {
       doc: 'Auth session cookie name. Override on localhost when multiple frontends share the host so INS sign-in does not overwrite animals-frontend cookies.',
       format: String,
-      default: 'sid',
+      default: isDevelopment ? 'ins-sid' : 'sid',
       env: 'AUTH_SESSION_COOKIE_NAME'
     },
     enabled: {
