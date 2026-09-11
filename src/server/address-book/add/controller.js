@@ -104,9 +104,15 @@ const renderAddForm = (
     .code(statusCode)
 
 const loadCountryItems = async (traceId) =>
-  buildCountrySelectItems(await getAddressFormCountries(traceId).catch(() => []))
+  buildCountrySelectItems(
+    await getAddressFormCountries(traceId).catch(() => [])
+  )
 
-async function submitAddress(request, h, { traceId, handshake, orgId, formValues }) {
+async function submitAddress(
+  request,
+  h,
+  { traceId, handshake, orgId, formValues }
+) {
   try {
     const countries = await getAddressFormCountries(traceId)
     const countryItems = buildCountrySelectItems(countries)
