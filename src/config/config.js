@@ -263,6 +263,12 @@ export const config = convict({
     }
   },
   auth: {
+    cookieName: {
+      doc: 'Auth session cookie name. Override on localhost when multiple frontends share the host so INS sign-in does not overwrite animals-frontend cookies.',
+      format: String,
+      default: 'sid',
+      env: 'AUTH_SESSION_COOKIE_NAME'
+    },
     enabled: {
       doc: 'Enable authentication (Bell + session cookie)',
       format: Boolean,
