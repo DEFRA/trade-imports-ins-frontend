@@ -38,7 +38,7 @@ const buildView = (h, { formValues, countryItems, errorList, fieldErrors }) =>
 const countryItemsOrNone = async () =>
   buildCountrySelectItems(await getAddressFormCountries().catch(() => []))
 
-const get = async (request, h) => {
+const get = async (_request, h) => {
   try {
     const countries = await getAddressFormCountries()
     return buildView(h, {
