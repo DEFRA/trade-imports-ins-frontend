@@ -9,7 +9,7 @@ import { defineConfig, devices } from '@playwright/test'
 const port = Number(process.env.PORT ?? 3050)
 
 export default defineConfig({
-  testDir: './src/server',
+  testDir: './src/server/app/features',
   testMatch: '**/*.fit.spec.js',
   fullyParallel: true,
   timeout: 60_000,

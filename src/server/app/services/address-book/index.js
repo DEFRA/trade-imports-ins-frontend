@@ -1,4 +1,5 @@
 import { isStubMode } from '../../../common/services/mode.js'
+import { HTTP_STATUS_BAD_REQUEST } from '../../lib/http-status.js'
 import * as client from './client.js'
 import * as stub from './stub.js'
 
@@ -31,3 +32,6 @@ export const mapApiErrorsToFormErrors = (problemBody) => {
   )
   return { errorList, fieldErrors }
 }
+
+export const isValidationFailure = (err) =>
+  err?.status === HTTP_STATUS_BAD_REQUEST && Boolean(err.body?.errors)

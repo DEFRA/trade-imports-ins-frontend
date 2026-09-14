@@ -76,7 +76,7 @@ describe('#buildPaginationLinks', () => {
     )
 
     // page 1 is the default and is omitted from the querystring, matching
-    // address-book-helper.js's buildAddressBookQueryString convention.
+    // the address book's buildAddressBookQueryString convention.
     expect(model.previous.href).toBe('/?sort=lastUpdated%2Casc')
     expect(model.next.href).toBe('/?sort=lastUpdated%2Casc&page=3')
     expect(model.items).toHaveLength(3)

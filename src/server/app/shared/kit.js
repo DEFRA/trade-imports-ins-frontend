@@ -1,9 +1,8 @@
 import Boom from '@hapi/boom'
 
-import { sessionAuthRouteOptions } from '../../common/constants/session-auth-route-options.js'
 import { organisationIdOf } from '../../common/helpers/organisation-id.js'
 
-export const routeOptions = sessionAuthRouteOptions
+export const routeOptions = { auth: 'session' }
 
 export const sharedCopy = {}
 
@@ -80,11 +79,12 @@ export const requireOrganisationId = (request) => {
  * @param {Function} handlers.get - renders the page.
  * @param {Function} [handlers.post] - handles the page's form; omit it on a
  * page with no form.
+ * @param {object} [options] - the Hapi route options for both routes; a page
+ * whose path carries a parameter passes its own so the parameter is
+ * validated before the handler runs.
  * @returns {object[]} the Hapi routes.
  */
-export const pageRoutes = (path, { get, post }) => [
-  { method: 'GET', path, options: routeOptions, handler: get },
-  ...(post
-    ? [{ method: 'POST', path, options: routeOptions, handler: post }]
-    : [])
+export const pageRoutes = (path, { get, post }, options = routeOptions) => [
+  { method: 'GET', path, options, handler: get },
+  ...(post ? [{ method: 'POST', path, options, handler: post }] : [])
 ]

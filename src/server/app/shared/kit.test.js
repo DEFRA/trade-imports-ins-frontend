@@ -118,6 +118,27 @@ describe('#pageRoutes', () => {
     ])
   })
 
+  it('Should apply the route options a page supplies to both routes', () => {
+    const options = { ...routeOptions, validate: { params: {} } }
+
+    expect(
+      pageRoutes('/address-book/{id}/edit', { get, post }, options)
+    ).toEqual([
+      {
+        method: 'GET',
+        path: '/address-book/{id}/edit',
+        options,
+        handler: get
+      },
+      {
+        method: 'POST',
+        path: '/address-book/{id}/edit',
+        options,
+        handler: post
+      }
+    ])
+  })
+
   it('Should name the session strategy on every route', () => {
     expect(routeOptions).toEqual({ auth: 'session' })
   })

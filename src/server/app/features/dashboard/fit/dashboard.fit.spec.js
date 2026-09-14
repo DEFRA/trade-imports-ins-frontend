@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 import {
   expectNoSeriousOrCriticalAxeViolations,
   signIn
-} from '../../../../address-book/fit/address-form.js'
+} from '../../address-book/fit/address-form.js'
 
 test.describe('dashboard', () => {
   test('shows notifications from every status with enough to identify the consignment (AC1, AC2)', async ({

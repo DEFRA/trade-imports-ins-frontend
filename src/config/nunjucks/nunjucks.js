@@ -41,7 +41,7 @@ export const nunjucksConfig = {
       environment: nunjucksEnvironment
     },
     relativeTo: path.resolve(dirname, '../..'),
-    path: ['server/app', 'server/app/features', 'server'],
+    path: ['server/app', 'server/app/features'],
     isCached: !config.get('nunjucks.noCache'),
     context
   }

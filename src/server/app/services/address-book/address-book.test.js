@@ -251,15 +251,37 @@ describe('#mapApiErrorsToFormErrors', () => {
 })
 
 describe('the public surface', () => {
-  test('Should expose the five address operations and the error mapper, nothing else', () => {
+  test('Should expose the five address operations, the error mapper and the validation-failure predicate, nothing else', () => {
     expect(Object.keys(addressBook).sort()).toEqual([
       'createAddress',
       'deleteAddress',
       'getAddress',
+      'isValidationFailure',
       'listAddresses',
       'mapApiErrorsToFormErrors',
       'updateAddress'
     ])
+  })
+})
+
+describe('#isValidationFailure', () => {
+  test('Should recognise the 400 the client raises with field errors', () => {
+    expect(
+      addressBook.isValidationFailure({
+        status: 400,
+        body: { errors: { email: ['Enter an email address'] } }
+      })
+    ).toBe(true)
+  })
+
+  test('Should refuse any other failure, including a 400 without field errors', () => {
+    expect(addressBook.isValidationFailure({ status: 400, body: {} })).toBe(
+      false
+    )
+    expect(
+      addressBook.isValidationFailure({ status: 500, body: { errors: {} } })
+    ).toBe(false)
+    expect(addressBook.isValidationFailure(undefined)).toBe(false)
   })
 })
 
