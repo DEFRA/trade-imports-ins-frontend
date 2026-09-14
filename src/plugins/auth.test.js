@@ -231,6 +231,17 @@ describe('auth plugin', () => {
   })
 
   describe('getCookieOptions', () => {
+    const buildRequestWithCachedSession = (userSession) => ({
+      server: {
+        app: {
+          cache: {
+            get: vi.fn().mockResolvedValue(userSession),
+            set: vi.fn()
+          }
+        }
+      }
+    })
+
     test('redirectTo builds /auth/sign-in redirect including pathname and search', () => {
       const options = getCookieOptions()
 
@@ -268,16 +279,7 @@ describe('auth plugin', () => {
         refreshToken: 'refresh-token'
       }
 
-      const request = {
-        server: {
-          app: {
-            cache: {
-              get: vi.fn().mockResolvedValue(userSession),
-              set: vi.fn()
-            }
-          }
-        }
-      }
+      const request = buildRequestWithCachedSession(userSession)
 
       jwtDecodeMock.mockReturnValue({ exp: 999999 })
       jwtVerifyTimeMock.mockImplementation(() => undefined)
@@ -296,16 +298,7 @@ describe('auth plugin', () => {
         refreshToken: 'old-refresh'
       }
 
-      const request = {
-        server: {
-          app: {
-            cache: {
-              get: vi.fn().mockResolvedValue(userSession),
-              set: vi.fn()
-            }
-          }
-        }
-      }
+      const request = buildRequestWithCachedSession(userSession)
 
       jwtDecodeMock.mockReturnValue({ exp: 1 })
       jwtVerifyTimeMock.mockImplementation(() => {
@@ -361,16 +354,7 @@ describe('auth plugin', () => {
         refreshToken: 'old-refresh'
       }
 
-      const request = {
-        server: {
-          app: {
-            cache: {
-              get: vi.fn().mockResolvedValue(userSession),
-              set: vi.fn()
-            }
-          }
-        }
-      }
+      const request = buildRequestWithCachedSession(userSession)
 
       jwtDecodeMock.mockReturnValue({ exp: 1 })
       jwtVerifyTimeMock.mockImplementation(() => {
@@ -391,16 +375,7 @@ describe('auth plugin', () => {
         refreshToken: 'old-refresh'
       }
 
-      const request = {
-        server: {
-          app: {
-            cache: {
-              get: vi.fn().mockResolvedValue(userSession),
-              set: vi.fn()
-            }
-          }
-        }
-      }
+      const request = buildRequestWithCachedSession(userSession)
 
       jwtDecodeMock.mockReturnValue({ exp: 1 })
       jwtVerifyTimeMock.mockImplementation(() => {
