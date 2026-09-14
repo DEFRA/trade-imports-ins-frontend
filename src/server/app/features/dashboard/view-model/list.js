@@ -59,12 +59,12 @@ const pageRange = ({ page, size, totalElements, totalPages }) => {
 }
 
 /** The results range for the current page, in the copy's words, or null with no results. */
-export function buildResultsLabel(pagination, format) {
+export function buildResultsLabel(pagination, formatLabel) {
   if (pagination.totalElements < 1) {
     return null
   }
   const { from, to, count } = pageRange(pagination)
-  return format(from, to, count)
+  return formatLabel(from, to, count)
 }
 
 /** Builds numbered govukPagination links from the backend's pagination metadata. */
