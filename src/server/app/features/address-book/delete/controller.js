@@ -1,5 +1,6 @@
 import { deleteAddress } from '../../../services/address-book/index.js'
 import * as kit from '../../../shared/kit.js'
+import { copyFor } from '../../../shared/copy.js'
 import {
   addressBookPath,
   addressDeleteRoutePath,
@@ -9,10 +10,12 @@ import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { addressIdRouteOptions } from '../address-id-params.js'
 import { boomFor, loadStoredAddress } from '../stored-address.js'
 import { setSuccessBanner } from '../success-banner.js'
+import { copy as en } from '../copy/copy.en.js'
+import { copy as cy } from '../copy/copy.cy.js'
 
 const logger = createLogger()
 const view = 'address-book/delete/template'
-const PAGE_TITLE = 'Delete address'
+const copy = copyFor({ en, cy })
 
 const get = async (request, h) => {
   const orgId = kit.requireOrganisationId(request)
@@ -21,8 +24,8 @@ const get = async (request, h) => {
   try {
     const address = await loadStoredAddress(orgId, id)
     return h.view(view, {
-      ...kit.base(PAGE_TITLE, { backLink: addressPath(id) }),
-      heading: PAGE_TITLE,
+      ...kit.base(copy.delete.title, { backLink: addressPath(id) }),
+      copy,
       addressName: address.name
     })
   } catch (err) {
@@ -42,7 +45,7 @@ const post = async (request, h) => {
   try {
     const address = await loadStoredAddress(orgId, id)
     await deleteAddress(orgId, id)
-    setSuccessBanner(request, `${address.name} deleted from your address book`)
+    setSuccessBanner(request, copy.successBanner.deleted(address.name))
     return h.redirect(addressBookPath())
   } catch (err) {
     throw boomFor(err, () =>

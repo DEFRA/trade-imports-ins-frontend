@@ -1,6 +1,7 @@
 import { listAddresses } from '../../../services/address-book/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
+import { copyFor } from '../../../shared/copy.js'
 import {
   addressAddPath,
   addressBookPath,
@@ -17,10 +18,12 @@ import {
   buildResultsLabel,
   mapAddressRows
 } from '../view-model/list.js'
+import { copy as en } from '../copy/copy.en.js'
+import { copy as cy } from '../copy/copy.cy.js'
 
 const logger = createLogger()
 const view = 'address-book/list/template'
-const PAGE_TITLE = 'Address book'
+const copy = copyFor({ en, cy })
 
 const parsePage = (queryPage) => {
   const page = Number.parseInt(queryPage, 10)
@@ -34,7 +37,7 @@ const escapeHtml = (value) =>
     .replaceAll('"', '&quot;')
 
 const viewLink = (address) =>
-  `<a class="govuk-link" href="${addressPath(address.id)}">View<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
+  `<a class="govuk-link" href="${addressPath(address.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
 
 const tableRowsOf = (addresses) =>
   addresses.map((address) => [
@@ -56,8 +59,8 @@ const paginationOf = (response) => ({
 
 const buildView = (h, model) =>
   h.view(view, {
-    ...kit.base(PAGE_TITLE),
-    heading: PAGE_TITLE,
+    ...kit.base(copy.list.title),
+    copy,
     listHref: addressBookPath(),
     addHref: addressAddPath(),
     ...model
@@ -85,7 +88,7 @@ const get = async (request, h) => {
 
     return buildView(h, {
       tableRows: tableRowsOf(addresses),
-      resultsLabel: buildResultsLabel(pagination),
+      resultsLabel: buildResultsLabel(pagination, copy.list.results),
       pagination: buildPaginationLinks(pagination, search),
       q,
       hasSearch,
@@ -104,7 +107,7 @@ const get = async (request, h) => {
       isEmpty: false,
       noSearchResults: false,
       successBanner,
-      errorList: [{ text: 'Something went wrong loading your address book' }]
+      errorList: [{ text: copy.errors.loadList }]
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }

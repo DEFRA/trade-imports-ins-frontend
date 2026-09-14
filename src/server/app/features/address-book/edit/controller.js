@@ -11,6 +11,7 @@ import {
   HTTP_STATUS_NOT_FOUND
 } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
+import { copyFor } from '../../../shared/copy.js'
 import {
   addressBookPath,
   addressEditRoutePath,
@@ -29,18 +30,23 @@ import {
 } from '../fields.js'
 import { boomFor, loadStoredAddress } from '../stored-address.js'
 import { setSuccessBanner } from '../success-banner.js'
+import { copy as en } from '../copy/copy.en.js'
+import { copy as cy } from '../copy/copy.cy.js'
 
 const logger = createLogger()
 const view = 'address-book/edit/template'
-const PAGE_TITLE = 'Edit address details'
+const copy = copyFor({ en, cy })
+
+const countryItemsOf = (countries) =>
+  buildCountrySelectItems(countries, copy.form.countryPlaceholder)
 
 const buildView = (
   h,
   { id, formValues, countryItems, errorList, fieldErrors }
 ) =>
   h.view(view, {
-    ...kit.base(PAGE_TITLE, { backLink: addressPath(id) }),
-    heading: PAGE_TITLE,
+    ...kit.base(copy.edit.title, { backLink: addressPath(id) }),
+    copy,
     formValues,
     countryItems,
     errorList,
@@ -48,7 +54,7 @@ const buildView = (
   })
 
 const countryItemsOrNone = async () =>
-  buildCountrySelectItems(await getAddressFormCountries().catch(() => []))
+  countryItemsOf(await getAddressFormCountries().catch(() => []))
 
 const rejected = async (h, model) =>
   buildView(h, { ...model, countryItems: await countryItemsOrNone() })
@@ -63,7 +69,7 @@ const get = async (request, h) => {
     return buildView(h, {
       id,
       formValues: formValuesOf(address),
-      countryItems: buildCountrySelectItems(countries)
+      countryItems: countryItemsOf(countries)
     })
   } catch (err) {
     throw boomFor(err, () =>
@@ -89,12 +95,12 @@ const post = async (request, h) => {
       return buildView(h, {
         id,
         formValues,
-        countryItems: buildCountrySelectItems(countries),
+        countryItems: countryItemsOf(countries),
         ...formatValidationErrors(error)
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     const updated = await updateAddress(orgId, id, value)
-    setSuccessBanner(request, `${updated.name} updated in your address book`)
+    setSuccessBanner(request, copy.successBanner.updated(updated.name))
     return h.redirect(addressBookPath())
   } catch (err) {
     if (err.isBoom) {
@@ -117,7 +123,7 @@ const post = async (request, h) => {
       await rejected(h, {
         id,
         formValues,
-        errorList: [{ text: 'Something went wrong saving the address' }]
+        errorList: [{ text: copy.errors.save }]
       })
     ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }

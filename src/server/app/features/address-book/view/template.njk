@@ -6,7 +6,7 @@
 {% block content %}
 
   {{ govukBackLink({
-    text: "Back",
+    text: sharedCopy.layout.back,
     href: backLink
   }) }}
 
@@ -20,11 +20,11 @@
 
     <div class="govuk-button-group">
       {{ govukButton({
-        text: "Edit",
+        text: copy.view.edit,
         href: editHref
       }) }}
       {{ govukButton({
-        text: "Delete",
+        text: copy.view.delete,
         href: deleteHref,
         classes: "govuk-button--warning"
       }) }}

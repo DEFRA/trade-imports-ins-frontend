@@ -18,19 +18,17 @@ export const buildAddressBookQueryString = ({ page, q, countryCode } = {}) => {
 const clampPage = (page, totalPages) =>
   Math.min(Math.max(page, 1), Math.max(totalPages, 1))
 
-export const buildResultsLabel = ({
-  page,
-  pageSize,
-  totalItems,
-  totalPages
-}) => {
+export const buildResultsLabel = (
+  { page, pageSize, totalItems, totalPages },
+  format
+) => {
   if (totalItems < 1) {
     return null
   }
   const currentPage = clampPage(page, totalPages)
   const from = (currentPage - 1) * pageSize + 1
   const to = Math.min(currentPage * pageSize, totalItems)
-  return `Showing ${from}-${to} of ${totalItems}`
+  return format(from, to, totalItems)
 }
 
 const pageHrefFor = (search) => (page) =>

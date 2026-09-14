@@ -1,14 +1,19 @@
 import Boom from '@hapi/boom'
 
 import { organisationIdOf } from '../../common/helpers/organisation-id.js'
+import { copyFor } from './copy.js'
+import { copy as sharedEn } from './copy.en.js'
+import { copy as sharedCy } from './copy.cy.js'
 
 export const routeOptions = { auth: 'session' }
 
-export const sharedCopy = {}
+/**
+ * The one resolved instance of the shared chrome copy; `base` puts it in
+ * every view model.
+ */
+export const sharedCopy = copyFor({ en: sharedEn, cy: sharedCy })
 
 const LAYOUT = 'shared/layout.njk'
-
-const ERROR_SUMMARY_TITLE = 'There is a problem'
 
 const anchorHref = (field) => `#${field}`
 
@@ -35,7 +40,7 @@ export const errorSummary = (
     return null
   }
   return {
-    titleText: ERROR_SUMMARY_TITLE,
+    titleText: sharedCopy.errorSummary.title,
     disableAutoFocus,
     errorList: entries.map(([field, text]) => ({ text, href: href(field) }))
   }

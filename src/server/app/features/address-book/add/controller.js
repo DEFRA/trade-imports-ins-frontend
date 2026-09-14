@@ -8,6 +8,7 @@ import {
   HTTP_STATUS_INTERNAL_SERVER_ERROR
 } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
+import { copyFor } from '../../../shared/copy.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
@@ -20,15 +21,20 @@ import {
   formatValidationErrors
 } from '../fields.js'
 import { setSuccessBanner } from '../success-banner.js'
+import { copy as en } from '../copy/copy.en.js'
+import { copy as cy } from '../copy/copy.cy.js'
 
 const logger = createLogger()
 const view = 'address-book/add/template'
-const PAGE_TITLE = 'Add address details'
+const copy = copyFor({ en, cy })
+
+const countryItemsOf = (countries) =>
+  buildCountrySelectItems(countries, copy.form.countryPlaceholder)
 
 const buildView = (h, { formValues, countryItems, errorList, fieldErrors }) =>
   h.view(view, {
-    ...kit.base(PAGE_TITLE),
-    heading: PAGE_TITLE,
+    ...kit.base(copy.add.title),
+    copy,
     formValues,
     countryItems,
     errorList,
@@ -36,21 +42,21 @@ const buildView = (h, { formValues, countryItems, errorList, fieldErrors }) =>
   })
 
 const countryItemsOrNone = async () =>
-  buildCountrySelectItems(await getAddressFormCountries().catch(() => []))
+  countryItemsOf(await getAddressFormCountries().catch(() => []))
 
 const get = async (_request, h) => {
   try {
     const countries = await getAddressFormCountries()
     return buildView(h, {
       formValues: formValuesOf(),
-      countryItems: buildCountrySelectItems(countries)
+      countryItems: countryItemsOf(countries)
     })
   } catch (err) {
     logger.error({ err }, 'Failed to load address form countries')
     return buildView(h, {
       formValues: formValuesOf(),
       countryItems: [],
-      errorList: [{ text: 'Something went wrong loading the form' }]
+      errorList: [{ text: copy.errors.loadForm }]
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }
@@ -70,12 +76,12 @@ const post = async (request, h) => {
     if (error) {
       return buildView(h, {
         formValues,
-        countryItems: buildCountrySelectItems(countries),
+        countryItems: countryItemsOf(countries),
         ...formatValidationErrors(error)
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     const created = await createAddress(orgId, value)
-    setSuccessBanner(request, `${created.name} added to your address book`)
+    setSuccessBanner(request, copy.successBanner.added(created.name))
     return h.redirect(addressBookPath())
   } catch (err) {
     if (isValidationFailure(err)) {
@@ -89,7 +95,7 @@ const post = async (request, h) => {
     return buildView(h, {
       formValues,
       countryItems: await countryItemsOrNone(),
-      errorList: [{ text: 'Something went wrong saving the address' }]
+      errorList: [{ text: copy.errors.save }]
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }

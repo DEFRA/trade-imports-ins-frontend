@@ -8,17 +8,17 @@
 {% block content %}
 
   {{ govukBackLink({
-    text: "Back",
+    text: sharedCopy.layout.back,
     href: backLink
   }) }}
 
-  {{ appHeading({ text: heading }) }}
+  {{ appHeading({ text: copy.edit.title }) }}
 
   <div class="govuk-body" data-testid="app-page-body">
 
     {% if errorList %}
       {{ govukErrorSummary({
-        titleText: "There is a problem",
+        titleText: sharedCopy.errorSummary.title,
         errorList: errorList
       }) }}
     {% endif %}
@@ -27,7 +27,7 @@
       <input type="hidden" name="crumb" value="{{ crumb }}" />
 
       {{ govukInput({
-        label: { text: "Name or organisation name" },
+        label: { text: copy.form.fields.name },
         id: "name",
         name: "name",
         value: formValues.name,
@@ -36,7 +36,7 @@
       }) }}
 
       {{ govukInput({
-        label: { text: "Address line 1" },
+        label: { text: copy.form.fields.addressLine1 },
         id: "addressLine1",
         name: "addressLine1",
         value: formValues.addressLine1,
@@ -45,7 +45,7 @@
       }) }}
 
       {{ govukInput({
-        label: { text: "Address line 2 (optional)" },
+        label: { text: copy.form.fields.addressLine2 },
         id: "addressLine2",
         name: "addressLine2",
         value: formValues.addressLine2,
@@ -54,7 +54,7 @@
       }) }}
 
       {{ govukInput({
-        label: { text: "Town or city" },
+        label: { text: copy.form.fields.townOrCity },
         id: "townOrCity",
         name: "townOrCity",
         value: formValues.townOrCity,
@@ -63,7 +63,7 @@
       }) }}
 
       {{ govukInput({
-        label: { text: "County (optional)" },
+        label: { text: copy.form.fields.county },
         id: "county",
         name: "county",
         value: formValues.county,
@@ -72,7 +72,7 @@
       }) }}
 
       {{ govukInput({
-        label: { text: "Postcode or Zip code" },
+        label: { text: copy.form.fields.postcode },
         id: "postcode",
         name: "postcode",
         value: formValues.postcode,
@@ -83,26 +83,26 @@
       {{ govukSelect({
         id: "countryCode",
         name: "countryCode",
-        label: { text: "Country" },
+        label: { text: copy.form.fields.countryCode },
         items: countryItems,
         value: formValues.countryCode,
         errorMessage: fieldErrors.countryCode if fieldErrors
       }) }}
 
       {{ govukInput({
-        label: { text: "Phone number" },
+        label: { text: copy.form.fields.phone },
         id: "phone",
         name: "phone",
         value: formValues.phone,
         classes: "govuk-!-width-two-thirds",
         hint: {
-          text: "For international numbers include the country code"
+          text: copy.form.phoneHint
         },
         errorMessage: fieldErrors.phone if fieldErrors
       }) }}
 
       {{ govukInput({
-        label: { text: "Email address" },
+        label: { text: copy.form.fields.email },
         id: "email",
         name: "email",
         value: formValues.email,
@@ -112,9 +112,9 @@
       }) }}
 
       <div class="govuk-button-group">
-        {{ govukButton({ text: "Save changes" }) }}
+        {{ govukButton({ text: copy.edit.save }) }}
         {{ govukButton({
-          text: "Cancel",
+          text: copy.edit.cancel,
           name: "cancel",
           value: "true",
           classes: "govuk-button--secondary"

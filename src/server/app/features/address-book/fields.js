@@ -1,5 +1,9 @@
 import Joi from 'joi'
 
+import { copyFor } from '../../shared/copy.js'
+import { copy as en } from './copy/copy.en.js'
+import { copy as cy } from './copy/copy.cy.js'
+
 export const FIELD_RULES = {
   name: { maxLength: 255, required: true },
   addressLine1: { maxLength: 255, required: true },
@@ -17,6 +21,8 @@ export const FIELDS = Object.keys(FIELD_RULES)
 export const formValuesOf = (source = {}) =>
   Object.fromEntries(FIELDS.map((field) => [field, source[field] ?? '']))
 
+const { errors } = copyFor({ en, cy })
+
 const crumbSchema = () => Joi.string().optional().allow('', null)
 
 const nameSchema = () =>
@@ -25,9 +31,9 @@ const nameSchema = () =>
     .required()
     .max(FIELD_RULES.name.maxLength)
     .messages({
-      'string.empty': 'Enter a name',
-      'any.required': 'Enter a name',
-      'string.max': `Name must be ${FIELD_RULES.name.maxLength} characters or fewer`
+      'string.empty': errors.name.required,
+      'any.required': errors.name.required,
+      'string.max': errors.name.maxLength(FIELD_RULES.name.maxLength)
     })
 
 const addressLine1Schema = () =>
@@ -36,9 +42,11 @@ const addressLine1Schema = () =>
     .required()
     .max(FIELD_RULES.addressLine1.maxLength)
     .messages({
-      'string.empty': 'Enter address line 1',
-      'any.required': 'Enter address line 1',
-      'string.max': `Address line 1 must be ${FIELD_RULES.addressLine1.maxLength} characters or fewer`
+      'string.empty': errors.addressLine1.required,
+      'any.required': errors.addressLine1.required,
+      'string.max': errors.addressLine1.maxLength(
+        FIELD_RULES.addressLine1.maxLength
+      )
     })
 
 const addressLine2Schema = () =>
@@ -47,7 +55,9 @@ const addressLine2Schema = () =>
     .allow('')
     .max(FIELD_RULES.addressLine2.maxLength)
     .messages({
-      'string.max': `Address line 2 must be ${FIELD_RULES.addressLine2.maxLength} characters or fewer`
+      'string.max': errors.addressLine2.maxLength(
+        FIELD_RULES.addressLine2.maxLength
+      )
     })
 
 const townOrCitySchema = () =>
@@ -56,9 +66,11 @@ const townOrCitySchema = () =>
     .required()
     .max(FIELD_RULES.townOrCity.maxLength)
     .messages({
-      'string.empty': 'Enter a town or city',
-      'any.required': 'Enter a town or city',
-      'string.max': `Town or city must be ${FIELD_RULES.townOrCity.maxLength} characters or fewer`
+      'string.empty': errors.townOrCity.required,
+      'any.required': errors.townOrCity.required,
+      'string.max': errors.townOrCity.maxLength(
+        FIELD_RULES.townOrCity.maxLength
+      )
     })
 
 const countySchema = () =>
@@ -67,7 +79,7 @@ const countySchema = () =>
     .allow('')
     .max(FIELD_RULES.county.maxLength)
     .messages({
-      'string.max': `County must be ${FIELD_RULES.county.maxLength} characters or fewer`
+      'string.max': errors.county.maxLength(FIELD_RULES.county.maxLength)
     })
 
 const postcodeSchema = () =>
@@ -76,9 +88,9 @@ const postcodeSchema = () =>
     .required()
     .max(FIELD_RULES.postcode.maxLength)
     .messages({
-      'string.empty': 'Enter a postcode',
-      'any.required': 'Enter a postcode',
-      'string.max': `Postcode must be ${FIELD_RULES.postcode.maxLength} characters or fewer`
+      'string.empty': errors.postcode.required,
+      'any.required': errors.postcode.required,
+      'string.max': errors.postcode.maxLength(FIELD_RULES.postcode.maxLength)
     })
 
 const countryCodeSchema = (mdmCountryCodes) =>
@@ -87,9 +99,9 @@ const countryCodeSchema = (mdmCountryCodes) =>
     .required()
     .valid(...mdmCountryCodes)
     .messages({
-      'string.empty': 'Enter a country',
-      'any.required': 'Enter a country',
-      'any.only': 'Select a country from the list'
+      'string.empty': errors.countryCode.required,
+      'any.required': errors.countryCode.required,
+      'any.only': errors.countryCode.fromList
     })
 
 const phoneSchema = () =>
@@ -98,9 +110,9 @@ const phoneSchema = () =>
     .required()
     .max(FIELD_RULES.phone.maxLength)
     .messages({
-      'string.empty': 'Enter a telephone number',
-      'any.required': 'Enter a telephone number',
-      'string.max': `Telephone number must be ${FIELD_RULES.phone.maxLength} characters or fewer`
+      'string.empty': errors.phone.required,
+      'any.required': errors.phone.required,
+      'string.max': errors.phone.maxLength(FIELD_RULES.phone.maxLength)
     })
 
 const emailSchema = () =>
@@ -110,10 +122,10 @@ const emailSchema = () =>
     .email({ tlds: { allow: false } })
     .max(FIELD_RULES.email.maxLength)
     .messages({
-      'string.empty': 'Enter an email address',
-      'any.required': 'Enter an email address',
-      'string.email': 'Enter an email address in the correct format',
-      'string.max': `Email address must be ${FIELD_RULES.email.maxLength} characters or fewer`
+      'string.empty': errors.email.required,
+      'any.required': errors.email.required,
+      'string.email': errors.email.format,
+      'string.max': errors.email.maxLength(FIELD_RULES.email.maxLength)
     })
 
 export const buildAddressSchema = (mdmCountryCodes) =>

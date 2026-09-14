@@ -9,24 +9,24 @@
 {% block content %}
 
   {{ appHeading({
-    text: heading,
-    caption: "trade-imports-ins-frontend"
+    text: copy.title,
+    caption: serviceName
   }) }}
 
   <div class="govuk-body" data-testid="app-page-body">
 
     {% if errorList %}
       {{ govukErrorSummary({
-        titleText: "There is a problem",
+        titleText: sharedCopy.errorSummary.title,
         errorList: errorList
       }) }}
     {% endif %}
 
-    <form method="get" action="/" class="govuk-!-margin-bottom-6">
+    <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">
       <input type="hidden" name="sort" value="{{ sort }}" />
       {{ govukInput({
         label: {
-          text: "Search by notification reference"
+          text: copy.search.label
         },
         id: "referenceNumber",
         name: "referenceNumber",
@@ -35,39 +35,39 @@
         classes: "govuk-!-width-two-thirds"
       }) }}
       {{ govukButton({
-        text: "Search",
+        text: copy.search.button,
         classes: "govuk-!-margin-left-2"
       }) }}
     </form>
 
     {% if tableRows.length %}
-      <form method="get" action="/" class="govuk-!-margin-bottom-6">
+      <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">
         <input type="hidden" name="referenceNumber" value="{{ referenceNumber }}" />
         {{ govukSelect({
           id: "sort",
           name: "sort",
           label: {
-            text: "Sort by"
+            text: copy.sort.label
           },
           items: sortOptions
         }) }}
         {{ govukButton({
-          text: "Update sort",
+          text: copy.sort.update,
           classes: "govuk-button--secondary"
         }) }}
       </form>
     {% endif %}
 
     {% if isEmpty %}
-      <p class="govuk-body" data-testid="dashboard-empty">There are no notifications yet.</p>
+      <p class="govuk-body" data-testid="dashboard-empty">{{ copy.empty.text }}</p>
       {{ govukButton({
-        text: "Start a new notification",
+        text: copy.empty.startButton,
         href: startNewNotificationHref
       }) }}
     {% elif noSearchResults %}
-      <p class="govuk-body" data-testid="dashboard-no-results">No notifications found</p>
+      <p class="govuk-body" data-testid="dashboard-no-results">{{ copy.search.noResults }}</p>
       <p class="govuk-body">
-        <a class="govuk-link" href="/">Clear search</a>
+        <a class="govuk-link" href="{{ listHref }}">{{ copy.search.clear }}</a>
       </p>
     {% elif tableRows.length %}
       {% if resultsLabel %}
@@ -78,20 +78,20 @@
 
       {% if hasSearch %}
         <p class="govuk-body govuk-!-margin-bottom-4">
-          <a class="govuk-link" href="/" data-testid="dashboard-clear-search">Clear search</a>
+          <a class="govuk-link" href="{{ listHref }}" data-testid="dashboard-clear-search">{{ copy.search.clear }}</a>
         </p>
       {% endif %}
 
       {{ govukTable({
-        caption: "Notifications",
+        caption: copy.table.caption,
         captionClasses: "govuk-visually-hidden",
         head: [
-          { text: "Reference number" },
-          { text: "Status" },
-          { text: "Origin country" },
-          { text: "Commodity" },
-          { text: "Arrival date" },
-          { html: '<span class="govuk-visually-hidden">Action</span>' }
+          { text: copy.table.reference },
+          { text: copy.table.status },
+          { text: copy.table.origin },
+          { text: copy.table.commodity },
+          { text: copy.table.arrival },
+          { html: '<span class="govuk-visually-hidden">' + copy.table.action + '</span>' }
         ],
         rows: tableRows
       }) }}

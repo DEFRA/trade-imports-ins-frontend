@@ -7,6 +7,7 @@ import {
   buildResultsLabel,
   mapAddressRows
 } from './list.js'
+import { copy } from '../copy/copy.en.js'
 
 const twoPages = { page: 2, pageSize: 25, totalItems: 30, totalPages: 2 }
 
@@ -25,14 +26,22 @@ describe('#buildAddressLine', () => {
 describe('#buildResultsLabel', () => {
   test('formats the current page range', () => {
     expect(
-      buildResultsLabel({ page: 1, pageSize: 8, totalItems: 24, totalPages: 3 })
+      buildResultsLabel(
+        { page: 1, pageSize: 8, totalItems: 24, totalPages: 3 },
+        copy.list.results
+      )
     ).toBe('Showing 1-8 of 24')
-    expect(buildResultsLabel(twoPages)).toBe('Showing 26-30 of 30')
+    expect(buildResultsLabel(twoPages, copy.list.results)).toBe(
+      'Showing 26-30 of 30'
+    )
   })
 
   test('returns null when there are no results', () => {
     expect(
-      buildResultsLabel({ page: 1, pageSize: 25, totalItems: 0, totalPages: 0 })
+      buildResultsLabel(
+        { page: 1, pageSize: 25, totalItems: 0, totalPages: 0 },
+        copy.list.results
+      )
     ).toBeNull()
   })
 })

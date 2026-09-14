@@ -43,10 +43,13 @@ describe('#getAddressFormCountries', () => {
 describe('#buildCountrySelectItems', () => {
   test('prepends the placeholder option for govukSelect', () => {
     expect(
-      buildCountrySelectItems([
-        { code: 'GB', name: 'United Kingdom' },
-        { code: 'FR', name: 'France' }
-      ])
+      buildCountrySelectItems(
+        [
+          { code: 'GB', name: 'United Kingdom' },
+          { code: 'FR', name: 'France' }
+        ],
+        'Select a country'
+      )
     ).toEqual([
       { value: '', text: 'Select a country' },
       { value: 'GB', text: 'United Kingdom' },

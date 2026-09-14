@@ -21,11 +21,8 @@ export function buildCountryItems(countries) {
   }))
 }
 
-export function buildCountrySelectItems(countries) {
-  return [
-    { value: '', text: 'Select a country' },
-    ...buildCountryItems(countries)
-  ]
+export function buildCountrySelectItems(countries, placeholder) {
+  return [{ value: '', text: placeholder }, ...buildCountryItems(countries)]
 }
 
 /**

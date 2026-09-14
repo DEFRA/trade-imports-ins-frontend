@@ -1,4 +1,5 @@
 import * as kit from '../../../shared/kit.js'
+import { copyFor } from '../../../shared/copy.js'
 import {
   addressBookPath,
   addressDeletePath,
@@ -9,32 +10,38 @@ import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { getAddressFormCountries } from '../address-countries.js'
 import { addressIdRouteOptions } from '../address-id-params.js'
 import { boomFor, loadStoredAddress } from '../stored-address.js'
+import { copy as en } from '../copy/copy.en.js'
+import { copy as cy } from '../copy/copy.cy.js'
 
 const logger = createLogger()
 const view = 'address-book/view/template'
+const copy = copyFor({ en, cy })
 
 export const buildRows = (address, countryName) => [
+  { key: { text: copy.form.fields.name }, value: { text: address.name } },
   {
-    key: { text: 'Name or organisation name' },
-    value: { text: address.name }
+    key: { text: copy.form.fields.addressLine1 },
+    value: { text: address.addressLine1 }
   },
-  { key: { text: 'Address line 1' }, value: { text: address.addressLine1 } },
   {
-    key: { text: 'Address line 2 (optional)' },
+    key: { text: copy.form.fields.addressLine2 },
     value: { text: address.addressLine2 }
   },
-  { key: { text: 'Town or city' }, value: { text: address.townOrCity } },
-  { key: { text: 'County' }, value: { text: address.county } },
   {
-    key: { text: 'Postcode or Zip code' },
+    key: { text: copy.form.fields.townOrCity },
+    value: { text: address.townOrCity }
+  },
+  { key: { text: copy.view.countyRowLabel }, value: { text: address.county } },
+  {
+    key: { text: copy.form.fields.postcode },
     value: { text: address.postcode }
   },
   {
-    key: { text: 'Country' },
+    key: { text: copy.form.fields.countryCode },
     value: { text: countryName ?? address.countryCode }
   },
-  { key: { text: 'Email address' }, value: { text: address.email } },
-  { key: { text: 'Phone number' }, value: { text: address.phone } }
+  { key: { text: copy.form.fields.email }, value: { text: address.email } },
+  { key: { text: copy.form.fields.phone }, value: { text: address.phone } }
 ]
 
 const countryNameOf = (countries, countryCode) =>
@@ -49,6 +56,7 @@ const get = async (request, h) => {
     const countries = await getAddressFormCountries().catch(() => [])
     return h.view(view, {
       ...kit.base(address.name, { backLink: addressBookPath() }),
+      copy,
       heading: address.name,
       editHref: addressEditPath(id),
       deleteHref: addressDeletePath(id),

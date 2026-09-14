@@ -6,10 +6,10 @@ import { dashboardPath } from '../../../shared/paths.js'
 const LIST_DATE_FORMAT = 'd MMM yyyy'
 
 export const SORT_OPTIONS = [
-  { value: 'arrivalDate,desc', text: 'Arrival date (newest first)' },
-  { value: 'arrivalDate,asc', text: 'Arrival date (oldest first)' },
-  { value: 'lastUpdated,desc', text: 'Last updated (newest first)' },
-  { value: 'lastUpdated,asc', text: 'Last updated (oldest first)' }
+  { value: 'arrivalDate,desc', copyKey: 'arrivalNewest' },
+  { value: 'arrivalDate,asc', copyKey: 'arrivalOldest' },
+  { value: 'lastUpdated,desc', copyKey: 'updatedNewest' },
+  { value: 'lastUpdated,asc', copyKey: 'updatedOldest' }
 ]
 
 const DEFAULT_SORT = SORT_OPTIONS[0].value
@@ -58,13 +58,13 @@ const pageRange = ({ page, size, totalElements, totalPages }) => {
   }
 }
 
-/** Builds a results range label for the current page, e.g. "Showing 1-25 of 40". */
-export function buildResultsLabel(pagination) {
+/** The results range for the current page, in the copy's words, or null with no results. */
+export function buildResultsLabel(pagination, format) {
   if (pagination.totalElements < 1) {
     return null
   }
   const { from, to, count } = pageRange(pagination)
-  return `Showing ${from}-${to} of ${count}`
+  return format(from, to, count)
 }
 
 /** Builds numbered govukPagination links from the backend's pagination metadata. */

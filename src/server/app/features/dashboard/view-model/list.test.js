@@ -11,6 +11,8 @@ vi.mock('../../../../../config/config.js', () => ({
   }
 }))
 
+import { copy } from '../copy/copy.en.js'
+
 const {
   buildDashboardQueryString,
   buildNotificationLink,
@@ -19,7 +21,7 @@ const {
   buildStartNewNotificationLink,
   formatDisplayDate,
   mapNotificationRows
-} = await import('./notification-dashboard-helper.js')
+} = await import('./list.js')
 
 describe('#buildDashboardQueryString', () => {
   test('is empty with no arguments', () => {
@@ -46,13 +48,19 @@ describe('#buildDashboardQueryString', () => {
 describe('#buildResultsLabel', () => {
   test('returns null when there are no results', () => {
     expect(
-      buildResultsLabel({ page: 1, size: 25, totalElements: 0, totalPages: 0 })
+      buildResultsLabel(
+        { page: 1, size: 25, totalElements: 0, totalPages: 0 },
+        copy.results
+      )
     ).toBeNull()
   })
 
   test('describes the current page range', () => {
     expect(
-      buildResultsLabel({ page: 2, size: 25, totalElements: 40, totalPages: 2 })
+      buildResultsLabel(
+        { page: 2, size: 25, totalElements: 40, totalPages: 2 },
+        copy.results
+      )
     ).toBe('Showing 26-40 of 40')
   })
 })
@@ -75,8 +83,6 @@ describe('#buildPaginationLinks', () => {
       { sort: 'lastUpdated,asc', referenceNumber: undefined }
     )
 
-    // page 1 is the default and is omitted from the querystring, matching
-    // the address book's buildAddressBookQueryString convention.
     expect(model.previous.href).toBe('/?sort=lastUpdated%2Casc')
     expect(model.next.href).toBe('/?sort=lastUpdated%2Casc&page=3')
     expect(model.items).toHaveLength(3)
