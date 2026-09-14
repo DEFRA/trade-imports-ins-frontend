@@ -4,7 +4,7 @@ import { getOidcConfigWithRetry } from '../auth/get-oidc-config-with-retry.js'
 import { refreshTokens } from '../auth/refresh-tokens.js'
 import { getSafeRedirect } from '../auth/get-safe-redirect.js'
 import { config } from '../config/config.js'
-import { isAuthStubMode } from '../server/common/services/mode.js'
+import { isStubMode } from '../server/common/services/mode.js'
 
 export const authPlugin = {
   plugin: {
@@ -19,9 +19,9 @@ export const authPlugin = {
       // All routes will require authentication unless explicitly set to 'defra-id' or `auth: false`
       server.auth.default('session')
 
-      // In auth.stubMode, skip Bell/Defra ID entirely - stub-sign-in.js writes
+      // In stub mode, skip Bell/Defra ID entirely - stub-sign-in.js writes
       // a session directly instead. Auth is still enforced everywhere else.
-      if (isAuthStubMode()) {
+      if (isStubMode()) {
         return
       }
 
@@ -105,12 +105,10 @@ function getCookieOptions() {
     },
     redirectTo: function (request) {
       const target = `${request.url.pathname}${request.url.search}`
-      // In auth.stubMode, authRoutes (and its /auth/sign-in route) is never
+      // In stub mode, authRoutes (and its /auth/sign-in route) is never
       // registered - server.js registers stubSignInRoutes instead, so an
       // unauthenticated request must be sent to /auth/stub-sign-in or it 404s.
-      const signInPath = isAuthStubMode()
-        ? '/auth/stub-sign-in'
-        : '/auth/sign-in'
+      const signInPath = isStubMode() ? '/auth/stub-sign-in' : '/auth/sign-in'
       return `${signInPath}?redirect=${encodeURIComponent(target)}`
     },
     validate: async function (request, session) {

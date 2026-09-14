@@ -5,6 +5,7 @@ const getOidcConfigWithRetryMock = vi.hoisted(() => vi.fn())
 const configGetMock = vi.hoisted(() => vi.fn())
 const refreshTokensMock = vi.hoisted(() => vi.fn())
 const getSafeRedirectMock = vi.hoisted(() => vi.fn())
+const isStubModeMock = vi.hoisted(() => vi.fn())
 
 const jwtDecodeMock = vi.hoisted(() => vi.fn())
 const jwtVerifyTimeMock = vi.hoisted(() => vi.fn())
@@ -25,6 +26,10 @@ vi.mock('../auth/refresh-tokens.js', () => ({
 
 vi.mock('../auth/get-safe-redirect.js', () => ({
   getSafeRedirect: getSafeRedirectMock
+}))
+
+vi.mock('../server/common/services/mode.js', () => ({
+  isStubMode: isStubModeMock
 }))
 
 vi.mock('@hapi/jwt', () => ({
@@ -52,6 +57,7 @@ describe('auth plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
+    isStubModeMock.mockReturnValue(false)
     getOidcConfigWithRetryMock.mockResolvedValue(oidcConfig)
 
     configGetMock.mockImplementation((key) => {
@@ -106,6 +112,23 @@ describe('auth plugin', () => {
     )
 
     expect(server.auth.default).toHaveBeenCalledWith('session')
+  })
+
+  test('register skips Bell and the OIDC fetch in stub mode, still enforcing session auth', async () => {
+    // Stub mode replaces the Defra ID round-trip, not authentication itself:
+    // stub-sign-in.js writes the session that the cookie strategy then checks,
+    // so the strategy and the default must still be in place. Reaching for the
+    // OIDC config would also fail outright — there is no identity provider
+    // configured in the environments stub mode is meant for.
+    isStubModeMock.mockReturnValue(true)
+    const server = buildServer()
+
+    await authPlugin.plugin.register(server)
+
+    expect(server.auth.strategy).toHaveBeenCalledTimes(1)
+    expect(server.auth.strategy.mock.calls[0][0]).toBe('session')
+    expect(server.auth.default).toHaveBeenCalledWith('session')
+    expect(getOidcConfigWithRetryMock).not.toHaveBeenCalled()
   })
 
   test('register registers no Bell strategy when OIDC discovery fails', async () => {
@@ -253,6 +276,20 @@ describe('auth plugin', () => {
       })
 
       expect(redirect).toBe('/auth/sign-in?redirect=%2Forigin%3Fa%3D1')
+    })
+
+    test('redirectTo sends unauthenticated requests to /auth/stub-sign-in in stub mode', () => {
+      isStubModeMock.mockReturnValue(true)
+      const options = getCookieOptions()
+
+      const redirect = options.redirectTo({
+        url: {
+          pathname: '/origin',
+          search: '?a=1'
+        }
+      })
+
+      expect(redirect).toBe('/auth/stub-sign-in?redirect=%2Forigin%3Fa%3D1')
     })
 
     test('validate returns isValid:false when session does not exist in cache', async () => {

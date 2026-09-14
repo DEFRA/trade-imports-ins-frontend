@@ -9,6 +9,7 @@ import {
 } from 'vitest'
 
 import { createServer } from '../server.js'
+import { config } from '../../config/config.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import {
   sessionAuth,
@@ -47,15 +48,18 @@ const defraIdAuth = (profileOverrides = {}) => ({
 })
 
 describe('#authController', () => {
+  const originalMode = config.get('stubMode')
   let server
 
   beforeAll(async () => {
+    config.set('stubMode', false)
     server = await createServer()
     await server.initialize()
   })
 
   afterAll(async () => {
     await server.stop({ timeout: 0 })
+    config.set('stubMode', originalMode)
   })
 
   beforeEach(() => {

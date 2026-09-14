@@ -9,7 +9,7 @@ import { authPlugin } from '../plugins/auth.js'
 import { authRoutes } from './auth/index.js'
 import { stubSignInRoutes } from './auth/stub-sign-in.js'
 import { config } from '../config/config.js'
-import { isAuthStubMode } from './common/services/mode.js'
+import { isStubMode } from './common/services/mode.js'
 import { pulse } from './common/helpers/pulse.js'
 import { catchAll } from './common/helpers/errors.js'
 import { nunjucksConfig } from '../config/nunjucks/nunjucks.js'
@@ -74,7 +74,7 @@ export async function createServer() {
     Cookie,
     Bell,
     ...(authEnabled
-      ? [authPlugin, isAuthStubMode() ? stubSignInRoutes : authRoutes]
+      ? [authPlugin, isStubMode() ? stubSignInRoutes : authRoutes]
       : []),
     router
   ])

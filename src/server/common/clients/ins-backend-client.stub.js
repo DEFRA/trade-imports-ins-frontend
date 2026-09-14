@@ -1,5 +1,5 @@
 /**
- * In-memory stand-in for the real INS Backend API, selected by runMode=stub
+ * In-memory stand-in for the real INS Backend API, selected by STUB_MODE=true
  * (see mode.js). The dashboard is deliberately unscoped to an organisation,
  * so — unlike address-book-client.stub.js — there is a single fixed dataset
  * rather than one keyed per organisation.

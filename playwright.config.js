@@ -2,10 +2,9 @@ import { defineConfig, devices } from '@playwright/test'
 
 /**
  * Playwright config for this app's feature coverage (address book, dashboard).
- * Fully self-contained - both INS_MODE=stub (Address Book + Reference Data +
- * INS Backend clients) and AUTH_STUB_MODE=true (skip the real Defra ID OIDC
- * exchange) are set for the webServer below, so no other service needs to be
- * running.
+ * Fully self-contained - STUB_MODE=true is set for the webServer below, which
+ * serves stub data and skips the Defra ID OIDC exchange, so no other service
+ * needs to be running.
  */
 const port = Number(process.env.PORT ?? 3050)
 
@@ -29,11 +28,7 @@ export default defineConfig({
     {
       command: 'npm run fit:start',
       url: `http://localhost:${port}/health`,
-      env: {
-        PORT: String(port),
-        INS_MODE: 'stub',
-        AUTH_STUB_MODE: 'true'
-      },
+      env: { PORT: String(port), STUB_MODE: 'true' },
       timeout: 60_000,
       reuseExistingServer: false
     }

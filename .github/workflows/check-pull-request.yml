@@ -50,9 +50,11 @@ jobs:
 #        env:
 #          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # This Playwright suite boots the app itself with INS_MODE=stub and
-  # AUTH_STUB_MODE=true, so it needs no workspace stack. Kept out of
-  # pr-validator so a browser run does not sit in front of the other checks.
+  # This Playwright suite boots the app itself with STUB_MODE=true - stub data
+  # and a locally signed session in place of the Defra ID round-trip, auth still
+  # enforced (see src/server/auth/stub-sign-in.js) - so it needs no workspace
+  # stack. Kept out of pr-validator so a browser run does not sit in front of
+  # the other checks.
   playwright:
     name: FIT Tests
     runs-on: ubuntu-latest

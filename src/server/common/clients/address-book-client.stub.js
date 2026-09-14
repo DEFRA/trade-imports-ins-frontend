@@ -1,5 +1,5 @@
 /**
- * In-memory stand-in for the real Address Book API, selected by runMode=stub
+ * In-memory stand-in for the real Address Book API, selected by STUB_MODE=true
  * (see mode.js). No network call, no Mongo - deterministic per organisationId
  * so specs stay isolated from each other without any cross-process seeding.
  *

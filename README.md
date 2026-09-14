@@ -109,6 +109,12 @@ DEFRA_ID_SERVICE_ID=aeaa0a80-15f3-48b2-8bd7-0e02874b3d32
 DEFRA_ID_POLICY=b2c_1a_cui_cpdev_signupsigninsfi
 ```
 
+Alternatively set `STUB_MODE=true`, which serves stub data and signs its own
+session instead of doing the Defra ID OIDC exchange. Auth is still enforced —
+only the external round-trip is bypassed — and the switch is refused in
+production. The Playwright suite sets it for its own web server, so
+`npm run test:fit` needs no other service running.
+
 ### Git hooks
 
 Install git hooks (optional)
