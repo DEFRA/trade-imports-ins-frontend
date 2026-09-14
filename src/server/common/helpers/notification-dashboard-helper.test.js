@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
-vi.mock('#/config/config.js', () => ({
+vi.mock('../../../config/config.js', () => ({
   config: {
     get: vi.fn((key) => {
       if (key === 'tradeImportsAnimalsFrontend.baseUrl') {

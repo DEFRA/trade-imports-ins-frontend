@@ -1,5 +1,5 @@
 import { listController } from './controller.js'
-import { sessionAuthRouteOptions } from '#/server/common/constants/session-auth-route-options.js'
+import { sessionAuthRouteOptions } from '../../common/constants/session-auth-route-options.js'
 
 export const addressBookList = {
   plugin: {

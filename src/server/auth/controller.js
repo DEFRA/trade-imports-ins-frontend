@@ -1,8 +1,8 @@
-import { getSignOutUrl } from '#/auth/get-sign-out-url.js'
-import { validateState } from '#/auth/state.js'
-import { verifyToken } from '#/auth/verify-token.js'
-import { getPermissions } from '#/auth/get-permissions.js'
-import { getSafeRedirect } from '#/auth/get-safe-redirect.js'
+import { getSignOutUrl } from '../../auth/get-sign-out-url.js'
+import { validateState } from '../../auth/state.js'
+import { verifyToken } from '../../auth/verify-token.js'
+import { getPermissions } from '../../auth/get-permissions.js'
+import { getSafeRedirect } from '../../auth/get-safe-redirect.js'
 
 export const authController = {
   signin: {

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { countriesClient } from './countries-client.js'
 
-vi.mock('#/config/config.js', () => ({
+vi.mock('../../../config/config.js', () => ({
   config: {
     get: vi.fn((key) => {
       if (key === 'tradeImportsReferenceDataApi.baseUrl') {
@@ -17,7 +17,7 @@ vi.mock('#/config/config.js', () => ({
   }
 }))
 
-vi.mock('#/server/common/helpers/logging/logger.js', () => ({
+vi.mock('../helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: vi.fn() })
 }))
 

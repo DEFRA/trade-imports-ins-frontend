@@ -1,4 +1,4 @@
-import { isStubMode } from '#/server/common/services/mode.js'
+import { isStubMode } from '../services/mode.js'
 import {
   addressBookClient as realClient,
   mapApiErrorsToFormErrors,

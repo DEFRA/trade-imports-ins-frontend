@@ -1,16 +1,16 @@
 import { getTraceId } from '@defra/hapi-tracing'
 
-import { countriesClient } from '#/server/common/clients/countries-client.js'
-import { insBackendClient } from '#/server/common/clients/ins-backend-client.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
-import { createLogger } from '#/server/common/helpers/logging/logger.js'
+import { countriesClient } from '../../common/clients/countries-client.js'
+import { insBackendClient } from '../../common/clients/ins-backend-client.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
+import { createLogger } from '../../common/helpers/logging/logger.js'
 import {
   SORT_OPTIONS,
   buildPaginationLinks,
   buildResultsLabel,
   buildStartNewNotificationLink,
   mapNotificationRows
-} from '#/server/common/helpers/notification-dashboard-helper.js'
+} from '../../common/helpers/notification-dashboard-helper.js'
 
 const logger = createLogger()
 const VIEW = 'routes/home/index'

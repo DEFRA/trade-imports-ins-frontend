@@ -1,23 +1,23 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { createServer } from '#/server/server.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
+import { createServer } from '../../server.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import {
   sessionAuth,
   mockOidcConfig
-} from '#/server/common/test-helpers/mock-auth.js'
-import { insBackendClient } from '#/server/common/clients/ins-backend-client.js'
+} from '../../common/test-helpers/mock-auth.js'
+import { insBackendClient } from '../../common/clients/ins-backend-client.js'
 
-vi.mock('#/auth/get-oidc-config.js', () => ({
+vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
 vi.mock(
-  '#/server/common/clients/ins-backend-client.js',
-  () => import('#/server/common/clients/__mocks__/ins-backend-client.js')
+  '../../common/clients/ins-backend-client.js',
+  () => import('../../common/clients/__mocks__/ins-backend-client.js')
 )
 
-vi.mock('#/server/common/clients/countries-client.js', () => ({
+vi.mock('../../common/clients/countries-client.js', () => ({
   countriesClient: {
     getCountries: vi.fn().mockResolvedValue([
       { code: 'GB', name: 'United Kingdom' },

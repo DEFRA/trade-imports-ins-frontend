@@ -1,4 +1,4 @@
-import { renderComponent } from '#/test-helpers/component-helpers.js'
+import { renderComponent } from '../../../../../test-helpers/component-helpers.js'
 
 describe('Service Header Component', () => {
   test('renders Sign out link for authenticated users', () => {

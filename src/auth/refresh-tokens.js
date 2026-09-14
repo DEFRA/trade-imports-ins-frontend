@@ -1,7 +1,7 @@
 import Wreck from '@hapi/wreck'
 import { getTraceId } from '@defra/hapi-tracing'
 import { getOidcConfig } from './get-oidc-config.js'
-import { config } from '#/config/config.js'
+import { config } from '../config/config.js'
 
 const TOKEN_ENDPOINT_TIMEOUT_MS = 3000
 

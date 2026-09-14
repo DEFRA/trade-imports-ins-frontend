@@ -1,6 +1,6 @@
 const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
-import { config } from '#/config/config.js'
+import { config } from '../../../config/config.js'
 import { parseProblemBody, throwOnError } from './http-client.js'
 
 const addressBookBaseUrl = config.get('tradeImportsAddressBookApi.baseUrl')

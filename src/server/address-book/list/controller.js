@@ -1,20 +1,20 @@
 import { getTraceId } from '@defra/hapi-tracing'
 
-import { addressBookClient } from '#/server/common/clients/address-book-client.js'
+import { addressBookClient } from '../../common/clients/address-book-client.js'
 import {
   buildPaginationLinks,
   buildResultsLabel,
   mapAddressRows
-} from '#/server/common/helpers/address-book-helper.js'
-import { createLogger } from '#/server/common/helpers/logging/logger.js'
-import { getSessionValue } from '#/server/common/helpers/session-helpers.js'
-import { sessionKeys } from '#/server/common/constants/session-keys.js'
-import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
+} from '../../common/helpers/address-book-helper.js'
+import { createLogger } from '../../common/helpers/logging/logger.js'
+import { getSessionValue } from '../../common/helpers/session-helpers.js'
+import { sessionKeys } from '../../common/constants/session-keys.js'
+import { requireOrganisationId } from '../../common/helpers/require-organisation-id.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import {
   getAddressFormCountries,
   resolveCountryCodeFromSearchTerm
-} from '#/server/address-book/address-countries.js'
+} from '../address-countries.js'
 
 const logger = createLogger()
 const VIEW = 'address-book/list/index'

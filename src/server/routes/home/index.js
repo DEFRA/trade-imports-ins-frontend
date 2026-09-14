@@ -1,5 +1,5 @@
 import { homeController } from './controller.js'
-import { sessionAuthRouteOptions } from '#/server/common/constants/session-auth-route-options.js'
+import { sessionAuthRouteOptions } from '../../common/constants/session-auth-route-options.js'
 
 /**
  * Sets up the routes used in the home page.

@@ -1,4 +1,4 @@
-import { config } from '#/config/config.js'
+import { config } from '../config/config.js'
 
 async function getSignOutUrl(_request, _token) {
   const oidcBaseUrl = new URL(config.get('defraId.oidcDiscoveryUrl'))

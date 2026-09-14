@@ -1,10 +1,10 @@
 import Boom from '@hapi/boom'
 import { getTraceId } from '@defra/hapi-tracing'
 
-import { addressBookClient } from '#/server/common/clients/address-book-client.js'
-import { createLogger } from '#/server/common/helpers/logging/logger.js'
-import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
+import { addressBookClient } from '../../common/clients/address-book-client.js'
+import { createLogger } from '../../common/helpers/logging/logger.js'
+import { requireOrganisationId } from '../../common/helpers/require-organisation-id.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { getAddressFormCountries } from '../address-countries.js'
 
 const logger = createLogger()

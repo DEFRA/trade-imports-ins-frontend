@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 
 const { mapApiErrorsToFormErrors } = await vi.importActual(
-  '#/server/common/clients/address-book-client.js'
+  '../address-book-client.js'
 )
 
 export { mapApiErrorsToFormErrors }

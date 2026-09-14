@@ -11,7 +11,7 @@ import { vi } from 'vitest'
 // (see config/nunjucks/context/context.test.js).
 const mockConfigGet = vi.fn()
 
-vi.mock('#/config/config.js', () => ({
+vi.mock('../../../config/config.js', () => ({
   config: { get: (...args) => mockConfigGet(...args) }
 }))
 

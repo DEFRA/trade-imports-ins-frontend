@@ -7,7 +7,7 @@ import {
   ORGANISATION_ID_HEADER
 } from './address-book-client.js'
 
-vi.mock('#/config/config.js', () => ({
+vi.mock('../../../config/config.js', () => ({
   config: {
     get: vi.fn((key) => {
       if (key === 'tradeImportsAddressBookApi.baseUrl') {
@@ -21,7 +21,7 @@ vi.mock('#/config/config.js', () => ({
   }
 }))
 
-vi.mock('#/server/common/helpers/logging/logger.js', () => ({
+vi.mock('../helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: vi.fn() })
 }))
 

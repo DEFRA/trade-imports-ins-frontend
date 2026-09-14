@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { insBackendClient } from './ins-backend-client.js'
 
-vi.mock('#/config/config.js', () => ({
+vi.mock('../../../config/config.js', () => ({
   config: {
     get: vi.fn((key) => {
       if (key === 'tradeImportsInsBackendApi.baseUrl') {

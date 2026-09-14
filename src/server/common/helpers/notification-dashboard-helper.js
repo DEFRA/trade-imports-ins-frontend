@@ -1,6 +1,6 @@
 import { format, isValid, parseISO } from 'date-fns'
 
-import { config } from '#/config/config.js'
+import { config } from '../../../config/config.js'
 import {
   buildPaginationLinks as buildSharedPaginationLinks,
   buildResultsLabel as buildSharedResultsLabel

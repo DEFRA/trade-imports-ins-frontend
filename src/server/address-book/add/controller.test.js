@@ -1,24 +1,24 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { createServer } from '#/server/server.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
+import { createServer } from '../../server.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import {
   sessionAuth,
   mockOidcConfig
-} from '#/server/common/test-helpers/mock-auth.js'
-import { addressBookClient } from '#/server/common/clients/address-book-client.js'
-import { countriesClient } from '#/server/common/clients/countries-client.js'
-import { config } from '#/config/config.js'
+} from '../../common/test-helpers/mock-auth.js'
+import { addressBookClient } from '../../common/clients/address-book-client.js'
+import { countriesClient } from '../../common/clients/countries-client.js'
+import { config } from '../../../config/config.js'
 
-vi.mock('#/auth/get-oidc-config.js', () => ({
+vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
 vi.mock(
-  '#/server/common/clients/address-book-client.js',
-  () => import('#/server/common/clients/__mocks__/address-book-client.js')
+  '../../common/clients/address-book-client.js',
+  () => import('../../common/clients/__mocks__/address-book-client.js')
 )
-vi.mock('#/server/common/clients/countries-client.js')
+vi.mock('../../common/clients/countries-client.js')
 
 const mockCountries = [
   { code: 'GB', name: 'United Kingdom' },

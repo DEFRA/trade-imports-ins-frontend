@@ -1,12 +1,12 @@
 import Boom from '@hapi/boom'
 import { getTraceId } from '@defra/hapi-tracing'
 
-import { addressBookClient } from '#/server/common/clients/address-book-client.js'
-import { createLogger } from '#/server/common/helpers/logging/logger.js'
-import { setSessionValue } from '#/server/common/helpers/session-helpers.js'
-import { sessionKeys } from '#/server/common/constants/session-keys.js'
-import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
+import { addressBookClient } from '../../common/clients/address-book-client.js'
+import { createLogger } from '../../common/helpers/logging/logger.js'
+import { setSessionValue } from '../../common/helpers/session-helpers.js'
+import { sessionKeys } from '../../common/constants/session-keys.js'
+import { requireOrganisationId } from '../../common/helpers/require-organisation-id.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 
 const logger = createLogger()
 const VIEW = 'address-book/delete/index'

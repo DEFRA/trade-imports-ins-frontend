@@ -3,9 +3,9 @@ import { vi } from 'vitest'
 import { catchAll } from './errors.js'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../constants/status-codes.js'
-import { mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import { mockOidcConfig } from '../test-helpers/mock-auth.js'
 
-vi.mock('#/auth/get-oidc-config.js', () => ({
+vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 

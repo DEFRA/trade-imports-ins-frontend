@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 
 import Jwt from '@hapi/jwt'
 
-import { getSafeRedirect } from '#/auth/get-safe-redirect.js'
+import { getSafeRedirect } from '../../auth/get-safe-redirect.js'
 
 // Generated once per process rather than hardcoded - this token is only ever
 // decoded (never verified against a known key) by the session validator, so

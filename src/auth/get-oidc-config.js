@@ -1,6 +1,6 @@
 import Wreck from '@hapi/wreck'
 import { getTraceId } from '@defra/hapi-tracing'
-import { config } from '#/config/config.js'
+import { config } from '../config/config.js'
 
 const OIDC_DOCUMENT_TIMEOUT_MS = 1000
 const SERVER_SIDE_ENDPOINTS = ['token_endpoint', 'jwks_uri']

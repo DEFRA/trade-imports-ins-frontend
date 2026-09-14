@@ -1,5 +1,5 @@
-import { config } from '#/config/config.js'
-import { createLogger } from '#/server/common/helpers/logging/logger.js'
+import { config } from '../../../config/config.js'
+import { createLogger } from '../helpers/logging/logger.js'
 
 const tradeImportsReferenceDataUrl = config.get(
   'tradeImportsReferenceDataApi.baseUrl'

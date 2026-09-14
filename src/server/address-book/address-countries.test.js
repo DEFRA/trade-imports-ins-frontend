@@ -8,13 +8,13 @@ import {
   GB_COUNTRY
 } from './address-countries.js'
 
-vi.mock('#/server/common/clients/countries-client.js', () => ({
+vi.mock('../common/clients/countries-client.js', () => ({
   countriesClient: {
     getCountries: vi.fn()
   }
 }))
 
-import { countriesClient } from '#/server/common/clients/countries-client.js'
+import { countriesClient } from '../common/clients/countries-client.js'
 
 describe('#getAddressFormCountries', () => {
   beforeEach(() => {

@@ -1,4 +1,4 @@
-import { countriesClient } from '#/server/common/clients/countries-client.js'
+import { countriesClient } from '../common/clients/countries-client.js'
 
 const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }
 

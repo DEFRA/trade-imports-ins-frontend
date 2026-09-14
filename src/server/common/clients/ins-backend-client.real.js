@@ -1,4 +1,4 @@
-import { config } from '#/config/config.js'
+import { config } from '../../../config/config.js'
 import { throwOnError } from './http-client.js'
 
 const insBackendBaseUrl = config.get('tradeImportsInsBackendApi.baseUrl')
