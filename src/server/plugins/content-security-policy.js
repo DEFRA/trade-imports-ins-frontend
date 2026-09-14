@@ -1,11 +1,5 @@
 import Blankie from 'blankie'
 
-import { config } from '#/config/config.js'
-
-const animalsFrontendOrigin = new URL(
-  config.get('tradeImportsAnimalsFrontend.baseUrl')
-).origin
-
 /**
  * Manage content security policies.
  * @satisfies {import('@hapi/hapi').Plugin}
@@ -28,8 +22,8 @@ const contentSecurityPolicy = {
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
-    // Handshake save/cancel POSTs redirect to animals-frontend; form-action must allow that origin.
-    formAction: ['self', animalsFrontendOrigin],
+    // INS forms POST to this service only; handshake returns via server redirect, not cross-origin form submit.
+    formAction: ['self'],
     manifestSrc: ['self'],
     generateNonces: false
   }
