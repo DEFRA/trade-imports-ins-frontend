@@ -2,12 +2,7 @@
   "mcpServers": {
     "sonarqube": {
       "command": "sonar",
-      "args": [
-        "run",
-        "mcp",
-        "--project",
-        "DEFRA_trade-imports-ins-frontend"
-      ]
+      "args": ["run", "mcp", "--project", "DEFRA_trade-imports-ins-frontend"]
     }
   }
 }
