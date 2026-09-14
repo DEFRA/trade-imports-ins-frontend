@@ -9,7 +9,7 @@ export default defineConfig({
     // way the Playwright suite does. Tests that exercise real mode set the flag
     // themselves and restore it.
     env: { STUB_MODE: 'true' },
-    exclude: [...configDefaults.exclude, '**/*.fit.spec.js'],
+    exclude: [...configDefaults.exclude, 'fit/**', '**/*.fit.spec.js'],
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',

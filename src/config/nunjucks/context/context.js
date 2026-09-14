@@ -14,10 +14,10 @@ const logger = createLogger()
 const assetPath = config.get('assetPath')
 const manifestPath = path.join(
   config.get('root'),
-  '.public/.vite/manifest.json'
+  '.public/assets-manifest.json'
 )
 
-let viteManifest
+let webpackManifest
 
 /**
  * Which service-navigation item the current request sits under, so the layout
@@ -40,11 +40,11 @@ export function activeNavigationItem(requestPath = '') {
 }
 
 export function context(request) {
-  if (!viteManifest) {
+  if (!webpackManifest) {
     try {
-      viteManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
+      webpackManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
     } catch {
-      logger.error(`Vite ${path.basename(manifestPath)} not found`)
+      logger.error(`Webpack ${path.basename(manifestPath)} not found`)
     }
   }
 
@@ -70,8 +70,8 @@ export function context(request) {
           isAuthenticated: false
         },
     getAssetPath(asset) {
-      const viteAssetPath = viteManifest?.[asset]?.file
-      return `${assetPath}/${viteAssetPath ?? asset}`
+      const webpackAssetPath = webpackManifest?.[asset]
+      return `${assetPath}/${webpackAssetPath ?? asset}`
     },
     crumb: request.plugins?.crumb ?? request.state?.crumb ?? ''
   }

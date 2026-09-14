@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-import {
-  expectNoSeriousOrCriticalAxeViolations,
-  signIn
-} from './address-form.js'
+import { expectNoSeriousOrCriticalAxeViolations } from './address-form.js'
 import { SEED_ADDRESS_ID, SEED_ADDRESS_NAME } from './seed-address.js'
+import { signIn } from '../../../../../../fit/sign-in.js'
 
 async function openSeedAddress(page, organisationId) {
   await signIn(page, { organisationId })

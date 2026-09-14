@@ -8,9 +8,9 @@ import {
   fillValidAddress,
   maxLengthValidations,
   requiredValidations,
-  signIn,
   validAddress
 } from './address-form.js'
+import { signIn } from '../../../../../../fit/sign-in.js'
 
 const ADD_URL = /\/address-book\/add$/
 

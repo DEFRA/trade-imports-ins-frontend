@@ -51,7 +51,7 @@ describe('context and cache', () => {
   describe('#context', () => {
     const mockRequest = { path: '/' }
 
-    describe('When Vite manifest file read succeeds', () => {
+    describe('When webpack manifest file read succeeds', () => {
       let contextImport
       let contextResult
 
@@ -97,7 +97,7 @@ describe('context and cache', () => {
       describe('With valid asset path', () => {
         test('Should provide expected asset path', () => {
           expect(contextResult.getAssetPath('application.js')).toBe(
-            '/public/application.js'
+            '/public/javascripts/application.js'
           )
         })
       })
@@ -111,7 +111,7 @@ describe('context and cache', () => {
       })
     })
 
-    describe('When Vite manifest file read fails', () => {
+    describe('When webpack manifest file read fails', () => {
       let contextImport
 
       beforeAll(async () => {
@@ -124,9 +124,9 @@ describe('context and cache', () => {
         contextImport.context(mockRequest)
       })
 
-      test('Should log that the Vite Manifest file is not available', () => {
+      test('Should log that the Webpack Manifest file is not available', () => {
         expect(mockLoggerError).toHaveBeenCalledWith(
-          'Vite manifest.json not found'
+          'Webpack assets-manifest.json not found'
         )
       })
     })
@@ -136,7 +136,7 @@ describe('context and cache', () => {
     const mockRequest = { path: '/' }
     let contextResult
 
-    describe('Vite manifest file cache', () => {
+    describe('Webpack manifest file cache', () => {
       let contextImport
 
       beforeAll(async () => {

@@ -1,9 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-import {
-  expectNoSeriousOrCriticalAxeViolations,
-  signIn
-} from './address-form.js'
+import { expectNoSeriousOrCriticalAxeViolations } from './address-form.js'
+import { signIn } from '../../../../../../fit/sign-in.js'
 
 const ORG_DEFAULT = 'stub-org-1'
 const ORG_EMPTY = 'stub-org-empty'

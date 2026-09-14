@@ -4,10 +4,10 @@ import {
   expectErrorFocusOn,
   expectNoSeriousOrCriticalAxeViolations,
   fieldLabels,
-  setFieldValue,
-  signIn
+  setFieldValue
 } from './address-form.js'
 import { SEED_ADDRESS_ID, SEED_ADDRESS_NAME } from './seed-address.js'
+import { signIn } from '../../../../../../fit/sign-in.js'
 
 const PAGE_TITLE = 'Edit address details'
 const EDIT_URL = new RegExp(`/address-book/${SEED_ADDRESS_ID}/edit$`)

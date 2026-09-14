@@ -210,6 +210,30 @@ describe('content column width by surface', () => {
   })
 })
 
+describe('assets', () => {
+  it('Should link the stylesheet and the script by their webpack manifest keys', () => {
+    const $ = load(renderLayout(signedIn))
+
+    expect($('link[rel="stylesheet"]').attr('href')).toBe(
+      '/assets/stylesheets/application.scss'
+    )
+    expect($('script[type="module"]').attr('src')).toBe(
+      '/assets/application.js'
+    )
+  })
+
+  it('Should take the icons from the asset path', () => {
+    const $ = load(renderLayout(signedIn, { assetPath: '/public/assets' }))
+
+    expect($('link[rel="icon"][sizes="48x48"]').attr('href')).toBe(
+      '/public/assets/images/favicon.ico'
+    )
+    expect($('link[rel="manifest"]').attr('href')).toBe(
+      '/public/assets/manifest.json'
+    )
+  })
+})
+
 describe('kit surfaces', () => {
   it('Should build page chrome at the reading measure', () => {
     expect(base('Any page').contentColumnClass).toBe(SURFACES.form)
