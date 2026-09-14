@@ -82,7 +82,7 @@ test.describe('view address', () => {
   test('Back returns to the address book', async ({ page }) => {
     await openSeedAddress(page, 'stub-org-view-back')
 
-    await page.getByRole('link', { name: 'Back' }).click()
+    await page.getByRole('link', { name: 'Back', exact: true }).click()
 
     await expect(page).toHaveURL(/\/address-book$/)
     await expect(

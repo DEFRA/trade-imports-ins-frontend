@@ -72,9 +72,6 @@ export const copy = {
     cancel: 'Cancel'
   },
   errors: {
-    loadList: 'Something went wrong loading your address book',
-    loadForm: 'Something went wrong loading the form',
-    save: 'Something went wrong saving the address',
     name: {
       required: 'Enter a name',
       maxLength: (max) => `Name must be ${max} characters or fewer`

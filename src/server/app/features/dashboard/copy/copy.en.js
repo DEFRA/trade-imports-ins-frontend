@@ -36,8 +36,5 @@ export const copy = {
   empty: {
     text: 'There are no notifications yet.',
     startButton: 'Start a new notification'
-  },
-  errors: {
-    load: 'Something went wrong loading the dashboard'
   }
 }

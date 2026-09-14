@@ -28,15 +28,17 @@ const copy = copyFor({ en, cy })
 const countryItemsOf = (countries) =>
   buildCountrySelectItems(countries, copy.form.countryPlaceholder)
 
-const buildView = (h, { formValues, countryItems, errors = {}, errorList }) =>
+const buildView = (
+  h,
+  { formValues, countryItems, errors = {}, recoverableError = false }
+) =>
   h.view(view, {
-    ...kit.base(copy.add.title),
+    ...kit.base(copy.add.title, { recoverableError }),
     copy,
     formValues,
     countryItems,
     errors,
-    errorSummary: kit.errorSummary(errors),
-    errorList
+    errorSummary: kit.errorSummary(errors)
   })
 
 const countryItemsOrNone = async () =>
@@ -54,7 +56,7 @@ const get = async (_request, h) => {
     return buildView(h, {
       formValues: formValuesOf(),
       countryItems: [],
-      errorList: [{ text: copy.errors.loadForm }]
+      recoverableError: true
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }
@@ -95,7 +97,7 @@ const post = async (request, h) => {
     return buildView(h, {
       formValues,
       countryItems: await countryItemsOrNone(),
-      errorList: [{ text: copy.errors.save }]
+      recoverableError: true
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }

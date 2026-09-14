@@ -2,105 +2,88 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "govuk/components/pagination/macro.njk" import govukPagination %}
-{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
 
-{% block content %}
+{% block journeyContent %}
+  <h1 class="govuk-heading-xl">{{ copy.title }}</h1>
 
-  {{ appHeading({
-    text: copy.title,
-    caption: serviceName
-  }) }}
+  <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">
+    <input type="hidden" name="sort" value="{{ sort }}" />
+    {{ govukInput({
+      label: {
+        text: copy.search.label
+      },
+      id: "referenceNumber",
+      name: "referenceNumber",
+      type: "search",
+      value: referenceNumber,
+      classes: "govuk-!-width-two-thirds"
+    }) }}
+    {{ govukButton({
+      text: copy.search.button,
+      classes: "govuk-!-margin-left-2"
+    }) }}
+  </form>
 
-  <div class="govuk-body" data-testid="app-page-body">
-
-    {% if errorList %}
-      {{ govukErrorSummary({
-        titleText: sharedCopy.errorSummary.title,
-        errorList: errorList
-      }) }}
-    {% endif %}
-
+  {% if tableRows.length %}
     <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">
-      <input type="hidden" name="sort" value="{{ sort }}" />
-      {{ govukInput({
+      <input type="hidden" name="referenceNumber" value="{{ referenceNumber }}" />
+      {{ govukSelect({
+        id: "sort",
+        name: "sort",
         label: {
-          text: copy.search.label
+          text: copy.sort.label
         },
-        id: "referenceNumber",
-        name: "referenceNumber",
-        type: "search",
-        value: referenceNumber,
-        classes: "govuk-!-width-two-thirds"
+        items: sortOptions
       }) }}
       {{ govukButton({
-        text: copy.search.button,
-        classes: "govuk-!-margin-left-2"
+        text: copy.sort.update,
+        classes: "govuk-button--secondary"
       }) }}
     </form>
+  {% endif %}
 
-    {% if tableRows.length %}
-      <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">
-        <input type="hidden" name="referenceNumber" value="{{ referenceNumber }}" />
-        {{ govukSelect({
-          id: "sort",
-          name: "sort",
-          label: {
-            text: copy.sort.label
-          },
-          items: sortOptions
-        }) }}
-        {{ govukButton({
-          text: copy.sort.update,
-          classes: "govuk-button--secondary"
-        }) }}
-      </form>
-    {% endif %}
-
-    {% if isEmpty %}
-      <p class="govuk-body" data-testid="dashboard-empty">{{ copy.empty.text }}</p>
-      {{ govukButton({
-        text: copy.empty.startButton,
-        href: startNewNotificationHref
-      }) }}
-    {% elif noSearchResults %}
-      <p class="govuk-body" data-testid="dashboard-no-results">{{ copy.search.noResults }}</p>
-      <p class="govuk-body">
-        <a class="govuk-link" href="{{ listHref }}">{{ copy.search.clear }}</a>
+  {% if isEmpty %}
+    <p class="govuk-body" data-testid="dashboard-empty">{{ copy.empty.text }}</p>
+    {{ govukButton({
+      text: copy.empty.startButton,
+      href: startNewNotificationHref
+    }) }}
+  {% elif noSearchResults %}
+    <p class="govuk-body" data-testid="dashboard-no-results">{{ copy.search.noResults }}</p>
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ listHref }}">{{ copy.search.clear }}</a>
+    </p>
+  {% elif tableRows.length %}
+    {% if resultsLabel %}
+      <p class="govuk-body govuk-!-margin-bottom-4" data-testid="dashboard-results-label">
+        {{ resultsLabel }}
       </p>
-    {% elif tableRows.length %}
-      {% if resultsLabel %}
-        <p class="govuk-body govuk-!-margin-bottom-4" data-testid="dashboard-results-label">
-          {{ resultsLabel }}
-        </p>
-      {% endif %}
-
-      {% if hasSearch %}
-        <p class="govuk-body govuk-!-margin-bottom-4">
-          <a class="govuk-link" href="{{ listHref }}" data-testid="dashboard-clear-search">{{ copy.search.clear }}</a>
-        </p>
-      {% endif %}
-
-      {{ govukTable({
-        caption: copy.table.caption,
-        captionClasses: "govuk-visually-hidden",
-        head: [
-          { text: copy.table.reference },
-          { text: copy.table.status },
-          { text: copy.table.origin },
-          { text: copy.table.commodity },
-          { text: copy.table.arrival },
-          { html: '<span class="govuk-visually-hidden">' + copy.table.action + '</span>' }
-        ],
-        rows: tableRows
-      }) }}
-
-      {% if pagination %}
-        {{ govukPagination(pagination) }}
-      {% endif %}
     {% endif %}
 
-  </div>
+    {% if hasSearch %}
+      <p class="govuk-body govuk-!-margin-bottom-4">
+        <a class="govuk-link" href="{{ listHref }}" data-testid="dashboard-clear-search">{{ copy.search.clear }}</a>
+      </p>
+    {% endif %}
 
+    {{ govukTable({
+      caption: copy.table.caption,
+      captionClasses: "govuk-visually-hidden",
+      head: [
+        { text: copy.table.reference },
+        { text: copy.table.status },
+        { text: copy.table.origin },
+        { text: copy.table.commodity },
+        { text: copy.table.arrival },
+        { html: '<span class="govuk-visually-hidden">' + copy.table.action + '</span>' }
+      ],
+      rows: tableRows
+    }) }}
+
+    {% if pagination %}
+      {{ govukPagination(pagination) }}
+    {% endif %}
+  {% endif %}
 {% endblock %}

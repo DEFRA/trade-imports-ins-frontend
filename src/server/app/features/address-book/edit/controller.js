@@ -39,16 +39,18 @@ const countryItemsOf = (countries) =>
 
 const buildView = (
   h,
-  { id, formValues, countryItems, errors = {}, errorList }
+  { id, formValues, countryItems, errors = {}, recoverableError = false }
 ) =>
   h.view(view, {
-    ...kit.base(copy.edit.title, { backLink: addressPath(id) }),
+    ...kit.base(copy.edit.title, {
+      backLink: addressPath(id),
+      recoverableError
+    }),
     copy,
     formValues,
     countryItems,
     errors,
-    errorSummary: kit.errorSummary(errors),
-    errorList
+    errorSummary: kit.errorSummary(errors)
   })
 
 const countryItemsOrNone = async () =>
@@ -123,7 +125,7 @@ const post = async (request, h) => {
       await rejected(h, {
         id,
         formValues,
-        errorList: [{ text: copy.errors.save }]
+        recoverableError: true
       })
     ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }

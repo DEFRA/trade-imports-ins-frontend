@@ -139,6 +139,26 @@ describe('#addressBookEditController', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
+  test('POST shows the recoverable-error banner when the address book rejects the update with a server error', async () => {
+    addressBookApi()
+      .put(ADDRESS_PATH)
+      .reply(503, { title: 'Service Unavailable' })
+
+    const { result, statusCode } = await server.inject({
+      method: 'POST',
+      url: `/address-book/${addressId}/edit`,
+      auth: sessionAuth('edit-post-500'),
+      payload: validPayload
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toContain('govuk-notification-banner')
+    expect(result).toContain(
+      'Sorry, there is a problem with the service. Try again in a few minutes.'
+    )
+    expect(result).toContain('value="Highland Livestock Ltd"')
+  })
+
   test('POST updates address and redirects with success banner', async () => {
     let sent
     const scope = addressBookApi()

@@ -1,12 +1,27 @@
 /**
  * Shared chrome copy — the only copy that legitimately lives outside a
- * feature folder: the layout (back link, footer), the unauthorised page,
- * the error-summary title and the error page's messages. Every view reaches
- * it as `sharedCopy` via `kit.base`.
+ * feature folder: the layout (service name, service navigation, phase
+ * banner, back link, error title prefix, footer), the unauthorised page,
+ * the error-summary title, the recoverable-error banner and the error
+ * page's messages. Every view reaches it as `sharedCopy` via `kit.base`.
  */
 export const copy = {
   layout: {
+    serviceName: 'Import notification service',
+    errorTitlePrefix: 'Error: ',
     back: 'Back',
+    phaseBanner: {
+      tag: 'Alpha',
+      bodyPrefix: 'This is a new service. Help us improve it and',
+      feedbackLinkText: 'give your feedback by email'
+    },
+    serviceNavigation: {
+      menuButton: 'Menu',
+      dashboard: 'Dashboard',
+      addressBook: 'Address book',
+      manageAccount: 'Manage account',
+      logOut: 'Log out'
+    },
     footer: {
       privacy: 'Privacy',
       cookies: 'Cookies',
@@ -21,6 +36,10 @@ export const copy = {
   },
   errorSummary: {
     title: 'There is a problem'
+  },
+  recoverableError: {
+    title: 'There is a problem',
+    body: 'Sorry, there is a problem with the service. Try again in a few minutes.'
   },
   errorPage: {
     notFound: 'Page not found',

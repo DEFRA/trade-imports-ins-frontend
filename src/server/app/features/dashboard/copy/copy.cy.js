@@ -31,8 +31,5 @@ export const copy = {
   empty: {
     text: 'Nid oes unrhyw hysbysiadau eto.',
     startButton: 'Dechrau hysbysiad newydd'
-  },
-  errors: {
-    load: 'Aeth rhywbeth o’i le wrth lwytho’r dangosfwrdd'
   }
 }

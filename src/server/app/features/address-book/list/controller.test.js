@@ -82,6 +82,7 @@ describe('#addressBookListController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('govuk-grid-column-full')
     expect(result).toContain('Address book')
     expect(result).toContain('Showing 1-1 of 1')
     expect(result).toContain('Highland Livestock Ltd')
@@ -257,6 +258,10 @@ describe('#addressBookListController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.internalServerError)
-    expect(result).toContain('Something went wrong loading your address book')
+    expect(result).toContain('govuk-notification-banner')
+    expect(result).toContain(
+      'Sorry, there is a problem with the service. Try again in a few minutes.'
+    )
+    expect(result).not.toContain('govuk-error-summary')
   })
 })

@@ -63,6 +63,26 @@ describe('error-page copy', () => {
   })
 })
 
+describe('layout copy', () => {
+  it('Should name the service and the four navigation items the fit specs click', () => {
+    expect(sharedEn.layout.serviceName).toBe('Import notification service')
+    expect(sharedEn.layout.serviceNavigation).toEqual({
+      menuButton: 'Menu',
+      dashboard: 'Dashboard',
+      addressBook: 'Address book',
+      manageAccount: 'Manage account',
+      logOut: 'Log out'
+    })
+  })
+
+  it('Should tell the user to try again when a service behind a page fails', () => {
+    expect(sharedEn.recoverableError).toEqual({
+      title: 'There is a problem',
+      body: 'Sorry, there is a problem with the service. Try again in a few minutes.'
+    })
+  })
+})
+
 describe('shared copy module', () => {
   it('Should have a non-empty string at every leaf', () => {
     for (const { path, value } of leaves(sharedEn)) {

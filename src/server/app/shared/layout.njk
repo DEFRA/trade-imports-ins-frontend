@@ -1,14 +1,20 @@
 {% extends "govuk/template.njk" %}
 
-{# Import GOVUK components globally #}
-{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "govuk/components/back-link/macro.njk" import govukBackLink %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
 
-{# Import custom components globally #}
-{% from "heading/macro.njk" import appHeading %}
-{% from "service-header/macro.njk" import appServiceHeader %}
-
-{% set mainClasses = "app-main-wrapper" %}
+{# Destination for the alpha phase banner's feedback link. A destination, not
+   copy, so it lives here beside the footer's meta links rather than in
+   copy.en.js/copy.cy.js — it is identical in both locales. #}
+{% set feedbackUrl = "mailto:APHAServiceDesk@apha.gov.uk" %}
+{% set signOutUrl = "/signout" %}
+{# The account page has no home in this service yet, so it points at a
+   placeholder — as Design release 1 does. The dashboard and the address book
+   are real pages; their URLs arrive in the view context from paths.js. #}
+{% set manageAccountUrl = "#" %}
 
 {% block headIcons %}
   <link rel="icon" sizes="48x48" href="{{ getAssetPath("node_modules/govuk-frontend/dist/govuk/assets/images/favicon.ico") }}">
@@ -23,39 +29,84 @@
   <link href="{{ getAssetPath('src/client/stylesheets/application.scss') }}" rel="stylesheet">
 {% endblock %}
 
-{% block header %}
-  {# serviceName being used in govukHeader will be @deprecated in v6. It has moved to govukServiceNavigation - https://github.com/alphagov/govuk-frontend/blob/main/CHANGELOG.md#move-service-name-and-navigation-links-from-the-govuk-header-to-service-navigation-component #}
+{% block pageTitle %}{% if errorSummary %}{{ sharedCopy.layout.errorTitlePrefix }}{% endif %}{{ pageTitle }} | {{ sharedCopy.layout.serviceName }}{% endblock %}
+
+{% block govukHeader %}
   {{ govukHeader({
     homepageUrl: "https://www.gov.uk/",
     classes: "app-header",
-    containerClasses: "govuk-width-container",
-    serviceName: serviceName,
-    serviceUrl: serviceUrl,
-    useTudorCrown: true
-  }) }}
-
-  {{ govukServiceNavigation({
-    navigation: navigation
+    containerClasses: "govuk-width-container"
   }) }}
 {% endblock %}
 
-{% block pageTitle %}
-  {{ pageTitle }} | {{ serviceName }}
+{% block govukServiceNavigation %}
+  {% set navigationItems = [] %}
+  {% if userSession and userSession.isAuthenticated %}
+    {% set navigationItems = [
+      {
+        text: sharedCopy.layout.serviceNavigation.dashboard,
+        href: dashboardUrl,
+        active: activeNavigationItem == "dashboard"
+      },
+      {
+        text: sharedCopy.layout.serviceNavigation.addressBook,
+        href: addressBookUrl,
+        active: activeNavigationItem == "addressBook"
+      },
+      {
+        text: sharedCopy.layout.serviceNavigation.manageAccount,
+        href: manageAccountUrl
+      },
+      {
+        text: sharedCopy.layout.serviceNavigation.logOut,
+        href: signOutUrl
+      }
+    ] %}
+  {% endif %}
+  {{ govukServiceNavigation({
+    serviceName: sharedCopy.layout.serviceName,
+    serviceUrl: dashboardUrl,
+    menuButtonText: sharedCopy.layout.serviceNavigation.menuButton,
+    navigation: navigationItems
+  }) }}
 {% endblock %}
 
 {% block beforeContent %}
-  {{ appServiceHeader({ userSession: userSession, authEnabled: authEnabled }) }}
-
-  {% if breadcrumbs.length > 1 %}
-    {{ govukBreadcrumbs({
-      items: breadcrumbs
-    }) }}
+  {% set phaseBannerHtml %}{{ sharedCopy.layout.phaseBanner.bodyPrefix }} <a class="govuk-link" href="{{ feedbackUrl }}">{{ sharedCopy.layout.phaseBanner.feedbackLinkText }}</a>.{% endset %}
+  {# Grey tag to match Design release 1; the GDS phase-banner example leaves the tag blue. #}
+  {{ govukPhaseBanner({
+    tag: { text: sharedCopy.layout.phaseBanner.tag, classes: "govuk-tag--grey" },
+    html: phaseBannerHtml
+  }) }}
+  {# No breadcrumbs: Design release 1 gives a page one route backwards — the
+     back link — and one route up, the service navigation. #}
+  {% if backLink %}
+    {{ govukBackLink({ text: sharedCopy.layout.back, href: backLink }) }}
   {% endif %}
 {% endblock %}
 
-{% block content %}{% endblock %}
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="{{ contentColumnClass | default("govuk-grid-column-two-thirds", true) }}">
+      {% if recoverableError %}
+        {{ govukNotificationBanner({
+          titleText: sharedCopy.recoverableError.title,
+          text: sharedCopy.recoverableError.body,
+          role: "alert"
+        }) }}
+      {% endif %}
+      {% if journeyStrip %}
+        <div class="app-journey-strip govuk-!-margin-bottom-4">
+          {{ govukTag({ text: journeyStrip.status.text, classes: journeyStrip.status.classes }) }}
+          <span class="govuk-body govuk-!-font-weight-bold">{{ journeyStrip.reference }}</span>
+        </div>
+      {% endif %}
+      {% block journeyContent %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}
 
-{% block footer %}
+{% block govukFooter %}
   {{ govukFooter({
     meta: {
       items: [

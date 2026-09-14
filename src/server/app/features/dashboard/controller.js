@@ -65,9 +65,14 @@ const paginationOf = (response) => ({
   totalPages: response.totalPages
 })
 
-const buildView = (h, { sort, referenceNumber, hasSearch }, model) =>
+const buildView = (
+  h,
+  { sort, referenceNumber, hasSearch },
+  { recoverableError = false, ...model }
+) =>
   h.view(view, {
-    ...kit.base(copy.title),
+    ...kit.base(copy.title, { recoverableError }),
+    contentColumnClass: kit.surfaceClass('display'),
     copy,
     listHref: dashboardPath(),
     sort,
@@ -113,7 +118,7 @@ const get = async (request, h) => {
       pagination: null,
       isEmpty: false,
       noSearchResults: false,
-      errorList: [{ text: copy.errors.load }]
+      recoverableError: true
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }

@@ -1,3 +1,4 @@
+import nock from 'nock'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../../../../server.js'
@@ -8,6 +9,7 @@ import {
 } from '../../../../common/test-helpers/mock-auth.js'
 import {
   addressBookApi,
+  referenceDataApi,
   runInRealMode,
   serveCountries
 } from '../../../../common/test-helpers/real-mode.js'
@@ -92,6 +94,26 @@ describe.sequential('#addressBookAddController', () => {
     expect(result).toContain('France')
   })
 
+  test('GET shows the recoverable-error banner when reference data cannot be reached', async () => {
+    nock.cleanAll()
+    referenceDataApi()
+      .get('/countries')
+      .reply(503, { title: 'Service Unavailable' })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book/add',
+      auth: sessionAuth('add-get-countries-500')
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toContain('govuk-notification-banner')
+    expect(result).toContain(
+      'Sorry, there is a problem with the service. Try again in a few minutes.'
+    )
+    expect(result).toContain('Add address details')
+  })
+
   test('POST re-renders form when API returns 400 validation errors', async () => {
     const scope = addressBookApi()
       .post(ADDRESSES_PATH)
@@ -138,6 +160,26 @@ describe.sequential('#addressBookAddController', () => {
     expect(headers.location).toBe('/address-book')
     expect(scope.isDone()).toBe(true)
     expect(posted).toMatchObject(validPayload)
+  })
+
+  test('POST shows the recoverable-error banner when the address book rejects the save with a server error', async () => {
+    addressBookApi()
+      .post(ADDRESSES_PATH)
+      .reply(503, { title: 'Service Unavailable' })
+
+    const { result, statusCode } = await server.inject({
+      method: 'POST',
+      url: '/address-book/add',
+      auth: sessionAuth('add-post-500'),
+      payload: validPayload
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toContain('govuk-notification-banner')
+    expect(result).toContain(
+      'Sorry, there is a problem with the service. Try again in a few minutes.'
+    )
+    expect(result).toContain('value="Highland Livestock Ltd"')
   })
 
   test('POST sends the trimmed form fields and nothing else to the address book', async () => {
@@ -192,6 +234,9 @@ describe.sequential('#addressBookAddController', () => {
 
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
+    expect(result).toContain(
+      'Error: Add address details | Import notification service'
+    )
     expect(result).toContain('href="#name"')
     expect(result).toContain('Enter a name')
     expect(result).toContain('href="#email"')

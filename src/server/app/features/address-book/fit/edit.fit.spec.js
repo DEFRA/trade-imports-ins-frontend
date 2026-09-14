@@ -45,10 +45,9 @@ test.describe('edit address', () => {
     await expect(
       page.getByText('For international numbers include the country code')
     ).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Back' })).toHaveAttribute(
-      'href',
-      `/address-book/${SEED_ADDRESS_ID}`
-    )
+    await expect(
+      page.getByRole('link', { name: 'Back', exact: true })
+    ).toHaveAttribute('href', `/address-book/${SEED_ADDRESS_ID}`)
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {

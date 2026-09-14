@@ -74,6 +74,7 @@ describe('#dashboard', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('govuk-grid-column-full')
     expect(result).toContain('Dashboard')
     expect(result).toContain('GBN-AG-26-000001')
     expect(result).toContain('SUBMITTED')
@@ -268,7 +269,7 @@ describe('#dashboard', () => {
     expect(scope.isDone()).toBe(true)
   })
 
-  test('shows an error page when the backend call fails', async () => {
+  test('shows the recoverable-error banner when the backend call fails', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -281,6 +282,10 @@ describe('#dashboard', () => {
     })
 
     expect(statusCode).toBe(statusCodes.internalServerError)
-    expect(result).toContain('Something went wrong loading the dashboard')
+    expect(result).toContain('govuk-notification-banner')
+    expect(result).toContain(
+      'Sorry, there is a problem with the service. Try again in a few minutes.'
+    )
+    expect(result).not.toContain('govuk-error-summary')
   })
 })

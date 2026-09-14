@@ -13,6 +13,20 @@ export const routeOptions = { auth: 'session' }
  */
 export const sharedCopy = copyFor({ en: sharedEn, cy: sharedCy })
 
+export const SURFACES = Object.freeze({
+  form: 'govuk-grid-column-two-thirds',
+  display: 'govuk-grid-column-full'
+})
+
+export const surfaceClass = (surface) => {
+  if (!Object.hasOwn(SURFACES, surface)) {
+    throw new Error(
+      `Unknown surface '${surface}'. Expected one of: ${Object.keys(SURFACES).join(', ')}`
+    )
+  }
+  return SURFACES[surface]
+}
+
 const LAYOUT = 'shared/layout.njk'
 
 const anchorHref = (field) => `#${field}`
@@ -56,16 +70,20 @@ export const fieldError = (fieldErrors, field) =>
  * @param {object} [options]
  * @param {string} [options.backLink] - where the back link goes; omit it on a
  * page with no way back.
- * @param {boolean} [options.recoverableError] - the save failed in a way the
- * user can retry.
- * @returns {object} the common view model.
+ * @param {boolean} [options.recoverableError] - a service behind the page
+ * failed, so it could not be built or its form could not be saved; the
+ * layout tells the user to try again.
+ * @returns {object} the common view model. `contentColumnClass` is the
+ * reading measure; a page that lays out a table overrides it with
+ * `surfaceClass('display')`.
  */
 export const base = (title, { backLink, recoverableError = false } = {}) => ({
   layout: LAYOUT,
   pageTitle: title,
   backLink,
   sharedCopy,
-  recoverableError
+  recoverableError,
+  contentColumnClass: SURFACES.form
 })
 
 export const requireOrganisationId = (request) => {

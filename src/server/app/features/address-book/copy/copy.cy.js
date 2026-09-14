@@ -68,9 +68,6 @@ export const copy = {
     cancel: 'Canslo'
   },
   errors: {
-    loadList: 'Aeth rhywbeth o’i le wrth lwytho eich llyfr cyfeiriadau',
-    loadForm: 'Aeth rhywbeth o’i le wrth lwytho’r ffurflen',
-    save: 'Aeth rhywbeth o’i le wrth gadw’r cyfeiriad',
     name: {
       required: 'Rhowch enw',
       maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`

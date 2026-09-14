@@ -1,7 +1,21 @@
 // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
 export const copy = {
   layout: {
+    serviceName: 'Gwasanaeth hysbysu mewnforio',
+    errorTitlePrefix: 'Gwall: ',
     back: 'Yn ôl',
+    phaseBanner: {
+      tag: 'Alffa',
+      bodyPrefix: "Gwasanaeth newydd yw hwn. Helpwch ni i'w wella —",
+      feedbackLinkText: 'rhowch eich adborth drwy e-bost'
+    },
+    serviceNavigation: {
+      menuButton: 'Dewislen',
+      dashboard: 'Dangosfwrdd',
+      addressBook: 'Llyfr cyfeiriadau',
+      manageAccount: 'Rheoli cyfrif',
+      logOut: 'Allgofnodi'
+    },
     footer: {
       privacy: 'Preifatrwydd',
       cookies: 'Cwcis',
@@ -16,6 +30,10 @@ export const copy = {
   },
   errorSummary: {
     title: 'Mae problem'
+  },
+  recoverableError: {
+    title: 'Mae problem',
+    body: 'Mae’n ddrwg gennym, mae problem gyda’r gwasanaeth. Rhowch gynnig arall arni ymhen ychydig funudau.'
   },
   errorPage: {
     notFound: 'Heb ddod o hyd i’r dudalen',

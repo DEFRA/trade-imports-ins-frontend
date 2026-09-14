@@ -27,10 +27,9 @@ test.describe('delete address', () => {
         `Are you sure you want to delete ${SEED_ADDRESS_NAME} from your address book?`
       )
     ).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Back' })).toHaveAttribute(
-      'href',
-      `/address-book/${SEED_ADDRESS_ID}`
-    )
+    await expect(
+      page.getByRole('link', { name: 'Back', exact: true })
+    ).toHaveAttribute('href', `/address-book/${SEED_ADDRESS_ID}`)
   })
 
   test('Cancel returns to the address details with nothing deleted', async ({
