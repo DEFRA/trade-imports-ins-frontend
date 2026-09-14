@@ -136,14 +136,16 @@ export const addController = {
       } catch (err) {
         const status = err?.status ?? err?.output?.statusCode
         if (Number(status) === 400 && err.body?.errors) {
-          const countries = await getAddressFormCountries().catch(() => [])
+          const recoveryCountries = await getAddressFormCountries().catch(
+            () => []
+          )
           const formattedErrors = mapApiErrorsToFormErrors(err.body)
           return h
             .view(
               VIEW,
               buildViewModel({
                 formValues,
-                countryItems: buildCountrySelectItems(countries),
+                countryItems: buildCountrySelectItems(recoveryCountries),
                 errorList: formattedErrors.errorList,
                 fieldErrors: formattedErrors.fieldErrors
               })

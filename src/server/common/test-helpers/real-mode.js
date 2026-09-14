@@ -2,6 +2,7 @@ import nock from 'nock'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 
 import { config } from '../../../config/config.js'
+import { statusCodes } from '../constants/status-codes.js'
 
 /** Refuses every outbound HTTP request that no nock interceptor answers, so a
  * test can never reach a service that happens to be running locally. */
@@ -46,4 +47,7 @@ export const insBackendApi = () =>
 
 /** Every request for the country list, for as long as the test runs. */
 export const serveCountries = (countries) =>
-  referenceDataApi().persist().get('/countries').reply(200, countries)
+  referenceDataApi()
+    .persist()
+    .get('/countries')
+    .reply(statusCodes.ok, countries)
