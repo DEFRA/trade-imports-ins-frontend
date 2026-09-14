@@ -1,17 +1,14 @@
 import { vi } from 'vitest'
 
-import { createServer } from '#/server/server.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
-import {
-  sessionAuth,
-  mockOidcConfig
-} from '#/server/common/test-helpers/mock-auth.js'
+import { createServer } from '../server.js'
+import { statusCodes } from '../common/constants/status-codes.js'
+import { mockOidcConfig } from '../common/test-helpers/mock-auth.js'
 
-vi.mock('#/auth/get-oidc-config.js', () => ({
+vi.mock('../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-describe('#aboutController', () => {
+describe('#healthController', () => {
   let server
 
   beforeAll(async () => {
@@ -26,11 +23,10 @@ describe('#aboutController', () => {
   test('Should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/about',
-      auth: sessionAuth('about-page')
+      url: '/health'
     })
 
-    expect(result).toEqual(expect.stringContaining('About |'))
+    expect(result).toEqual({ message: 'success' })
     expect(statusCode).toBe(statusCodes.ok)
   })
 })

@@ -1,6 +1,6 @@
 import Crumb from '@hapi/crumb'
 
-import { config } from '#/config/config.js'
+import { config } from '../config/config.js'
 
 /**
  * CSRF protection via @hapi/crumb. Disabled during test runs (see config csrf.enabled).

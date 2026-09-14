@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 
-import { createServer } from '#/server/server.js'
-import { config } from '#/config/config.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
+import { createServer } from './server.js'
+import { config } from '../config/config.js'
+import { statusCodes } from './common/constants/status-codes.js'
 
 describe('#router auth gating', () => {
   let server

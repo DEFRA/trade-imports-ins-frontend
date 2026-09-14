@@ -3,7 +3,7 @@ import { sessionAuthRouteOptions } from '#/server/common/constants/session-auth-
 
 /**
  * Sets up the routes used in the /signout page.
- * These routes are registered in src/server/plugins/router.js.
+ * These routes are registered in src/server/router.js.
  */
 export const signout = {
   plugin: {

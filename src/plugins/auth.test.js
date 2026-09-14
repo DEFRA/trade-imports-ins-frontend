@@ -9,21 +9,21 @@ const getSafeRedirectMock = vi.hoisted(() => vi.fn())
 const jwtDecodeMock = vi.hoisted(() => vi.fn())
 const jwtVerifyTimeMock = vi.hoisted(() => vi.fn())
 
-vi.mock('#/auth/get-oidc-config-with-retry.js', () => ({
+vi.mock('../auth/get-oidc-config-with-retry.js', () => ({
   getOidcConfigWithRetry: getOidcConfigWithRetryMock
 }))
 
-vi.mock('#/config/config.js', () => ({
+vi.mock('../config/config.js', () => ({
   config: {
     get: configGetMock
   }
 }))
 
-vi.mock('#/auth/refresh-tokens.js', () => ({
+vi.mock('../auth/refresh-tokens.js', () => ({
   refreshTokens: refreshTokensMock
 }))
 
-vi.mock('#/auth/get-safe-redirect.js', () => ({
+vi.mock('../auth/get-safe-redirect.js', () => ({
   getSafeRedirect: getSafeRedirectMock
 }))
 
