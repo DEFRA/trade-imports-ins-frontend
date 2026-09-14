@@ -1,11 +1,8 @@
 /**
- * Shared pagination logic for list pages backed by different APIs whose
- * pagination metadata uses different field names for the same values (e.g.
- * address-book-helper.js's `pageSize`/`totalItems` vs
- * notification-dashboard-helper.js's `size`/`totalElements`). Callers pass
- * `sizeField`/`totalField` to name those properties on their own
- * `pagination` object, so the range-calculation and link-building logic
- * itself lives in one place.
+ * Pagination for a list page whose API names its page size and total
+ * differently from the next one. The caller passes `sizeField`/`totalField`
+ * to name those properties on its own `pagination` object, so the
+ * range-calculation and link-building logic itself lives in one place.
  */
 
 /** Clamps a requested page number into the valid [1, totalPages] range. */

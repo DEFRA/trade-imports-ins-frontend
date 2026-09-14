@@ -3,7 +3,7 @@ import { getTraceId } from '@defra/hapi-tracing'
 
 import { getAddress } from '../../app/services/address-book/index.js'
 import { createLogger } from '../../common/helpers/logging/logger.js'
-import { requireOrganisationId } from '../../common/helpers/require-organisation-id.js'
+import { requireOrganisationId } from '../../app/shared/kit.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { getAddressFormCountries } from '../address-countries.js'
 

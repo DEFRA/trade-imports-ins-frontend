@@ -8,7 +8,7 @@ import {
 import { createLogger } from '../../common/helpers/logging/logger.js'
 import { setSessionValue } from '../../common/helpers/session-helpers.js'
 import { sessionKeys } from '../../common/constants/session-keys.js'
-import { requireOrganisationId } from '../../common/helpers/require-organisation-id.js'
+import { requireOrganisationId } from '../../app/shared/kit.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 
 const logger = createLogger()

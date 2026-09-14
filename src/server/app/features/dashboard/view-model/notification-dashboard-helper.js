@@ -1,13 +1,9 @@
 import { format, isValid, parseISO } from 'date-fns'
 
-import { config } from '../../../config/config.js'
-import {
-  buildPaginationLinks as buildSharedPaginationLinks,
-  buildResultsLabel as buildSharedResultsLabel
-} from './pagination-helper.js'
+import { config } from '../../../../../config/config.js'
+import { dashboardPath } from '../../../shared/paths.js'
 
 const LIST_DATE_FORMAT = 'd MMM yyyy'
-const DASHBOARD_PATH = '/'
 
 export const SORT_OPTIONS = [
   { value: 'arrivalDate,desc', text: 'Arrival date (newest first)' },
@@ -50,12 +46,25 @@ export function buildDashboardQueryString({
   return query ? `?${query}` : ''
 }
 
+const normalizePageNumber = (page, totalPages) =>
+  totalPages < 1 ? 1 : Math.min(Math.max(page, 1), totalPages)
+
+const pageRange = ({ page, size, totalElements, totalPages }) => {
+  const currentPage = normalizePageNumber(page, totalPages || 1)
+  return {
+    from: (currentPage - 1) * size + 1,
+    to: Math.min(currentPage * size, totalElements),
+    count: totalElements
+  }
+}
+
 /** Builds a results range label for the current page, e.g. "Showing 1-25 of 40". */
 export function buildResultsLabel(pagination) {
-  return buildSharedResultsLabel(pagination, {
-    sizeField: 'size',
-    totalField: 'totalElements'
-  })
+  if (pagination.totalElements < 1) {
+    return null
+  }
+  const { from, to, count } = pageRange(pagination)
+  return `Showing ${from}-${to} of ${count}`
 }
 
 /** Builds numbered govukPagination links from the backend's pagination metadata. */
@@ -63,13 +72,24 @@ export function buildPaginationLinks(
   pagination,
   { sort, referenceNumber } = {}
 ) {
-  return buildSharedPaginationLinks(pagination, {
-    sizeField: 'size',
-    totalField: 'totalElements',
-    basePath: DASHBOARD_PATH,
-    queryArgs: { sort, referenceNumber },
-    buildQueryString: buildDashboardQueryString
-  })
+  const { totalPages } = pagination
+  if (totalPages <= 1) {
+    return null
+  }
+  const page = normalizePageNumber(pagination.page, totalPages)
+  const pageHref = (targetPage) =>
+    `${dashboardPath()}${buildDashboardQueryString({ sort, referenceNumber, page: targetPage })}`
+
+  return {
+    results: pageRange(pagination),
+    previous: page > 1 ? { href: pageHref(page - 1) } : undefined,
+    next: page < totalPages ? { href: pageHref(page + 1) } : undefined,
+    items: Array.from({ length: totalPages }, (_, index) => ({
+      number: String(index + 1),
+      href: pageHref(index + 1),
+      current: index + 1 === page
+    }))
+  }
 }
 
 /**

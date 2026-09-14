@@ -27,6 +27,15 @@ describe('#router auth gating', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
+  test('the dashboard is not registered when auth is disabled', async () => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: '/'
+    })
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
   test('health remains available when auth is disabled', async () => {
     const { statusCode } = await server.inject({
       method: 'GET',

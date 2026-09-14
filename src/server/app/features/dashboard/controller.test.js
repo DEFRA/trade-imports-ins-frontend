@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { createServer } from '../../server.js'
-import { statusCodes } from '../../common/constants/status-codes.js'
+import { createServer } from '../../../server.js'
+import { statusCodes } from '../../../common/constants/status-codes.js'
 import {
   sessionAuth,
   mockOidcConfig
-} from '../../common/test-helpers/mock-auth.js'
+} from '../../../common/test-helpers/mock-auth.js'
 import {
   insBackendApi,
   runInRealMode,
   serveCountries
-} from '../../common/test-helpers/real-mode.js'
+} from '../../../common/test-helpers/real-mode.js'
 
-vi.mock('../../../auth/get-oidc-config.js', () => ({
+vi.mock('../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
@@ -29,7 +29,7 @@ const pageOf = (content, overrides = {}) => ({
   ...overrides
 })
 
-describe('#homeController', () => {
+describe('#dashboard', () => {
   let server
 
   runInRealMode()

@@ -1,7 +1,7 @@
 import inert from '@hapi/inert'
 
-import { home } from './routes/home/index.js'
 import { health } from './health/index.js'
+import { importNotificationService } from './app/routes.js'
 import { addressBookList } from './address-book/list/index.js'
 import { addressBookAdd } from './address-book/add/index.js'
 import { addressBookView } from './address-book/view/index.js'
@@ -21,7 +21,7 @@ export const router = {
 
       if (config.get('auth.enabled')) {
         await server.register([
-          home,
+          importNotificationService,
           signout,
           addressBookList,
           addressBookAdd,
