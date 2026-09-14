@@ -22,7 +22,6 @@ const contentSecurityPolicy = {
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
-    // INS forms POST to this service only; handshake returns via server redirect, not cross-origin form submit.
     formAction: ['self'],
     manifestSrc: ['self'],
     generateNonces: false
