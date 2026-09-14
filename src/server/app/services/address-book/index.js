@@ -19,19 +19,13 @@ export const updateAddress = (orgId, id, body) =>
 export const deleteAddress = (orgId, id) =>
   addressBook().deleteAddress(orgId, id)
 
-export const mapApiErrorsToFormErrors = (problemBody) => {
-  const errors = problemBody?.errors ?? {}
-  const errorList = Object.entries(errors).flatMap(([field, messages]) =>
-    messages.map((text) => ({ text, href: `#${field}` }))
-  )
-  const fieldErrors = Object.fromEntries(
-    Object.entries(errors).map(([field, messages]) => [
+export const mapApiErrorsToFormErrors = (problemBody) =>
+  Object.fromEntries(
+    Object.entries(problemBody?.errors ?? {}).map(([field, messages]) => [
       field,
-      { text: messages[0] }
+      messages[0]
     ])
   )
-  return { errorList, fieldErrors }
-}
 
 export const isValidationFailure = (err) =>
   err?.status === HTTP_STATUS_BAD_REQUEST && Boolean(err.body?.errors)

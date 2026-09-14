@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import { copyFor } from './copy.js'
-import { copy as sharedEn } from './copy.en.js'
-import { copy as sharedCy } from './copy.cy.js'
+import {
+  copy as sharedEn,
+  validatorDefaults as validatorDefaultsEn
+} from './copy.en.js'
+import {
+  copy as sharedCy,
+  validatorDefaults as validatorDefaultsCy
+} from './copy.cy.js'
 
 const leaves = (node, path = []) =>
   typeof node === 'object' && node !== null
@@ -66,4 +72,26 @@ describe('shared copy module', () => {
       )
     }
   })
+})
+
+describe('validator defaults', () => {
+  const SAMPLE_ARGUMENTS = [1, 2]
+
+  const textOf = (value) =>
+    typeof value === 'function' ? value(...SAMPLE_ARGUMENTS) : value
+
+  it.each([
+    ['en', validatorDefaultsEn],
+    ['cy', validatorDefaultsCy]
+  ])(
+    'Should render text at every %s leaf, function leaves included',
+    (locale, defaults) => {
+      for (const { path, value } of leaves(defaults)) {
+        expect(
+          textOf(value).trim().length,
+          `${locale}: ${path} must render text`
+        ).toBeGreaterThan(0)
+      }
+    }
+  )
 })

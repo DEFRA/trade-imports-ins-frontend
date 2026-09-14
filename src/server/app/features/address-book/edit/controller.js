@@ -10,6 +10,7 @@ import {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_NOT_FOUND
 } from '../../../lib/http-status.js'
+import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
@@ -23,11 +24,7 @@ import {
   getAddressFormCountries
 } from '../address-countries.js'
 import { addressIdRouteOptions } from '../address-id-params.js'
-import {
-  buildAddressSchema,
-  formValuesOf,
-  formatValidationErrors
-} from '../fields.js'
+import { addressRules, formValuesOf } from '../fields.js'
 import { boomFor, loadStoredAddress } from '../stored-address.js'
 import { setSuccessBanner } from '../success-banner.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -42,15 +39,16 @@ const countryItemsOf = (countries) =>
 
 const buildView = (
   h,
-  { id, formValues, countryItems, errorList, fieldErrors }
+  { id, formValues, countryItems, errors = {}, errorList }
 ) =>
   h.view(view, {
     ...kit.base(copy.edit.title, { backLink: addressPath(id) }),
     copy,
     formValues,
     countryItems,
-    errorList,
-    fieldErrors
+    errors,
+    errorSummary: kit.errorSummary(errors),
+    errorList
   })
 
 const countryItemsOrNone = async () =>
@@ -89,14 +87,16 @@ const post = async (request, h) => {
 
   try {
     const countries = await getAddressFormCountries()
-    const schema = buildAddressSchema(countries.map((country) => country.code))
-    const { error, value } = schema.validate(formValues, { abortEarly: false })
-    if (error) {
+    const { errors, value } = validate(
+      addressRules(countries.map((country) => country.code)),
+      formValues
+    )
+    if (errors) {
       return buildView(h, {
         id,
         formValues,
         countryItems: countryItemsOf(countries),
-        ...formatValidationErrors(error)
+        errors
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     const updated = await updateAddress(orgId, id, value)
@@ -114,7 +114,7 @@ const post = async (request, h) => {
         await rejected(h, {
           id,
           formValues,
-          ...mapApiErrorsToFormErrors(err.body)
+          errors: mapApiErrorsToFormErrors(err.body)
         })
       ).code(HTTP_STATUS_BAD_REQUEST)
     }

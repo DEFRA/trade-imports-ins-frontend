@@ -1,75 +1,99 @@
 import { describe, expect, test } from 'vitest'
 
-import {
-  FIELDS,
-  FIELD_RULES,
-  buildAddressSchema,
-  formValuesOf,
-  formatValidationErrors
-} from './fields.js'
+import { validate } from '../../lib/validate/index.js'
+import { FIELDS, FIELD_RULES, addressRules, formValuesOf } from './fields.js'
+import { copy } from './copy/copy.en.js'
 
 const MDM_CODES = ['GB', 'FR', 'DE']
 
-function validAddress(overrides = {}) {
-  return {
-    name: 'Highland Livestock Ltd',
-    addressLine1: "14 Drover's Way",
-    addressLine2: 'Unit 3',
-    townOrCity: 'Inverness',
-    county: 'Highland',
-    postcode: 'IV2 3JH',
-    countryCode: 'GB',
-    phone: '+44 1463 234567',
-    email: 'exports@example.com',
-    ...overrides
-  }
-}
+const rules = addressRules(MDM_CODES)
 
-describe('#buildAddressSchema', () => {
-  const schema = buildAddressSchema(MDM_CODES)
+const REQUIRED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].required)
+const BOUNDED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].maxLength)
 
-  test('accepts a valid Standard Address Block', () => {
-    const { error } = schema.validate(validAddress())
-    expect(error).toBeUndefined()
+const validAddress = (overrides = {}) => ({
+  name: 'Highland Livestock Ltd',
+  addressLine1: "14 Drover's Way",
+  addressLine2: 'Unit 3',
+  townOrCity: 'Inverness',
+  county: 'Highland',
+  postcode: 'IV2 3JH',
+  countryCode: 'GB',
+  phone: '+44 1463 234567',
+  email: 'exports@example.com',
+  ...overrides
+})
+
+describe('#addressRules', () => {
+  test('accepts a valid Standard Address Block and hands its values back', () => {
+    const { errors, value } = validate(rules, validAddress())
+
+    expect(errors).toBeNull()
+    expect(value).toEqual(validAddress())
   })
 
-  test('rejects missing mandatory fields', () => {
-    const { error } = schema.validate(validAddress({ name: '' }))
-    expect(error?.details.map((d) => d.path[0])).toContain('name')
+  test.each(REQUIRED_FIELDS)(
+    'refuses a blank %s with its required message',
+    (field) => {
+      expect(validate(rules, validAddress({ [field]: '' })).errors).toEqual({
+        [field]: copy.errors[field].required
+      })
+    }
+  )
+
+  test('refuses a whitespace-only mandatory field as blank', () => {
+    expect(validate(rules, validAddress({ name: '   ' })).errors).toEqual({
+      name: copy.errors.name.required
+    })
   })
 
-  test('rejects over-max fields', () => {
-    const { error } = schema.validate(
-      validAddress({ postcode: 'a'.repeat(13) })
+  test.each(BOUNDED_FIELDS)(
+    'refuses %s over its maximum length with its length message',
+    (field) => {
+      const max = FIELD_RULES[field].maxLength
+
+      expect(
+        validate(rules, validAddress({ [field]: 'A'.repeat(max + 1) })).errors
+      ).toEqual({ [field]: copy.errors[field].maxLength(max) })
+    }
+  )
+
+  test('refuses a country the reference data does not list as if blank', () => {
+    expect(validate(rules, validAddress({ countryCode: 'ZZ' })).errors).toEqual(
+      { countryCode: copy.errors.countryCode.required }
     )
-    expect(error?.details[0].path[0]).toBe('postcode')
   })
 
-  test('validates countryCode against MDM alpha-2 codes', () => {
-    const { error: invalid } = schema.validate(
-      validAddress({ countryCode: 'ZZ' })
+  test('refuses a malformed email address', () => {
+    expect(
+      validate(rules, validAddress({ email: 'not-an-email' })).errors
+    ).toEqual({ email: copy.errors.email.format })
+  })
+
+  test('accepts a free-string phone number', () => {
+    expect(
+      validate(rules, validAddress({ phone: 'call the office' })).errors
+    ).toBeNull()
+  })
+
+  test('lists every failing field in the order the form asks', () => {
+    const { errors } = validate(rules, {
+      ...formValuesOf(),
+      email: 'bad'
+    })
+
+    expect(Object.keys(errors)).toEqual(REQUIRED_FIELDS)
+    expect(errors.email).toBe(copy.errors.email.format)
+  })
+
+  test('hands back trimmed values', () => {
+    const { errors, value } = validate(
+      rules,
+      validAddress({ name: '  Highland Livestock Ltd  ' })
     )
-    expect(invalid).toBeDefined()
 
-    const { error: blank } = schema.validate(validAddress({ countryCode: '' }))
-    expect(blank).toBeDefined()
-  })
-
-  test('enforces email format and accepts free-string phone', () => {
-    const emailError = schema.validate(
-      validAddress({ email: 'not-an-email' })
-    ).error
-    expect(emailError?.details[0].path[0]).toBe('email')
-
-    const phoneOk = schema.validate(validAddress({ phone: 'call the office' }))
-    expect(phoneOk.error).toBeUndefined()
-  })
-
-  test('does not include operatorType or transporter fields', () => {
-    const keys = Object.keys(schema.describe().keys)
-    expect(keys).not.toContain('operatorType')
-    expect(keys).not.toContain('approvalNumber')
-    expect(keys).not.toContain('transporterCategory')
+    expect(errors).toBeNull()
+    expect(value.name).toBe('Highland Livestock Ltd')
   })
 })
 
@@ -134,36 +158,5 @@ describe('#formValuesOf', () => {
       phone: '+44 1463 234567',
       email: 'exports@example.com'
     })
-  })
-})
-
-describe('#formatValidationErrors', () => {
-  test('maps Joi details to GOV.UK errorList and fieldErrors', () => {
-    const joiError = {
-      details: [
-        {
-          message: 'Enter address line 1',
-          path: ['addressLine1']
-        },
-        {
-          message: 'Enter an email address in the correct format',
-          path: ['email']
-        }
-      ]
-    }
-
-    const result = formatValidationErrors(joiError)
-
-    expect(result.errorList).toEqual([
-      { text: 'Enter address line 1', href: '#addressLine1' },
-      {
-        text: 'Enter an email address in the correct format',
-        href: '#email'
-      }
-    ])
-    expect(result.fieldErrors.addressLine1.text).toBe('Enter address line 1')
-    expect(result.fieldErrors.email.text).toBe(
-      'Enter an email address in the correct format'
-    )
   })
 })

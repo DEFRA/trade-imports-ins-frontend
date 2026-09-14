@@ -140,6 +140,38 @@ describe.sequential('#addressBookAddController', () => {
     expect(posted).toMatchObject(validPayload)
   })
 
+  test('POST sends the trimmed form fields and nothing else to the address book', async () => {
+    let posted
+    const scope = addressBookApi()
+      .post(ADDRESSES_PATH, (body) => {
+        posted = body
+        return true
+      })
+      .reply(201, {
+        id: '665f1c2ab3e4d51a2c9d0e77',
+        name: 'Highland Livestock Ltd'
+      })
+
+    const { statusCode } = await server.inject({
+      method: 'POST',
+      url: '/address-book/add',
+      auth: sessionAuth('add-post-trimmed'),
+      payload: {
+        ...validPayload,
+        name: '  Highland Livestock Ltd  ',
+        crumb: 'not-for-the-api'
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.redirect)
+    expect(scope.isDone()).toBe(true)
+    expect(posted).toEqual({
+      ...validPayload,
+      addressLine2: '',
+      county: ''
+    })
+  })
+
   test('POST with invalid data re-renders form with errors', async () => {
     // No address-book interceptor: a request would be refused by nock and
     // surface as a 500, not the 400 asserted here.
@@ -160,6 +192,11 @@ describe.sequential('#addressBookAddController', () => {
 
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
+    expect(result).toContain('href="#name"')
+    expect(result).toContain('Enter a name')
+    expect(result).toContain('href="#email"')
+    expect(result).toContain('Enter an email address in the correct format')
+    expect(result).toContain('govuk-error-message')
   })
 
   test('Cancel returns to list without creating an address', async () => {

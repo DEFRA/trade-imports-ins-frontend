@@ -1,5 +1,10 @@
-import Joi from 'joi'
-
+import {
+  compose,
+  maxText,
+  requiredEmail,
+  requiredMaxText,
+  requiredOneOf
+} from '../../lib/validate/index.js'
 import { copyFor } from '../../shared/copy.js'
 import { copy as en } from './copy/copy.en.js'
 import { copy as cy } from './copy/copy.cy.js'
@@ -23,136 +28,40 @@ export const formValuesOf = (source = {}) =>
 
 const { errors } = copyFor({ en, cy })
 
-const crumbSchema = () => Joi.string().optional().allow('', null)
+const maxLengthOf = (field) => FIELD_RULES[field].maxLength
 
-const nameSchema = () =>
-  Joi.string()
-    .trim()
-    .required()
-    .max(FIELD_RULES.name.maxLength)
-    .messages({
-      'string.empty': errors.name.required,
-      'any.required': errors.name.required,
-      'string.max': errors.name.maxLength(FIELD_RULES.name.maxLength)
-    })
+const maxLengthMessageFor = (field) =>
+  errors[field].maxLength(maxLengthOf(field))
 
-const addressLine1Schema = () =>
-  Joi.string()
-    .trim()
-    .required()
-    .max(FIELD_RULES.addressLine1.maxLength)
-    .messages({
-      'string.empty': errors.addressLine1.required,
-      'any.required': errors.addressLine1.required,
-      'string.max': errors.addressLine1.maxLength(
-        FIELD_RULES.addressLine1.maxLength
-      )
-    })
-
-const addressLine2Schema = () =>
-  Joi.string()
-    .trim()
-    .allow('')
-    .max(FIELD_RULES.addressLine2.maxLength)
-    .messages({
-      'string.max': errors.addressLine2.maxLength(
-        FIELD_RULES.addressLine2.maxLength
-      )
-    })
-
-const townOrCitySchema = () =>
-  Joi.string()
-    .trim()
-    .required()
-    .max(FIELD_RULES.townOrCity.maxLength)
-    .messages({
-      'string.empty': errors.townOrCity.required,
-      'any.required': errors.townOrCity.required,
-      'string.max': errors.townOrCity.maxLength(
-        FIELD_RULES.townOrCity.maxLength
-      )
-    })
-
-const countySchema = () =>
-  Joi.string()
-    .trim()
-    .allow('')
-    .max(FIELD_RULES.county.maxLength)
-    .messages({
-      'string.max': errors.county.maxLength(FIELD_RULES.county.maxLength)
-    })
-
-const postcodeSchema = () =>
-  Joi.string()
-    .trim()
-    .required()
-    .max(FIELD_RULES.postcode.maxLength)
-    .messages({
-      'string.empty': errors.postcode.required,
-      'any.required': errors.postcode.required,
-      'string.max': errors.postcode.maxLength(FIELD_RULES.postcode.maxLength)
-    })
-
-const countryCodeSchema = (mdmCountryCodes) =>
-  Joi.string()
-    .trim()
-    .required()
-    .valid(...mdmCountryCodes)
-    .messages({
-      'string.empty': errors.countryCode.required,
-      'any.required': errors.countryCode.required,
-      'any.only': errors.countryCode.fromList
-    })
-
-const phoneSchema = () =>
-  Joi.string()
-    .trim()
-    .required()
-    .max(FIELD_RULES.phone.maxLength)
-    .messages({
-      'string.empty': errors.phone.required,
-      'any.required': errors.phone.required,
-      'string.max': errors.phone.maxLength(FIELD_RULES.phone.maxLength)
-    })
-
-const emailSchema = () =>
-  Joi.string()
-    .trim()
-    .required()
-    .email({ tlds: { allow: false } })
-    .max(FIELD_RULES.email.maxLength)
-    .messages({
-      'string.empty': errors.email.required,
-      'any.required': errors.email.required,
-      'string.email': errors.email.format,
-      'string.max': errors.email.maxLength(FIELD_RULES.email.maxLength)
-    })
-
-export const buildAddressSchema = (mdmCountryCodes) =>
-  Joi.object({
-    crumb: crumbSchema(),
-    name: nameSchema(),
-    addressLine1: addressLine1Schema(),
-    addressLine2: addressLine2Schema(),
-    townOrCity: townOrCitySchema(),
-    county: countySchema(),
-    postcode: postcodeSchema(),
-    countryCode: countryCodeSchema(mdmCountryCodes),
-    phone: phoneSchema(),
-    email: emailSchema()
+const requiredTextRule = (field) =>
+  requiredMaxText(field, maxLengthOf(field), {
+    required: errors[field].required,
+    maxLength: maxLengthMessageFor(field)
   })
 
-const fieldNameOf = (detail) => detail.path.join('-')
+const optionalTextRule = (field) =>
+  maxText(field, maxLengthOf(field), maxLengthMessageFor(field))
 
-export const formatValidationErrors = (joiError) => ({
-  errorList: joiError.details.map((detail) => ({
-    text: detail.message,
-    href: `#${fieldNameOf(detail)}`
-  })),
-  fieldErrors: Object.fromEntries(
-    joiError.details.map((detail) => [
-      fieldNameOf(detail),
-      { text: detail.message }
-    ])
+/**
+ * The Standard Address Block rules, composed in the order the form asks the
+ * fields — the order the error summary lists them in.
+ *
+ * @param {readonly string[]} countryCodes - the alpha-2 codes the country
+ * select offers; anything else is refused as if blank.
+ */
+export const addressRules = (countryCodes) =>
+  compose(
+    requiredTextRule('name'),
+    requiredTextRule('addressLine1'),
+    optionalTextRule('addressLine2'),
+    requiredTextRule('townOrCity'),
+    optionalTextRule('county'),
+    requiredTextRule('postcode'),
+    requiredOneOf('countryCode', countryCodes, errors.countryCode.required),
+    requiredTextRule('phone'),
+    requiredEmail('email', maxLengthOf('email'), {
+      required: errors.email.required,
+      maxLength: maxLengthMessageFor('email'),
+      format: errors.email.format
+    })
   )
-})

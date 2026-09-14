@@ -229,24 +229,26 @@ describe('against the real address book', () => {
 })
 
 describe('#mapApiErrorsToFormErrors', () => {
-  test('Should map the problem errors to an error summary and per-field messages', () => {
-    const result = addressBook.mapApiErrorsToFormErrors({
-      errors: {
-        addressLine1: ['Enter address line 1'],
-        email: ['Enter an email address in the correct format']
-      }
+  test('Should keep the first message for each field the problem names', () => {
+    expect(
+      addressBook.mapApiErrorsToFormErrors({
+        errors: {
+          addressLine1: ['Enter address line 1'],
+          email: [
+            'Enter an email address in the correct format',
+            'Email address must be 254 characters or fewer'
+          ]
+        }
+      })
+    ).toEqual({
+      addressLine1: 'Enter address line 1',
+      email: 'Enter an email address in the correct format'
     })
+  })
 
-    expect(result.errorList).toEqual([
-      { text: 'Enter address line 1', href: '#addressLine1' },
-      {
-        text: 'Enter an email address in the correct format',
-        href: '#email'
-      }
-    ])
-    expect(result.fieldErrors.email.text).toBe(
-      'Enter an email address in the correct format'
-    )
+  test('Should map a problem without field errors to no errors', () => {
+    expect(addressBook.mapApiErrorsToFormErrors({})).toEqual({})
+    expect(addressBook.mapApiErrorsToFormErrors(undefined)).toEqual({})
   })
 })
 

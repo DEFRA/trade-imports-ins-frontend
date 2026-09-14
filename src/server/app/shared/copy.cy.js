@@ -25,3 +25,15 @@ export const copy = {
     unexpected: 'Aeth rhywbeth o’i le'
   }
 }
+
+export const validatorDefaults = {
+  oneOf: 'Dewiswch opsiwn dilys',
+  postcode: 'Rhowch god post dilys',
+  vehicleReg: 'Rhowch rif cofrestru dilys',
+  ukPhone: 'Rhowch rif ffôn dilys yn y DU',
+  date: 'Rhowch ddyddiad dilys',
+  time: 'Rhowch amser go iawn, fel 14:30',
+  wholeNumber: 'Rhowch rif cyfan',
+  maxLength: (max) => `Rhowch ${max} nod neu lai`,
+  numberBetween: (min, max) => `Rhowch rif rhwng ${min} a ${max}`
+}

@@ -5,8 +5,14 @@ import { describe, expect, it } from 'vitest'
 
 import { leaves, isCopyLeaf } from './shared/copy-leaves.js'
 import { copyFor } from './shared/copy.js'
-import { copy as sharedEn } from './shared/copy.en.js'
-import { copy as sharedCy } from './shared/copy.cy.js'
+import {
+  copy as sharedEn,
+  validatorDefaults as validatorDefaultsEn
+} from './shared/copy.en.js'
+import {
+  copy as sharedCy,
+  validatorDefaults as validatorDefaultsCy
+} from './shared/copy.cy.js'
 import { copy as addressBookEn } from './features/address-book/copy/copy.en.js'
 import { copy as addressBookCy } from './features/address-book/copy/copy.cy.js'
 
@@ -37,7 +43,15 @@ const modulePairs = async () => {
       return { name: feature, en, cy }
     })
   )
-  return [...pairs, { name: 'shared', en: sharedEn, cy: sharedCy }]
+  return [
+    ...pairs,
+    { name: 'shared', en: sharedEn, cy: sharedCy },
+    {
+      name: 'shared.validatorDefaults',
+      en: validatorDefaultsEn,
+      cy: validatorDefaultsCy
+    }
+  ]
 }
 
 describe('copy parity — cy mirrors en structurally', () => {

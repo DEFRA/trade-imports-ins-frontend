@@ -7,6 +7,7 @@ import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR
 } from '../../../lib/http-status.js'
+import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
@@ -15,11 +16,7 @@ import {
   buildCountrySelectItems,
   getAddressFormCountries
 } from '../address-countries.js'
-import {
-  buildAddressSchema,
-  formValuesOf,
-  formatValidationErrors
-} from '../fields.js'
+import { addressRules, formValuesOf } from '../fields.js'
 import { setSuccessBanner } from '../success-banner.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
@@ -31,14 +28,15 @@ const copy = copyFor({ en, cy })
 const countryItemsOf = (countries) =>
   buildCountrySelectItems(countries, copy.form.countryPlaceholder)
 
-const buildView = (h, { formValues, countryItems, errorList, fieldErrors }) =>
+const buildView = (h, { formValues, countryItems, errors = {}, errorList }) =>
   h.view(view, {
     ...kit.base(copy.add.title),
     copy,
     formValues,
     countryItems,
-    errorList,
-    fieldErrors
+    errors,
+    errorSummary: kit.errorSummary(errors),
+    errorList
   })
 
 const countryItemsOrNone = async () =>
@@ -71,13 +69,15 @@ const post = async (request, h) => {
 
   try {
     const countries = await getAddressFormCountries()
-    const schema = buildAddressSchema(countries.map((country) => country.code))
-    const { error, value } = schema.validate(formValues, { abortEarly: false })
-    if (error) {
+    const { errors, value } = validate(
+      addressRules(countries.map((country) => country.code)),
+      formValues
+    )
+    if (errors) {
       return buildView(h, {
         formValues,
         countryItems: countryItemsOf(countries),
-        ...formatValidationErrors(error)
+        errors
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     const created = await createAddress(orgId, value)
@@ -88,7 +88,7 @@ const post = async (request, h) => {
       return buildView(h, {
         formValues,
         countryItems: await countryItemsOrNone(),
-        ...mapApiErrorsToFormErrors(err.body)
+        errors: mapApiErrorsToFormErrors(err.body)
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     logger.error({ err, orgId }, 'Failed to create address')

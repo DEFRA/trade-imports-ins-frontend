@@ -1,8 +1,8 @@
 /**
  * The address book — one copy module for the five pages. `form` is shared by
  * add and edit (the same Standard Address Block); `errors` carries the
- * validation messages `fields.js` hands to joi, one namespace per field so a
- * message and its rule sit together.
+ * validation messages `fields.js` hands to `lib/validate`, one namespace per
+ * field so a message and its rule sit together.
  */
 export const copy = {
   list: {
@@ -98,8 +98,7 @@ export const copy = {
       maxLength: (max) => `Postcode must be ${max} characters or fewer`
     },
     countryCode: {
-      required: 'Enter a country',
-      fromList: 'Select a country from the list'
+      required: 'Enter a country'
     },
     phone: {
       required: 'Enter a telephone number',

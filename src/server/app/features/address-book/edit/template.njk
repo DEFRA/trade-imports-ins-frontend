@@ -16,6 +16,8 @@
 
   <div class="govuk-body" data-testid="app-page-body">
 
+    {% include "shared/error-summary.njk" %}
+
     {% if errorList %}
       {{ govukErrorSummary({
         titleText: sharedCopy.errorSummary.title,
@@ -32,7 +34,7 @@
         name: "name",
         value: formValues.name,
         classes: "govuk-!-width-two-thirds",
-        errorMessage: fieldErrors.name if fieldErrors
+        errorMessage: errors.name and { text: errors.name }
       }) }}
 
       {{ govukInput({
@@ -41,7 +43,7 @@
         name: "addressLine1",
         value: formValues.addressLine1,
         classes: "govuk-!-width-two-thirds",
-        errorMessage: fieldErrors.addressLine1 if fieldErrors
+        errorMessage: errors.addressLine1 and { text: errors.addressLine1 }
       }) }}
 
       {{ govukInput({
@@ -50,7 +52,7 @@
         name: "addressLine2",
         value: formValues.addressLine2,
         classes: "govuk-!-width-two-thirds",
-        errorMessage: fieldErrors.addressLine2 if fieldErrors
+        errorMessage: errors.addressLine2 and { text: errors.addressLine2 }
       }) }}
 
       {{ govukInput({
@@ -59,7 +61,7 @@
         name: "townOrCity",
         value: formValues.townOrCity,
         classes: "govuk-!-width-two-thirds",
-        errorMessage: fieldErrors.townOrCity if fieldErrors
+        errorMessage: errors.townOrCity and { text: errors.townOrCity }
       }) }}
 
       {{ govukInput({
@@ -68,7 +70,7 @@
         name: "county",
         value: formValues.county,
         classes: "govuk-!-width-two-thirds",
-        errorMessage: fieldErrors.county if fieldErrors
+        errorMessage: errors.county and { text: errors.county }
       }) }}
 
       {{ govukInput({
@@ -77,7 +79,7 @@
         name: "postcode",
         value: formValues.postcode,
         classes: "govuk-input--width-10",
-        errorMessage: fieldErrors.postcode if fieldErrors
+        errorMessage: errors.postcode and { text: errors.postcode }
       }) }}
 
       {{ govukSelect({
@@ -86,7 +88,7 @@
         label: { text: copy.form.fields.countryCode },
         items: countryItems,
         value: formValues.countryCode,
-        errorMessage: fieldErrors.countryCode if fieldErrors
+        errorMessage: errors.countryCode and { text: errors.countryCode }
       }) }}
 
       {{ govukInput({
@@ -98,7 +100,7 @@
         hint: {
           text: copy.form.phoneHint
         },
-        errorMessage: fieldErrors.phone if fieldErrors
+        errorMessage: errors.phone and { text: errors.phone }
       }) }}
 
       {{ govukInput({
@@ -108,7 +110,7 @@
         value: formValues.email,
         classes: "govuk-!-width-two-thirds",
         autocomplete: "email",
-        errorMessage: fieldErrors.email if fieldErrors
+        errorMessage: errors.email and { text: errors.email }
       }) }}
 
       <div class="govuk-button-group">

@@ -4,7 +4,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { leaves, isCopyLeaf } from './shared/copy-leaves.js'
-import { copy as sharedCopy } from './shared/copy.en.js'
+import { copy as sharedCopy, validatorDefaults } from './shared/copy.en.js'
 
 const FEATURES_DIR = fileURLToPath(new URL('./features', import.meta.url))
 
@@ -83,8 +83,11 @@ describe('copy convention — shared chrome', () => {
     })
   })
 
-  it('Should keep every shared leaf valid copy', () => {
-    for (const { path: leafPath, value } of leaves(sharedCopy)) {
+  it('Should keep every shared and validator-default leaf valid copy', () => {
+    for (const { path: leafPath, value } of [
+      ...leaves(sharedCopy),
+      ...leaves(validatorDefaults)
+    ]) {
       expect(isCopyLeaf(value), `${leafPath} must be copy`).toBe(true)
     }
   })
