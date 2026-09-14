@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest'
 
-import { insBackendClient } from './ins-backend-client.stub.js'
+import { listNotifications } from './stub.js'
 
-describe('#insBackendClient (stub)', () => {
+describe('#listNotifications (stub)', () => {
   describe('listNotifications sorting', () => {
     test.each([
       ['arrivalDate,desc', ['agg-stub-2', 'agg-stub-1', 'agg-stub-3']],
@@ -10,7 +10,7 @@ describe('#insBackendClient (stub)', () => {
       ['lastUpdated,desc', ['agg-stub-3', 'agg-stub-1', 'agg-stub-2']],
       ['lastUpdated,asc', ['agg-stub-2', 'agg-stub-1', 'agg-stub-3']]
     ])('sorts by %s', async (sort, expectedOrder) => {
-      const { content } = await insBackendClient.listNotifications('trace', {
+      const { content } = await listNotifications({
         page: 1,
         sort
       })
@@ -19,7 +19,7 @@ describe('#insBackendClient (stub)', () => {
     })
 
     test('falls back to the arrivalDate,desc default when sort is omitted', async () => {
-      const { content } = await insBackendClient.listNotifications('trace', {
+      const { content } = await listNotifications({
         page: 1
       })
 
@@ -33,7 +33,7 @@ describe('#insBackendClient (stub)', () => {
 
   describe('listNotifications visibility', () => {
     test('excludes DELETED-status rows from the results and totals', async () => {
-      const result = await insBackendClient.listNotifications('trace', {
+      const result = await listNotifications({
         page: 1
       })
 
@@ -44,7 +44,7 @@ describe('#insBackendClient (stub)', () => {
 
   describe('listNotifications pagination', () => {
     test('returns all visible rows on page 1 when under one page size', async () => {
-      const result = await insBackendClient.listNotifications('trace', {
+      const result = await listNotifications({
         page: 1
       })
 
@@ -54,7 +54,7 @@ describe('#insBackendClient (stub)', () => {
     })
 
     test('returns an empty page past the last page, preserving totals', async () => {
-      const result = await insBackendClient.listNotifications('trace', {
+      const result = await listNotifications({
         page: 2
       })
 

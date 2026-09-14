@@ -1,6 +1,6 @@
 import { getTraceId } from '@defra/hapi-tracing'
 
-import { addressBookClient } from '../../common/clients/address-book-client.js'
+import { listAddresses } from '../../app/services/address-book/index.js'
 import {
   buildPaginationLinks,
   buildResultsLabel,
@@ -64,12 +64,12 @@ export const listController = {
     )
 
     try {
-      const countries = await getAddressFormCountries(traceId)
+      const countries = await getAddressFormCountries()
       const resolvedCountryCode =
         request.query.countryCode?.trim() ||
         resolveCountryCodeFromSearchTerm(q, countries)
 
-      const response = await addressBookClient.listAddresses(orgId, traceId, {
+      const response = await listAddresses(orgId, {
         page,
         q: hasSearch ? q : undefined,
         countryCode: resolvedCountryCode

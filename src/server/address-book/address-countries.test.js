@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import {
   buildCountryItems,
@@ -7,27 +7,23 @@ import {
   resolveCountryCodeFromSearchTerm,
   GB_COUNTRY
 } from './address-countries.js'
-
-vi.mock('../common/clients/countries-client.js', () => ({
-  countriesClient: {
-    getCountries: vi.fn()
-  }
-}))
-
-import { countriesClient } from '../common/clients/countries-client.js'
+import {
+  referenceDataApi,
+  runInRealMode
+} from '../common/test-helpers/real-mode.js'
 
 describe('#getAddressFormCountries', () => {
-  beforeEach(() => {
-    vi.mocked(countriesClient.getCountries).mockReset()
-  })
+  runInRealMode()
 
   test('GB-prepends countries from reference data', async () => {
-    countriesClient.getCountries.mockResolvedValue([
-      { code: 'FR', name: 'France' },
-      { code: 'GB', name: 'United Kingdom duplicate' }
-    ])
+    referenceDataApi()
+      .get('/countries')
+      .reply(200, [
+        { code: 'FR', name: 'France' },
+        { code: 'GB', name: 'United Kingdom duplicate' }
+      ])
 
-    const countries = await getAddressFormCountries('trace-1')
+    const countries = await getAddressFormCountries()
 
     expect(countries[0]).toEqual(GB_COUNTRY)
     expect(countries[1]).toEqual({ code: 'FR', name: 'France' })
@@ -36,9 +32,9 @@ describe('#getAddressFormCountries', () => {
   })
 
   test('throws when MDM list is empty', async () => {
-    countriesClient.getCountries.mockResolvedValue([])
+    referenceDataApi().get('/countries').reply(200, [])
 
-    await expect(getAddressFormCountries('trace-1')).rejects.toThrow(
+    await expect(getAddressFormCountries()).rejects.toThrow(
       'Country reference data is unavailable'
     )
   })

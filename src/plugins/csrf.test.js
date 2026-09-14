@@ -7,23 +7,15 @@ import {
   mockOidcConfig
 } from '../server/common/test-helpers/mock-auth.js'
 import { config } from '../config/config.js'
-import { countriesClient } from '../server/common/clients/countries-client.js'
 
 vi.mock('../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
-vi.mock('../server/common/clients/countries-client.js')
-
-const mockCountries = [
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'FR', name: 'France' }
-]
 
 describe('#csrfPlugin', () => {
   let server
 
   beforeAll(async () => {
-    vi.mocked(countriesClient.getCountries).mockResolvedValue(mockCountries)
     server = await createServer()
     await server.initialize()
   })

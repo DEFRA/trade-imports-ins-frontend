@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 import { getTraceId } from '@defra/hapi-tracing'
 
-import { addressBookClient } from '../../common/clients/address-book-client.js'
+import { getAddress } from '../../app/services/address-book/index.js'
 import { createLogger } from '../../common/helpers/logging/logger.js'
 import { requireOrganisationId } from '../../common/helpers/require-organisation-id.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
@@ -48,13 +48,13 @@ export const viewController = {
     const { id } = request.params
 
     try {
-      const address = await addressBookClient.getAddress(orgId, traceId, id)
+      const address = await getAddress(orgId, id)
 
       if (address.deleted) {
         throw Boom.notFound()
       }
 
-      const countries = await getAddressFormCountries(traceId).catch(() => [])
+      const countries = await getAddressFormCountries().catch(() => [])
       const countryNames = Object.fromEntries(
         countries.map((country) => [country.code, country.name])
       )

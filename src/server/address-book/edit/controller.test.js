@@ -6,20 +6,19 @@ import {
   sessionAuth,
   mockOidcConfig
 } from '../../common/test-helpers/mock-auth.js'
-import { addressBookClient } from '../../common/clients/address-book-client.js'
-import { countriesClient } from '../../common/clients/countries-client.js'
+import {
+  addressBookApi,
+  runInRealMode,
+  serveCountries
+} from '../../common/test-helpers/real-mode.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-vi.mock(
-  '../../common/clients/address-book-client.js',
-  () => import('../../common/clients/__mocks__/address-book-client.js')
-)
-vi.mock('../../common/clients/countries-client.js')
-
+const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
+const ADDRESS_PATH = `/organisation/${ORG_ID}/addresses/${addressId}`
 
 const mockCountries = [
   { code: 'GB', name: 'United Kingdom' },
@@ -55,6 +54,8 @@ const validPayload = {
 describe('#addressBookEditController', () => {
   let server
 
+  runInRealMode()
+
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
@@ -65,13 +66,11 @@ describe('#addressBookEditController', () => {
   })
 
   beforeEach(() => {
-    vi.mocked(countriesClient.getCountries).mockResolvedValue(mockCountries)
-    vi.mocked(addressBookClient.getAddress).mockReset()
-    vi.mocked(addressBookClient.updateAddress).mockReset()
+    serveCountries(mockCountries)
   })
 
   test('GET renders prefilled edit form', async () => {
-    addressBookClient.getAddress.mockResolvedValue(mockAddress)
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -87,9 +86,7 @@ describe('#addressBookEditController', () => {
   })
 
   test('GET returns 404 when address is not found', async () => {
-    addressBookClient.getAddress.mockRejectedValue(
-      Object.assign(new Error('Not found'), { status: 404 })
-    )
+    addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
     const { statusCode } = await server.inject({
       method: 'GET',
@@ -101,10 +98,9 @@ describe('#addressBookEditController', () => {
   })
 
   test('GET returns 404 for soft-deleted tombstones', async () => {
-    addressBookClient.getAddress.mockResolvedValue({
-      ...mockAddress,
-      deleted: true
-    })
+    addressBookApi()
+      .get(ADDRESS_PATH)
+      .reply(200, { ...mockAddress, deleted: true })
 
     const { statusCode } = await server.inject({
       method: 'GET',
@@ -115,10 +111,8 @@ describe('#addressBookEditController', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  test('POST returns 404 when updateAddress rejects with 404', async () => {
-    addressBookClient.updateAddress.mockRejectedValue(
-      Object.assign(new Error('Not found'), { status: 404 })
-    )
+  test('POST returns 404 when the address book rejects the update with 404', async () => {
+    addressBookApi().put(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
     const { statusCode } = await server.inject({
       method: 'POST',
@@ -131,10 +125,13 @@ describe('#addressBookEditController', () => {
   })
 
   test('POST updates address and redirects with success banner', async () => {
-    addressBookClient.updateAddress.mockResolvedValue({
-      ...mockAddress,
-      name: 'Updated Farm Ltd'
-    })
+    let sent
+    const scope = addressBookApi()
+      .put(ADDRESS_PATH, (body) => {
+        sent = body
+        return true
+      })
+      .reply(200, { ...mockAddress, name: 'Updated Farm Ltd' })
 
     const { statusCode, headers } = await server.inject({
       method: 'POST',
@@ -148,19 +145,17 @@ describe('#addressBookEditController', () => {
 
     expect(statusCode).toBe(statusCodes.redirect)
     expect(headers.location).toBe('/address-book')
-    expect(addressBookClient.updateAddress).toHaveBeenCalledWith(
-      '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88',
-      expect.any(String),
-      addressId,
-      expect.objectContaining({
-        name: 'Updated Farm Ltd',
-        addressLine2: '',
-        county: ''
-      })
-    )
+    expect(scope.isDone()).toBe(true)
+    expect(sent).toMatchObject({
+      name: 'Updated Farm Ltd',
+      addressLine2: '',
+      county: ''
+    })
   })
 
   test('POST with invalid data re-renders form with errors', async () => {
+    // No address-book interceptor: a request would be refused by nock and
+    // surface as a 500, not the 400 asserted here.
     const { result, statusCode } = await server.inject({
       method: 'POST',
       url: `/address-book/${addressId}/edit`,
@@ -178,7 +173,6 @@ describe('#addressBookEditController', () => {
 
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
-    expect(addressBookClient.updateAddress).not.toHaveBeenCalled()
   })
 
   test('Cancel returns to list without updating', async () => {
@@ -191,6 +185,5 @@ describe('#addressBookEditController', () => {
 
     expect(statusCode).toBe(statusCodes.redirect)
     expect(headers.location).toBe('/address-book')
-    expect(addressBookClient.updateAddress).not.toHaveBeenCalled()
   })
 })

@@ -1,6 +1,6 @@
 /**
  * The stub seeds one address per organisation at a deterministic id
- * (address-book-client.stub.js), so a spec can address it directly rather
+ * (app/services/address-book/stub.js), so a spec can address it directly rather
  * than reading an id back out of the page.
  */
 export const SEED_ADDRESS_NAME = 'Stub Farm 1'

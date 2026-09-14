@@ -1,7 +1,7 @@
 import { getTraceId } from '@defra/hapi-tracing'
 
-import { countriesClient } from '../../common/clients/countries-client.js'
-import { insBackendClient } from '../../common/clients/ins-backend-client.js'
+import { getCountries } from '../../app/services/countries/index.js'
+import { listNotifications } from '../../app/services/ins-backend/index.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { createLogger } from '../../common/helpers/logging/logger.js'
 import {
@@ -70,8 +70,8 @@ export const homeController = {
     const hasSearch = Boolean(referenceNumber)
 
     try {
-      const countries = await countriesClient.getCountries(traceId)
-      const response = await insBackendClient.listNotifications(traceId, {
+      const countries = await getCountries()
+      const response = await listNotifications({
         page,
         sort,
         referenceNumber: hasSearch ? referenceNumber : undefined

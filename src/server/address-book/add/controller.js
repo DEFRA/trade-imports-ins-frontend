@@ -1,9 +1,9 @@
 import { getTraceId } from '@defra/hapi-tracing'
 
 import {
-  addressBookClient,
+  createAddress,
   mapApiErrorsToFormErrors
-} from '../../common/clients/address-book-client.js'
+} from '../../app/services/address-book/index.js'
 import { buildAddressSchema } from '../address-schema.js'
 import {
   buildCountrySelectItems,
@@ -65,7 +65,7 @@ export const addController = {
       const traceId = getTraceId() ?? ''
 
       try {
-        const countries = await getAddressFormCountries(traceId)
+        const countries = await getAddressFormCountries()
 
         return h.view(
           VIEW,
@@ -100,7 +100,7 @@ export const addController = {
       const formValues = payloadToFormValues(request.payload)
 
       try {
-        const countries = await getAddressFormCountries(traceId)
+        const countries = await getAddressFormCountries()
         const countryItems = buildCountrySelectItems(countries)
         const mdmCodes = countries.map((country) => country.code)
         const schema = buildAddressSchema(mdmCodes)
@@ -124,11 +124,7 @@ export const addController = {
             .code(statusCodes.badRequest)
         }
 
-        const created = await addressBookClient.createAddress(
-          orgId,
-          traceId,
-          value
-        )
+        const created = await createAddress(orgId, value)
 
         setSessionValue(
           request,
@@ -140,9 +136,7 @@ export const addController = {
       } catch (err) {
         const status = err?.status ?? err?.output?.statusCode
         if (Number(status) === 400 && err.body?.errors) {
-          const countries = await getAddressFormCountries(traceId).catch(
-            () => []
-          )
+          const countries = await getAddressFormCountries().catch(() => [])
           const formattedErrors = mapApiErrorsToFormErrors(err.body)
           return h
             .view(
@@ -158,7 +152,7 @@ export const addController = {
         }
 
         logger.error({ err, traceId, orgId }, 'Failed to create address')
-        const countries = await getAddressFormCountries(traceId).catch(() => [])
+        const countries = await getAddressFormCountries().catch(() => [])
         return h
           .view(VIEW, {
             ...buildViewModel({

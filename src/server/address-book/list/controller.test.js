@@ -6,28 +6,55 @@ import {
   sessionAuth,
   mockOidcConfig
 } from '../../common/test-helpers/mock-auth.js'
-import { addressBookClient } from '../../common/clients/address-book-client.js'
+import {
+  addressBookApi,
+  runInRealMode,
+  serveCountries
+} from '../../common/test-helpers/real-mode.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-vi.mock(
-  '../../common/clients/address-book-client.js',
-  () => import('../../common/clients/__mocks__/address-book-client.js')
-)
+const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
+const ADDRESSES_PATH = `/organisation/${ORG_ID}/addresses`
 
-vi.mock('../../common/clients/countries-client.js', () => ({
-  countriesClient: {
-    getCountries: vi.fn().mockResolvedValue([
-      { code: 'GB', name: 'United Kingdom' },
-      { code: 'FR', name: 'France' }
-    ])
-  }
-}))
+const countries = [
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'FR', name: 'France' }
+]
+
+const highland = {
+  id: '1',
+  name: 'Highland Livestock Ltd',
+  addressLine1: "14 Drover's Way",
+  townOrCity: 'Inverness',
+  postcode: 'IV2 3JH',
+  countryCode: 'GB'
+}
+
+const greenFarm = {
+  id: '1',
+  name: 'Green Farm',
+  addressLine1: '1 Road',
+  townOrCity: 'Inverness',
+  postcode: 'IV2 3JH',
+  countryCode: 'GB'
+}
+
+const pageOf = (items, overrides = {}) => ({
+  items,
+  page: 1,
+  pageSize: 25,
+  totalItems: items.length,
+  totalPages: items.length ? 1 : 0,
+  ...overrides
+})
 
 describe('#addressBookListController', () => {
   let server
+
+  runInRealMode()
 
   beforeAll(async () => {
     server = await createServer()
@@ -39,26 +66,14 @@ describe('#addressBookListController', () => {
   })
 
   beforeEach(() => {
-    vi.mocked(addressBookClient.listAddresses).mockReset()
+    serveCountries(countries)
   })
 
   test('renders address list with Name, Address and Country columns', async () => {
-    addressBookClient.listAddresses.mockResolvedValue({
-      items: [
-        {
-          id: '1',
-          name: 'Highland Livestock Ltd',
-          addressLine1: "14 Drover's Way",
-          townOrCity: 'Inverness',
-          postcode: 'IV2 3JH',
-          countryCode: 'GB'
-        }
-      ],
-      page: 1,
-      pageSize: 25,
-      totalItems: 1,
-      totalPages: 1
-    })
+    addressBookApi()
+      .get(ADDRESSES_PATH)
+      .query({ page: '1' })
+      .reply(200, pageOf([highland]))
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -81,13 +96,10 @@ describe('#addressBookListController', () => {
   })
 
   test('shows empty state when org has no addresses', async () => {
-    addressBookClient.listAddresses.mockResolvedValue({
-      items: [],
-      page: 1,
-      pageSize: 25,
-      totalItems: 0,
-      totalPages: 0
-    })
+    addressBookApi()
+      .get(ADDRESSES_PATH)
+      .query({ page: '1' })
+      .reply(200, pageOf([]))
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -102,15 +114,18 @@ describe('#addressBookListController', () => {
   })
 
   test('renders numbered pagination when more than one page', async () => {
-    addressBookClient.listAddresses.mockResolvedValue({
-      items: [
-        { id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }
-      ],
-      page: 2,
-      pageSize: 25,
-      totalItems: 30,
-      totalPages: 2
-    })
+    addressBookApi()
+      .get(ADDRESSES_PATH)
+      .query({ page: '2' })
+      .reply(
+        200,
+        pageOf(
+          [
+            { id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }
+          ],
+          { page: 2, totalItems: 30, totalPages: 2 }
+        )
+      )
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -125,22 +140,10 @@ describe('#addressBookListController', () => {
   })
 
   test('does not show clear search on the unfiltered list', async () => {
-    addressBookClient.listAddresses.mockResolvedValue({
-      items: [
-        {
-          id: '1',
-          name: 'Highland Livestock Ltd',
-          addressLine1: "14 Drover's Way",
-          townOrCity: 'Inverness',
-          postcode: 'IV2 3JH',
-          countryCode: 'GB'
-        }
-      ],
-      page: 1,
-      pageSize: 25,
-      totalItems: 1,
-      totalPages: 1
-    })
+    addressBookApi()
+      .get(ADDRESSES_PATH)
+      .query({ page: '1' })
+      .reply(200, pageOf([highland]))
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -153,22 +156,10 @@ describe('#addressBookListController', () => {
   })
 
   test('shows clear search when search results are returned', async () => {
-    addressBookClient.listAddresses.mockResolvedValue({
-      items: [
-        {
-          id: '1',
-          name: 'Green Farm',
-          addressLine1: '1 Road',
-          townOrCity: 'Inverness',
-          postcode: 'IV2 3JH',
-          countryCode: 'GB'
-        }
-      ],
-      page: 1,
-      pageSize: 25,
-      totalItems: 1,
-      totalPages: 1
-    })
+    addressBookApi()
+      .get(ADDRESSES_PATH)
+      .query({ page: '1', q: 'green' })
+      .reply(200, pageOf([greenFarm]))
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -184,22 +175,22 @@ describe('#addressBookListController', () => {
   })
 
   test('forwards search query and resolves country name to countryCode', async () => {
-    addressBookClient.listAddresses.mockResolvedValue({
-      items: [
-        {
-          id: '1',
-          name: 'Paris Depot',
-          addressLine1: '1 Rue de Rivoli',
-          townOrCity: 'Paris',
-          postcode: '75001',
-          countryCode: 'FR'
-        }
-      ],
-      page: 1,
-      pageSize: 25,
-      totalItems: 1,
-      totalPages: 1
-    })
+    const scope = addressBookApi()
+      .get(ADDRESSES_PATH)
+      .query({ page: '1', q: 'France', countryCode: 'FR' })
+      .reply(
+        200,
+        pageOf([
+          {
+            id: '1',
+            name: 'Paris Depot',
+            addressLine1: '1 Rue de Rivoli',
+            townOrCity: 'Paris',
+            postcode: '75001',
+            countryCode: 'FR'
+          }
+        ])
+      )
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -208,24 +199,17 @@ describe('#addressBookListController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(addressBookClient.listAddresses).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(String),
-      expect.objectContaining({ q: 'France', countryCode: 'FR' })
-    )
+    expect(scope.isDone()).toBe(true)
     expect(result).toContain('Paris Depot')
     expect(result).toContain('France')
     expect(result).toContain('value="France"')
   })
 
   test('shows no-results state distinct from empty state when search has no matches', async () => {
-    addressBookClient.listAddresses.mockResolvedValue({
-      items: [],
-      page: 1,
-      pageSize: 25,
-      totalItems: 0,
-      totalPages: 0
-    })
+    addressBookApi()
+      .get(ADDRESSES_PATH)
+      .query({ page: '1', q: 'zzznomatch' })
+      .reply(200, pageOf([]))
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -241,20 +225,13 @@ describe('#addressBookListController', () => {
   })
 
   test('pagination preserves the active search term', async () => {
-    addressBookClient.listAddresses.mockResolvedValue({
-      items: [
-        {
-          id: '1',
-          name: 'Green Farm',
-          addressLine1: '1 Road',
-          countryCode: 'GB'
-        }
-      ],
-      page: 2,
-      pageSize: 25,
-      totalItems: 30,
-      totalPages: 2
-    })
+    const scope = addressBookApi()
+      .get(ADDRESSES_PATH)
+      .query({ page: '2', q: 'green', countryCode: 'GB' })
+      .reply(
+        200,
+        pageOf([greenFarm], { page: 2, totalItems: 30, totalPages: 2 })
+      )
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -263,16 +240,15 @@ describe('#addressBookListController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
+    expect(scope.isDone()).toBe(true)
     expect(result).toContain('?q=green&amp;countryCode=GB')
-    expect(addressBookClient.listAddresses).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(String),
-      expect.objectContaining({ q: 'green', countryCode: 'GB', page: 2 })
-    )
   })
 
-  test('returns 500 when listAddresses fails', async () => {
-    addressBookClient.listAddresses.mockRejectedValue(new Error('API down'))
+  test('returns 500 when the address book cannot be reached', async () => {
+    addressBookApi()
+      .get(ADDRESSES_PATH)
+      .query({ page: '1' })
+      .reply(503, { title: 'Service Unavailable' })
 
     const { result, statusCode } = await server.inject({
       method: 'GET',

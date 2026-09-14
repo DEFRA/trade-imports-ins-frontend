@@ -1,7 +1,7 @@
 /**
  * In-memory stand-in for the real INS Backend API, selected by STUB_MODE=true
  * (see mode.js). The dashboard is deliberately unscoped to an organisation,
- * so — unlike address-book-client.stub.js — there is a single fixed dataset
+ * so — unlike the address-book stub — there is a single fixed dataset
  * rather than one keyed per organisation.
  */
 const PAGE_SIZE = 25
@@ -50,7 +50,7 @@ const NOTIFICATIONS = [
   }
 ]
 
-function sortComparator(sort) {
+const sortComparator = (sort) => {
   const [field, direction] = (sort ?? 'arrivalDate,desc').split(',')
   const sortField = field === 'lastUpdated' ? 'lastUpdated' : 'arrivalDate'
   const multiplier = direction === 'asc' ? 1 : -1
@@ -58,26 +58,28 @@ function sortComparator(sort) {
     multiplier * (new Date(a[sortField]) - new Date(b[sortField]))
 }
 
-export const insBackendClient = {
-  async listNotifications(_traceId, { page = 1, sort, referenceNumber } = {}) {
-    const visible = NOTIFICATIONS.filter((n) => n.status !== DELETED_STATUS)
+export const listNotifications = async ({
+  page = 1,
+  sort,
+  referenceNumber
+} = {}) => {
+  const visible = NOTIFICATIONS.filter((n) => n.status !== DELETED_STATUS)
 
-    const matches = referenceNumber
-      ? visible.filter((n) => n.referenceNumber === referenceNumber)
-      : visible.slice().sort(sortComparator(sort))
+  const matches = referenceNumber
+    ? visible.filter((n) => n.referenceNumber === referenceNumber)
+    : visible.slice().sort(sortComparator(sort))
 
-    const totalElements = matches.length
-    const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE))
-    const from = (page - 1) * PAGE_SIZE
-    const content = matches.slice(from, from + PAGE_SIZE)
+  const totalElements = matches.length
+  const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE))
+  const from = (page - 1) * PAGE_SIZE
+  const content = matches.slice(from, from + PAGE_SIZE)
 
-    return {
-      content,
-      page,
-      size: PAGE_SIZE,
-      numberOfElements: content.length,
-      totalElements,
-      totalPages
-    }
+  return {
+    content,
+    page,
+    size: PAGE_SIZE,
+    numberOfElements: content.length,
+    totalElements,
+    totalPages
   }
 }

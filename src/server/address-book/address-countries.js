@@ -1,9 +1,9 @@
-import { countriesClient } from '../common/clients/countries-client.js'
+import { getCountries } from '../app/services/countries/index.js'
 
 const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }
 
-export async function getAddressFormCountries(traceId) {
-  const countries = await countriesClient.getCountries(traceId)
+export async function getAddressFormCountries() {
+  const countries = await getCountries()
 
   if (!countries?.length) {
     throw new Error('Country reference data is unavailable')

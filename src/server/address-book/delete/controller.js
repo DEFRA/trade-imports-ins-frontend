@@ -1,7 +1,10 @@
 import Boom from '@hapi/boom'
 import { getTraceId } from '@defra/hapi-tracing'
 
-import { addressBookClient } from '../../common/clients/address-book-client.js'
+import {
+  deleteAddress,
+  getAddress
+} from '../../app/services/address-book/index.js'
 import { createLogger } from '../../common/helpers/logging/logger.js'
 import { setSessionValue } from '../../common/helpers/session-helpers.js'
 import { sessionKeys } from '../../common/constants/session-keys.js'
@@ -20,7 +23,7 @@ export const deleteController = {
       const { id } = request.params
 
       try {
-        const address = await addressBookClient.getAddress(orgId, traceId, id)
+        const address = await getAddress(orgId, id)
 
         if (address.deleted) {
           throw Boom.notFound()
@@ -60,13 +63,13 @@ export const deleteController = {
       }
 
       try {
-        const address = await addressBookClient.getAddress(orgId, traceId, id)
+        const address = await getAddress(orgId, id)
 
         if (address.deleted) {
           throw Boom.notFound()
         }
 
-        await addressBookClient.deleteAddress(orgId, traceId, id)
+        await deleteAddress(orgId, id)
 
         setSessionValue(
           request,

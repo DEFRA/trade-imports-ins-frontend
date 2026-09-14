@@ -2,9 +2,10 @@ import Boom from '@hapi/boom'
 import { getTraceId } from '@defra/hapi-tracing'
 
 import {
-  addressBookClient,
-  mapApiErrorsToFormErrors
-} from '../../common/clients/address-book-client.js'
+  getAddress,
+  mapApiErrorsToFormErrors,
+  updateAddress
+} from '../../app/services/address-book/index.js'
 import { buildAddressSchema } from '../address-schema.js'
 import {
   buildCountrySelectItems,
@@ -67,11 +68,8 @@ function buildViewModel({
   }
 }
 
-async function renderEditForm(
-  h,
-  { id, formValues, traceId, errorList, fieldErrors }
-) {
-  const countries = await getAddressFormCountries(traceId).catch(() => [])
+async function renderEditForm(h, { id, formValues, errorList, fieldErrors }) {
+  const countries = await getAddressFormCountries().catch(() => [])
 
   return h.view(
     VIEW,
@@ -93,13 +91,13 @@ export const editController = {
       const { id } = request.params
 
       try {
-        const address = await addressBookClient.getAddress(orgId, traceId, id)
+        const address = await getAddress(orgId, id)
 
         if (address.deleted) {
           throw Boom.notFound()
         }
 
-        const countries = await getAddressFormCountries(traceId)
+        const countries = await getAddressFormCountries()
 
         return h.view(
           VIEW,
@@ -139,7 +137,7 @@ export const editController = {
       const formValues = payloadToFormValues(request.payload)
 
       try {
-        const countries = await getAddressFormCountries(traceId)
+        const countries = await getAddressFormCountries()
         const mdmCodes = countries.map((country) => country.code)
         const schema = buildAddressSchema(mdmCodes)
 
@@ -153,19 +151,13 @@ export const editController = {
             await renderEditForm(h, {
               id,
               formValues,
-              traceId,
               errorList: formattedErrors.errorList,
               fieldErrors: formattedErrors.fieldErrors
             })
           ).code(statusCodes.badRequest)
         }
 
-        const updated = await addressBookClient.updateAddress(
-          orgId,
-          traceId,
-          id,
-          value
-        )
+        const updated = await updateAddress(orgId, id, value)
 
         setSessionValue(
           request,
@@ -189,7 +181,6 @@ export const editController = {
             await renderEditForm(h, {
               id,
               formValues,
-              traceId,
               errorList: formattedErrors.errorList,
               fieldErrors: formattedErrors.fieldErrors
             })
@@ -201,7 +192,6 @@ export const editController = {
           await renderEditForm(h, {
             id,
             formValues,
-            traceId,
             errorList: [{ text: 'Something went wrong saving the address' }]
           })
         ).code(statusCodes.internalServerError)

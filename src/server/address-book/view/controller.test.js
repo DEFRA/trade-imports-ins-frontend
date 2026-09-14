@@ -6,21 +6,21 @@ import {
   sessionAuth,
   mockOidcConfig
 } from '../../common/test-helpers/mock-auth.js'
-import { addressBookClient } from '../../common/clients/address-book-client.js'
-import { countriesClient } from '../../common/clients/countries-client.js'
+import {
+  addressBookApi,
+  runInRealMode,
+  serveCountries
+} from '../../common/test-helpers/real-mode.js'
 import { buildRows } from './controller.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-vi.mock(
-  '../../common/clients/address-book-client.js',
-  () => import('../../common/clients/__mocks__/address-book-client.js')
-)
-vi.mock('../../common/clients/countries-client.js')
-
+const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
+const ADDRESS_PATH = `/organisation/${ORG_ID}/addresses/${addressId}`
+const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
 const mockAddress = {
   id: addressId,
@@ -74,6 +74,8 @@ describe('#buildRows', () => {
 describe('#addressBookViewController', () => {
   let server
 
+  runInRealMode()
+
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
@@ -84,15 +86,17 @@ describe('#addressBookViewController', () => {
   })
 
   beforeEach(() => {
-    vi.mocked(addressBookClient.getAddress).mockReset()
-    vi.mocked(countriesClient.getCountries).mockResolvedValue([
+    serveCountries([
       { code: 'GB', name: 'United Kingdom' },
       { code: 'FR', name: 'France' }
     ])
   })
 
   test('GET renders read-only address details with Edit and Delete actions', async () => {
-    addressBookClient.getAddress.mockResolvedValue(mockAddress)
+    const scope = addressBookApi()
+      .get(ADDRESS_PATH)
+      .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+      .reply(200, mockAddress)
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -101,6 +105,7 @@ describe('#addressBookViewController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
+    expect(scope.isDone()).toBe(true)
     expect(result).toContain('Highland Livestock Ltd')
     expect(result).toContain('14 Drover&#39;s Way')
     expect(result).toContain('Inverness')
@@ -116,17 +121,10 @@ describe('#addressBookViewController', () => {
     expect(result).toContain(`/address-book/${addressId}/delete`)
     expect(result).not.toContain('operator')
     expect(result).not.toContain('Type')
-    expect(addressBookClient.getAddress).toHaveBeenCalledWith(
-      '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88',
-      expect.any(String),
-      addressId
-    )
   })
 
   test('GET returns 404 when address is not found', async () => {
-    addressBookClient.getAddress.mockRejectedValue(
-      Object.assign(new Error('Not found'), { status: 404 })
-    )
+    addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
     const { statusCode } = await server.inject({
       method: 'GET',
@@ -137,7 +135,9 @@ describe('#addressBookViewController', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  test('GET returns 404 for malformed address id', async () => {
+  test('GET returns 404 for malformed address id without reaching the address book', async () => {
+    // No interceptor: the route's id validation must answer before the handler
+    // runs, otherwise the refused request would surface as a 500.
     const { statusCode } = await server.inject({
       method: 'GET',
       url: '/address-book/not-a-valid-id',
@@ -145,14 +145,12 @@ describe('#addressBookViewController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.notFound)
-    expect(addressBookClient.getAddress).not.toHaveBeenCalled()
   })
 
   test('GET returns 404 for soft-deleted tombstones', async () => {
-    addressBookClient.getAddress.mockResolvedValue({
-      ...mockAddress,
-      deleted: true
-    })
+    addressBookApi()
+      .get(ADDRESS_PATH)
+      .reply(200, { ...mockAddress, deleted: true })
 
     const { statusCode } = await server.inject({
       method: 'GET',

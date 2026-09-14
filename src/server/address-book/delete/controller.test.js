@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
@@ -6,18 +6,19 @@ import {
   sessionAuth,
   mockOidcConfig
 } from '../../common/test-helpers/mock-auth.js'
-import { addressBookClient } from '../../common/clients/address-book-client.js'
+import {
+  addressBookApi,
+  runInRealMode
+} from '../../common/test-helpers/real-mode.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-vi.mock(
-  '../../common/clients/address-book-client.js',
-  () => import('../../common/clients/__mocks__/address-book-client.js')
-)
-
+const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
+const ADDRESS_PATH = `/organisation/${ORG_ID}/addresses/${addressId}`
+const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
 const mockAddress = {
   id: addressId,
@@ -34,6 +35,8 @@ const mockAddress = {
 describe('#addressBookDeleteController', () => {
   let server
 
+  runInRealMode()
+
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
@@ -43,13 +46,8 @@ describe('#addressBookDeleteController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  beforeEach(() => {
-    vi.mocked(addressBookClient.getAddress).mockReset()
-    vi.mocked(addressBookClient.deleteAddress).mockReset()
-  })
-
   test('GET renders delete confirmation page', async () => {
-    addressBookClient.getAddress.mockResolvedValue(mockAddress)
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -65,9 +63,7 @@ describe('#addressBookDeleteController', () => {
   })
 
   test('GET returns 404 when address is not found', async () => {
-    addressBookClient.getAddress.mockRejectedValue(
-      Object.assign(new Error('Not found'), { status: 404 })
-    )
+    addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
     const { statusCode } = await server.inject({
       method: 'GET',
@@ -79,10 +75,9 @@ describe('#addressBookDeleteController', () => {
   })
 
   test('GET returns 404 for soft-deleted tombstones', async () => {
-    addressBookClient.getAddress.mockResolvedValue({
-      ...mockAddress,
-      deleted: true
-    })
+    addressBookApi()
+      .get(ADDRESS_PATH)
+      .reply(200, { ...mockAddress, deleted: true })
 
     const { statusCode } = await server.inject({
       method: 'GET',
@@ -93,11 +88,9 @@ describe('#addressBookDeleteController', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  test('POST returns 404 when deleteAddress rejects with 404', async () => {
-    addressBookClient.getAddress.mockResolvedValue(mockAddress)
-    addressBookClient.deleteAddress.mockRejectedValue(
-      Object.assign(new Error('Not found'), { status: 404 })
-    )
+  test('POST returns 404 when the address book rejects the delete with 404', async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    addressBookApi().delete(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
     const { statusCode } = await server.inject({
       method: 'POST',
@@ -109,11 +102,12 @@ describe('#addressBookDeleteController', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  test('POST returns 404 for soft-deleted tombstones', async () => {
-    addressBookClient.getAddress.mockResolvedValue({
-      ...mockAddress,
-      deleted: true
-    })
+  test('POST returns 404 for soft-deleted tombstones without deleting', async () => {
+    // No DELETE interceptor: a delete would be refused by nock and surface as a
+    // 500, not the 404 asserted here.
+    addressBookApi()
+      .get(ADDRESS_PATH)
+      .reply(200, { ...mockAddress, deleted: true })
 
     const { statusCode } = await server.inject({
       method: 'POST',
@@ -123,7 +117,6 @@ describe('#addressBookDeleteController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.notFound)
-    expect(addressBookClient.deleteAddress).not.toHaveBeenCalled()
   })
 
   test('Cancel returns to address details without deleting', async () => {
@@ -136,12 +129,14 @@ describe('#addressBookDeleteController', () => {
 
     expect(statusCode).toBe(statusCodes.redirect)
     expect(headers.location).toBe(`/address-book/${addressId}`)
-    expect(addressBookClient.deleteAddress).not.toHaveBeenCalled()
   })
 
   test('Confirm soft-deletes address and redirects to list', async () => {
-    addressBookClient.getAddress.mockResolvedValue(mockAddress)
-    addressBookClient.deleteAddress.mockResolvedValue(undefined)
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    const scope = addressBookApi()
+      .delete(ADDRESS_PATH)
+      .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+      .reply(204)
 
     const { statusCode, headers } = await server.inject({
       method: 'POST',
@@ -152,10 +147,6 @@ describe('#addressBookDeleteController', () => {
 
     expect(statusCode).toBe(statusCodes.redirect)
     expect(headers.location).toBe('/address-book')
-    expect(addressBookClient.deleteAddress).toHaveBeenCalledWith(
-      '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88',
-      expect.any(String),
-      addressId
-    )
+    expect(scope.isDone()).toBe(true)
   })
 })
