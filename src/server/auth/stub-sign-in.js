@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 
 import Jwt from '@hapi/jwt'
 
-import { getSafeRedirect } from '#/auth/get-safe-redirect.js'
+import { getSafeRedirect } from '../../auth/get-safe-redirect.js'
 
 // Generated once per process rather than hardcoded - this token is only ever
 // decoded (never verified against a known key) by the session validator, so
@@ -27,7 +27,7 @@ function buildStubToken(sessionId) {
 }
 
 /**
- * Replaces the real Defra ID OIDC round-trip when auth.stubMode is on
+ * Replaces the real Defra ID OIDC round-trip when stub mode is on
  * (see mode.js / plugins/auth.js). Auth is still enforced everywhere else -
  * this only produces the same end state the real sign-in-oidc handler does
  * (cached session + session cookie), signed locally rather than verified

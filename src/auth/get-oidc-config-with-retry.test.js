@@ -9,7 +9,7 @@ vi.mock('@hapi/wreck', () => ({
   default: { get: wreckGetMock }
 }))
 
-vi.mock('#/config/config.js', () => ({
+vi.mock('../config/config.js', () => ({
   config: { get: configGetMock }
 }))
 

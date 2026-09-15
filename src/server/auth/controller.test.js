@@ -8,25 +8,26 @@ import {
   vi
 } from 'vitest'
 
-import { createServer } from '#/server/server.js'
-import { statusCodes } from '#/server/common/constants/status-codes.js'
+import { createServer } from '../server.js'
+import { config } from '../../config/config.js'
+import { statusCodes } from '../common/constants/status-codes.js'
 import {
   sessionAuth,
   mockOidcConfig
-} from '#/server/common/test-helpers/mock-auth.js'
-import { verifyToken } from '#/auth/verify-token.js'
-import { getPermissions } from '#/auth/get-permissions.js'
+} from '../common/test-helpers/mock-auth.js'
+import { verifyToken } from '../../auth/verify-token.js'
+import { getPermissions } from '../../auth/get-permissions.js'
 
-vi.mock('#/auth/get-oidc-config.js', () => ({
+vi.mock('../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
-vi.mock('#/auth/get-sign-out-url.js', () => ({
+vi.mock('../../auth/get-sign-out-url.js', () => ({
   getSignOutUrl: vi.fn().mockResolvedValue('/signed-out')
 }))
-vi.mock('#/auth/verify-token.js', () => ({
+vi.mock('../../auth/verify-token.js', () => ({
   verifyToken: vi.fn()
 }))
-vi.mock('#/auth/get-permissions.js', () => ({
+vi.mock('../../auth/get-permissions.js', () => ({
   getPermissions: vi.fn()
 }))
 
@@ -47,15 +48,18 @@ const defraIdAuth = (profileOverrides = {}) => ({
 })
 
 describe('#authController', () => {
+  const originalMode = config.get('stubMode')
   let server
 
   beforeAll(async () => {
+    config.set('stubMode', false)
     server = await createServer()
     await server.initialize()
   })
 
   afterAll(async () => {
     await server.stop({ timeout: 0 })
+    config.set('stubMode', originalMode)
   })
 
   beforeEach(() => {

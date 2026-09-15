@@ -3,7 +3,7 @@ import Wreck from '@hapi/wreck'
 import Jwt from '@hapi/jwt'
 import { getTraceId } from '@defra/hapi-tracing'
 import { getOidcConfig, OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
-import { config } from '#/config/config.js'
+import { config } from '../config/config.js'
 
 async function verifyToken(token) {
   const oidcConfig = await getOidcConfig()

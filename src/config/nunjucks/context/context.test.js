@@ -14,7 +14,7 @@ vi.mock('node:fs', async () => {
 vi.mock('../../../server/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
 }))
-vi.mock(import('#/config/config.js'), async (importOriginal) => {
+vi.mock(import('../../config.js'), async (importOriginal) => {
   const originalModule = await importOriginal()
   return {
     config: {
@@ -26,6 +26,21 @@ vi.mock(import('#/config/config.js'), async (importOriginal) => {
   }
 })
 
+const expectedContext = {
+  assetPath: '/public/assets',
+  getAssetPath: expect.any(Function),
+  serviceName: 'trade-imports-ins-frontend',
+  serviceUrl: '/',
+  authEnabled: true,
+  activeNavigationItem: 'dashboard',
+  dashboardUrl: '/',
+  addressBookUrl: '/address-book',
+  userSession: {
+    isAuthenticated: false
+  },
+  crumb: ''
+}
+
 describe('context and cache', () => {
   beforeEach(() => {
     mockReadFileSync.mockReset()
@@ -36,7 +51,7 @@ describe('context and cache', () => {
   describe('#context', () => {
     const mockRequest = { path: '/' }
 
-    describe('When Vite manifest file read succeeds', () => {
+    describe('When webpack manifest file read succeeds', () => {
       let contextImport
       let contextResult
 
@@ -55,30 +70,7 @@ describe('context and cache', () => {
       })
 
       test('Should provide expected context', () => {
-        expect(contextResult).toEqual({
-          assetPath: '/public/assets',
-          breadcrumbs: [],
-          getAssetPath: expect.any(Function),
-          navigation: [
-            {
-              current: true,
-              text: 'Dashboard',
-              href: '/'
-            },
-            {
-              current: false,
-              text: 'Address book',
-              href: '/address-book'
-            }
-          ],
-          serviceName: 'trade-imports-ins-frontend',
-          serviceUrl: '/',
-          authEnabled: true,
-          userSession: {
-            isAuthenticated: false
-          },
-          crumb: ''
-        })
+        expect(contextResult).toEqual(expectedContext)
       })
 
       test('Should expose authenticated user details in userSession', () => {
@@ -105,7 +97,7 @@ describe('context and cache', () => {
       describe('With valid asset path', () => {
         test('Should provide expected asset path', () => {
           expect(contextResult.getAssetPath('application.js')).toBe(
-            '/public/application.js'
+            '/public/javascripts/application.js'
           )
         })
       })
@@ -119,7 +111,7 @@ describe('context and cache', () => {
       })
     })
 
-    describe('When Vite manifest file read fails', () => {
+    describe('When webpack manifest file read fails', () => {
       let contextImport
 
       beforeAll(async () => {
@@ -132,9 +124,9 @@ describe('context and cache', () => {
         contextImport.context(mockRequest)
       })
 
-      test('Should log that the Vite Manifest file is not available', () => {
+      test('Should log that the Webpack Manifest file is not available', () => {
         expect(mockLoggerError).toHaveBeenCalledWith(
-          'Vite manifest.json not found'
+          'Webpack assets-manifest.json not found'
         )
       })
     })
@@ -144,7 +136,7 @@ describe('context and cache', () => {
     const mockRequest = { path: '/' }
     let contextResult
 
-    describe('Vite manifest file cache', () => {
+    describe('Webpack manifest file cache', () => {
       let contextImport
 
       beforeAll(async () => {
@@ -170,31 +162,42 @@ describe('context and cache', () => {
       })
 
       test('Should provide expected context', () => {
-        expect(contextResult).toEqual({
-          assetPath: '/public/assets',
-          breadcrumbs: [],
-          getAssetPath: expect.any(Function),
-          navigation: [
-            {
-              current: true,
-              text: 'Dashboard',
-              href: '/'
-            },
-            {
-              current: false,
-              text: 'Address book',
-              href: '/address-book'
-            }
-          ],
-          serviceName: 'trade-imports-ins-frontend',
-          serviceUrl: '/',
-          authEnabled: true,
-          userSession: {
-            isAuthenticated: false
-          },
-          crumb: ''
-        })
+        expect(contextResult).toEqual(expectedContext)
       })
+    })
+  })
+
+  describe('#activeNavigationItem', () => {
+    let activeNavigationItem
+
+    beforeAll(async () => {
+      ;({ activeNavigationItem } = await import('./context.js'))
+    })
+
+    test('Should mark the dashboard on the dashboard', () => {
+      expect(activeNavigationItem('/')).toBe('dashboard')
+    })
+
+    test('Should mark the address book on the address book', () => {
+      expect(activeNavigationItem('/address-book')).toBe('addressBook')
+    })
+
+    test('Should keep the address book marked inside an address', () => {
+      expect(activeNavigationItem('/address-book/abc-123/edit')).toBe(
+        'addressBook'
+      )
+    })
+
+    test('Should mark nothing on a path that merely starts with the section name', () => {
+      expect(activeNavigationItem('/address-bookkeeping')).toBeNull()
+    })
+
+    test('Should mark nothing on a page outside the navigation', () => {
+      expect(activeNavigationItem('/auth/sign-out')).toBeNull()
+    })
+
+    test('Should mark nothing when there is no path', () => {
+      expect(activeNavigationItem(undefined)).toBeNull()
     })
   })
 })
