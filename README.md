@@ -33,6 +33,7 @@ repository `trade-imports-animals-tests`, as its `ins` Playwright project
 - [Local development](#local-development)
 - [Auth](#authentication-trade-imports-defra-id-stub)
 - [Docker](#docker)
+- [Lighthouse](#lighthouse)
 - [SonarCloud](#sonarcloud)
 - [Licence](#licence)
 
@@ -227,6 +228,17 @@ A cross-repo change must use the **same branch name** in every repository
 it touches: the stack probes each repository for a branch-tagged image
 and falls back to `:latest` per service, so a mismatched name silently
 picks up someone else's image.
+
+## Lighthouse
+
+`npm run lighthouse` seeds its audit targets from the app's own registered
+routes, then runs Lighthouse CI against them.
+
+Every GET route the service registers is audited — the dashboard, the
+address book list, add, view, edit and delete — on one address the setup
+step creates through the app's own pages. The
+[Lighthouse guide](src/server/app/docs/lighthouse.md) covers how to run it
+against a locally started app, the score floors and the CI workflow.
 
 ## SonarCloud
 

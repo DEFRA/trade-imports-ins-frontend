@@ -34,6 +34,7 @@ represents.
 - [Feature anatomy](features.md)
 - [Services](services.md)
 - [Testing](testing.md)
+- [Lighthouse](lighthouse.md)
 
 ## Recipes
 

@@ -37,6 +37,9 @@
     "depcruise:graph": "depcruise src/server/app --config .dependency-cruiser.cjs --output-type archi | dot -T svg > ins-arch.svg",
     "pretest": "npm run build:frontend",
     "test": "AWS_EMF_ENVIRONMENT=Local TZ=UTC vitest run --coverage",
+    "lighthouse": "run-s lighthouse:targets lighthouse:run",
+    "lighthouse:targets": "node scripts/lighthouse/seed-audit-targets.js",
+    "lighthouse:run": "node scripts/lighthouse/run-audit.js",
     "test:watch": "AWS_EMF_ENVIRONMENT=Local TZ=UTC vitest",
     "security-audit": "npm audit --audit-level=critical",
     "server:watch": "nodemon --inspect=0.0.0.0 --ext js,json --legacy-watch --watch ./src/server --watch ./src/config --env-file-if-exists=.env ./src",
@@ -84,6 +87,7 @@
     "@axe-core/playwright": "4.12.1",
     "@babel/preset-env": "8.0.2",
     "@defra/hapi-connect": "1.0.1",
+    "@lhci/cli": "0.15.1",
     "@playwright/test": "1.61.0",
     "@vitest/coverage-v8": "4.1.8",
     "autoprefixer": "10.5.4",
@@ -101,6 +105,7 @@
     "postcss-load-config": "6.0.1",
     "postcss-loader": "8.2.1",
     "prettier": "3.8.2",
+    "puppeteer": "25.6.0",
     "sass-embedded": "1.100.0",
     "sass-loader": "17.0.0",
     "source-map-loader": "5.0.0",
@@ -114,6 +119,13 @@
   },
   "overrides": {
     "brace-expansion": "5.0.8",
-    "minimatch": "10.2.4"
+    "minimatch": "10.2.4",
+    "lighthouse": {
+      ".": "13.4.1",
+      "ws": "7.5.11"
+    },
+    "puppeteer-core": {
+      "ws": "8.21.0"
+    }
   }
 }
