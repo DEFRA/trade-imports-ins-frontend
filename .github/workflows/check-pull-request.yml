@@ -54,11 +54,11 @@ jobs:
           docker build --no-cache --tag trade-imports-ins-frontend .
           exit $?
 
-#      - name: SonarCloud Scan
-#        if: github.actor != 'dependabot[bot]'
-#        uses: SonarSource/sonarqube-scan-action@master
-#        env:
-#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: SonarCloud Scan
+        if: github.actor != 'dependabot[bot]'
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # The frontend owns two Playwright projects — `smoke` and `features` — which
   # boot the app themselves with STUB_MODE=true: stub data and a locally signed
