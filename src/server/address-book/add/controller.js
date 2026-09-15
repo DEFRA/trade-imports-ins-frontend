@@ -103,19 +103,15 @@ const renderAddForm = (
     )
     .code(statusCode)
 
-const loadCountryItems = async (traceId) =>
-  buildCountrySelectItems(
-    await getAddressFormCountries(traceId).catch(() => [])
-  )
-
-async function submitAddress(
+const submitAddress = async (
   request,
   h,
   { traceId, handshake, orgId, formValues }
-) {
+) => {
+  const countries = await getAddressFormCountries(traceId).catch(() => [])
+  const countryItems = buildCountrySelectItems(countries)
+
   try {
-    const countries = await getAddressFormCountries(traceId)
-    const countryItems = buildCountrySelectItems(countries)
     const mdmCodes = countries.map((country) => country.code)
     const schema = buildAddressSchema(mdmCodes)
 
@@ -157,7 +153,7 @@ async function submitAddress(
         h,
         {
           formValues,
-          countryItems: await loadCountryItems(traceId),
+          countryItems,
           errorList: formattedErrors.errorList,
           fieldErrors: formattedErrors.fieldErrors,
           handshake
@@ -166,12 +162,12 @@ async function submitAddress(
       )
     }
 
-    logger.error({ err, traceId, orgId }, 'Failed to create address')
+    request.logger.error({ err }, 'Failed to create address')
     return renderAddForm(
       h,
       {
         formValues,
-        countryItems: await loadCountryItems(traceId),
+        countryItems,
         errorList: [{ text: 'Something went wrong saving the address' }],
         handshake
       },

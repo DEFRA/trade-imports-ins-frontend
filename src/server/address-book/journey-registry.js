@@ -16,22 +16,33 @@ const registry = Object.freeze({
 export const isKnownJourneyType = (journeyType) =>
   Object.hasOwn(registry, journeyType)
 
+const assertHandshakeIds = (context) => {
+  if (!context.notificationId || !context.fulfilmentId) {
+    throw new Error(
+      'Handshake context must include notificationId and fulfilmentId'
+    )
+  }
+}
+
 export const buildReturnUrl = (context, { addressId } = {}) => {
   const entry = registry[context.journeyType]
   if (!entry) {
     throw new Error(`Unknown journey type "${context.journeyType}"`)
   }
 
+  assertHandshakeIds(context)
+
   const baseUrl = config
     .get('tradeImportsAnimalsFrontend.baseUrl')
     .replace(/\/$/, '')
-  let path = entry.returnPathTemplate
+  const path = entry.returnPathTemplate
     .replace('{notification-id}', encodeURIComponent(context.notificationId))
     .replace('{fulfilment-id}', encodeURIComponent(context.fulfilmentId))
 
+  const url = new URL(path, baseUrl)
   if (addressId) {
-    path += `&addressId=${encodeURIComponent(addressId)}`
+    url.searchParams.set('addressId', addressId)
   }
 
-  return `${baseUrl}${path}`
+  return url.href
 }

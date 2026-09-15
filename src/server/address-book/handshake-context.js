@@ -13,11 +13,12 @@ const queryValue = (request, name) => {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : ''
 }
 
-export const readHandshakeQuery = (request) => {
-  const journeyType = queryValue(request, 'journey-type')
-  const notificationId = queryValue(request, 'notification-id')
-  const fulfilmentId = queryValue(request, 'fulfilment-id')
+const payloadValue = (payload, name) => {
+  const value = payload?.[name]
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : ''
+}
 
+const buildHandshakeContext = ({ journeyType, notificationId, fulfilmentId }) => {
   if (!journeyType && !notificationId && !fulfilmentId) {
     return null
   }
@@ -36,6 +37,13 @@ export const readHandshakeQuery = (request) => {
     fulfilmentId
   }
 }
+
+export const readHandshakeQuery = (request) =>
+  buildHandshakeContext({
+    journeyType: queryValue(request, 'journey-type'),
+    notificationId: queryValue(request, 'notification-id'),
+    fulfilmentId: queryValue(request, 'fulfilment-id')
+  })
 
 export const storeHandshakeContext = (request, context) => {
   if (context) {
@@ -48,34 +56,12 @@ export const storeHandshakeContext = (request, context) => {
 export const loadHandshakeContext = (request) =>
   getSessionValue(request, sessionKeys.addressBookHandshake)
 
-const payloadValue = (payload, name) => {
-  const value = payload?.[name]
-  return typeof value === 'string' && value.trim() !== '' ? value.trim() : ''
-}
-
-export const readHandshakePayload = (payload) => {
-  const journeyType = payloadValue(payload, 'journey-type')
-  const notificationId = payloadValue(payload, 'notification-id')
-  const fulfilmentId = payloadValue(payload, 'fulfilment-id')
-
-  if (!journeyType && !notificationId && !fulfilmentId) {
-    return null
-  }
-
-  if (!journeyType || !notificationId || !fulfilmentId) {
-    throw Boom.badRequest('Incomplete journey handshake')
-  }
-
-  if (!isKnownJourneyType(journeyType)) {
-    throw Boom.notFound()
-  }
-
-  return {
-    journeyType,
-    notificationId,
-    fulfilmentId
-  }
-}
+export const readHandshakePayload = (payload) =>
+  buildHandshakeContext({
+    journeyType: payloadValue(payload, 'journey-type'),
+    notificationId: payloadValue(payload, 'notification-id'),
+    fulfilmentId: payloadValue(payload, 'fulfilment-id')
+  })
 
 const validatedSessionContext = (request) => {
   const fromSession = loadHandshakeContext(request)

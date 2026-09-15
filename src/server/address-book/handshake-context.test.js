@@ -152,6 +152,49 @@ describe('resolveHandshakeContext', () => {
     )
   })
 
+  test('prefers the POST payload over a different session handshake', () => {
+    const sessionContext = {
+      journeyType: 'gbn-ag',
+      notificationId: 'GBN-AG-26-OLDREF',
+      fulfilmentId: '00000000-0000-4000-8000-000000000001'
+    }
+    const request = mockRequest(
+      {},
+      {
+        'journey-type': validContext.journeyType,
+        'notification-id': validContext.notificationId,
+        'fulfilment-id': validContext.fulfilmentId,
+        name: 'Farm'
+      },
+      { [sessionKeys.addressBookHandshake]: sessionContext }
+    )
+
+    expect(resolveHandshakeContext(request)).toEqual(validContext)
+    expect(loadHandshakeContext(request)).toEqual(validContext)
+  })
+
+  test('throws when the POST payload handshake is incomplete', () => {
+    const request = mockRequest({}, { 'journey-type': 'gbn-ag', name: 'Farm' })
+
+    expect(() => resolveHandshakeContext(request)).toThrow(
+      Boom.badRequest('Incomplete journey handshake')
+    )
+  })
+
+  test('throws when the POST payload journey type is not registered', () => {
+    const request = mockRequest(
+      {},
+      {
+        'journey-type': 'not-a-journey',
+        'notification-id': validContext.notificationId,
+        'fulfilment-id': validContext.fulfilmentId,
+        name: 'Farm'
+      }
+    )
+
+    expect(() => resolveHandshakeContext(request)).toThrow(Boom.notFound())
+  })
+
   test('falls back to the session when the payload carries no handshake fields', () => {
     const request = mockRequest(
       {},
@@ -197,11 +240,13 @@ describe('syncHandshakeContext', () => {
   })
 
   test('clears handshake context when the GET query is absent', () => {
-    const request = mockRequest()
+    const request = mockRequest(
+      {},
+      undefined,
+      { [sessionKeys.addressBookHandshake]: validContext }
+    )
 
     expect(syncHandshakeContext(request)).toBeNull()
-    expect(request.yar.clear).toHaveBeenCalledWith(
-      sessionKeys.addressBookHandshake
-    )
+    expect(loadHandshakeContext(request)).toBeNull()
   })
 })

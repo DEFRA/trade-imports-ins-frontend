@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '#/config/config.js'
 import {
@@ -7,15 +7,23 @@ import {
   JOURNEY_TYPES
 } from './journey-registry.js'
 
+const defaultAnimalsBaseUrl = 'http://localhost:3000'
+
 describe('journey-registry', () => {
+  beforeEach(() => {
+    config.set('tradeImportsAnimalsFrontend.baseUrl', defaultAnimalsBaseUrl)
+  })
+
+  afterAll(() => {
+    config.set('tradeImportsAnimalsFrontend.baseUrl', defaultAnimalsBaseUrl)
+  })
+
   test('recognises the live-animals journey type', () => {
     expect(isKnownJourneyType(JOURNEY_TYPES.GBN_AG)).toBe(true)
     expect(isKnownJourneyType('not-a-journey')).toBe(false)
   })
 
   test('buildReturnUrl substitutes opaque ids into the registry template', () => {
-    config.set('tradeImportsAnimalsFrontend.baseUrl', 'http://localhost:3000')
-
     const url = buildReturnUrl(
       {
         journeyType: JOURNEY_TYPES.GBN_AG,
@@ -31,8 +39,6 @@ describe('journey-registry', () => {
   })
 
   test('buildReturnUrl omits addressId on cancel', () => {
-    config.set('tradeImportsAnimalsFrontend.baseUrl', 'http://localhost:3000')
-
     const url = buildReturnUrl({
       journeyType: JOURNEY_TYPES.GBN_AG,
       notificationId: 'GBN-AG-26-4F7K2P',
@@ -59,7 +65,6 @@ describe('journey-registry', () => {
   })
 
   test('buildReturnUrl URI-encodes opaque ids that contain reserved characters', () => {
-    config.set('tradeImportsAnimalsFrontend.baseUrl', 'http://localhost:3000')
     const notificationId = 'GBN-AG/26?x'
     const fulfilmentId = '9ad1&b=c/d'
 
@@ -82,5 +87,16 @@ describe('journey-registry', () => {
         fulfilmentId: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
       })
     ).toThrow('Unknown journey type "not-a-journey"')
+  })
+
+  test('buildReturnUrl throws when notificationId or fulfilmentId is missing', () => {
+    expect(() =>
+      buildReturnUrl({
+        journeyType: JOURNEY_TYPES.GBN_AG,
+        notificationId: 'GBN-AG-26-4F7K2P'
+      })
+    ).toThrow(
+      'Handshake context must include notificationId and fulfilmentId'
+    )
   })
 })

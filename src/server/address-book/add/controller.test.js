@@ -9,7 +9,6 @@ import {
 import { addressBookClient } from '#/server/common/clients/address-book-client.js'
 import { countriesClient } from '#/server/common/clients/countries-client.js'
 import { config } from '#/config/config.js'
-import { JOURNEY_TYPES } from '../journey-registry.js'
 
 vi.mock('#/auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
@@ -270,7 +269,6 @@ describe.sequential('#addressBookAddController', () => {
     expect(post.headers.location).toBe(
       'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&addressId=665f1c2ab3e4d51a2c9d0e77'
     )
-    expect(JOURNEY_TYPES.GBN_AG).toBe('gbn-ag')
   })
 
   test('POST shows an error when address book save fails', async () => {
@@ -318,6 +316,7 @@ describe.sequential('#addressBookAddController', () => {
       url: '/address-book/add',
       auth: sessionAuth('add-post-api-400-countries-fail'),
       payload: {
+        ...handshakeFields,
         name: 'Highland Livestock Ltd',
         addressLine1: "14 Drover's Way",
         townOrCity: 'Inverness',
