@@ -4,6 +4,7 @@ import { NodePackageImporter } from 'sass-embedded'
 export default defineConfig({
   base: '/public',
   build: {
+    cssMinify: 'esbuild',
     outDir: '.public',
     manifest: true,
     rolldownOptions: {
