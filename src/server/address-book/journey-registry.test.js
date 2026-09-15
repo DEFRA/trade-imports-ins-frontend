@@ -95,8 +95,6 @@ describe('journey-registry', () => {
         journeyType: JOURNEY_TYPES.GBN_AG,
         notificationId: 'GBN-AG-26-4F7K2P'
       })
-    ).toThrow(
-      'Handshake context must include notificationId and fulfilmentId'
-    )
+    ).toThrow('Handshake context must include notificationId and fulfilmentId')
   })
 })

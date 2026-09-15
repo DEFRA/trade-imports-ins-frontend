@@ -250,11 +250,9 @@ describe('syncHandshakeContext', () => {
   })
 
   test('clears handshake context when the GET query is absent', () => {
-    const request = mockRequest(
-      {},
-      undefined,
-      { [sessionKeys.addressBookHandshake]: validContext }
-    )
+    const request = mockRequest({}, undefined, {
+      [sessionKeys.addressBookHandshake]: validContext
+    })
 
     expect(syncHandshakeContext(request)).toBeNull()
     expect(loadHandshakeContext(request)).toBeNull()
