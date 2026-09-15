@@ -44,11 +44,12 @@ describe.sequential('#addressBookAddController', () => {
   })
 
   const handshakeQuery =
-    '?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+    '?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value'
   const handshakeFields = {
     'journey-type': 'gbn-ag',
     'notification-id': 'GBN-AG-26-4F7K2P',
-    'fulfilment-id': '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+    'fulfilment-id': '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',
+    'handshake-token': 'handshake-token-value'
   }
 
   test('GET renders the add address details form', async () => {
@@ -194,7 +195,7 @@ describe.sequential('#addressBookAddController', () => {
   test('GET refuses an unrecognised journey type', async () => {
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: '/address-book/add?journey-type=not-a-journey&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',
+      url: '/address-book/add?journey-type=not-a-journey&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value',
       auth: sessionAuth('add-get-unknown-journey')
     })
 
@@ -267,7 +268,7 @@ describe.sequential('#addressBookAddController', () => {
 
     expect(post.statusCode).toBe(statusCodes.redirect)
     expect(post.headers.location).toBe(
-      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&addressId=665f1c2ab3e4d51a2c9d0e77'
+      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value&addressId=665f1c2ab3e4d51a2c9d0e77'
     )
   })
 
@@ -341,7 +342,7 @@ describe.sequential('#addressBookAddController', () => {
 
     expect(post.statusCode).toBe(statusCodes.redirect)
     expect(post.headers.location).toBe(
-      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value'
     )
     expect(addressBookClient.createAddress).not.toHaveBeenCalled()
   })

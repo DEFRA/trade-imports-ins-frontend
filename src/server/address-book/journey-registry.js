@@ -40,6 +40,9 @@ export const buildReturnUrl = (context, { addressId } = {}) => {
     .replace('{fulfilment-id}', encodeURIComponent(context.fulfilmentId))
 
   const url = new URL(path, baseUrl)
+  if (context.handshakeToken) {
+    url.searchParams.set('handshake-token', context.handshakeToken)
+  }
   if (addressId) {
     url.searchParams.set('addressId', addressId)
   }

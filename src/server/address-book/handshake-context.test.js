@@ -14,7 +14,8 @@ import {
 const validContext = {
   journeyType: 'gbn-ag',
   notificationId: 'GBN-AG-26-4F7K2P',
-  fulfilmentId: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+  fulfilmentId: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',
+  handshakeToken: 'handshake-token-value'
 }
 
 const mockRequest = (query = {}, payload = undefined, session = {}) => {
@@ -57,7 +58,8 @@ describe('readHandshakeQuery', () => {
         mockRequest({
           'journey-type': 'not-a-journey',
           'notification-id': 'GBN-AG-26-4F7K2P',
-          'fulfilment-id': validContext.fulfilmentId
+          'fulfilment-id': validContext.fulfilmentId,
+          'handshake-token': validContext.handshakeToken
         })
       )
     ).toThrow(Boom.notFound())
@@ -69,7 +71,8 @@ describe('readHandshakeQuery', () => {
         mockRequest({
           'journey-type': ' gbn-ag ',
           'notification-id': ' GBN-AG-26-4F7K2P ',
-          'fulfilment-id': ` ${validContext.fulfilmentId} `
+          'fulfilment-id': ` ${validContext.fulfilmentId} `,
+          'handshake-token': ` ${validContext.handshakeToken} `
         })
       )
     ).toEqual(validContext)
@@ -94,7 +97,8 @@ describe('readHandshakePayload', () => {
       readHandshakePayload({
         'journey-type': 'not-a-journey',
         'notification-id': 'GBN-AG-26-4F7K2P',
-        'fulfilment-id': validContext.fulfilmentId
+        'fulfilment-id': validContext.fulfilmentId,
+        'handshake-token': validContext.handshakeToken
       })
     ).toThrow(Boom.notFound())
   })
@@ -104,7 +108,8 @@ describe('readHandshakePayload', () => {
       readHandshakePayload({
         'journey-type': ' gbn-ag ',
         'notification-id': ' GBN-AG-26-4F7K2P ',
-        'fulfilment-id': ` ${validContext.fulfilmentId} `
+        'fulfilment-id': ` ${validContext.fulfilmentId} `,
+        'handshake-token': ` ${validContext.handshakeToken} `
       })
     ).toEqual(validContext)
   })
@@ -141,6 +146,7 @@ describe('resolveHandshakeContext', () => {
         'journey-type': validContext.journeyType,
         'notification-id': validContext.notificationId,
         'fulfilment-id': validContext.fulfilmentId,
+        'handshake-token': validContext.handshakeToken,
         name: 'Farm'
       }
     )
@@ -156,7 +162,8 @@ describe('resolveHandshakeContext', () => {
     const sessionContext = {
       journeyType: 'gbn-ag',
       notificationId: 'GBN-AG-26-OLDREF',
-      fulfilmentId: '00000000-0000-4000-8000-000000000001'
+      fulfilmentId: '00000000-0000-4000-8000-000000000001',
+      handshakeToken: 'old-token'
     }
     const request = mockRequest(
       {},
@@ -164,6 +171,7 @@ describe('resolveHandshakeContext', () => {
         'journey-type': validContext.journeyType,
         'notification-id': validContext.notificationId,
         'fulfilment-id': validContext.fulfilmentId,
+        'handshake-token': validContext.handshakeToken,
         name: 'Farm'
       },
       { [sessionKeys.addressBookHandshake]: sessionContext }
@@ -188,6 +196,7 @@ describe('resolveHandshakeContext', () => {
         'journey-type': 'not-a-journey',
         'notification-id': validContext.notificationId,
         'fulfilment-id': validContext.fulfilmentId,
+        'handshake-token': validContext.handshakeToken,
         name: 'Farm'
       }
     )
@@ -229,7 +238,8 @@ describe('syncHandshakeContext', () => {
     const request = mockRequest({
       'journey-type': validContext.journeyType,
       'notification-id': validContext.notificationId,
-      'fulfilment-id': validContext.fulfilmentId
+      'fulfilment-id': validContext.fulfilmentId,
+      'handshake-token': validContext.handshakeToken
     })
 
     expect(syncHandshakeContext(request)).toEqual(validContext)
