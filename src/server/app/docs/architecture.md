@@ -134,11 +134,13 @@ production code cannot use test exemptions.
   directly, with nothing injected at boot.
 - there is no `dispatchPages` and no page dispatch index — navigation is
   the fixed route list above.
-- there is no `prime()` step: countries are fetched per request rather
-  than primed at boot.
+- there is no `prime()` step: the countries service loads itself on the
+  first read and caches the list for the life of the process.
 - page controllers are named `controller.js`, not `<page>.controller.js`.
-- each service barrel chooses stub or real per call
-  (`isStubMode() ? stub : client`), not through an injected adapter.
+- the address-book and ins-backend barrels choose stub or real per call
+  (`isStubMode() ? stub : client`), not through an injected adapter;
+  countries checks the mode once inside `ensureLoaded` and serves its
+  module-scope cache thereafter.
 - browser tests share one fit fixture
   ([`address-form.js`](../features/address-book/fit/address-form.js))
   rather than each spec building its own axe call from scratch.

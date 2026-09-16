@@ -98,6 +98,9 @@ const get = async (request, h) => {
       successBanner
     })
   } catch (err) {
+    if (err.isBoom) {
+      throw err
+    }
     logger.error({ err, orgId }, 'Failed to load address book')
     return buildView(h, {
       tableRows: [],

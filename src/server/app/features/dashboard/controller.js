@@ -111,6 +111,9 @@ const get = async (request, h) => {
       noSearchResults: response.totalElements === 0 && hasSearch
     })
   } catch (err) {
+    if (err.isBoom) {
+      throw err
+    }
     logger.error({ err }, 'Failed to load dashboard')
     return buildView(h, query, {
       tableRows: [],

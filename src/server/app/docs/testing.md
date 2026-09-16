@@ -48,7 +48,14 @@ test.
 `services/<name>/<name>.test.js` runs under `runInRealMode()`: request
 path, query, organisation and trace headers (`getTraceId` mocked with a
 hoisted `vi.fn`), parsed body, the 400 problem shape, and the refusal
-without an organisation. An `in stub mode` describe under
+without an organisation. The exception is countries: its tests live in
+[`services/run-mode.test.js`](../services/run-mode.test.js), beside the
+journeys' file of the same name, because the module-scope cache has to be
+imported cold (`vi.resetModules()` plus a dynamic import) and the mode
+flipped through `process.env.STUB_MODE` rather than `config.set` — a
+re-imported service reads a fresh convict instance.
+
+An `in stub mode` describe under
 `refuseOutboundHttp()` pins the seeds the fit specs depend on.
 `ins-backend/stub.test.js` covers the dashboard stub.
 

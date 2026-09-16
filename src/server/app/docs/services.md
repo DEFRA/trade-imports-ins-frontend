@@ -44,11 +44,15 @@ ObjectId.
 
 ### countries
 
-[`index.js`](../services/countries/index.js) exports `getCountries(blocks)`
-— the reference-data `/countries` list, or the stub's `COUNTRIES`. A
-failure is thrown, not logged; the caller logs with context.
+[`index.js`](../services/countries/index.js) exports `getCountries()` and
+`ensureLoaded()` — the reference-data `/countries` list, or the stub's
+`COUNTRIES`. The list is fetched on the first read and cached at module
+scope for the life of the process; a failed load leaves the cache unloaded
+so the next read retries, and rejects with `Boom.serverUnavailable`, which
+`catchAll` renders as the shared error page with a 503. In stub mode the
+seed plays the role of a loaded cache and nothing is fetched.
 Feature-side, [`address-countries.js`](../features/address-book/address-countries.js)
-puts GB first and throws on an empty list.
+puts GB first and rejects the same way on an empty list.
 
 ### ins-backend
 

@@ -41,8 +41,8 @@ const buildView = (
     errorSummary: kit.errorSummary(errors)
   })
 
-const countryItemsOrNone = async () =>
-  countryItemsOf(await getAddressFormCountries().catch(() => []))
+const loadCountryItems = async () =>
+  countryItemsOf(await getAddressFormCountries())
 
 const get = async (_request, h) => {
   try {
@@ -52,6 +52,9 @@ const get = async (_request, h) => {
       countryItems: countryItemsOf(countries)
     })
   } catch (err) {
+    if (err.isBoom) {
+      throw err
+    }
     logger.error({ err }, 'Failed to load address form countries')
     return buildView(h, {
       formValues: formValuesOf(),
@@ -86,17 +89,20 @@ const post = async (request, h) => {
     setSuccessBanner(request, copy.successBanner.added(created.name))
     return h.redirect(addressBookPath())
   } catch (err) {
+    if (err.isBoom) {
+      throw err
+    }
     if (isValidationFailure(err)) {
       return buildView(h, {
         formValues,
-        countryItems: await countryItemsOrNone(),
+        countryItems: await loadCountryItems(),
         errors: mapApiErrorsToFormErrors(err.body)
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     logger.error({ err, orgId }, 'Failed to create address')
     return buildView(h, {
       formValues,
-      countryItems: await countryItemsOrNone(),
+      countryItems: await loadCountryItems(),
       recoverableError: true
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }

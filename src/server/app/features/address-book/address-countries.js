@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import { getCountries } from '../../services/countries/index.js'
 
 const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }
@@ -6,7 +8,9 @@ export async function getAddressFormCountries() {
   const countries = await getCountries()
 
   if (!countries?.length) {
-    throw new Error('Country reference data is unavailable')
+    throw Boom.serverUnavailable('Reference data unavailable', {
+      dataset: 'countries'
+    })
   }
 
   const withoutGb = countries.filter((country) => country.code !== 'GB')

@@ -53,11 +53,11 @@ const buildView = (
     errorSummary: kit.errorSummary(errors)
   })
 
-const countryItemsOrNone = async () =>
-  countryItemsOf(await getAddressFormCountries().catch(() => []))
+const loadCountryItems = async () =>
+  countryItemsOf(await getAddressFormCountries())
 
 const rejected = async (h, model) =>
-  buildView(h, { ...model, countryItems: await countryItemsOrNone() })
+  buildView(h, { ...model, countryItems: await loadCountryItems() })
 
 const get = async (request, h) => {
   const orgId = kit.requireOrganisationId(request)

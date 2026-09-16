@@ -1,4 +1,3 @@
-import nock from 'nock'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../../../../server.js'
@@ -7,7 +6,6 @@ import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
 import {
   addressBookApi,
-  referenceDataApi,
   runInRealMode,
   serveCountries
 } from '../../../../common/test-helpers/real-mode.js'
@@ -90,26 +88,6 @@ describe.sequential('#addressBookAddController', () => {
     expect(result).toContain('United Kingdom')
     expect(result).toContain('value="FR"')
     expect(result).toContain('France')
-  })
-
-  test('GET shows the recoverable-error banner when reference data cannot be reached', async () => {
-    nock.cleanAll()
-    referenceDataApi()
-      .get('/countries')
-      .reply(503, { title: 'Service Unavailable' })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/address-book/add',
-      auth: sessionAuth('add-get-countries-500')
-    })
-
-    expect(statusCode).toBe(statusCodes.internalServerError)
-    expect(result).toContain('govuk-notification-banner')
-    expect(result).toContain(
-      'Sorry, there is a problem with the service. Try again in a few minutes.'
-    )
-    expect(result).toContain('Add address details')
   })
 
   test('POST re-renders form when API returns 400 validation errors', async () => {

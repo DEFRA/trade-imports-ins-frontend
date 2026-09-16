@@ -53,7 +53,7 @@ const get = async (request, h) => {
 
   try {
     const address = await loadStoredAddress(orgId, id)
-    const countries = await getAddressFormCountries().catch(() => [])
+    const countries = await getAddressFormCountries()
     return h.view(view, {
       ...kit.base(address.name, { backLink: addressBookPath() }),
       copy,
