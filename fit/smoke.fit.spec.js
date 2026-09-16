@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
 
 import { signIn } from './sign-in.js'
+import { expectNoSeriousOrCriticalViolations } from '../src/server/app/features/address-book/fit/axe.js'
 import {
-  expectNoSeriousOrCriticalAxeViolations,
   fillValidAddress,
   validAddress
 } from '../src/server/app/features/address-book/fit/address-form.js'
@@ -65,7 +65,7 @@ test('a trader signs in, sees the dashboard, and adds, views and deletes an addr
     })
   ).toHaveCount(0)
 
-  await expectNoSeriousOrCriticalAxeViolations(
+  await expectNoSeriousOrCriticalViolations(
     page,
     'address book after the smoke run'
   )

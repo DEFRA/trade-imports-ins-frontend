@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-import { expectNoSeriousOrCriticalAxeViolations } from './address-form.js'
+import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { SEED_ADDRESS_ID, SEED_ADDRESS_NAME } from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
@@ -75,6 +75,6 @@ test.describe('delete address', () => {
   test('has no serious or critical axe violations', async ({ page }) => {
     await openDeleteConfirmation(page, 'stub-org-delete-axe')
 
-    await expectNoSeriousOrCriticalAxeViolations(page, 'Delete address')
+    await expectNoSeriousOrCriticalViolations(page, 'Delete address')
   })
 })

@@ -1,9 +1,23 @@
+import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
 
-import { expectNoSeriousOrCriticalAxeViolations } from '../../address-book/fit/address-form.js'
-import { signIn } from '../../../../../../fit/sign-in.js'
+import { signIn } from '../../../../../fit/sign-in.js'
 
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
+
+const expectNoSeriousOrCriticalViolations = async (page, subject) => {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze()
+  const seriousOrCritical = results.violations.filter(({ impact }) =>
+    ['serious', 'critical'].includes(impact)
+  )
+
+  expect(
+    seriousOrCritical,
+    `${subject} has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+  ).toEqual([])
+}
 
 test.describe('dashboard', () => {
   test('shows notifications from every status with enough to identify the consignment (AC1, AC2)', async ({
@@ -41,7 +55,7 @@ test.describe('dashboard', () => {
     await signIn(page)
     await page.goto('/')
 
-    await expectNoSeriousOrCriticalAxeViolations(page, 'dashboard')
+    await expectNoSeriousOrCriticalViolations(page, 'dashboard')
   })
 
   test('opening a submitted notification links into the read-only notification-view page (AC3)', async ({

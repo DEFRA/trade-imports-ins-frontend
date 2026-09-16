@@ -9,11 +9,12 @@ All other paths are relative to `src/server/app/`.
 service call, one template, both copy bundles, one controller test and one
 feature spec.
 
-- [`features/address-book/add/controller.js`](../features/address-book/add/controller.js)
+- [`features/address-book/add/add.controller.js`](../features/address-book/add/add.controller.js)
 - [`features/address-book/add/template.njk`](../features/address-book/add/template.njk)
-- [`features/address-book/add/controller.test.js`](../features/address-book/add/controller.test.js)
+- [`features/address-book/add/add.controller.test.js`](../features/address-book/add/add.controller.test.js)
 - [`features/address-book/fit/add.fit.spec.js`](../features/address-book/fit/add.fit.spec.js)
 - [`features/address-book/fit/address-form.js`](../features/address-book/fit/address-form.js)
+- [`features/address-book/fit/axe.js`](../features/address-book/fit/axe.js)
 - [`features/address-book/copy/copy.en.js`](../features/address-book/copy/copy.en.js)
 - [`features/address-book/copy/copy.cy.js`](../features/address-book/copy/copy.cy.js)
 - [`features/address-book/copy/copy.test.js`](../features/address-book/copy/copy.test.js)
@@ -41,17 +42,17 @@ features/<name>/
 ├── controller.js
 ├── controller.test.js
 ├── template.njk
-├── copy/
-│   ├── copy.en.js
-│   ├── copy.cy.js
-│   └── copy.test.js
-└── fit/
-    └── <name>.fit.spec.js
+├── <name>.fit.spec.js
+└── copy/
+    ├── copy.en.js
+    ├── copy.cy.js
+    └── copy.test.js
 ```
 
 For a page joining `address-book`, create a `features/address-book/<page>/`
-folder with `controller.js`, `template.njk` and `controller.test.js`; put
-its spec in the group's `fit/`, and its strings in the group's `copy/`.
+folder with `<page>.controller.js`, `template.njk` and
+`<page>.controller.test.js`; put its spec in the group's `fit/`, and its
+strings in the group's `copy/`.
 Create both locale bundles and their test as soon as the template exists —
 see [features.md](features.md#copy-and-templates).
 
@@ -104,7 +105,7 @@ entry module under `src/client/javascripts/`, name it as an `entry` in
 ## 8. Add unit tests
 
 Write `controller.test.js` in the shape of
-[`add/controller.test.js`](../features/address-book/add/controller.test.js):
+[`add/add.controller.test.js`](../features/address-book/add/add.controller.test.js):
 
 - `vi.mock` of `get-oidc-config.js`, `describe.sequential`,
   `runInRealMode()`.
@@ -125,8 +126,9 @@ pin catches copy drift.
 
 ## Playwright feature test
 
-Add `features/<name>/fit/<name>.fit.spec.js`, or a spec in the group's
-`fit/`. `import { signIn } from '<relative>/fit/sign-in.js'`. Every test
+Add `features/<name>/<name>.fit.spec.js` beside the controller, or, for a
+page joining a group, a spec in the group's `fit/`.
+`import { signIn } from '<relative>/fit/sign-in.js'`. Every test
 signs in with its own organisation id (`stub-org-<page>-<case>`, with
 `crypto.randomUUID()` when the test writes), because the address-book
 stub keys its data by organisation — the `-empty` and `-paginated`
@@ -141,11 +143,16 @@ Cover: initial render, happy-path save and redirect, each validation rule
 
 ## Accessibility test
 
-Call `expectNoSeriousOrCriticalAxeViolations(page, name)` from
-`address-form.js` on the initial render and on the validation-error state
-(`await expect(page.getByRole('alert')).toBeVisible()` first). It checks
-`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` and `wcag22aa`, and fails on a
-serious or critical violation.
+Check the initial render and the validation-error state (`await
+expect(page.getByRole('alert')).toBeVisible()` first). For a page joining
+`address-book`, import `expectNoSeriousOrCriticalViolations` from the group's
+[`fit/axe.js`](../features/address-book/fit/axe.js) and call it with
+`(page, name)`. For a new single-page feature, define
+`expectNoSeriousOrCriticalViolations` inline at the top of
+`features/<name>/<name>.fit.spec.js`, the way
+[`features/dashboard/dashboard.fit.spec.js`](../features/dashboard/dashboard.fit.spec.js)
+does. Either way it checks `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` and
+`wcag22aa`, and fails on a serious or critical violation.
 
 ## 9. Run every check
 

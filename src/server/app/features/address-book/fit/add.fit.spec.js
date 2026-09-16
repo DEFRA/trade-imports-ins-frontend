@@ -3,13 +3,13 @@ import { test, expect } from '@playwright/test'
 import {
   NAME_LABEL,
   expectErrorFocusOn,
-  expectNoSeriousOrCriticalAxeViolations,
   fieldLabels,
   fillValidAddress,
   maxLengthValidations,
   requiredValidations,
   validAddress
 } from './address-form.js'
+import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 const ADD_URL = /\/address-book\/add$/
@@ -50,7 +50,7 @@ test.describe('add address', () => {
     await signIn(page, { organisationId: 'stub-org-add-axe' })
     await page.goto(ADD_PATH)
 
-    await expectNoSeriousOrCriticalAxeViolations(page, 'Add address')
+    await expectNoSeriousOrCriticalViolations(page, 'Add address')
   })
 })
 
@@ -125,7 +125,7 @@ test.describe('add address validation', () => {
     await submit(page)
     await expect(page.getByRole('alert')).toBeVisible()
 
-    await expectNoSeriousOrCriticalAxeViolations(
+    await expectNoSeriousOrCriticalViolations(
       page,
       'Add address validation error'
     )

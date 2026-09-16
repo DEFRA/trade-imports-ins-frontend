@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-import { expectNoSeriousOrCriticalAxeViolations } from './address-form.js'
+import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 const ORG_DEFAULT = 'stub-org-1'
@@ -80,7 +80,7 @@ test.describe('list and pagination', () => {
     await signIn(page, { organisationId: ORG_DEFAULT })
     await page.goto(LIST_PATH)
 
-    await expectNoSeriousOrCriticalAxeViolations(page, 'Address book list')
+    await expectNoSeriousOrCriticalViolations(page, 'Address book list')
   })
 
   test('paginates when there are more than 25 addresses', async ({ page }) => {

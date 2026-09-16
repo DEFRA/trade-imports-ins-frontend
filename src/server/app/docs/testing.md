@@ -25,7 +25,7 @@ Convention checks:
 
 ## Controller tests
 
-See [`add/controller.test.js`](../features/address-book/add/controller.test.js)
+See [`add/add.controller.test.js`](../features/address-book/add/add.controller.test.js)
 for the pattern, and the helpers in
 [`common/test-helpers/`](../../common/test-helpers/): `real-mode.js`
 (`runInRealMode()`, `refuseOutboundHttp()`, `addressBookApi()`,
@@ -83,7 +83,9 @@ Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 `signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
 labels, `validAddress`, `fillValidAddress`, `expectErrorFocusOn`, the two
-validation tables, `expectNoSeriousOrCriticalAxeViolations`.
+validation tables.
+[`axe.js`](../features/address-book/fit/axe.js) — the address-book group's
+shared axe helper, `expectNoSeriousOrCriticalViolations`.
 [`seed-address.js`](../features/address-book/fit/seed-address.js) — the
 deterministic seed id.
 

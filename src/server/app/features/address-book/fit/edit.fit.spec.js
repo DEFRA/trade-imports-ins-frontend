@@ -2,10 +2,10 @@ import { test, expect } from '@playwright/test'
 
 import {
   expectErrorFocusOn,
-  expectNoSeriousOrCriticalAxeViolations,
   fieldLabels,
   setFieldValue
 } from './address-form.js'
+import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { SEED_ADDRESS_ID, SEED_ADDRESS_NAME } from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
@@ -53,7 +53,7 @@ test.describe('edit address', () => {
   test('has no serious or critical axe violations', async ({ page }) => {
     await openEditForm(page, 'stub-org-edit-axe')
 
-    await expectNoSeriousOrCriticalAxeViolations(page, 'Edit address')
+    await expectNoSeriousOrCriticalViolations(page, 'Edit address')
   })
 
   test('a rejected save keeps the edits rather than the stored address', async ({
@@ -104,7 +104,7 @@ test.describe('edit address', () => {
     await save(page)
     await expect(page.getByRole('alert')).toBeVisible()
 
-    await expectNoSeriousOrCriticalAxeViolations(
+    await expectNoSeriousOrCriticalViolations(
       page,
       'Edit address validation error'
     )

@@ -9,11 +9,11 @@ slice of paths, controllers, copy, templates, view models and tests, and
 
 **`dashboard/`** is the single-page shape: `controller.js`, `template.njk`,
 `controller.test.js`, `copy/`, `view-model/list.js` (plus its test), and
-`fit/dashboard.fit.spec.js`.
+`dashboard.fit.spec.js` beside the controller.
 
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
-`add/`, `view/`, `edit/`, `delete/`), each holding `controller.js`,
-`template.njk` and `controller.test.js`. Group-wide modules sit at the
+`add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
+`template.njk` and `<page>.controller.test.js`. Group-wide modules sit at the
 root:
 
 - [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
@@ -30,7 +30,7 @@ root:
   yar-backed, read-once.
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
-specs plus the fixtures `address-form.js` and `seed-address.js`.
+specs plus the fixtures `address-form.js`, `axe.js` and `seed-address.js`.
 
 ## Paths
 
@@ -66,7 +66,7 @@ pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
 ## Controllers
 
 The shape every ins controller takes, citing
-[`add/controller.js`](../features/address-book/add/controller.js):
+[`add/add.controller.js`](../features/address-book/add/add.controller.js):
 
 - a module-level `logger`, `view` and `copy`.
 - a `buildView(h, model)` helper spreading `kit.base(...)` and adding
@@ -139,7 +139,8 @@ with `getAssetPath('<entry>.js')`. Build config is load-bearing.
 
 ## Tests
 
-Controller, copy and view-model tests sit beside the feature. Browser
-specs are `*.fit.spec.js` in the feature's `fit/` folder and run in the
+Controller, copy and view-model tests sit beside the feature. Browser specs
+are `*.fit.spec.js`: a group's specs live in the group's `fit/`; a
+single-page feature's spec sits beside its controller. Both run in the
 Playwright `features` project. Every feature spec includes initial-render
 and error-state accessibility checks. See [testing.md](testing.md).

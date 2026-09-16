@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright'
 import { expect } from '@playwright/test'
 
 import { FIELD_RULES } from '../fields.js'
@@ -15,7 +14,6 @@ const TOWN_OR_CITY_LABEL = 'Town or city'
 const POSTCODE_LABEL = 'Postcode or Zip code'
 const PHONE_LABEL = 'Phone number'
 const EMAIL_LABEL = 'Email address'
-const AXE_VIOLATIONS_INDENT = 2
 
 export const fieldLabels = {
   name: NAME_LABEL,
@@ -39,19 +37,6 @@ export const validAddress = {
   countryCode: 'GB',
   email: 'exports@example.com',
   phone: '+44 1463 234567'
-}
-
-export async function expectNoSeriousOrCriticalAxeViolations(page, pageName) {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    .analyze()
-  const seriousOrCritical = results.violations.filter(({ impact }) =>
-    ['serious', 'critical'].includes(impact)
-  )
-  expect(
-    seriousOrCritical,
-    `${pageName} has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, AXE_VIOLATIONS_INDENT)}`
-  ).toEqual([])
 }
 
 export async function setFieldValue(page, field, value) {

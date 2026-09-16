@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-import { expectNoSeriousOrCriticalAxeViolations } from './address-form.js'
+import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { SEED_ADDRESS_ID, SEED_ADDRESS_NAME } from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
@@ -91,6 +91,6 @@ test.describe('view address', () => {
   test('has no serious or critical axe violations', async ({ page }) => {
     await openSeedAddress(page, 'stub-org-view-axe')
 
-    await expectNoSeriousOrCriticalAxeViolations(page, 'Address details')
+    await expectNoSeriousOrCriticalViolations(page, 'Address details')
   })
 })

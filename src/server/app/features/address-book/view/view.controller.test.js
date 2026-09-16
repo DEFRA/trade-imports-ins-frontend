@@ -9,7 +9,7 @@ import {
   runInRealMode,
   serveCountries
 } from '../../../../common/test-helpers/real-mode.js'
-import { buildRows } from './controller.js'
+import { buildRows } from './view.controller.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
