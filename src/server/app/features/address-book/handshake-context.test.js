@@ -121,10 +121,7 @@ describe('storeHandshakeContext and loadHandshakeContext', () => {
     const request = mockRequest()
     storeHandshakeContext(request, validContext)
 
-    expect(request.yar.set).toHaveBeenCalledWith(
-      SESSION_KEY,
-      validContext
-    )
+    expect(request.yar.set).toHaveBeenCalledWith(SESSION_KEY, validContext)
     expect(loadHandshakeContext(request)).toEqual(validContext)
   })
 
@@ -133,9 +130,7 @@ describe('storeHandshakeContext and loadHandshakeContext', () => {
     storeHandshakeContext(request, validContext)
     storeHandshakeContext(request, null)
 
-    expect(request.yar.clear).toHaveBeenCalledWith(
-      SESSION_KEY
-    )
+    expect(request.yar.clear).toHaveBeenCalledWith(SESSION_KEY)
   })
 })
 
@@ -153,10 +148,7 @@ describe('resolveHandshakeContext', () => {
     )
 
     expect(resolveHandshakeContext(request)).toEqual(validContext)
-    expect(request.yar.set).toHaveBeenCalledWith(
-      SESSION_KEY,
-      validContext
-    )
+    expect(request.yar.set).toHaveBeenCalledWith(SESSION_KEY, validContext)
   })
 
   test('prefers the POST payload over a different session handshake', () => {
@@ -228,9 +220,7 @@ describe('resolveHandshakeContext', () => {
     )
 
     expect(resolveHandshakeContext(request)).toBeNull()
-    expect(request.yar.clear).toHaveBeenCalledWith(
-      SESSION_KEY
-    )
+    expect(request.yar.clear).toHaveBeenCalledWith(SESSION_KEY)
   })
 })
 
@@ -244,10 +234,7 @@ describe('syncHandshakeContext', () => {
     })
 
     expect(syncHandshakeContext(request)).toEqual(validContext)
-    expect(request.yar.set).toHaveBeenCalledWith(
-      SESSION_KEY,
-      validContext
-    )
+    expect(request.yar.set).toHaveBeenCalledWith(SESSION_KEY, validContext)
   })
 
   test('clears handshake context when the GET query is absent', () => {

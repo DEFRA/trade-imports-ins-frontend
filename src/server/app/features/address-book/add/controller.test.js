@@ -291,12 +291,10 @@ describe.sequential('#addressBookAddController', () => {
   })
 
   test('POST from a handshake returns to the journey with the new address id and no address-book banner', async () => {
-    const scope = addressBookApi()
-      .post(ADDRESSES_PATH)
-      .reply(201, {
-        id: '665f1c2ab3e4d51a2c9d0e77',
-        name: 'Highland Livestock Ltd'
-      })
+    const scope = addressBookApi().post(ADDRESSES_PATH).reply(201, {
+      id: '665f1c2ab3e4d51a2c9d0e77',
+      name: 'Highland Livestock Ltd'
+    })
 
     const { statusCode, headers } = await server.inject({
       method: 'POST',
