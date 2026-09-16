@@ -1,7 +1,7 @@
 import { vi } from 'vitest'
 
 import { statusCodes } from '../common/constants/status-codes.js'
-import { mockOidcConfig } from '../common/test-helpers/mock-auth.js'
+import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
 import {
   startTestServer,
   stopTestServer

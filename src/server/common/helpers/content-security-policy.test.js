@@ -1,7 +1,8 @@
 import { vi } from 'vitest'
 
 import { createServer } from '../../server.js'
-import { mockOidcConfig, sessionAuth } from '../test-helpers/mock-auth.js'
+import { mockOidcConfig } from '../test-helpers/mock-oidc-config.js'
+import { sessionAuth } from '../test-helpers/session-auth.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))

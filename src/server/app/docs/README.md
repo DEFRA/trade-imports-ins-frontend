@@ -23,10 +23,11 @@ as a 24-character hex Mongo ObjectId — a mismatch is a 404, not a validation
 error on the page.
 
 The chassis adds routes of its own outside this list: `/health`, `/auth/*`
-(or `/auth/stub-sign-in` in stub mode), `/signout` and `/public/*`. The
-dashboard's row links leave the service for the animals frontend
-(`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`), which owns the notification a row
-represents.
+and `/public/*`. In stub mode `/auth/*` is `/auth/sign-in`,
+`/auth/stub-sign-in` and `/auth/sign-out`, served by the stub plugin without
+an identity provider. The dashboard's row links leave the service for the
+animals frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`), which owns the
+notification a row represents.
 
 ## Guides
 

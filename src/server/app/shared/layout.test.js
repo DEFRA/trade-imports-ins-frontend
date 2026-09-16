@@ -53,7 +53,7 @@ describe('service navigation', () => {
       '/',
       '/address-book',
       '#',
-      '/signout'
+      '/auth/sign-out'
     ])
   })
 
@@ -97,7 +97,7 @@ describe('service navigation', () => {
 
     expect(html).toContain(sharedCopy.layout.serviceName)
     expect(html).not.toContain(NAVIGATION_LIST)
-    expect(html).not.toContain('href="/signout"')
+    expect(html).not.toContain('href="/auth/sign-out"')
     expect(html).not.toContain(serviceNavigation.logOut)
   })
 })

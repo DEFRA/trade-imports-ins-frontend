@@ -35,7 +35,7 @@ export const authController = {
 
       if (!profile.organisationId) {
         request.logger?.error(
-          { profile },
+          { crn: profile.crn },
           'Sign-in rejected: missing organisationId in Defra ID token'
         )
         return h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))

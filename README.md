@@ -19,7 +19,7 @@ The service serves `/`, the dashboard. It lists, searches by reference and
 sorts the aggregated notifications, and is not scoped to an organisation.
 Each row links to the animals frontend, which owns the notification. It
 also serves `/address-book` with `add`, `{id}`, `{id}/edit` and
-`{id}/delete`, plus `/auth/*`, `/signout` and `/health`. See
+`{id}/delete`, plus `/auth/*` and `/health`. See
 [The served surface](src/server/app/docs/README.md#the-served-surface).
 
 Deployed end-to-end tests for this service live in the shared tests

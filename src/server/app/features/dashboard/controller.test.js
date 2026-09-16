@@ -2,10 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import {
-  sessionAuth,
-  mockOidcConfig
-} from '../../../common/test-helpers/mock-auth.js'
+import { mockOidcConfig } from '../../../common/test-helpers/mock-oidc-config.js'
+import { sessionAuth } from '../../../common/test-helpers/session-auth.js'
 import {
   insBackendApi,
   runInRealMode,

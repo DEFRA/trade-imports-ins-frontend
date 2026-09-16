@@ -39,17 +39,20 @@ export function activeNavigationItem(requestPath = '') {
   return null
 }
 
-export function context(request) {
+async function context(request) {
   if (!webpackManifest) {
     try {
       webpackManifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
-    } catch {
+    } catch (error) {
       logger.error(`Webpack ${path.basename(manifestPath)} not found`)
     }
   }
 
-  const authData = request.auth?.isAuthenticated
-    ? request.auth.credentials
+  // If the user is authenticated, add the user's details to the view context
+  // This allows the view to display the user's session details and the ability to conditionally render content
+  const sessionId = request.auth?.credentials?.sessionId
+  const authData = sessionId
+    ? await request.server.app.cache.get(sessionId)
     : null
 
   return {
@@ -63,7 +66,7 @@ export function context(request) {
     userSession: authData
       ? {
           isAuthenticated: true,
-          displayName: authData.name || authData.email || 'User',
+          displayName: authData.displayName || authData.email || 'User',
           email: authData.email
         }
       : {
@@ -76,3 +79,5 @@ export function context(request) {
     crumb: request.plugins?.crumb ?? request.state?.crumb ?? ''
   }
 }
+
+export { context }

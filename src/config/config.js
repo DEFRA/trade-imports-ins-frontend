@@ -4,32 +4,33 @@ import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
 
+const env = process.env.NODE_ENV
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
 
-const isProduction = process.env.NODE_ENV === 'production'
-const isTest = process.env.NODE_ENV === 'test'
-const isDevelopment = process.env.NODE_ENV === 'development'
+const isProduction = env === 'production'
+const isTest = env === 'test'
+const isDevelopment = env === 'development'
 const isLocal = isDevelopment || isTest
-const isPlatform = !isLocal
-const csrfEnabled = !isTest
+const isPlatform = !isLocal // Deployed to CDP platform
 
 const authCookieSameSite = 'Lax'
+const csrfEnabled = !isTest
 
 convict.addFormats(convictFormatWithValidator)
 
 // convict's built-in Boolean format coerces any string other than exactly
 // 'false' to true (e.g. a typo like 'flase' silently enables the flag), so
-// security/environment-gating flags use this stricter format instead - it
-// only accepts an actual boolean, or the literal strings 'true'/'false' from
-// an env var, and fails config.validate() on anything else.
+// every env-backed boolean uses this stricter format instead - it only
+// accepts an actual boolean, or the literal strings 'true'/'false' from an
+// env var, and fails config.validate() on anything else.
 convict.addFormat({
   name: 'strict-boolean',
   validate(val) {
     if (typeof val !== 'boolean') {
-      throw new Error("must be 'true' or 'false'")
+      throw new TypeError("must be 'true' or 'false'")
     }
   },
   coerce(val) {
@@ -103,7 +104,7 @@ export const config = convict({
   log: {
     enabled: {
       doc: 'Is logging enabled',
-      format: Boolean,
+      format: 'strict-boolean',
       default: process.env.NODE_ENV !== 'test',
       env: 'LOG_ENABLED'
     },
@@ -124,8 +125,7 @@ export const config = convict({
       format: Array,
       default: isProduction
         ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
-        : [],
-      env: 'LOG_REDACT'
+        : []
     }
   },
   httpProxy: {
@@ -137,7 +137,7 @@ export const config = convict({
   },
   isSecureContextEnabled: {
     doc: 'Enable Secure Context',
-    format: Boolean,
+    format: 'strict-boolean',
     default: isProduction,
     env: 'ENABLE_SECURE_CONTEXT'
   },
@@ -170,15 +170,15 @@ export const config = convict({
         env: 'SESSION_COOKIE_TTL'
       },
       password: {
-        doc: 'session cookie password',
+        doc: 'The cookie password.',
         format: String,
-        default: 'the-password-must-be-at-least-32-characters-long',
+        default: 'replace-with-at-least-32-chars-long-string-1234567890',
         env: 'SESSION_COOKIE_PASSWORD',
         sensitive: true
       },
       secure: {
         doc: 'set secure flag on cookie',
-        format: Boolean,
+        format: 'strict-boolean',
         default: isProduction,
         env: 'SESSION_COOKIE_SECURE'
       },
@@ -239,7 +239,7 @@ export const config = convict({
     signOutHostnameRewrite: {
       enabled: {
         doc: 'Rewrite internal OIDC hostnames in sign-out URL for local environments',
-        format: Boolean,
+        format: 'strict-boolean',
         default: !isProduction,
         env: 'DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_ENABLED'
       },
@@ -257,7 +257,7 @@ export const config = convict({
     },
     refreshTokens: {
       doc: 'True if Defra Identity refresh tokens are enabled.',
-      format: Boolean,
+      format: 'strict-boolean',
       default: true,
       env: 'DEFRA_ID_REFRESH_TOKENS'
     }
@@ -271,7 +271,7 @@ export const config = convict({
   auth: {
     enabled: {
       doc: 'Enable authentication (Bell + session cookie)',
-      format: Boolean,
+      format: 'strict-boolean',
       default: true,
       env: 'AUTH_ENABLED'
     }
@@ -304,13 +304,13 @@ export const config = convict({
     },
     useSingleInstanceCache: {
       doc: 'Connect to a single instance of redis instead of a cluster.',
-      format: Boolean,
+      format: 'strict-boolean',
       default: !isProduction,
       env: 'USE_SINGLE_INSTANCE_CACHE'
     },
     useTLS: {
       doc: 'Connect to redis using TLS',
-      format: Boolean,
+      format: 'strict-boolean',
       default: isProduction,
       env: 'REDIS_TLS'
     }
@@ -318,13 +318,13 @@ export const config = convict({
   nunjucks: {
     watch: {
       doc: 'Reload templates when they are changed.',
-      format: Boolean,
+      format: 'strict-boolean',
       default: isDevelopment,
       env: 'NUNJUCKS_WATCH'
     },
     noCache: {
       doc: 'Recompile every template on every render instead of caching it.',
-      format: Boolean,
+      format: 'strict-boolean',
       default: isDevelopment,
       env: 'NUNJUCKS_NO_CACHE'
     }

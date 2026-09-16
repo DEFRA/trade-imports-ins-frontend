@@ -1,6 +1,6 @@
 import { allRoutes } from './features/index.js'
 
-export const importNotificationService = {
+export const serviceRoutes = {
   plugin: {
     name: 'import-notification-service',
     register: (server) => {

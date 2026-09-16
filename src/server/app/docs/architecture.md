@@ -12,11 +12,12 @@ registers logging, tracing, metrics, secure context, pulse, the session
 cache, Nunjucks, Scooter, the content security policy, CSRF, Cookie and
 Bell. Then — only when `auth.enabled` — it registers the auth plugin and,
 beside it, one routes plugin: the Defra ID `/auth/*` routes in
-[`src/server/auth/index.js`](../../auth/index.js), or the stub sign-in
-routes in [`stub-sign-in.js`](../../auth/stub-sign-in.js) when
-`isStubMode()`. Last comes [`router.js`](../../router.js), which registers
-`health`, then — only when `auth.enabled` — the application plugin and
-`signout`, then static files.
+[`src/server/auth/index.js`](../../auth/index.js), or the stub routes in
+[`stub-sign-in.js`](../../auth/stub-sign-in.js) when `isStubMode()` — the
+same `/auth/sign-in` and `/auth/sign-out` paths, with no identity provider
+involved. Last comes [`router.js`](../../router.js), which registers
+`health`, then — only when `auth.enabled` — the application plugin, then
+static files.
 
 - [`src/plugins/auth.js`](../../../plugins/auth.js) — the session strategy,
   the Bell/Defra ID strategy, and the stub-mode short circuit that skips
@@ -31,8 +32,8 @@ routes in [`stub-sign-in.js`](../../auth/stub-sign-in.js) when
   Nunjucks environment and view context.
 - [`src/server/common/`](../../common/) — chassis helpers,
   `constants/status-codes.js`, `services/mode.js` and `test-helpers/`.
-- `src/server/auth/`, `src/server/health/` and `src/server/signout/` — the
-  routes those helpers serve.
+- `src/server/auth/` and `src/server/health/` — the routes those helpers
+  serve.
 
 **The error page**: [`common/helpers/errors.js`](../../common/helpers/errors.js)'s
 `catchAll` renders `shared/error` through `kit.base()` with the

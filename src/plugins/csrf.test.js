@@ -2,10 +2,8 @@ import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../server/server.js'
 import { statusCodes } from '../server/common/constants/status-codes.js'
-import {
-  sessionAuth,
-  mockOidcConfig
-} from '../server/common/test-helpers/mock-auth.js'
+import { mockOidcConfig } from '../server/common/test-helpers/mock-oidc-config.js'
+import { sessionAuth } from '../server/common/test-helpers/session-auth.js'
 import { config } from '../config/config.js'
 
 vi.mock('../auth/get-oidc-config.js', () => ({

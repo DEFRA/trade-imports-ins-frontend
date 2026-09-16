@@ -30,8 +30,9 @@ for the pattern, and the helpers in
 [`common/test-helpers/`](../../common/test-helpers/): `real-mode.js`
 (`runInRealMode()`, `refuseOutboundHttp()`, `addressBookApi()`,
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
-`mock-auth.js` (`sessionAuth(sessionId, overrides)`, `mockOidcConfig`),
-`test-server.js`.
+`session-auth.js` (`sessionAuth(sessionId, overrides)`),
+`mock-oidc-config.js` (`mockOidcConfig`), `mock-auth-config.js`
+(`mockAuthConfig(importOriginal)`), `test-server.js`.
 
 Mock at the network boundary: nock answers the HTTP calls the real
 clients make — never `vi.mock` a service barrel, and never mock

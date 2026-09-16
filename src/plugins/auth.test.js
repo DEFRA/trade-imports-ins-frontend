@@ -67,9 +67,9 @@ describe('auth plugin', () => {
         'session.cookie.password': 'some-password-32-chars-long-000000',
         isProduction: false,
         'session.cookie.sameSite': 'Lax',
-        'defraId.redirectUrl': 'http://localhost:3002/auth/sign-in-oidc',
-        'defraId.serviceId': 'trade-imports-ins-frontend',
-        'defraId.policy': 'b2c_1a_cui_cpdev_signupsigninsfi',
+        'defraId.redirectUrl': 'http://localhost:3000/auth/sign-in-oidc',
+        'defraId.serviceId': 'service-123',
+        'defraId.policy': 'policy-abc',
         'defraId.refreshTokens': true
       }
 
@@ -112,6 +112,7 @@ describe('auth plugin', () => {
     )
 
     expect(server.auth.default).toHaveBeenCalledWith('session')
+    expect(isStubModeMock).toHaveBeenCalled()
   })
 
   test('register skips Bell and the OIDC fetch in stub mode, still enforcing session auth', async () => {
@@ -166,7 +167,7 @@ describe('auth plugin', () => {
 
     expect(getSafeRedirectMock).toHaveBeenCalledWith('/some/path?x=1')
     expect(request.yar.set).toHaveBeenCalledWith('redirect', '/safe/redirect')
-    expect(location).toBe('http://localhost:3002/auth/sign-in-oidc')
+    expect(location).toBe('http://localhost:3000/auth/sign-in-oidc')
   })
 
   test('getBellOptions.location stores nothing when no redirect is requested', () => {
@@ -182,7 +183,7 @@ describe('auth plugin', () => {
     const location = options.location(request)
 
     expect(request.yar.set).not.toHaveBeenCalled()
-    expect(location).toBe('http://localhost:3002/auth/sign-in-oidc')
+    expect(location).toBe('http://localhost:3000/auth/sign-in-oidc')
   })
 
   test('getBellOptions.providerParams adds forceReselection for /auth/organisation', () => {
@@ -194,8 +195,8 @@ describe('auth plugin', () => {
     })
 
     expect(base).toEqual({
-      serviceId: 'trade-imports-ins-frontend',
-      p: 'b2c_1a_cui_cpdev_signupsigninsfi',
+      serviceId: 'service-123',
+      p: 'policy-abc',
       response_mode: 'query'
     })
 
@@ -205,8 +206,8 @@ describe('auth plugin', () => {
     })
 
     expect(withForce).toEqual({
-      serviceId: 'trade-imports-ins-frontend',
-      p: 'b2c_1a_cui_cpdev_signupsigninsfi',
+      serviceId: 'service-123',
+      p: 'policy-abc',
       response_mode: 'query',
       forceReselection: true
     })
@@ -217,8 +218,8 @@ describe('auth plugin', () => {
     })
 
     expect(withRelationshipId).toEqual({
-      serviceId: 'trade-imports-ins-frontend',
-      p: 'b2c_1a_cui_cpdev_signupsigninsfi',
+      serviceId: 'service-123',
+      p: 'policy-abc',
       response_mode: 'query',
       forceReselection: true,
       relationshipId: 'org-999'
@@ -278,7 +279,22 @@ describe('auth plugin', () => {
       expect(redirect).toBe('/auth/sign-in?redirect=%2Forigin%3Fa%3D1')
     })
 
-    test('redirectTo sends unauthenticated requests to /auth/stub-sign-in in stub mode', () => {
+    test('redirectTo encodes the return URL query string', () => {
+      const options = getCookieOptions()
+
+      const redirect = options.redirectTo({
+        url: {
+          pathname: '/address-book',
+          search: '?q=France&page=2'
+        }
+      })
+
+      expect(redirect).toBe(
+        '/auth/sign-in?redirect=%2Faddress-book%3Fq%3DFrance%26page%3D2'
+      )
+    })
+
+    test('redirectTo keeps sending unauthenticated requests to /auth/sign-in in stub mode', () => {
       isStubModeMock.mockReturnValue(true)
       const options = getCookieOptions()
 
@@ -289,7 +305,7 @@ describe('auth plugin', () => {
         }
       })
 
-      expect(redirect).toBe('/auth/stub-sign-in?redirect=%2Forigin%3Fa%3D1')
+      expect(redirect).toBe('/auth/sign-in?redirect=%2Forigin%3Fa%3D1')
     })
 
     test('validate returns isValid:false when session does not exist in cache', async () => {
@@ -376,7 +392,7 @@ describe('auth plugin', () => {
           'session.cookie.password': 'some-password-32-chars-long-000000',
           isProduction: false,
           'session.cookie.sameSite': 'Lax',
-          'defraId.redirectUrl': 'http://localhost:3002/auth/sign-in-oidc',
+          'defraId.redirectUrl': 'http://localhost:3000/auth/sign-in-oidc',
           'defraId.serviceId': 'service-123',
           'defraId.policy': 'policy-abc',
           'defraId.refreshTokens': false
@@ -424,21 +440,6 @@ describe('auth plugin', () => {
 
       expect(res).toEqual({ isValid: false })
       expect(request.server.app.cache.set).not.toHaveBeenCalled()
-    })
-
-    test('redirectTo encodes the return URL query string', () => {
-      const options = getCookieOptions()
-
-      const redirect = options.redirectTo({
-        url: {
-          pathname: '/address-book',
-          search: '?q=France&page=2'
-        }
-      })
-
-      expect(redirect).toBe(
-        '/auth/sign-in?redirect=%2Faddress-book%3Fq%3DFrance%26page%3D2'
-      )
     })
   })
 })
