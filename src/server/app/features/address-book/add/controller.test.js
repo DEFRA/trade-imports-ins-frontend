@@ -154,7 +154,7 @@ describe.sequential('#addressBookAddController', () => {
       payload: validPayload
     })
 
-    expect(statusCode).toBe(statusCodes.redirect)
+    expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe('/address-book')
     expect(scope.isDone()).toBe(true)
     expect(posted).toMatchObject(validPayload)
@@ -203,7 +203,7 @@ describe.sequential('#addressBookAddController', () => {
       }
     })
 
-    expect(statusCode).toBe(statusCodes.redirect)
+    expect(statusCode).toBe(statusCodes.redirectFound)
     expect(scope.isDone()).toBe(true)
     expect(posted).toEqual({
       ...validPayload,
@@ -250,7 +250,7 @@ describe.sequential('#addressBookAddController', () => {
       payload: { cancel: 'true' }
     })
 
-    expect(statusCode).toBe(statusCodes.redirect)
+    expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe('/address-book')
   })
 })

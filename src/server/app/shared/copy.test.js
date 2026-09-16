@@ -56,8 +56,8 @@ describe('error-page copy', () => {
     expect(sharedEn.errorPage).toEqual({
       notFound: 'Page not found',
       forbidden: 'Forbidden',
-      unauthorized: 'Unauthorized',
-      badRequest: 'Bad Request',
+      unauthorized: 'You need to sign in to view this page',
+      badRequest: 'There is a problem with your request',
       unexpected: 'Something went wrong'
     })
   })

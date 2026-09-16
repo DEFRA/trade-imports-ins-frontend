@@ -1,7 +1,7 @@
+import { createServer } from '../../server.js'
+import { statusCodes } from '../constants/status-codes.js'
 import { vi } from 'vitest'
 
-import { startServer } from './start-server.js'
-import { statusCodes } from '../constants/status-codes.js'
 import { mockOidcConfig } from '../test-helpers/mock-oidc-config.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
@@ -13,7 +13,8 @@ describe('#serveStaticFiles', () => {
 
   describe('When secure context is disabled', () => {
     beforeEach(async () => {
-      server = await startServer()
+      server = await createServer()
+      await server.initialize()
     })
 
     afterEach(async () => {
@@ -27,6 +28,15 @@ describe('#serveStaticFiles', () => {
       })
 
       expect(statusCode).toBe(statusCodes.noContent)
+    })
+
+    test('Should serve assets as expected', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/public/assets/images/govuk-crest.svg'
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
     })
   })
 })

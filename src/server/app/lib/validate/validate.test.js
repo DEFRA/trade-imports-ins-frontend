@@ -41,6 +41,8 @@ const FLIP_FIELD_MAX_LENGTH_MESSAGE = 'Code must be 5 characters or less'
 const COUNT_REQUIRED_MESSAGE = 'Enter the number of items'
 const COUNT_WHOLE_NUMBER_MESSAGE = 'Enter a whole number greater than 0'
 const NOT_A_DATE = 'not a date'
+const BLOCKS_BLANK_WHITESPACE_AND_MISSING =
+  'Should block blank, whitespace-only and missing values with the required message'
 
 describe('#requiredText — the sole save-blocking primitive', () => {
   const schema = requiredText('fullName', FULL_NAME_REQUIRED_MESSAGE)
@@ -232,7 +234,7 @@ describe('#requiredIntegerInRange — save-blocking whole number in a range', ()
     expect(run(schema, { itemCount: '25' }).errors).toBeNull()
   })
 
-  it('Should block blank, whitespace-only and missing values with the required message', () => {
+  it(BLOCKS_BLANK_WHITESPACE_AND_MISSING, () => {
     expect(run(schema, { itemCount: '' }).errors).toEqual({
       itemCount: COUNT_REQUIRED_MESSAGE
     })
@@ -341,7 +343,7 @@ describe('#requiredEmail — save-blocking email address with a length cap', () 
     expect(value.email).toBe('alex@example.com')
   })
 
-  it('Should block blank, whitespace-only and missing values with the required message', () => {
+  it(BLOCKS_BLANK_WHITESPACE_AND_MISSING, () => {
     expect(run(schema, { email: '' }).errors).toEqual({
       email: EMAIL_REQUIRED_MESSAGE
     })
@@ -557,7 +559,7 @@ describe('#requiredDateTextInRange — save-blocking date text in bounds', () =>
     }
   })
 
-  it('Should block blank, whitespace-only and missing values with the required message', () => {
+  it(BLOCKS_BLANK_WHITESPACE_AND_MISSING, () => {
     expect(run(schema, { arrivalDate: '' }).errors).toEqual({
       arrivalDate: ARRIVAL_DATE_REQUIRED_MESSAGE
     })

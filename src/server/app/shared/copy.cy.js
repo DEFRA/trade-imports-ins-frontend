@@ -38,8 +38,8 @@ export const copy = {
   errorPage: {
     notFound: 'Heb ddod o hyd i’r dudalen',
     forbidden: 'Gwaharddedig',
-    unauthorized: 'Heb awdurdod',
-    badRequest: 'Cais annilys',
+    unauthorized: 'Mae angen i chi fewngofnodi i weld y dudalen hon',
+    badRequest: 'Mae problem gyda’ch cais',
     unexpected: 'Aeth rhywbeth o’i le'
   }
 }

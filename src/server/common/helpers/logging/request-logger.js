@@ -3,7 +3,8 @@ import hapiPino from 'hapi-pino'
 import { loggerOptions } from './logger-options.js'
 
 const pathToIgnore = (_, request) =>
-  request.path.startsWith('/public') ||
+  request.path === '/public' ||
+  request.path.startsWith('/public/') ||
   request.path === '/health' ||
   request.path === '/favicon.ico'
 

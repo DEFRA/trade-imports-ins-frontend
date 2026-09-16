@@ -157,7 +157,7 @@ describe('#addressBookDeleteController', () => {
       payload: { cancel: 'true' }
     })
 
-    expect(statusCode).toBe(statusCodes.redirect)
+    expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(`/address-book/${addressId}`)
   })
 
@@ -175,7 +175,7 @@ describe('#addressBookDeleteController', () => {
       payload: {}
     })
 
-    expect(statusCode).toBe(statusCodes.redirect)
+    expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe('/address-book')
     expect(scope.isDone()).toBe(true)
   })
