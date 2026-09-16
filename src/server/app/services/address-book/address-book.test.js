@@ -32,10 +32,12 @@ const highland = {
   email: 'exports@example.com'
 }
 
+const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
+
 const validationProblem = {
   type: 'https://api.cdp.defra.cloud/problems/validation-error',
   errors: {
-    email: ['Enter an email address in the correct format']
+    email: [EMAIL_FORMAT_ERROR]
   }
 }
 
@@ -235,14 +237,14 @@ describe('#mapApiErrorsToFormErrors', () => {
         errors: {
           addressLine1: ['Enter address line 1'],
           email: [
-            'Enter an email address in the correct format',
+            EMAIL_FORMAT_ERROR,
             'Email address must be 254 characters or fewer'
           ]
         }
       })
     ).toEqual({
       addressLine1: 'Enter address line 1',
-      email: 'Enter an email address in the correct format'
+      email: EMAIL_FORMAT_ERROR
     })
   })
 

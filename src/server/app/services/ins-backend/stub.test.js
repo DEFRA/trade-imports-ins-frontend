@@ -2,13 +2,17 @@ import { describe, expect, test } from 'vitest'
 
 import { listNotifications } from './stub.js'
 
+const STUB_1 = 'agg-stub-1'
+const STUB_2 = 'agg-stub-2'
+const STUB_3 = 'agg-stub-3'
+
 describe('#listNotifications (stub)', () => {
   describe('listNotifications sorting', () => {
     test.each([
-      ['arrivalDate,desc', ['agg-stub-2', 'agg-stub-1', 'agg-stub-3']],
-      ['arrivalDate,asc', ['agg-stub-3', 'agg-stub-1', 'agg-stub-2']],
-      ['lastUpdated,desc', ['agg-stub-3', 'agg-stub-1', 'agg-stub-2']],
-      ['lastUpdated,asc', ['agg-stub-2', 'agg-stub-1', 'agg-stub-3']]
+      ['arrivalDate,desc', [STUB_2, STUB_1, STUB_3]],
+      ['arrivalDate,asc', [STUB_3, STUB_1, STUB_2]],
+      ['lastUpdated,desc', [STUB_3, STUB_1, STUB_2]],
+      ['lastUpdated,asc', [STUB_2, STUB_1, STUB_3]]
     ])('sorts by %s', async (sort, expectedOrder) => {
       const { content } = await listNotifications({
         page: 1,
@@ -24,9 +28,9 @@ describe('#listNotifications (stub)', () => {
       })
 
       expect(content.map((n) => n.aggregateId)).toEqual([
-        'agg-stub-2',
-        'agg-stub-1',
-        'agg-stub-3'
+        STUB_2,
+        STUB_1,
+        STUB_3
       ])
     })
   })

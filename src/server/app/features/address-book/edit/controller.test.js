@@ -17,6 +17,7 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
 const ADDRESS_PATH = `/organisation/${ORG_ID}/addresses/${addressId}`
+const UPDATED_NAME = 'Updated Farm Ltd'
 
 const mockCountries = [
   { code: 'GB', name: 'United Kingdom' },
@@ -164,7 +165,7 @@ describe('#addressBookEditController', () => {
         sent = body
         return true
       })
-      .reply(200, { ...mockAddress, name: 'Updated Farm Ltd' })
+      .reply(200, { ...mockAddress, name: UPDATED_NAME })
 
     const { statusCode, headers } = await server.inject({
       method: 'POST',
@@ -172,7 +173,7 @@ describe('#addressBookEditController', () => {
       auth: sessionAuth('edit-post-success'),
       payload: {
         ...validPayload,
-        name: 'Updated Farm Ltd'
+        name: UPDATED_NAME
       }
     })
 
@@ -180,7 +181,7 @@ describe('#addressBookEditController', () => {
     expect(headers.location).toBe('/address-book')
     expect(scope.isDone()).toBe(true)
     expect(sent).toMatchObject({
-      name: 'Updated Farm Ltd',
+      name: UPDATED_NAME,
       addressLine2: '',
       county: ''
     })

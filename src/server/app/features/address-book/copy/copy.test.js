@@ -58,13 +58,15 @@ describe('#copy', () => {
   )
 
   it('Should name the address in each success banner', () => {
-    expect(copy.successBanner.added('Green Farm')).toBe(
+    const addressName = 'Green Farm'
+
+    expect(copy.successBanner.added(addressName)).toBe(
       'Green Farm added to your address book'
     )
-    expect(copy.successBanner.updated('Green Farm')).toBe(
+    expect(copy.successBanner.updated(addressName)).toBe(
       'Green Farm updated in your address book'
     )
-    expect(copy.successBanner.deleted('Green Farm')).toBe(
+    expect(copy.successBanner.deleted(addressName)).toBe(
       'Green Farm deleted from your address book'
     )
   })

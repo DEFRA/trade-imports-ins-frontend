@@ -11,16 +11,21 @@ const rules = addressRules(MDM_CODES)
 const REQUIRED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].required)
 const BOUNDED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].maxLength)
 
+const BUSINESS_NAME = 'Highland Livestock Ltd'
+const ADDRESS_LINE_1 = "14 Drover's Way"
+const PHONE = '+44 1463 234567'
+const EMAIL = 'exports@example.com'
+
 const validAddress = (overrides = {}) => ({
-  name: 'Highland Livestock Ltd',
-  addressLine1: "14 Drover's Way",
+  name: BUSINESS_NAME,
+  addressLine1: ADDRESS_LINE_1,
   addressLine2: 'Unit 3',
   townOrCity: 'Inverness',
   county: 'Highland',
   postcode: 'IV2 3JH',
   countryCode: 'GB',
-  phone: '+44 1463 234567',
-  email: 'exports@example.com',
+  phone: PHONE,
+  email: EMAIL,
   ...overrides
 })
 
@@ -93,7 +98,7 @@ describe('#addressRules', () => {
     )
 
     expect(errors).toBeNull()
-    expect(value.name).toBe('Highland Livestock Ltd')
+    expect(value.name).toBe(BUSINESS_NAME)
   })
 })
 
@@ -137,26 +142,26 @@ describe('#formValuesOf', () => {
   test('reads the form fields from a stored address and blanks what is missing', () => {
     const address = {
       id: '665f1c2ab3e4d51a2c9d0e77',
-      name: 'Highland Livestock Ltd',
-      addressLine1: "14 Drover's Way",
+      name: BUSINESS_NAME,
+      addressLine1: ADDRESS_LINE_1,
       townOrCity: 'Inverness',
       postcode: 'IV2 3JH',
       countryCode: 'GB',
-      phone: '+44 1463 234567',
-      email: 'exports@example.com',
+      phone: PHONE,
+      email: EMAIL,
       deleted: false
     }
 
     expect(formValuesOf(address)).toEqual({
-      name: 'Highland Livestock Ltd',
-      addressLine1: "14 Drover's Way",
+      name: BUSINESS_NAME,
+      addressLine1: ADDRESS_LINE_1,
       addressLine2: '',
       townOrCity: 'Inverness',
       county: '',
       postcode: 'IV2 3JH',
       countryCode: 'GB',
-      phone: '+44 1463 234567',
-      email: 'exports@example.com'
+      phone: PHONE,
+      email: EMAIL
     })
   })
 })

@@ -12,6 +12,7 @@ import {
 
 const REFERENCE_DATA_URL = config.get('tradeImportsReferenceDataApi.baseUrl')
 const originalMode = process.env.STUB_MODE
+const UK_NAME = 'United Kingdom'
 
 const serveCountryList = (countries) =>
   nock(REFERENCE_DATA_URL).get('/countries').reply(200, countries)
@@ -64,14 +65,14 @@ describe('#buildCountrySelectItems', () => {
     expect(
       buildCountrySelectItems(
         [
-          { code: 'GB', name: 'United Kingdom' },
+          { code: 'GB', name: UK_NAME },
           { code: 'FR', name: 'France' }
         ],
         'Select a country'
       )
     ).toEqual([
       { value: '', text: 'Select a country' },
-      { value: 'GB', text: 'United Kingdom' },
+      { value: 'GB', text: UK_NAME },
       { value: 'FR', text: 'France' }
     ])
   })
@@ -81,11 +82,11 @@ describe('#buildCountryItems', () => {
   test('binds option value to country code not name', () => {
     expect(
       buildCountryItems([
-        { code: 'GB', name: 'United Kingdom' },
+        { code: 'GB', name: UK_NAME },
         { code: 'FR', name: 'France' }
       ])
     ).toEqual([
-      { value: 'GB', text: 'United Kingdom' },
+      { value: 'GB', text: UK_NAME },
       { value: 'FR', text: 'France' }
     ])
   })
@@ -93,16 +94,14 @@ describe('#buildCountryItems', () => {
 
 describe('#resolveCountryCodeFromSearchTerm', () => {
   const countries = [
-    { code: 'GB', name: 'United Kingdom' },
+    { code: 'GB', name: UK_NAME },
     { code: 'FR', name: 'France' }
   ]
 
   test('returns alpha-2 code for a case-insensitive country name match', () => {
     expect(resolveCountryCodeFromSearchTerm('France', countries)).toBe('FR')
     expect(resolveCountryCodeFromSearchTerm('france', countries)).toBe('FR')
-    expect(resolveCountryCodeFromSearchTerm('United Kingdom', countries)).toBe(
-      'GB'
-    )
+    expect(resolveCountryCodeFromSearchTerm(UK_NAME, countries)).toBe('GB')
   })
 
   test('returns undefined when the term does not match a country name', () => {

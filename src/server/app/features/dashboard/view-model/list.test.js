@@ -13,6 +13,8 @@ vi.mock('../../../../../config/config.js', () => ({
 
 import { copy } from '../copy/copy.en.js'
 
+const REFERENCE_NUMBER = 'GBN-AG-26-000001'
+
 const {
   buildDashboardQueryString,
   buildNotificationLink,
@@ -31,7 +33,7 @@ describe('#buildDashboardQueryString', () => {
   test('carries referenceNumber, non-default sort and page > 1', () => {
     expect(
       buildDashboardQueryString({
-        referenceNumber: 'GBN-AG-26-000001',
+        referenceNumber: REFERENCE_NUMBER,
         sort: 'lastUpdated,asc',
         page: 3
       })
@@ -80,7 +82,7 @@ describe('#buildPaginationLinks', () => {
   test('builds previous/next and numbered items, carrying sort and referenceNumber', () => {
     const model = buildPaginationLinks(
       { page: 2, size: 25, totalElements: 60, totalPages: 3 },
-      { sort: 'lastUpdated,asc', referenceNumber: undefined }
+      { sort: 'lastUpdated,asc', referenceNumber: null }
     )
 
     expect(model.previous.href).toBe('/?sort=lastUpdated%2Casc')
@@ -110,8 +112,8 @@ describe('#buildPaginationLinks', () => {
 
 describe('#buildNotificationLink', () => {
   test('SUBMITTED notifications link to the read-only notification-view page', () => {
-    expect(buildNotificationLink('SUBMITTED', 'GBN-AG-26-000001')).toBe(
-      'http://localhost:3000/notifications/GBN-AG-26-000001/notification-view'
+    expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
+      `http://localhost:3000/notifications/${REFERENCE_NUMBER}/notification-view`
     )
   })
 
@@ -156,7 +158,7 @@ describe('#mapNotificationRows', () => {
     const rows = mapNotificationRows(
       [
         {
-          referenceNumber: 'GBN-AG-26-000001',
+          referenceNumber: REFERENCE_NUMBER,
           status: 'SUBMITTED',
           originCountry: 'FR',
           commodity: null,
@@ -168,12 +170,12 @@ describe('#mapNotificationRows', () => {
 
     expect(rows).toEqual([
       {
-        referenceNumber: 'GBN-AG-26-000001',
+        referenceNumber: REFERENCE_NUMBER,
         status: 'SUBMITTED',
         originCountry: 'France',
         commodity: '',
         arrivalDate: '10 Sep 2026',
-        href: 'http://localhost:3000/notifications/GBN-AG-26-000001/notification-view'
+        href: `http://localhost:3000/notifications/${REFERENCE_NUMBER}/notification-view`
       }
     ])
   })
@@ -182,7 +184,7 @@ describe('#mapNotificationRows', () => {
     const [row] = mapNotificationRows(
       [
         {
-          referenceNumber: 'GBN-AG-26-000001',
+          referenceNumber: REFERENCE_NUMBER,
           status: 'DRAFT',
           originCountry: 'ZZ'
         }

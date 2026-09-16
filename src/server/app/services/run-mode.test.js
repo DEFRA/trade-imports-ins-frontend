@@ -21,11 +21,12 @@ const STUB_SEED = [
   { code: 'IE', name: 'Ireland' }
 ]
 const originalMode = process.env.STUB_MODE
+const COUNTRIES_PATH = '/countries'
 
 const referenceData = () => nock(REFERENCE_DATA_URL)
 
 const serveCountryList = (countries = [ZEDLAND]) =>
-  referenceData().get('/countries').reply(200, countries)
+  referenceData().get(COUNTRIES_PATH).reply(200, countries)
 
 const importCountriesIn = async (mode) => {
   process.env.STUB_MODE = mode
@@ -51,7 +52,7 @@ describe('countries service', () => {
   describe('#fetchCountries', () => {
     test('Should GET /countries with the trace header and parse the list', async () => {
       const scope = referenceData()
-        .get('/countries')
+        .get(COUNTRIES_PATH)
         .matchHeader(TRACING_HEADER, TRACE_ID)
         .reply(200, [ZEDLAND])
       const { fetchCountries } = await import('./countries/client.js')
@@ -62,7 +63,7 @@ describe('countries service', () => {
 
     test('Should request countries filtered to the given blocks', async () => {
       const scope = referenceData()
-        .get('/countries')
+        .get(COUNTRIES_PATH)
         .query({ blocks: 'BLOCK_ONE' })
         .reply(200, [ZEDLAND])
       const { fetchCountries } = await import('./countries/client.js')
@@ -72,7 +73,7 @@ describe('countries service', () => {
     })
 
     test('Should throw with the status on a non-ok response', async () => {
-      referenceData().get('/countries').reply(503)
+      referenceData().get(COUNTRIES_PATH).reply(503)
       const { fetchCountries } = await import('./countries/client.js')
 
       await expect(fetchCountries()).rejects.toMatchObject({
@@ -121,7 +122,7 @@ describe('countries service', () => {
     })
 
     test('Should re-attempt on the next read after a failed load', async () => {
-      referenceData().get('/countries').reply(503)
+      referenceData().get(COUNTRIES_PATH).reply(503)
       const countries = await importCountriesIn('false')
 
       await expect(countries.getCountries()).rejects.toMatchObject({
@@ -134,7 +135,7 @@ describe('countries service', () => {
     })
 
     test('Should reject with a serverUnavailable Boom on load failure', async () => {
-      referenceData().get('/countries').reply(503)
+      referenceData().get(COUNTRIES_PATH).reply(503)
       const countries = await importCountriesIn('false')
 
       await expect(countries.getCountries()).rejects.toMatchObject({

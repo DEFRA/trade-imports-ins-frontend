@@ -9,7 +9,6 @@
     "node": ">=24",
     "npm": ">=11.6.2"
   },
-  "packageManager": "npm@11.6.2",
   "scripts": {
     "build:frontend": "NODE_ENV=production webpack",
     "dev": "AWS_EMF_ENVIRONMENT=Local run-p frontend:watch server:watch",
@@ -18,7 +17,6 @@
     "fit:start": "NODE_ENV=development node .",
     "fit:start:workspace": "npm run check:workspace-stack && npm run fit:start",
     "check:workspace-stack": "node scripts/check-workspace-stack.js",
-    "install:pinned-npm": "npx --yes \"$(node scripts/npm-version.js)\" install",
     "test:fit": "npm run build:frontend && playwright test",
     "test:fit:smoke": "npm run test:fit -- --project=smoke",
     "test:fit:features": "npm run test:fit -- --project=features",
@@ -27,7 +25,8 @@
     "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "frontend:watch": "NODE_ENV=development webpack --watch",
-    "git:pre-commit-hook": "npm run security-audit && npm run format:check && npm run lint && npm test",
+    "git:pre-commit-hook": "npm run format:check && npm run lint && npm test",
+    "postinstall": "npm run setup:husky",
     "lint": "run-s lint:js lint:scss lint:arch",
     "lint:js": "eslint .",
     "lint:js:fix": "eslint . --fix",
@@ -41,7 +40,7 @@
     "lighthouse:targets": "node scripts/lighthouse/seed-audit-targets.js",
     "lighthouse:run": "node scripts/lighthouse/run-audit.js",
     "test:watch": "AWS_EMF_ENVIRONMENT=Local TZ=UTC vitest",
-    "security-audit": "npm audit --audit-level=critical",
+    "security-audit": "npm audit --audit-level=high",
     "server:watch": "nodemon --inspect=0.0.0.0 --ext js,json --legacy-watch --watch ./src/server --watch ./src/config --env-file-if-exists=.env ./src",
     "server:debug": "nodemon --inspect-brk=0.0.0.0 --ext js,json --legacy-watch --watch ./src/server --watch ./src/config --env-file-if-exists=.env ./src",
     "prestart": "npm run build:frontend",
@@ -98,6 +97,7 @@
     "copy-webpack-plugin": "14.0.0",
     "dependency-cruiser": "16.10.4",
     "eslint": "9.39.2",
+    "eslint-plugin-sonarjs": "4.2.0",
     "husky": "9.1.7",
     "neostandard": "0.13.0",
     "nock": "^14.0.1",
@@ -120,8 +120,9 @@
     "webpack-cli": "7.2.2"
   },
   "overrides": {
-    "brace-expansion": "5.0.8",
-    "minimatch": "10.2.4",
+    "brace-expansion": "^5.0.9",
+    "tmp": "0.2.7",
+    "uuid": "11.1.1",
     "lighthouse": {
       ".": "13.4.1",
       "ws": "7.5.11"

@@ -6,6 +6,8 @@ import { signIn } from '../../../../../../fit/sign-in.js'
 const ORG_DEFAULT = 'stub-org-1'
 const ORG_EMPTY = 'stub-org-empty'
 const ORG_PAGINATED = 'stub-org-paginated'
+const LIST_PATH = '/address-book'
+const ADD_NEW_ADDRESS = 'Add a new address'
 
 test.describe('navigation', () => {
   test('Dashboard and Address book links are visible and navigate correctly', async ({
@@ -31,7 +33,7 @@ test.describe('list and pagination', () => {
     page
   }) => {
     await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto('/address-book')
+    await page.goto(LIST_PATH)
 
     const table = page.getByRole('table')
     await expect(
@@ -56,7 +58,7 @@ test.describe('list and pagination', () => {
       table.getByRole('cell', { name: 'United Kingdom', exact: true })
     ).toBeVisible()
     await expect(
-      page.getByRole('button', { name: 'Add a new address' })
+      page.getByRole('button', { name: ADD_NEW_ADDRESS })
     ).toBeVisible()
   })
 
@@ -64,9 +66,9 @@ test.describe('list and pagination', () => {
     page
   }) => {
     await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto('/address-book')
+    await page.goto(LIST_PATH)
 
-    await page.getByRole('button', { name: 'Add a new address' }).click()
+    await page.getByRole('button', { name: ADD_NEW_ADDRESS }).click()
 
     await expect(page).toHaveURL(/\/address-book\/add$/)
     await expect(
@@ -76,14 +78,14 @@ test.describe('list and pagination', () => {
 
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto('/address-book')
+    await page.goto(LIST_PATH)
 
     await expectNoSeriousOrCriticalAxeViolations(page, 'Address book list')
   })
 
   test('paginates when there are more than 25 addresses', async ({ page }) => {
     await signIn(page, { organisationId: ORG_PAGINATED })
-    await page.goto('/address-book')
+    await page.goto(LIST_PATH)
 
     await expect(page.getByText('Showing 1-25 of 30')).toBeVisible()
 
@@ -99,11 +101,11 @@ test.describe('empty state', () => {
     page
   }) => {
     await signIn(page, { organisationId: ORG_EMPTY })
-    await page.goto('/address-book')
+    await page.goto(LIST_PATH)
 
     await expect(page.getByText('You have no addresses yet.')).toBeVisible()
     await expect(
-      page.getByRole('button', { name: 'Add a new address' })
+      page.getByRole('button', { name: ADD_NEW_ADDRESS })
     ).toBeVisible()
   })
 })

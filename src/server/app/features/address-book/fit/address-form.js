@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect } from '@playwright/test'
 
+import { FIELD_RULES } from '../fields.js'
+
 /**
  * Shared fixture for the address form specs. Add and edit render the same
  * Standard Address Block against the same schema (fields.js), so the
@@ -8,17 +10,23 @@ import { expect } from '@playwright/test'
  */
 
 export const NAME_LABEL = 'Name or organisation name'
+const ADDRESS_LINE_1_LABEL = 'Address line 1'
+const TOWN_OR_CITY_LABEL = 'Town or city'
+const POSTCODE_LABEL = 'Postcode or Zip code'
+const PHONE_LABEL = 'Phone number'
+const EMAIL_LABEL = 'Email address'
+const AXE_VIOLATIONS_INDENT = 2
 
 export const fieldLabels = {
   name: NAME_LABEL,
-  addressLine1: 'Address line 1',
+  addressLine1: ADDRESS_LINE_1_LABEL,
   addressLine2: 'Address line 2 (optional)',
-  townOrCity: 'Town or city',
+  townOrCity: TOWN_OR_CITY_LABEL,
   county: 'County (optional)',
-  postcode: 'Postcode or Zip code',
+  postcode: POSTCODE_LABEL,
   countryCode: 'Country',
-  phone: 'Phone number',
-  email: 'Email address'
+  phone: PHONE_LABEL,
+  email: EMAIL_LABEL
 }
 
 export const validAddress = {
@@ -42,7 +50,7 @@ export async function expectNoSeriousOrCriticalAxeViolations(page, pageName) {
   )
   expect(
     seriousOrCritical,
-    `${pageName} has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
+    `${pageName} has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, AXE_VIOLATIONS_INDENT)}`
   ).toEqual([])
 }
 
@@ -93,13 +101,13 @@ export async function expectErrorFocusOn(
 // [field, label, "enter a ..." error]. Address Line 2 and County are optional
 // - deliberately excluded.
 export const requiredValidations = [
-  ['name', 'Name or organisation name', 'Enter a name'],
-  ['addressLine1', 'Address line 1', 'Enter address line 1'],
-  ['townOrCity', 'Town or city', 'Enter a town or city'],
-  ['postcode', 'Postcode or Zip code', 'Enter a postcode'],
+  ['name', NAME_LABEL, 'Enter a name'],
+  ['addressLine1', ADDRESS_LINE_1_LABEL, 'Enter address line 1'],
+  ['townOrCity', TOWN_OR_CITY_LABEL, 'Enter a town or city'],
+  ['postcode', POSTCODE_LABEL, 'Enter a postcode'],
   ['countryCode', 'Country', 'Enter a country'],
-  ['phone', 'Phone number', 'Enter a telephone number'],
-  ['email', 'Email address', 'Enter an email address']
+  ['phone', PHONE_LABEL, 'Enter a telephone number'],
+  ['email', EMAIL_LABEL, 'Enter an email address']
 ]
 
 // [field, label, maxLength, "must be N characters or fewer" error] - every
@@ -107,50 +115,50 @@ export const requiredValidations = [
 export const maxLengthValidations = [
   [
     'name',
-    'Name or organisation name',
-    255,
+    NAME_LABEL,
+    FIELD_RULES.name.maxLength,
     'Name must be 255 characters or fewer'
   ],
   [
     'addressLine1',
-    'Address line 1',
-    255,
+    ADDRESS_LINE_1_LABEL,
+    FIELD_RULES.addressLine1.maxLength,
     'Address line 1 must be 255 characters or fewer'
   ],
   [
     'addressLine2',
     'Address line 2 (optional)',
-    255,
+    FIELD_RULES.addressLine2.maxLength,
     'Address line 2 must be 255 characters or fewer'
   ],
   [
     'townOrCity',
-    'Town or city',
-    100,
+    TOWN_OR_CITY_LABEL,
+    FIELD_RULES.townOrCity.maxLength,
     'Town or city must be 100 characters or fewer'
   ],
   [
     'county',
     'County (optional)',
-    100,
+    FIELD_RULES.county.maxLength,
     'County must be 100 characters or fewer'
   ],
   [
     'postcode',
-    'Postcode or Zip code',
-    12,
+    POSTCODE_LABEL,
+    FIELD_RULES.postcode.maxLength,
     'Postcode must be 12 characters or fewer'
   ],
   [
     'phone',
-    'Phone number',
-    20,
+    PHONE_LABEL,
+    FIELD_RULES.phone.maxLength,
     'Telephone number must be 20 characters or fewer'
   ],
   [
     'email',
-    'Email address',
-    254,
+    EMAIL_LABEL,
+    FIELD_RULES.email.maxLength,
     'Email address must be 254 characters or fewer'
   ]
 ]

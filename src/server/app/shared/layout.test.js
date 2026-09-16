@@ -14,6 +14,7 @@ const NAVIGATION_LIST = 'govuk-service-navigation__list'
 const ACTIVE_ITEM = 'govuk-service-navigation__item--active'
 const ACTIVE_FALLBACK = 'govuk-service-navigation__active-fallback'
 const NOTIFICATION_BANNER = 'govuk-notification-banner'
+const ADDRESS_BOOK_URL = '/address-book'
 const { serviceNavigation } = sharedCopy.layout
 
 const signedIn = {
@@ -29,7 +30,7 @@ const renderLayout = (userSession, context = {}) =>
     sharedCopy,
     userSession,
     dashboardUrl: '/',
-    addressBookUrl: '/address-book',
+    addressBookUrl: ADDRESS_BOOK_URL,
     getAssetPath: (asset) => `/assets/${asset}`,
     ...context
   })
@@ -51,7 +52,7 @@ describe('service navigation', () => {
     ])
     expect(links.map((_, anchor) => $(anchor).attr('href')).get()).toEqual([
       '/',
-      '/address-book',
+      ADDRESS_BOOK_URL,
       '#',
       '/auth/sign-out'
     ])
@@ -122,7 +123,7 @@ describe('alpha phase banner', () => {
   })
 
   it('Should place the banner above the back link', () => {
-    const html = renderLayout(signedIn, { backLink: '/address-book' })
+    const html = renderLayout(signedIn, { backLink: ADDRESS_BOOK_URL })
 
     expect(html.indexOf(PHASE_BANNER)).toBeLessThan(html.indexOf(BACK_LINK))
   })
@@ -130,12 +131,12 @@ describe('alpha phase banner', () => {
 
 describe('back link', () => {
   it('Should render the back link the view model names, labelled from the shared copy', () => {
-    const $ = load(renderLayout(signedIn, { backLink: '/address-book' }))
+    const $ = load(renderLayout(signedIn, { backLink: ADDRESS_BOOK_URL }))
     const link = $(`a.${BACK_LINK}`)
 
     expect(link).toHaveLength(1)
     expect(link.text().trim()).toBe(sharedCopy.layout.back)
-    expect(link.attr('href')).toBe('/address-book')
+    expect(link.attr('href')).toBe(ADDRESS_BOOK_URL)
   })
 
   it('Should render no back link on a page with no way back', () => {
@@ -145,14 +146,14 @@ describe('back link', () => {
 
 describe('breadcrumbs', () => {
   it('Should render no breadcrumb trail, as Design release 1 has none', () => {
-    const html = renderLayout(signedIn, { backLink: '/address-book' })
+    const html = renderLayout(signedIn, { backLink: ADDRESS_BOOK_URL })
 
     expect(html).not.toContain(BREADCRUMBS)
   })
 
   it('Should ignore a breadcrumbs value a caller still passes', () => {
     const html = renderLayout(signedIn, {
-      breadcrumbs: [{ text: 'Your addresses', href: '/address-book' }]
+      breadcrumbs: [{ text: 'Your addresses', href: ADDRESS_BOOK_URL }]
     })
 
     expect(html).not.toContain(BREADCRUMBS)

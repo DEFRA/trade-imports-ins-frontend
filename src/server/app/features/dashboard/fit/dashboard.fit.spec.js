@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test'
 import { expectNoSeriousOrCriticalAxeViolations } from '../../address-book/fit/address-form.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
+const REFERENCE_NUMBER = 'GBN-AG-26-000001'
+
 test.describe('dashboard', () => {
   test('shows notifications from every status with enough to identify the consignment (AC1, AC2)', async ({
     page
@@ -17,7 +19,7 @@ test.describe('dashboard', () => {
     // Stub dataset spans SUBMITTED, DRAFT and AMEND — all three must appear
     // in the same list (AC2), each with enough to identify the consignment.
     await expect(
-      page.getByRole('cell', { name: 'GBN-AG-26-000001', exact: true })
+      page.getByRole('cell', { name: REFERENCE_NUMBER, exact: true })
     ).toBeVisible()
     await expect(
       page.getByRole('cell', { name: 'GBN-AG-26-000002', exact: true })
@@ -76,11 +78,11 @@ test.describe('dashboard', () => {
 
     await page
       .getByLabel('Search by notification reference')
-      .fill('GBN-AG-26-000001')
+      .fill(REFERENCE_NUMBER)
     await page.getByRole('button', { name: 'Search' }).click()
 
     await expect(
-      page.getByRole('cell', { name: 'GBN-AG-26-000001', exact: true })
+      page.getByRole('cell', { name: REFERENCE_NUMBER, exact: true })
     ).toBeVisible()
     await expect(
       page.getByRole('cell', { name: 'GBN-AG-26-000002', exact: true })

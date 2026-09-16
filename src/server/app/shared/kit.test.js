@@ -13,6 +13,9 @@ import {
 } from './kit.js'
 
 const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
+const ENTER_A_NAME = 'Enter a name'
+const ADD_PATH = '/address-book/add'
+const EDIT_PATH = '/address-book/{id}/edit'
 
 const thrownBy = (callback) => {
   try {
@@ -27,7 +30,6 @@ describe('#base — the chrome every page shares', () => {
     expect(base('Dashboard')).toEqual({
       layout: 'shared/layout.njk',
       pageTitle: 'Dashboard',
-      backLink: undefined,
       sharedCopy,
       recoverableError: false,
       contentColumnClass: SURFACES.form
@@ -56,12 +58,11 @@ describe('#errorSummary', () => {
 
   it('Should list every field error under the one title, each linked to its in-page anchor', () => {
     expect(
-      errorSummary({ name: 'Enter a name', email: 'Enter an email address' })
+      errorSummary({ name: ENTER_A_NAME, email: 'Enter an email address' })
     ).toEqual({
       titleText: 'There is a problem',
-      disableAutoFocus: undefined,
       errorList: [
-        { text: 'Enter a name', href: '#name' },
+        { text: ENTER_A_NAME, href: '#name' },
         { text: 'Enter an email address', href: '#email' }
       ]
     })
@@ -69,12 +70,12 @@ describe('#errorSummary', () => {
 
   it('Should link through a supplied href builder and keep the caret where it is when asked', () => {
     const summary = errorSummary(
-      { name: 'Enter a name' },
-      { href: (field) => `/address-book/add#${field}`, disableAutoFocus: true }
+      { name: ENTER_A_NAME },
+      { href: (field) => `${ADD_PATH}#${field}`, disableAutoFocus: true }
     )
 
     expect(summary.errorList).toEqual([
-      { text: 'Enter a name', href: '/address-book/add#name' }
+      { text: ENTER_A_NAME, href: `${ADD_PATH}#name` }
     ])
     expect(summary.disableAutoFocus).toBe(true)
   })
@@ -82,13 +83,13 @@ describe('#errorSummary', () => {
 
 describe('#fieldError', () => {
   it('Should wrap the field message for the govuk macro', () => {
-    expect(fieldError({ name: 'Enter a name' }, 'name')).toEqual({
-      text: 'Enter a name'
+    expect(fieldError({ name: ENTER_A_NAME }, 'name')).toEqual({
+      text: ENTER_A_NAME
     })
   })
 
   it('Should be undefined when the field has no error', () => {
-    expect(fieldError({ name: 'Enter a name' }, 'email')).toBeUndefined()
+    expect(fieldError({ name: ENTER_A_NAME }, 'email')).toBeUndefined()
     expect(fieldError(undefined, 'email')).toBeUndefined()
   })
 })
@@ -104,16 +105,16 @@ describe('#pageRoutes', () => {
   })
 
   it('Should register the GET and POST pair on the same path for a page with a form', () => {
-    expect(pageRoutes('/address-book/add', { get, post })).toEqual([
+    expect(pageRoutes(ADD_PATH, { get, post })).toEqual([
       {
         method: 'GET',
-        path: '/address-book/add',
+        path: ADD_PATH,
         options: routeOptions,
         handler: get
       },
       {
         method: 'POST',
-        path: '/address-book/add',
+        path: ADD_PATH,
         options: routeOptions,
         handler: post
       }
@@ -123,18 +124,16 @@ describe('#pageRoutes', () => {
   it('Should apply the route options a page supplies to both routes', () => {
     const options = { ...routeOptions, validate: { params: {} } }
 
-    expect(
-      pageRoutes('/address-book/{id}/edit', { get, post }, options)
-    ).toEqual([
+    expect(pageRoutes(EDIT_PATH, { get, post }, options)).toEqual([
       {
         method: 'GET',
-        path: '/address-book/{id}/edit',
+        path: EDIT_PATH,
         options,
         handler: get
       },
       {
         method: 'POST',
-        path: '/address-book/{id}/edit',
+        path: EDIT_PATH,
         options,
         handler: post
       }

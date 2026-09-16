@@ -16,6 +16,9 @@ vi.mock('@defra/hapi-tracing', () => ({
 
 const TRACING_HEADER = config.get('tracing.header')
 const TRACE_ID = 'trace-123'
+const NOTIFICATIONS_PATH = '/notifications'
+const REFERENCE_NUMBER = 'GBN-AG-26-000001'
+const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
 
 const emptyPage = (page) => ({
   content: [],
@@ -35,11 +38,11 @@ describe('against the real INS backend', () => {
 
   test('Should GET /notifications with the page and the trace header', async () => {
     const scope = insBackendApi()
-      .get('/notifications')
+      .get(NOTIFICATIONS_PATH)
       .query({ page: '1' })
       .matchHeader(TRACING_HEADER, TRACE_ID)
       .reply(200, {
-        content: [{ referenceNumber: 'GBN-AG-26-000001' }],
+        content: [{ referenceNumber: REFERENCE_NUMBER }],
         page: 1,
         size: 25,
         numberOfElements: 1,
@@ -50,24 +53,24 @@ describe('against the real INS backend', () => {
     const result = await listNotifications({ page: 1 })
 
     expect(result.totalElements).toBe(1)
-    expect(result.content[0].referenceNumber).toBe('GBN-AG-26-000001')
+    expect(result.content[0].referenceNumber).toBe(REFERENCE_NUMBER)
     expect(scope.isDone()).toBe(true)
   })
 
   test('Should forward sort and referenceNumber as query parameters', async () => {
     const scope = insBackendApi()
-      .get('/notifications')
+      .get(NOTIFICATIONS_PATH)
       .query({
         page: '2',
         sort: 'arrivalDate,asc',
-        referenceNumber: 'GBN-AG-26-000002'
+        referenceNumber: OTHER_REFERENCE_NUMBER
       })
       .reply(200, emptyPage(2))
 
     await listNotifications({
       page: 2,
       sort: 'arrivalDate,asc',
-      referenceNumber: 'GBN-AG-26-000002'
+      referenceNumber: OTHER_REFERENCE_NUMBER
     })
 
     expect(scope.isDone()).toBe(true)
@@ -75,7 +78,7 @@ describe('against the real INS backend', () => {
 
   test('Should not send an organisation header — the dashboard is deliberately unscoped', async () => {
     const scope = insBackendApi()
-      .get('/notifications')
+      .get(NOTIFICATIONS_PATH)
       .query({ page: '1' })
       .reply(function replyFn() {
         expect(
@@ -91,7 +94,7 @@ describe('against the real INS backend', () => {
 
   test('Should throw with the status and message on a non-2xx response', async () => {
     insBackendApi()
-      .get('/notifications')
+      .get(NOTIFICATIONS_PATH)
       .query({ page: '1' })
       .reply(500, { title: 'Internal Server Error' })
 
@@ -110,8 +113,8 @@ describe('in stub mode', () => {
 
     expect(totalElements).toBe(3)
     expect(content.map((n) => n.referenceNumber)).toEqual([
-      'GBN-AG-26-000002',
-      'GBN-AG-26-000001',
+      OTHER_REFERENCE_NUMBER,
+      REFERENCE_NUMBER,
       'GBN-AG-26-000003'
     ])
   })

@@ -11,10 +11,13 @@ import {
 } from './handshake-context.js'
 
 const SESSION_KEY = 'addressBookHandshake'
+const NOTIFICATION_ID = 'GBN-AG-26-4F7K2P'
+const INCOMPLETE_HANDSHAKE_ERROR = 'Incomplete journey handshake'
+const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
 
 const validContext = {
   journeyType: 'gbn-ag',
-  notificationId: 'GBN-AG-26-4F7K2P',
+  notificationId: NOTIFICATION_ID,
   fulfilmentId: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',
   handshakeToken: 'handshake-token-value'
 }
@@ -47,18 +50,18 @@ describe('readHandshakeQuery', () => {
       readHandshakeQuery(
         mockRequest({
           'journey-type': 'gbn-ag',
-          'notification-id': 'GBN-AG-26-4F7K2P'
+          'notification-id': NOTIFICATION_ID
         })
       )
-    ).toThrow(Boom.badRequest('Incomplete journey handshake'))
+    ).toThrow(Boom.badRequest(INCOMPLETE_HANDSHAKE_ERROR))
   })
 
   test('throws when the journey type is not registered', () => {
     expect(() =>
       readHandshakeQuery(
         mockRequest({
-          'journey-type': 'not-a-journey',
-          'notification-id': 'GBN-AG-26-4F7K2P',
+          'journey-type': UNREGISTERED_JOURNEY_TYPE,
+          'notification-id': NOTIFICATION_ID,
           'fulfilment-id': validContext.fulfilmentId,
           'handshake-token': validContext.handshakeToken
         })
@@ -71,7 +74,7 @@ describe('readHandshakeQuery', () => {
       readHandshakeQuery(
         mockRequest({
           'journey-type': ' gbn-ag ',
-          'notification-id': ' GBN-AG-26-4F7K2P ',
+          'notification-id': ` ${NOTIFICATION_ID} `,
           'fulfilment-id': ` ${validContext.fulfilmentId} `,
           'handshake-token': ` ${validContext.handshakeToken} `
         })
@@ -90,14 +93,14 @@ describe('readHandshakePayload', () => {
       readHandshakePayload({
         'journey-type': 'gbn-ag'
       })
-    ).toThrow(Boom.badRequest('Incomplete journey handshake'))
+    ).toThrow(Boom.badRequest(INCOMPLETE_HANDSHAKE_ERROR))
   })
 
   test('throws when the journey type is not registered', () => {
     expect(() =>
       readHandshakePayload({
-        'journey-type': 'not-a-journey',
-        'notification-id': 'GBN-AG-26-4F7K2P',
+        'journey-type': UNREGISTERED_JOURNEY_TYPE,
+        'notification-id': NOTIFICATION_ID,
         'fulfilment-id': validContext.fulfilmentId,
         'handshake-token': validContext.handshakeToken
       })
@@ -108,7 +111,7 @@ describe('readHandshakePayload', () => {
     expect(
       readHandshakePayload({
         'journey-type': ' gbn-ag ',
-        'notification-id': ' GBN-AG-26-4F7K2P ',
+        'notification-id': ` ${NOTIFICATION_ID} `,
         'fulfilment-id': ` ${validContext.fulfilmentId} `,
         'handshake-token': ` ${validContext.handshakeToken} `
       })
@@ -178,7 +181,7 @@ describe('resolveHandshakeContext', () => {
     const request = mockRequest({}, { 'journey-type': 'gbn-ag', name: 'Farm' })
 
     expect(() => resolveHandshakeContext(request)).toThrow(
-      Boom.badRequest('Incomplete journey handshake')
+      Boom.badRequest(INCOMPLETE_HANDSHAKE_ERROR)
     )
   })
 
@@ -186,7 +189,7 @@ describe('resolveHandshakeContext', () => {
     const request = mockRequest(
       {},
       {
-        'journey-type': 'not-a-journey',
+        'journey-type': UNREGISTERED_JOURNEY_TYPE,
         'notification-id': validContext.notificationId,
         'fulfilment-id': validContext.fulfilmentId,
         'handshake-token': validContext.handshakeToken,

@@ -18,6 +18,9 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const ADDRESSES_PATH = `/organisation/${ORG_ID}/addresses`
 const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
+const ADD_ADDRESS_URL = '/address-book/add'
+const BUSINESS_NAME = 'Highland Livestock Ltd'
+const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
 const mockCountries = [
   { code: 'GB', name: 'United Kingdom' },
@@ -25,7 +28,7 @@ const mockCountries = [
 ]
 
 const validPayload = {
-  name: 'Highland Livestock Ltd',
+  name: BUSINESS_NAME,
   addressLine1: "14 Drover's Way",
   townOrCity: 'Inverness',
   postcode: 'IV2 3JH',
@@ -68,7 +71,7 @@ describe.sequential('#addressBookAddController', () => {
   test('GET renders the add address details form', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-get')
     })
 
@@ -91,7 +94,7 @@ describe.sequential('#addressBookAddController', () => {
   test('GET renders country select options from reference data', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-get-countries')
     })
 
@@ -108,19 +111,19 @@ describe.sequential('#addressBookAddController', () => {
       .reply(400, {
         type: 'https://api.cdp.defra.cloud/problems/validation-error',
         errors: {
-          email: ['Enter an email address in the correct format']
+          email: [EMAIL_FORMAT_ERROR]
         }
       })
 
     const { result, statusCode } = await server.inject({
       method: 'POST',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-api-400'),
       payload: validPayload
     })
 
     expect(statusCode).toBe(statusCodes.badRequest)
-    expect(result).toContain('Enter an email address in the correct format')
+    expect(result).toContain(EMAIL_FORMAT_ERROR)
     expect(scope.isDone()).toBe(true)
   })
 
@@ -134,12 +137,12 @@ describe.sequential('#addressBookAddController', () => {
       .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
       .reply(201, {
         id: '665f1c2ab3e4d51a2c9d0e77',
-        name: 'Highland Livestock Ltd'
+        name: BUSINESS_NAME
       })
 
     const { statusCode, headers } = await server.inject({
       method: 'POST',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-success'),
       payload: validPayload
     })
@@ -157,7 +160,7 @@ describe.sequential('#addressBookAddController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'POST',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-500'),
       payload: validPayload
     })
@@ -179,12 +182,12 @@ describe.sequential('#addressBookAddController', () => {
       })
       .reply(201, {
         id: '665f1c2ab3e4d51a2c9d0e77',
-        name: 'Highland Livestock Ltd'
+        name: BUSINESS_NAME
       })
 
     const { statusCode } = await server.inject({
       method: 'POST',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-trimmed'),
       payload: {
         ...validPayload,
@@ -207,7 +210,7 @@ describe.sequential('#addressBookAddController', () => {
     // surface as a 500, not the 400 asserted here.
     const { result, statusCode } = await server.inject({
       method: 'POST',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-invalid'),
       payload: {
         name: '',
@@ -228,8 +231,41 @@ describe.sequential('#addressBookAddController', () => {
     expect(result).toContain('href="#name"')
     expect(result).toContain('Enter a name')
     expect(result).toContain('href="#email"')
-    expect(result).toContain('Enter an email address in the correct format')
+    expect(result).toContain(EMAIL_FORMAT_ERROR)
     expect(result).toContain('govuk-error-message')
+  })
+
+  test('Cancel returns to list without creating an address', async () => {
+    const { statusCode, headers } = await server.inject({
+      method: 'POST',
+      url: ADD_ADDRESS_URL,
+      auth: sessionAuth('add-post-cancel'),
+      payload: { cancel: 'true' }
+    })
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe('/address-book')
+  })
+})
+
+describe.sequential('#addressBookAddController — journey handshake', () => {
+  let server
+
+  runInRealMode()
+
+  beforeAll(async () => {
+    server = await createServer()
+    await server.initialize()
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+  })
+
+  beforeEach(() => {
+    config.set('csrf.enabled', false)
+    config.set('tradeImportsAnimalsFrontend.baseUrl', ANIMALS_BASE_URL)
+    serveCountries(mockCountries)
   })
 
   test('GET arriving through a journey handshake carries the journey forward in hidden fields and the cancel label', async () => {
@@ -273,12 +309,12 @@ describe.sequential('#addressBookAddController', () => {
   test('POST from a handshake returns to the journey with the new address id and no address-book banner', async () => {
     const scope = addressBookApi().post(ADDRESSES_PATH).reply(201, {
       id: '665f1c2ab3e4d51a2c9d0e77',
-      name: 'Highland Livestock Ltd'
+      name: BUSINESS_NAME
     })
 
     const { statusCode, headers } = await server.inject({
       method: 'POST',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-handshake'),
       payload: { ...handshakeFields, ...validPayload }
     })
@@ -296,19 +332,19 @@ describe.sequential('#addressBookAddController', () => {
       .reply(statusCodes.badRequest, {
         type: 'https://api.cdp.defra.cloud/problems/validation-error',
         errors: {
-          email: ['Enter an email address in the correct format']
+          email: [EMAIL_FORMAT_ERROR]
         }
       })
 
     const { result, statusCode } = await server.inject({
       method: 'POST',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-handshake-api-400'),
       payload: { ...handshakeFields, ...validPayload }
     })
 
     expect(statusCode).toBe(statusCodes.badRequest)
-    expect(result).toContain('Enter an email address in the correct format')
+    expect(result).toContain(EMAIL_FORMAT_ERROR)
     expect(result).toContain('name="handshake-token"')
     expect(result).toContain('Cancel and return to address page')
   })
@@ -316,24 +352,12 @@ describe.sequential('#addressBookAddController', () => {
   test('Cancel from a handshake returns to the journey without creating an address', async () => {
     const { statusCode, headers } = await server.inject({
       method: 'POST',
-      url: '/address-book/add',
+      url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-handshake-cancel'),
       payload: { cancel: 'true', ...handshakeFields }
     })
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(RETURN_URL)
-  })
-
-  test('Cancel returns to list without creating an address', async () => {
-    const { statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: '/address-book/add',
-      auth: sessionAuth('add-post-cancel'),
-      payload: { cancel: 'true' }
-    })
-
-    expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toBe('/address-book')
   })
 })

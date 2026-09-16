@@ -41,21 +41,13 @@ repository `trade-imports-animals-tests`, as its `ins` Playwright project
 
 ### Node.js
 
-Node 24 or later, and npm 11.6.2 — the version pinned by `packageManager`
-in `package.json`. An ambient npm older than that rejects the lockfile.
+Node 24 or later, and npm 11.6.2 or later — the floor in `engines`.
 
 To use the correct version of Node.js for this application, via nvm:
 
 ```bash
 cd trade-imports-ins-frontend
 nvm use
-```
-
-Then install with the pinned npm, so the lockfile you regenerate matches
-the one CI and the Dockerfile install with:
-
-```bash
-npm run install:pinned-npm
 ```
 
 ## Server-side caching
@@ -88,9 +80,9 @@ npm install
 
 ### Git hooks
 
-The pre-commit hook is opt-in: `npm run setup:husky` installs it; it runs
-`npm run git:pre-commit-hook` — audit, format check, lint and the unit
-suite.
+`npm install` installs the pre-commit hook — `postinstall` runs
+`npm run setup:husky`. The hook runs `npm run git:pre-commit-hook`: format
+check, lint and the unit suite.
 
 ### Development
 

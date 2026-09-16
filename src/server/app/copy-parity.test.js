@@ -118,15 +118,17 @@ describe('copy parity — cy mirrors en structurally', () => {
   })
 })
 
+const ADDRESS_NAME = 'Green Farm'
+
 describe('copy parity — the locale seam resolves cy', () => {
   it('Should resolve the cy module and interpolate through it', () => {
     const copy = copyFor({ en: addressBookEn, cy: addressBookCy }, 'cy')
     expect(copy).toBe(addressBookCy)
-    expect(copy.successBanner.added('Green Farm')).toBe(
-      addressBookCy.successBanner.added('Green Farm')
+    expect(copy.successBanner.added(ADDRESS_NAME)).toBe(
+      addressBookCy.successBanner.added(ADDRESS_NAME)
     )
-    expect(copy.successBanner.added('Green Farm')).not.toBe(
-      addressBookEn.successBanner.added('Green Farm')
+    expect(copy.successBanner.added(ADDRESS_NAME)).not.toBe(
+      addressBookEn.successBanner.added(ADDRESS_NAME)
     )
   })
 

@@ -2,6 +2,8 @@ import { describe, expect, test } from 'vitest'
 
 import { errorMessageFromBody } from './http-client.js'
 
+const BAD_REQUEST_STATUS_TEXT = 'Bad Request'
+
 describe('#errorMessageFromBody', () => {
   test('prefers detail over message, title and statusText', () => {
     const body = {
@@ -9,30 +11,30 @@ describe('#errorMessageFromBody', () => {
       message: 'Message',
       title: 'Title'
     }
-    const response = { statusText: 'Bad Request', status: 400 }
+    const response = { statusText: BAD_REQUEST_STATUS_TEXT, status: 400 }
 
     expect(errorMessageFromBody(body, response)).toBe('Detail message')
   })
 
   test('falls back to message when detail is absent', () => {
     const body = { message: 'Message', title: 'Title' }
-    const response = { statusText: 'Bad Request', status: 400 }
+    const response = { statusText: BAD_REQUEST_STATUS_TEXT, status: 400 }
 
     expect(errorMessageFromBody(body, response)).toBe('Message')
   })
 
   test('falls back to title when detail and message are absent', () => {
     const body = { title: 'Title' }
-    const response = { statusText: 'Bad Request', status: 400 }
+    const response = { statusText: BAD_REQUEST_STATUS_TEXT, status: 400 }
 
     expect(errorMessageFromBody(body, response)).toBe('Title')
   })
 
   test('falls back to statusText when the body has no usable fields', () => {
     const body = {}
-    const response = { statusText: 'Bad Request', status: 400 }
+    const response = { statusText: BAD_REQUEST_STATUS_TEXT, status: 400 }
 
-    expect(errorMessageFromBody(body, response)).toBe('Bad Request')
+    expect(errorMessageFromBody(body, response)).toBe(BAD_REQUEST_STATUS_TEXT)
   })
 
   test('falls back to a generic HTTP status message when the body is empty and statusText is absent', () => {

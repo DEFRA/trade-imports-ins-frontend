@@ -16,6 +16,9 @@ vi.mock('../../../../auth/get-oidc-config.js', () => ({
 
 const NOTIFICATIONS_PATH = '/notifications'
 const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
+const REFERENCE_NUMBER = 'GBN-AG-26-000001'
+const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
+const ARRIVAL_DATE = '2026-09-10T00:00:00Z'
 
 const pageOf = (content, overrides = {}) => ({
   content,
@@ -56,11 +59,11 @@ describe('#dashboard', () => {
         200,
         pageOf([
           {
-            referenceNumber: 'GBN-AG-26-000001',
+            referenceNumber: REFERENCE_NUMBER,
             status: 'SUBMITTED',
             originCountry: 'FR',
             commodity: null,
-            arrivalDate: '2026-09-10T00:00:00Z'
+            arrivalDate: ARRIVAL_DATE
           }
         ])
       )
@@ -74,7 +77,7 @@ describe('#dashboard', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('govuk-grid-column-full')
     expect(result).toContain('Dashboard')
-    expect(result).toContain('GBN-AG-26-000001')
+    expect(result).toContain(REFERENCE_NUMBER)
     expect(result).toContain('SUBMITTED')
     expect(result).toContain('France')
     expect(result).not.toContain('>FR<')
@@ -91,13 +94,13 @@ describe('#dashboard', () => {
         pageOf(
           [
             {
-              referenceNumber: 'GBN-AG-26-000001',
+              referenceNumber: REFERENCE_NUMBER,
               status: 'SUBMITTED',
               originCountry: 'GB',
-              arrivalDate: '2026-09-10T00:00:00Z'
+              arrivalDate: ARRIVAL_DATE
             },
             {
-              referenceNumber: 'GBN-AG-26-000002',
+              referenceNumber: OTHER_REFERENCE_NUMBER,
               status: 'DRAFT',
               originCountry: 'GB',
               arrivalDate: '2026-09-11T00:00:00Z'
@@ -113,8 +116,8 @@ describe('#dashboard', () => {
       auth: sessionAuth('dashboard-two-statuses')
     })
 
-    expect(result).toContain('GBN-AG-26-000001')
-    expect(result).toContain('GBN-AG-26-000002')
+    expect(result).toContain(REFERENCE_NUMBER)
+    expect(result).toContain(OTHER_REFERENCE_NUMBER)
   })
 
   test('selecting a submitted notification links into the notification-view page (AC3)', async () => {
@@ -125,10 +128,10 @@ describe('#dashboard', () => {
         200,
         pageOf([
           {
-            referenceNumber: 'GBN-AG-26-000001',
+            referenceNumber: REFERENCE_NUMBER,
             status: 'SUBMITTED',
             originCountry: 'GB',
-            arrivalDate: '2026-09-10T00:00:00Z'
+            arrivalDate: ARRIVAL_DATE
           }
         ])
       )
@@ -140,7 +143,7 @@ describe('#dashboard', () => {
     })
 
     expect(result).toContain(
-      'href="http://localhost:3000/notifications/GBN-AG-26-000001/notification-view"'
+      `href="http://localhost:3000/notifications/${REFERENCE_NUMBER}/notification-view"`
     )
   })
 
@@ -152,10 +155,10 @@ describe('#dashboard', () => {
         200,
         pageOf([
           {
-            referenceNumber: 'GBN-AG-26-000002',
+            referenceNumber: OTHER_REFERENCE_NUMBER,
             status: 'DRAFT',
             originCountry: 'GB',
-            arrivalDate: '2026-09-10T00:00:00Z'
+            arrivalDate: ARRIVAL_DATE
           }
         ])
       )
@@ -167,35 +170,57 @@ describe('#dashboard', () => {
     })
 
     expect(result).toContain(
-      'href="http://localhost:3000/notifications/GBN-AG-26-000002"'
+      `href="http://localhost:3000/notifications/${OTHER_REFERENCE_NUMBER}"`
     )
     expect(result).not.toContain('notification-view')
+  })
+})
+
+describe('#dashboard — search, sort and errors', () => {
+  let server
+
+  runInRealMode()
+
+  beforeAll(async () => {
+    server = await createServer()
+    await server.initialize()
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+  })
+
+  beforeEach(() => {
+    serveCountries([
+      { code: 'GB', name: 'United Kingdom' },
+      { code: 'FR', name: 'France' }
+    ])
   })
 
   test('searching by complete reference returns only the matching notification (AC4)', async () => {
     const scope = insBackendApi()
       .get(NOTIFICATIONS_PATH)
-      .query({ ...DEFAULT_QUERY, referenceNumber: 'GBN-AG-26-000001' })
+      .query({ ...DEFAULT_QUERY, referenceNumber: REFERENCE_NUMBER })
       .reply(
         200,
         pageOf([
           {
-            referenceNumber: 'GBN-AG-26-000001',
+            referenceNumber: REFERENCE_NUMBER,
             status: 'SUBMITTED',
             originCountry: 'GB',
-            arrivalDate: '2026-09-10T00:00:00Z'
+            arrivalDate: ARRIVAL_DATE
           }
         ])
       )
 
     const { result } = await server.inject({
       method: 'GET',
-      url: '/?referenceNumber=GBN-AG-26-000001',
+      url: `/?referenceNumber=${REFERENCE_NUMBER}`,
       auth: sessionAuth('dashboard-search-match')
     })
 
     expect(scope.isDone()).toBe(true)
-    expect(result).toContain('GBN-AG-26-000001')
+    expect(result).toContain(REFERENCE_NUMBER)
   })
 
   test('no matching notification shows "No notifications found" (AC5)', async () => {
@@ -239,13 +264,13 @@ describe('#dashboard', () => {
       .query({
         page: '1',
         sort: 'lastUpdated,asc',
-        referenceNumber: 'GBN-AG-26-000001'
+        referenceNumber: REFERENCE_NUMBER
       })
       .reply(200, pageOf([]))
 
     await server.inject({
       method: 'GET',
-      url: '/?sort=lastUpdated,asc&referenceNumber=GBN-AG-26-000001',
+      url: `/?sort=lastUpdated,asc&referenceNumber=${REFERENCE_NUMBER}`,
       auth: sessionAuth('dashboard-sort-forward')
     })
 
