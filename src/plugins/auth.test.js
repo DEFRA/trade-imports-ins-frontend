@@ -65,6 +65,7 @@ describe('auth plugin', () => {
         'defraId.clientId': 'test-client-id',
         'defraId.clientSecret': 'test-client-secret',
         'session.cookie.password': 'some-password-32-chars-long-000000',
+        'auth.cookieName': 'ins-sid',
         isProduction: false,
         'session.cookie.sameSite': 'Lax',
         'defraId.redirectUrl': 'http://localhost:3000/auth/sign-in-oidc',
@@ -264,6 +265,10 @@ describe('auth plugin', () => {
           }
         }
       }
+    })
+
+    test('uses the configured auth cookie name', () => {
+      expect(getCookieOptions().cookie.name).toBe('ins-sid')
     })
 
     test('redirectTo builds /auth/sign-in redirect including pathname and search', () => {

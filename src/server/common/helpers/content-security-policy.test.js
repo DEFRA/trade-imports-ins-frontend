@@ -25,6 +25,10 @@ describe('#contentSecurityPolicy', () => {
       url: '/health'
     })
 
-    expect(resp.headers['content-security-policy']).toBeDefined()
+    const policy = resp.headers['content-security-policy']
+
+    expect(policy).toBeDefined()
+    expect(policy).toMatch(/form-action[^;]*'self'/)
+    expect(policy).toMatch(/form-action[^;]*http:\/\/localhost:3000/)
   })
 })

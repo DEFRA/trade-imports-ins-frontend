@@ -10,6 +10,12 @@
 
   <form method="post" novalidate>
     <input type="hidden" name="crumb" value="{{ crumb }}" />
+    {% if handshakeContext %}
+      <input type="hidden" name="journey-type" value="{{ handshakeContext.journeyType }}" />
+      <input type="hidden" name="notification-id" value="{{ handshakeContext.notificationId }}" />
+      <input type="hidden" name="fulfilment-id" value="{{ handshakeContext.fulfilmentId }}" />
+      <input type="hidden" name="handshake-token" value="{{ handshakeContext.handshakeToken }}" />
+    {% endif %}
 
     <h2 class="govuk-heading-m">{{ copy.form.addressHeading }}</h2>
 
@@ -100,7 +106,7 @@
     <div class="govuk-button-group">
       {{ govukButton({ text: copy.add.save }) }}
       {{ govukButton({
-        text: copy.add.cancel,
+        text: copy.add.cancelToJourney if handshakeContext else copy.add.cancel,
         name: "cancel",
         value: "true",
         classes: "govuk-button--secondary"

@@ -48,7 +48,8 @@ export const copy = {
   add: {
     title: 'Ychwanegu manylion cyfeiriad',
     save: 'Cadw a pharhau',
-    cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau'
+    cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
+    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad'
   },
   edit: {
     title: 'Golygu manylion cyfeiriad',

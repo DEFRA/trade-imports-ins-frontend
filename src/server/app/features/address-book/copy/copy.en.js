@@ -52,7 +52,8 @@ export const copy = {
   add: {
     title: 'Add address details',
     save: 'Save and continue',
-    cancel: 'Cancel and return to address book'
+    cancel: 'Cancel and return to address book',
+    cancelToJourney: 'Cancel and return to address page'
   },
   edit: {
     title: 'Edit address details',
