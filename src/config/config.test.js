@@ -28,6 +28,12 @@ describe('#config', () => {
     )
   })
 
+  test('loads TRADE_IMPORTS_PLANTS_FRONTEND_URL with the 3003 default', () => {
+    expect(config.get('tradeImportsPlantsFrontend.baseUrl')).toBe(
+      'http://localhost:3003'
+    )
+  })
+
   test('Defra ID redirect URLs use port 3002', () => {
     expect(config.get('defraId.redirectUrl')).toBe(
       'http://localhost:3002/auth/sign-in-oidc'

@@ -30,5 +30,6 @@ describe('#contentSecurityPolicy', () => {
     expect(policy).toBeDefined()
     expect(policy).toMatch(/form-action[^;]*'self'/)
     expect(policy).toMatch(/form-action[^;]*http:\/\/localhost:3000/)
+    expect(policy).toMatch(/form-action[^;]*http:\/\/localhost:3003/)
   })
 })

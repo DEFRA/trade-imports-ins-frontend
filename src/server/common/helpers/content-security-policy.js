@@ -2,9 +2,10 @@ import Blankie from 'blankie'
 
 import { config } from '../../../config/config.js'
 
-const animalsFrontendOrigin = new URL(
-  config.get('tradeImportsAnimalsFrontend.baseUrl')
-).origin
+const journeyFrontendOrigins = [
+  config.get('tradeImportsAnimalsFrontend.baseUrl'),
+  config.get('tradeImportsPlantsFrontend.baseUrl')
+].map((baseUrl) => new URL(baseUrl).origin)
 
 /**
  * Manage content security policies.
@@ -28,8 +29,8 @@ const contentSecurityPolicy = {
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
-    // Handshake save/cancel POSTs 302 to animals-frontend; browsers enforce form-action on that redirect.
-    formAction: ['self', animalsFrontendOrigin],
+    // Handshake save/cancel POSTs 302 to a journey frontend; browsers enforce form-action on that redirect.
+    formAction: ['self', ...journeyFrontendOrigins],
     manifestSrc: ['self'],
     generateNonces: false
   }

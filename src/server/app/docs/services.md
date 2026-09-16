@@ -69,10 +69,12 @@ The dashboard is not scoped to an organisation.
 | `tradeImportsReferenceDataApi.baseUrl` | `TRADE_IMPORTS_REFERENCE_DATA_URL`   | `http://localhost:8086` |
 | `tradeImportsInsBackendApi.baseUrl`    | `TRADE_IMPORTS_INS_BACKEND_URL`      | `http://localhost:8090` |
 | `tradeImportsAnimalsFrontend.baseUrl`  | `TRADE_IMPORTS_ANIMALS_FRONTEND_URL` | `http://localhost:3000` |
+| `tradeImportsPlantsFrontend.baseUrl`   | `TRADE_IMPORTS_PLANTS_FRONTEND_URL`  | `http://localhost:3003` |
 
-The last one is browser-visible (the dashboard's row links), so under the
-workspace stack it stays `localhost` while the three API URLs use
-`host.docker.internal`.
+The last two are browser-visible (the dashboard's row links, and the journey
+origins the content-security-policy trusts for the handshake's form-action),
+so under the workspace stack they stay `localhost` while the three API URLs
+use `host.docker.internal`.
 
 ## Shared HTTP helpers
 
