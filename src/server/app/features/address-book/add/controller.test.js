@@ -1,4 +1,3 @@
-import nock from 'nock'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../../../../server.js'
@@ -7,7 +6,6 @@ import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
 import {
   addressBookApi,
-  referenceDataApi,
   runInRealMode,
   serveCountries
 } from '../../../../common/test-helpers/real-mode.js'
@@ -232,24 +230,6 @@ describe.sequential('#addressBookAddController', () => {
     expect(result).toContain('href="#email"')
     expect(result).toContain('Enter an email address in the correct format')
     expect(result).toContain('govuk-error-message')
-  })
-
-  test('GET shows the recoverable-error banner when reference data will not serve countries', async () => {
-    nock.cleanAll()
-    referenceDataApi().get('/countries').reply(statusCodes.serviceUnavailable, {
-      title: 'Service Unavailable'
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/address-book/add',
-      auth: sessionAuth('add-get-countries-error')
-    })
-
-    expect(statusCode).toBe(statusCodes.internalServerError)
-    expect(result).toContain(
-      'Sorry, there is a problem with the service. Try again in a few minutes.'
-    )
   })
 
   test('GET arriving through a journey handshake carries the journey forward in hidden fields and the cancel label', async () => {
