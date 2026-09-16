@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const startServerMock = vi.hoisted(() => vi.fn())
 
-vi.mock('#/server/common/helpers/start-server.js', () => ({
+vi.mock('./server/common/helpers/start-server.js', () => ({
   startServer: startServerMock
 }))
 

@@ -1,5 +1,5 @@
 import { getOidcConfig } from './get-oidc-config.js'
-import { config } from '#/config/config.js'
+import { config } from '../config/config.js'
 
 const SECOND_MS = 1000
 const RETRY_DELAYS_MS = [SECOND_MS, 2 * SECOND_MS, 4 * SECOND_MS]

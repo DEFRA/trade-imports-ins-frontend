@@ -18,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Test code and Create Test Coverage Reports
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -35,9 +35,6 @@ jobs:
           npm run lint
           npm test
 
-      - name: Security audit
-        run: npm run security-audit
-
       - name: Test Docker Image Build
         run: |
           set +e
@@ -50,19 +47,22 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # This Playwright suite boots the app itself with INS_MODE=stub and
-  # AUTH_STUB_MODE=true, so it needs no workspace stack. Kept out of
-  # pr-validator so a browser run does not sit in front of the other checks.
-  playwright:
-    name: FIT Tests
+  # Deliberately a separate job from pr-validator. `npm audit` scans the whole
+  # installed tree against a live advisory feed, so a newly published advisory
+  # turns every open PR red regardless of what that PR changed — and advisories
+  # on indirect dependencies often have no upgrade path, needing a hand-written
+  # `overrides` entry on main to clear. Folded into pr-validator, that failure
+  # mode blocks the very PR carrying the fix. Kept separate, the audit stays
+  # visible on every PR without being the check that gates the merge.
+  security-audit:
+    name: Security audit
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -70,17 +70,44 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Security audit
+        run: npm run security-audit
+
+  # The frontend owns two Playwright projects — `smoke` and `features` — which
+  # boot the app themselves with STUB_MODE=true: stub data and a locally signed
+  # session in place of the Defra ID round-trip, auth still enforced (see
+  # src/server/auth/stub-sign-in.js), so they need no workspace stack. Kept out
+  # of pr-validator so a browser run does not sit in front of the rest of the
+  # PR checks.
+  playwright:
+    name: FIT Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Chromium only: both projects use devices['Desktop Chrome'].
       - name: Install the Playwright browser
         run: npm run playwright:install
 
-      - name: Run the Playwright suite
+      - name: Run the frontend-owned Playwright suites
         run: npm run test:fit:ci
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ins-frontend-playwright-report
+          name: frontend-playwright-report
           path: |
             playwright-report/
             test-results/
