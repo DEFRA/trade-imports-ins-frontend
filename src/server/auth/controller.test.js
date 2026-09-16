@@ -47,6 +47,12 @@ const defraIdAuth = (profileOverrides = {}) => ({
   }
 })
 
+const expectSessionCookieCleared = (headers) => {
+  const setCookie = headers['set-cookie'] ?? []
+  const cookies = Array.isArray(setCookie) ? setCookie : [setCookie]
+  expect(cookies.join('\n')).toContain('sid=')
+}
+
 describe('#authController', () => {
   const originalMode = config.get('stubMode')
   let server
@@ -90,25 +96,46 @@ describe('#authController', () => {
     expect(headers.location).toBe('/')
   })
 
-  test('GET /auth/sign-out-oidc redirects unauthenticated users to sign-out URL', async () => {
+  test('GET /auth/sign-out drops the session and redirects authenticated users to the sign-out URL', async () => {
+    const sessionId = 'signout-authenticated'
+    await server.app.cache.set(sessionId, { sessionId, token: 'mock-token' })
+
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: '/auth/sign-out',
+      auth: sessionAuth(sessionId)
+    })
+
+    expect(statusCode).toBe(statusCodes.redirect)
+    expect(headers.location).toBe('/signed-out')
+    expect(await server.app.cache.get(sessionId)).toBeNull()
+    expectSessionCookieCleared(headers)
+  })
+
+  test('GET /auth/sign-out-oidc redirects unauthenticated users to home', async () => {
     const { statusCode, headers } = await server.inject({
       method: 'GET',
       url: '/auth/sign-out-oidc'
     })
 
     expect(statusCode).toBe(statusCodes.redirect)
-    expect(headers.location).toBe('/signed-out')
+    expect(headers.location).toBe('/')
   })
 
   test('GET /auth/sign-out-oidc clears authenticated session and redirects', async () => {
+    const sessionId = 'signout-oidc-authenticated'
+    await server.app.cache.set(sessionId, { sessionId, token: 'mock-token' })
+
     const { statusCode, headers } = await server.inject({
       method: 'GET',
       url: '/auth/sign-out-oidc',
-      auth: sessionAuth('signout-oidc-authenticated')
+      auth: sessionAuth(sessionId)
     })
 
     expect(statusCode).toBe(statusCodes.redirect)
     expect(headers.location).toBe('/signed-out')
+    expect(await server.app.cache.get(sessionId)).toBeNull()
+    expectSessionCookieCleared(headers)
   })
 
   test('GET /auth/sign-in-oidc renders unauthorised when organisationId is missing', async () => {

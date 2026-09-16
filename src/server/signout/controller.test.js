@@ -43,4 +43,14 @@ describe('GET /signout', () => {
 
     expect(joinedCookies).toContain('sid=')
   })
+
+  test('redirects unauthenticated users to the sign-in page', async () => {
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: '/signout'
+    })
+
+    expect(statusCode).toBe(statusCodes.redirect)
+    expect(headers.location).toBe('/auth/stub-sign-in?redirect=%2Fsignout')
+  })
 })
