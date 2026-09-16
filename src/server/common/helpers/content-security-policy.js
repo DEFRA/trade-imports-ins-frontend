@@ -1,11 +1,10 @@
 import Blankie from 'blankie'
 
-import { config } from '../../../config/config.js'
+import { siblingFrontendBaseUrls } from '../../../config/config.js'
 
-const journeyFrontendOrigins = [
-  config.get('tradeImportsAnimalsFrontend.baseUrl'),
-  config.get('tradeImportsPlantsFrontend.baseUrl')
-].map((baseUrl) => new URL(baseUrl).origin)
+const siblingFrontendOrigins = siblingFrontendBaseUrls.map(
+  (baseUrl) => new URL(baseUrl).origin
+)
 
 /**
  * Manage content security policies.
@@ -29,8 +28,8 @@ const contentSecurityPolicy = {
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
-    // Handshake save/cancel POSTs 302 to a journey frontend; browsers enforce form-action on that redirect.
-    formAction: ['self', ...journeyFrontendOrigins],
+    // A browser enforces form-action across the 302 that follows a cross-service POST.
+    formAction: ['self', ...siblingFrontendOrigins],
     manifestSrc: ['self'],
     generateNonces: false
   }

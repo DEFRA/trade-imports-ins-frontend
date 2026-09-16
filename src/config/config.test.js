@@ -34,6 +34,12 @@ describe('#config', () => {
     )
   })
 
+  test('loads TRADE_IMPORTS_ANIMALS_FRONTEND_URL with the 3000 default', () => {
+    expect(config.get('tradeImportsAnimalsFrontend.baseUrl')).toBe(
+      'http://localhost:3000'
+    )
+  })
+
   test('Defra ID redirect URLs use port 3002', () => {
     expect(config.get('defraId.redirectUrl')).toBe(
       'http://localhost:3002/auth/sign-in-oidc'
@@ -117,6 +123,32 @@ describe('#config', () => {
       const { config: freshConfig } = await import('./config.js')
 
       expect(freshConfig.get('auth.enabled')).toBe(false)
+    })
+  })
+
+  describe('auth.cookieName', () => {
+    beforeEach(() => {
+      vi.resetModules()
+    })
+
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    test('defaults to a service-distinct name in development', async () => {
+      vi.stubEnv('NODE_ENV', 'development')
+
+      const { config: freshConfig } = await import('./config.js')
+
+      expect(freshConfig.get('auth.cookieName')).toBe('ins-sid')
+    })
+
+    test('reads AUTH_SESSION_COOKIE_NAME as the cookie name', async () => {
+      vi.stubEnv('AUTH_SESSION_COOKIE_NAME', 'custom-sid')
+
+      const { config: freshConfig } = await import('./config.js')
+
+      expect(freshConfig.get('auth.cookieName')).toBe('custom-sid')
     })
   })
 })

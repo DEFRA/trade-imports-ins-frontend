@@ -274,7 +274,7 @@ export const config = convict({
   },
   auth: {
     cookieName: {
-      doc: 'Auth session cookie name. Override on localhost when multiple frontends share the host so INS sign-in does not overwrite animals-frontend cookies.',
+      doc: 'Auth session cookie name. Each frontend uses a distinct name in development so signing in to one does not overwrite another frontend session on localhost.',
       format: String,
       default: isDevelopment ? 'ins-sid' : 'sid',
       env: 'AUTH_SESSION_COOKIE_NAME'
@@ -404,3 +404,8 @@ export const config = convict({
 })
 
 config.validate({ allowed: 'strict' })
+
+export const siblingFrontendBaseUrls = [
+  config.get('tradeImportsAnimalsFrontend.baseUrl'),
+  config.get('tradeImportsPlantsFrontend.baseUrl')
+]
