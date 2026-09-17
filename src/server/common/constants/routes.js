@@ -10,7 +10,8 @@ export const buildAddressBookRoutes = (base = ADDRESS_BOOK_BASE) => ({
   add: () => `${base}/${ADDRESS_BOOK_ADD_SEGMENT}`,
   viewPath: () => `${base}/${ADDRESS_BOOK_ID_PARAM}`,
   view: (id) => `${base}/${id}`,
-  editPath: () => `${base}/${ADDRESS_BOOK_ID_PARAM}/${ADDRESS_BOOK_EDIT_SEGMENT}`,
+  editPath: () =>
+    `${base}/${ADDRESS_BOOK_ID_PARAM}/${ADDRESS_BOOK_EDIT_SEGMENT}`,
   edit: (id) => `${base}/${id}/${ADDRESS_BOOK_EDIT_SEGMENT}`,
   deletePath: () =>
     `${base}/${ADDRESS_BOOK_ID_PARAM}/${ADDRESS_BOOK_DELETE_SEGMENT}`,
