@@ -20,6 +20,8 @@ export const buildAddressBookRoutes = (base = ADDRESS_BOOK_BASE) => ({
 
 const addressBookRoutes = buildAddressBookRoutes()
 
+export const addressBookListPath = addressBookRoutes.list
+export const addressBookAddPath = addressBookRoutes.add
 export const addressBookList = addressBookRoutes.list
 export const addressBookAdd = addressBookRoutes.add
 export const addressBookViewPath = addressBookRoutes.viewPath

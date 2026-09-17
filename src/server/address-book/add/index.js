@@ -1,5 +1,5 @@
 import { addController } from './controller.js'
-import { addressBookAdd } from '#/server/common/constants/routes.js'
+import { addressBookAddPath } from '#/server/common/constants/routes.js'
 import { sessionAuthRouteOptions } from '#/server/common/constants/session-auth-route-options.js'
 
 export const addressBookAdd = {
@@ -9,13 +9,13 @@ export const addressBookAdd = {
       server.route([
         {
           method: 'GET',
-          path: addressBookAdd(),
+          path: addressBookAddPath(),
           handler: addController.get.handler,
           options: sessionAuthRouteOptions
         },
         {
           method: 'POST',
-          path: addressBookAdd(),
+          path: addressBookAddPath(),
           handler: addController.post.handler,
           options: sessionAuthRouteOptions
         }
