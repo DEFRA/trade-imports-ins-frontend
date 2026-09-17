@@ -1,3 +1,4 @@
+import { addressBookList } from '#/server/common/constants/routes.js'
 import {
   buildPaginationLinks as buildSharedPaginationLinks,
   buildResultsLabel as buildSharedResultsLabel
@@ -36,7 +37,7 @@ export function buildResultsLabel(pagination) {
  */
 export function buildPaginationLinks(
   pagination,
-  { baseUrl = '/address-book', q, countryCode } = {}
+  { baseUrl = addressBookList(), q, countryCode } = {}
 ) {
   return buildSharedPaginationLinks(pagination, {
     sizeField: 'pageSize',

@@ -14,6 +14,7 @@ import { formatValidationErrors } from '#/server/common/helpers/validation-helpe
 import { setSessionValue } from '#/server/common/helpers/session-helpers.js'
 import { sessionKeys } from '#/server/common/constants/session-keys.js'
 import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
+import { addressBookList } from '#/server/common/constants/routes.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 import { buildReturnUrl } from '../journey-registry.js'
 import {
@@ -75,14 +76,14 @@ const redirectAfterAdd = (h, handshake, created) => {
   if (handshake) {
     return h.redirect(buildReturnUrl(handshake, { addressId: created.id }))
   }
-  return h.redirect('/address-book')
+  return h.redirect(addressBookList())
 }
 
 const redirectAfterCancel = (h, handshake) => {
   if (handshake) {
     return h.redirect(buildReturnUrl(handshake))
   }
-  return h.redirect('/address-book')
+  return h.redirect(addressBookList())
 }
 
 const renderAddForm = (

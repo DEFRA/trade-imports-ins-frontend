@@ -6,6 +6,10 @@ import { createLogger } from '#/server/common/helpers/logging/logger.js'
 import { setSessionValue } from '#/server/common/helpers/session-helpers.js'
 import { sessionKeys } from '#/server/common/constants/session-keys.js'
 import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
+import {
+  addressBookList,
+  addressBookView
+} from '#/server/common/constants/routes.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 
 const logger = createLogger()
@@ -56,7 +60,7 @@ export const deleteController = {
       const { id } = request.params
 
       if (request.payload?.cancel) {
-        return h.redirect(`/address-book/${id}`)
+        return h.redirect(addressBookView(id))
       }
 
       try {
@@ -74,7 +78,7 @@ export const deleteController = {
           `${address.name} deleted from your address book`
         )
 
-        return h.redirect('/address-book')
+        return h.redirect(addressBookList())
       } catch (err) {
         if (err.isBoom) {
           throw err
