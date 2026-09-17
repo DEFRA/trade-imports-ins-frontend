@@ -59,6 +59,11 @@ describe('context and cache', () => {
           assetPath: '/public/assets',
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
+          addressBookList: expect.any(Function),
+          addressBookAdd: expect.any(Function),
+          addressBookView: expect.any(Function),
+          addressBookEdit: expect.any(Function),
+          addressBookDelete: expect.any(Function),
           navigation: [
             {
               current: true,
@@ -174,6 +179,11 @@ describe('context and cache', () => {
           assetPath: '/public/assets',
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
+          addressBookList: expect.any(Function),
+          addressBookAdd: expect.any(Function),
+          addressBookView: expect.any(Function),
+          addressBookEdit: expect.any(Function),
+          addressBookDelete: expect.any(Function),
           navigation: [
             {
               current: true,

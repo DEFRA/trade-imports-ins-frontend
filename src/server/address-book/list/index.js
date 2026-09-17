@@ -1,4 +1,5 @@
 import { listController } from './controller.js'
+import { addressBookList } from '#/server/common/constants/routes.js'
 import { sessionAuthRouteOptions } from '#/server/common/constants/session-auth-route-options.js'
 
 export const addressBookList = {
@@ -8,7 +9,7 @@ export const addressBookList = {
       server.route([
         {
           method: 'GET',
-          path: '/address-book',
+          path: addressBookList(),
           handler: listController.handler,
           options: sessionAuthRouteOptions
         }

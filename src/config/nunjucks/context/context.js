@@ -3,6 +3,13 @@ import { readFileSync } from 'node:fs'
 
 import { config } from '#/config/config.js'
 import { buildNavigation } from './build-navigation.js'
+import {
+  addressBookAdd,
+  addressBookDelete,
+  addressBookEdit,
+  addressBookList,
+  addressBookView
+} from '#/server/common/constants/routes.js'
 import { createLogger } from '#/server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
@@ -47,6 +54,11 @@ export function context(request) {
       const viteAssetPath = viteManifest?.[asset]?.file
       return `${assetPath}/${viteAssetPath ?? asset}`
     },
+    addressBookList,
+    addressBookAdd,
+    addressBookView,
+    addressBookEdit,
+    addressBookDelete,
     crumb: request.plugins?.crumb ?? request.state?.crumb ?? ''
   }
 }

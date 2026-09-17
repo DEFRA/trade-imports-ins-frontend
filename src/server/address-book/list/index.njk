@@ -32,7 +32,7 @@
 
     <p class="govuk-body">Manage addresses used across import and export services.</p>
 
-    <form method="get" action="/address-book" class="govuk-!-margin-bottom-6">
+    <form method="get" action="{{ addressBookList() }}" class="govuk-!-margin-bottom-6">
       {{ govukInput({
         label: {
           text: "Search addresses",
@@ -53,7 +53,7 @@
     <div class="govuk-!-margin-bottom-6">
       {{ govukButton({
         text: "Add a new address",
-        href: "/address-book/add"
+        href: addressBookAdd()
       }) }}
     </div>
 
@@ -62,7 +62,7 @@
     {% elif noSearchResults %}
       <p class="govuk-body">No addresses match "{{ q }}".</p>
       <p class="govuk-body">
-        <a class="govuk-link" href="/address-book">Clear search</a>
+        <a class="govuk-link" href="{{ addressBookList() }}">Clear search</a>
       </p>
     {% elif tableRows.length %}
       {% if resultsLabel %}
@@ -73,7 +73,7 @@
 
       {% if hasSearch %}
         <p class="govuk-body govuk-!-margin-bottom-4">
-          <a class="govuk-link" href="/address-book" data-testid="address-book-clear-search">Clear search</a>
+          <a class="govuk-link" href="{{ addressBookList() }}" data-testid="address-book-clear-search">Clear search</a>
         </p>
       {% endif %}
 

@@ -7,7 +7,7 @@
 
   {{ govukBackLink({
     text: "Back",
-    href: "/address-book"
+    href: addressBookList()
   }) }}
 
   {{ appHeading({ text: heading }) }}
@@ -21,11 +21,11 @@
     <div class="govuk-button-group">
       {{ govukButton({
         text: "Edit",
-        href: "/address-book/" + id + "/edit"
+        href: addressBookEdit(id)
       }) }}
       {{ govukButton({
         text: "Delete",
-        href: "/address-book/" + id + "/delete",
+        href: addressBookDelete(id),
         classes: "govuk-button--warning"
       }) }}
     </div>

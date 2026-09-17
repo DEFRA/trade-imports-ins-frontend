@@ -1,3 +1,8 @@
+import {
+  addressBookList,
+  isAddressBookPath
+} from '#/server/common/constants/routes.js'
+
 export function buildNavigation(request) {
   const path = request?.path ?? ''
 
@@ -9,8 +14,8 @@ export function buildNavigation(request) {
     },
     {
       text: 'Address book',
-      href: '/address-book',
-      current: path.startsWith('/address-book')
+      href: addressBookList(),
+      current: isAddressBookPath(path)
     }
   ]
 }
