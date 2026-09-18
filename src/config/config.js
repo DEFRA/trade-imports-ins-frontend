@@ -290,6 +290,21 @@ export const config = convict({
     default: 'real',
     env: 'INS_MODE'
   },
+  cdpEnvironment: {
+    doc: "The CDP-injected environment name, or 'local' when it is unset (matches trade-imports-ins-backend's own ENVIRONMENT gate). EUDPA-390: the address lookup spike page is registered only for dev/local — see router.js.",
+    format: [
+      'dev',
+      'test',
+      'perf-test',
+      'ext-test',
+      'prod',
+      'infra-dev',
+      'management',
+      'local'
+    ],
+    default: 'local',
+    env: 'ENVIRONMENT'
+  },
   redis: {
     host: {
       doc: 'Redis cache host',
