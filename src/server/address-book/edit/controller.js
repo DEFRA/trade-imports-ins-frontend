@@ -15,6 +15,7 @@ import { formatValidationErrors } from '#/server/common/helpers/validation-helpe
 import { setSessionValue } from '#/server/common/helpers/session-helpers.js'
 import { sessionKeys } from '#/server/common/constants/session-keys.js'
 import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
+import { addressBookList } from '#/server/common/constants/routes.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 
 const logger = createLogger()
@@ -133,7 +134,7 @@ export const editController = {
       const { id } = request.params
 
       if (request.payload.cancel) {
-        return h.redirect('/address-book')
+        return h.redirect(addressBookList())
       }
 
       const formValues = payloadToFormValues(request.payload)
@@ -173,7 +174,7 @@ export const editController = {
           `${updated.name} updated in your address book`
         )
 
-        return h.redirect('/address-book')
+        return h.redirect(addressBookList())
       } catch (err) {
         if (err.isBoom) {
           throw err

@@ -10,6 +10,7 @@ import { createLogger } from '#/server/common/helpers/logging/logger.js'
 import { getSessionValue } from '#/server/common/helpers/session-helpers.js'
 import { sessionKeys } from '#/server/common/constants/session-keys.js'
 import { requireOrganisationId } from '#/server/common/helpers/require-organisation-id.js'
+import { addressBookView } from '#/server/common/constants/routes.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 import {
   getAddressFormCountries,
@@ -39,7 +40,7 @@ export function buildTableRows(addresses) {
     { text: address.countryName },
     {
       // The name is visually hidden so each "View" link is distinguishable row to row.
-      html: `<a class="govuk-link" href="/address-book/${encodeURIComponent(address.id)}">View<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
+      html: `<a class="govuk-link" href="${addressBookView(encodeURIComponent(address.id))}">View<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
     }
   ])
 }
