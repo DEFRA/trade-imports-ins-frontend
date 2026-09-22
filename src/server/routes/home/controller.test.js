@@ -133,7 +133,7 @@ describe('#homeController', () => {
     })
 
     expect(result).toContain(
-      'href="http://localhost:3000/notifications/GBN-AG-26-000001/notification-view"'
+      'href="http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view"'
     )
   })
 
@@ -156,7 +156,7 @@ describe('#homeController', () => {
     })
 
     expect(result).toContain(
-      'href="http://localhost:3000/notifications/GBN-AG-26-000002"'
+      'href="http://localhost:3000/live-animals/notifications/GBN-AG-26-000002"'
     )
     expect(result).not.toContain('notification-view')
   })
@@ -211,7 +211,7 @@ describe('#homeController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('There are no notifications yet.')
     expect(result).toContain('Start a new notification')
-    expect(result).toContain('href="http://localhost:3000"')
+    expect(result).toContain('href="http://localhost:3000/live-animals"')
     expect(result).not.toContain('No notifications found')
   })
 

@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '#/config/config.js'
+import { SET_BASES } from '#/server/common/constants/journey-set-bases.js'
 import {
   buildReturnUrl,
   isKnownJourneyType,
@@ -34,8 +35,20 @@ describe('journey-registry', () => {
     )
 
     expect(url).toBe(
-      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&addressId=665f1c2ab3e4d51a2c9d0e77'
+      'http://localhost:3000/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&addressId=665f1c2ab3e4d51a2c9d0e77'
     )
+  })
+
+  test("buildReturnUrl returns under the journey set's base, not the frontend root", () => {
+    const url = new URL(
+      buildReturnUrl({
+        journeyType: JOURNEY_TYPES.GBN_AG,
+        notificationId: 'GBN-AG-26-4F7K2P',
+        fulfilmentId: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+      })
+    )
+
+    expect(url.pathname.startsWith(`${SET_BASES.LIVE_ANIMALS}/`)).toBe(true)
   })
 
   test('buildReturnUrl omits addressId on cancel', () => {
@@ -46,7 +59,7 @@ describe('journey-registry', () => {
     })
 
     expect(url).toBe(
-      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+      'http://localhost:3000/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
     )
   })
 
@@ -60,7 +73,7 @@ describe('journey-registry', () => {
     })
 
     expect(url).toBe(
-      'http://localhost:3000/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+      'http://localhost:3000/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
     )
   })
 
@@ -75,7 +88,7 @@ describe('journey-registry', () => {
     })
 
     expect(url).toBe(
-      `http://localhost:3000/notifications/${encodeURIComponent(notificationId)}/address-return?fulfilment-id=${encodeURIComponent(fulfilmentId)}`
+      `http://localhost:3000/live-animals/notifications/${encodeURIComponent(notificationId)}/address-return?fulfilment-id=${encodeURIComponent(fulfilmentId)}`
     )
   })
 
