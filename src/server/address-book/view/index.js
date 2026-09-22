@@ -1,4 +1,5 @@
 import { viewController } from './controller.js'
+import { addressBookViewPath } from '#/server/common/constants/routes.js'
 import { addressIdRouteOptions } from '../address-id-params.js'
 
 export const addressBookView = {
@@ -8,7 +9,7 @@ export const addressBookView = {
       server.route([
         {
           method: 'GET',
-          path: '/address-book/{id}',
+          path: addressBookViewPath(),
           handler: viewController.handler,
           options: addressIdRouteOptions
         }
