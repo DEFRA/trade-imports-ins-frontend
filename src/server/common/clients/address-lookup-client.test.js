@@ -47,6 +47,52 @@ describe('#addressLookupClient (real)', () => {
     expect(scope.isDone()).toBe(true)
   })
 
+  test('GETs /address-lookup?postcode= with the postcode encoded, the tracing header and parses JSON', async () => {
+    const scope = nock('http://localhost:8090')
+      .get('/address-lookup')
+      .query({ postcode: 'SW1A 2AA' })
+      .matchHeader('x-cdp-request-id', traceId)
+      .reply(200, {
+        outcome: 'RESULTS',
+        query: { mode: 'POSTCODE', term: 'SW1A 2AA' },
+        results: [],
+        totalResults: 0,
+        returnedResults: 0
+      })
+
+    const result = await addressLookupClient.lookupByPostcode(
+      'SW1A 2AA',
+      traceId
+    )
+
+    expect(result.outcome).toBe('RESULTS')
+    expect(result.query.term).toBe('SW1A 2AA')
+    expect(scope.isDone()).toBe(true)
+  })
+
+  test('GETs /address-lookup?find= with the search text encoded, the tracing header and parses JSON', async () => {
+    const scope = nock('http://localhost:8090')
+      .get('/address-lookup')
+      .query({ find: '10 Downing Street & Co' })
+      .matchHeader('x-cdp-request-id', traceId)
+      .reply(200, {
+        outcome: 'RESULTS',
+        query: { mode: 'FIND', term: '10 Downing Street & Co' },
+        results: [],
+        totalResults: 0,
+        returnedResults: 0
+      })
+
+    const result = await addressLookupClient.lookupByFind(
+      '10 Downing Street & Co',
+      traceId
+    )
+
+    expect(result.outcome).toBe('RESULTS')
+    expect(result.query.term).toBe('10 Downing Street & Co')
+    expect(scope.isDone()).toBe(true)
+  })
+
   test('throws with status and message on a non-2xx response', async () => {
     nock('http://localhost:8090')
       .get('/address-lookup')

@@ -46,7 +46,10 @@ export function composeAddressLines(address) {
   const locality = address.locality ?? ''
 
   if (premises && street) {
-    return { addressLine1: premises, addressLine2: joinPresent([street, locality], ', ') }
+    return {
+      addressLine1: premises,
+      addressLine2: joinPresent([street, locality], ', ')
+    }
   }
 
   const only = premises || street
@@ -68,10 +71,17 @@ export function mapToAddressFields(address) {
   const { addressLine1, addressLine2 } = composeAddressLines(address)
   const gaps = []
 
-  if (!joinPresent(
-    [address.subBuildingName, address.buildingName, address.buildingNumber, address.street],
-    ''
-  )) {
+  if (
+    !joinPresent(
+      [
+        address.subBuildingName,
+        address.buildingName,
+        address.buildingNumber,
+        address.street
+      ],
+      ''
+    )
+  ) {
     gaps.push(
       'No name, number or street — address line 1 fell back to the whole formatted address.'
     )

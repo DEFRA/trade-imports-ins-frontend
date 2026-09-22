@@ -33,7 +33,10 @@ export const addressLookupClient = {
   },
 
   async lookupByPostcode(postcode, traceId) {
-    return get(`/address-lookup?postcode=${encodeURIComponent(postcode)}`, traceId)
+    return get(
+      `/address-lookup?postcode=${encodeURIComponent(postcode)}`,
+      traceId
+    )
   },
 
   async lookupByFind(find, traceId) {

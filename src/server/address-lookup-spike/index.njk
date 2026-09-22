@@ -108,6 +108,13 @@
       }) }}
     {% endif %}
 
+    {% if chosenError %}
+      {{ govukWarningText({
+        text: "The chosen address could not be read. Search again and pick a result.",
+        iconFallbackText: "Warning"
+      }) }}
+    {% endif %}
+
     {% if search %}
       {{ searchResults(search, term) }}
     {% endif %}

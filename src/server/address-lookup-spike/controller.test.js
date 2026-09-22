@@ -230,6 +230,25 @@ describe('#addressLookupSpikeController', () => {
     expect(result).toContain('HTTP_503')
   })
 
+  test('POST says nothing was returned when the lookup finds no addresses', async () => {
+    addressLookupClient.lookupByPostcode.mockResolvedValue(
+      resultsResponse('POSTCODE', {
+        outcome: 'NO_RESULTS',
+        results: [],
+        totalResults: 0,
+        returnedResults: 0
+      })
+    )
+
+    const { result, statusCode } = await server.inject(
+      search('XX1 1XX', 'address-lookup-spike-no-results')
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('No results')
+    expect(result).toContain('Nothing returned.')
+  })
+
   test('choosing a result maps it onto the address book fields without searching again', async () => {
     const { result, statusCode } = await server.inject({
       method: 'POST',
@@ -266,6 +285,25 @@ describe('#addressLookupSpikeController', () => {
     expect(result).toContain('no county')
     expect(result).toContain('ISO code')
   })
+
+  test.each([
+    ['is not valid JSON', '{not json'],
+    ['is not an object', 'null']
+  ])(
+    'choosing a result renders a warning when the chosen address %s',
+    async (_description, chosen) => {
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/address-lookup-spike',
+        payload: { term: 'SW1A 1AA', chosen },
+        auth: sessionAuth('address-lookup-spike-bad-chosen')
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('The chosen address could not be read')
+      expect(result).not.toContain('Mapped onto')
+    }
+  )
 
   test('POST renders a warning when the backend itself is unreachable', async () => {
     addressLookupClient.lookupByPostcode.mockRejectedValue(

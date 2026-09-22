@@ -101,19 +101,32 @@ export const addressLookupSpikeController = {
       // Picking a result carries the chosen address with it rather than searching again,
       // so choosing costs no further calls against that shared rate limit.
       if (chosen) {
-        const address = JSON.parse(chosen)
-        const { fields, gaps } = mapToAddressFields(address)
-        return view(h, {
-          term,
-          chosenAddress: address,
-          addressFields: fields,
-          mappingGaps: gaps,
-          chosenJson: JSON.stringify(address, null, 2)
-        })
+        try {
+          const address = JSON.parse(chosen)
+          if (address === null || typeof address !== 'object') {
+            throw new TypeError('Chosen address is not an object')
+          }
+          const { fields, gaps } = mapToAddressFields(address)
+          return view(h, {
+            term,
+            chosenAddress: address,
+            addressFields: fields,
+            mappingGaps: gaps,
+            chosenJson: JSON.stringify(address, null, 2)
+          })
+        } catch (err) {
+          request.logger.error(
+            { err, traceId },
+            'Address lookup spike could not read the chosen address'
+          )
+          return view(h, { term, chosenError: true })
+        }
       }
 
       if (!term?.trim()) {
-        return view(h, { termError: 'Enter a postcode or an address to search for' })
+        return view(h, {
+          termError: 'Enter a postcode or an address to search for'
+        })
       }
 
       try {
