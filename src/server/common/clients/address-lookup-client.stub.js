@@ -13,61 +13,80 @@
  */
 const DEFAULT_POSTCODE = 'SW1A 1AA'
 
+const RESULTS = [
+  {
+    addressLine: 'BUCKINGHAM PALACE, LONDON, SW1A 1AA',
+    buildingNumber: null,
+    buildingName: null,
+    subBuildingName: 'BUCKINGHAM PALACE',
+    street: null,
+    locality: null,
+    town: 'LONDON',
+    postcode: 'SW1A 1AA',
+    country: 'ENGLAND',
+    uprn: '100023336901',
+    match: '1',
+    matchDescription: 'EXACT',
+    language: 'EN'
+  },
+  {
+    addressLine: '1 DOWNING STREET, LONDON, SW1A 1AA',
+    buildingNumber: '1',
+    buildingName: null,
+    subBuildingName: null,
+    street: 'DOWNING STREET',
+    locality: null,
+    town: 'LONDON',
+    postcode: 'SW1A 1AA',
+    country: 'ENGLAND',
+    uprn: '100023336902',
+    match: '1',
+    matchDescription: 'EXACT',
+    language: 'EN'
+  },
+  {
+    addressLine: 'UNIT 1, DOWNING HOUSE, DOWNING STREET, LONDON, SW1A 1AA',
+    buildingNumber: null,
+    buildingName: 'DOWNING HOUSE',
+    subBuildingName: 'UNIT 1',
+    street: 'DOWNING STREET',
+    locality: null,
+    town: 'LONDON',
+    postcode: 'SW1A 1AA',
+    country: 'ENGLAND',
+    uprn: '100023336903',
+    match: '1',
+    matchDescription: 'EXACT',
+    language: 'EN'
+  }
+]
+
+function response(mode, term) {
+  return {
+    outcome: 'RESULTS',
+    query: { mode, term },
+    results: RESULTS,
+    totalResults: RESULTS.length,
+    returnedResults: RESULTS.length,
+    failureReason: null
+  }
+}
+
 export const addressLookupClient = {
   async lookupDefaultPostcode(_traceId) {
-    return {
-      outcome: 'RESULTS',
-      query: { mode: 'POSTCODE', term: DEFAULT_POSTCODE },
-      results: [
-        {
-          addressLine: 'BUCKINGHAM PALACE, LONDON, SW1A 1AA',
-          buildingNumber: null,
-          buildingName: null,
-          subBuildingName: 'BUCKINGHAM PALACE',
-          street: null,
-          locality: null,
-          town: 'LONDON',
-          postcode: 'SW1A 1AA',
-          country: 'ENGLAND',
-          uprn: '100023336901',
-          match: '1',
-          matchDescription: 'EXACT',
-          language: 'EN'
-        },
-        {
-          addressLine: '1 DOWNING STREET, LONDON, SW1A 1AA',
-          buildingNumber: '1',
-          buildingName: null,
-          subBuildingName: null,
-          street: 'DOWNING STREET',
-          locality: null,
-          town: 'LONDON',
-          postcode: 'SW1A 1AA',
-          country: 'ENGLAND',
-          uprn: '100023336902',
-          match: '1',
-          matchDescription: 'EXACT',
-          language: 'EN'
-        },
-        {
-          addressLine: 'UNIT 1, DOWNING HOUSE, DOWNING STREET, LONDON, SW1A 1AA',
-          buildingNumber: null,
-          buildingName: 'DOWNING HOUSE',
-          subBuildingName: 'UNIT 1',
-          street: 'DOWNING STREET',
-          locality: null,
-          town: 'LONDON',
-          postcode: 'SW1A 1AA',
-          country: 'ENGLAND',
-          uprn: '100023336903',
-          match: '1',
-          matchDescription: 'EXACT',
-          language: 'EN'
-        }
-      ],
-      totalResults: 3,
-      returnedResults: 3,
-      failureReason: null
-    }
+    return response('POSTCODE', DEFAULT_POSTCODE)
+  },
+
+  async lookupByPostcode(postcode, _traceId) {
+    return response('POSTCODE', postcode)
+  },
+
+  /**
+   * The same results as a postcode search, deliberately. What find really matches is a
+   * question only the real gateway can answer, and a stub that guessed would read as an
+   * answer.
+   */
+  async lookupByFind(find, _traceId) {
+    return response('FIND', find)
   }
 }

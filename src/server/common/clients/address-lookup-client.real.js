@@ -11,21 +11,32 @@ function buildHeaders(traceId) {
   }
 }
 
+async function get(path, traceId) {
+  const response = await fetch(`${insBackendBaseUrl}${path}`, {
+    method: 'GET',
+    headers: buildHeaders(traceId)
+  })
+
+  await throwOnError(response)
+  return response.json()
+}
+
 /**
- * EUDPA-390 spike client for `GET /address-lookup` on trade-imports-ins-backend. Iteration 1
- * takes no parameters — the backend always searches its configured default postcode. The
+ * EUDPA-390 spike client for `GET /address-lookup` on trade-imports-ins-backend. The
  * backend's response is always 200; a failed lookup is an `outcome`, not an HTTP error (plan,
  * "The backend → frontend contract"), so this only throws on a genuine transport failure or the
  * backend itself being unreachable.
  */
 export const addressLookupClient = {
   async lookupDefaultPostcode(traceId) {
-    const response = await fetch(`${insBackendBaseUrl}/address-lookup`, {
-      method: 'GET',
-      headers: buildHeaders(traceId)
-    })
+    return get('/address-lookup', traceId)
+  },
 
-    await throwOnError(response)
-    return response.json()
+  async lookupByPostcode(postcode, traceId) {
+    return get(`/address-lookup?postcode=${encodeURIComponent(postcode)}`, traceId)
+  },
+
+  async lookupByFind(find, traceId) {
+    return get(`/address-lookup?find=${encodeURIComponent(find)}`, traceId)
   }
 }

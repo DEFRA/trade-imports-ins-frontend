@@ -1,23 +1,104 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 {% from "govuk/components/details/macro.njk" import govukDetails %}
 {% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% macro outcomeTag(outcome) %}
+  {% if outcome == "RESULTS" %}
+    {{ govukTag({ text: "Results", classes: "govuk-tag--green" }) }}
+  {% elif outcome == "NO_RESULTS" %}
+    {{ govukTag({ text: "No results", classes: "govuk-tag--grey" }) }}
+  {% else %}
+    {{ govukTag({ text: "Failed", classes: "govuk-tag--red" }) }}
+  {% endif %}
+{% endmacro %}
+
+{% macro searchResults(search, term) %}
+  <h2 class="govuk-heading-m">
+    Searched <code>{{ "postcode=" if search.mode == "POSTCODE" else "find=" }}{{ search.term }}</code>
+  </h2>
+  <p class="govuk-body-s">
+    {% if search.mode == "POSTCODE" %}
+      That looked like a UK postcode, so it was searched as one.
+    {% else %}
+      That did not look like a UK postcode, so it was searched as free text.
+    {% endif %}
+  </p>
+
+  {{ outcomeTag(search.response.outcome) }}
+
+  {% if search.timings %}
+    <h3 class="govuk-heading-s govuk-!-margin-top-4">Where the time went</h3>
+    <p class="govuk-body-s">
+      {% if search.timings.tokenSource == "CACHED" %}
+        The cached access token was reused, so neither token hop ran.
+      {% else %}
+        No usable token was cached, so this search paid for both token hops.
+      {% endif %}
+    </p>
+    {{ govukTable({
+      head: [{ text: "Hop" }, { text: "Time", format: "numeric" }],
+      rows: search.timings.rows
+    }) }}
+    {% if search.traceId %}
+      <p class="govuk-body-s">Trace ID <code>{{ search.traceId }}</code> — for the full picture in OpenSearch.</p>
+    {% endif %}
+  {% endif %}
+
+  {% if search.response.outcome == "FAILED" %}
+    {{ govukWarningText({
+      text: "Failed: " + search.response.failureReason,
+      iconFallbackText: "Warning"
+    }) }}
+  {% elif search.rows.length %}
+    <p class="govuk-body">{{ search.response.returnedResults }} of {{ search.response.totalResults }} returned.</p>
+    {% for row in search.rows %}
+      <div class="govuk-!-margin-bottom-4">
+        <p class="govuk-body govuk-!-margin-bottom-1">{{ row.addressLine }}</p>
+        <p class="govuk-body-s govuk-!-margin-bottom-1">
+          Match {{ row.match }} ({{ row.matchDescription }}) · UPRN {{ row.uprn }}
+        </p>
+        <form method="post" novalidate>
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          <input type="hidden" name="term" value="{{ term }}" />
+          <input type="hidden" name="chosen" value="{{ search.response.results[row.index] | dump }}" />
+          {{ govukButton({
+            text: "Use this address",
+            classes: "govuk-button--secondary govuk-!-margin-bottom-0"
+          }) }}
+        </form>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="govuk-body">Nothing returned.</p>
+  {% endif %}
+{% endmacro %}
 
 {% block content %}
 
   {{ appHeading({
     text: heading,
-    caption: "EUDPA-390 — dev/local only, temporary"
+    caption: "EUDPA-390 — dev/local only, temporary. Nothing is saved."
   }) }}
 
   <div class="govuk-body" data-testid="app-page-body">
 
     <form method="post" novalidate>
       <input type="hidden" name="crumb" value="{{ crumb }}" />
-      {{ govukButton({ text: "Test the address lookup" }) }}
+      {{ govukInput({
+        label: { text: "Postcode or address" },
+        hint: { text: "A UK postcode is searched as a postcode. Anything else is searched as free text." },
+        id: "term",
+        name: "term",
+        value: term,
+        errorMessage: { text: termError } if termError
+      }) }}
+      {{ govukButton({ text: "Search" }) }}
     </form>
 
     {% if networkError %}
@@ -27,49 +108,38 @@
       }) }}
     {% endif %}
 
-    {% if response %}
+    {% if search %}
+      {{ searchResults(search, term) }}
+    {% endif %}
 
-      {% if response.outcome == "RESULTS" %}
-        {{ govukTag({ text: "Results", classes: "govuk-tag--green" }) }}
-      {% elif response.outcome == "NO_RESULTS" %}
-        {{ govukTag({ text: "No results", classes: "govuk-tag--grey" }) }}
-      {% else %}
-        {{ govukTag({ text: "Failed", classes: "govuk-tag--red" }) }}
-      {% endif %}
+    {% if addressFields %}
+      <h2 class="govuk-heading-m">Mapped onto the address book's fields</h2>
 
-      <h2 class="govuk-heading-m">Query</h2>
       {{ govukSummaryList({
         rows: [
-          { key: { text: "Mode" }, value: { text: response.query.mode } },
-          { key: { text: "Term" }, value: { text: response.query.term } }
+          { key: { text: "Address line 1" }, value: { text: addressFields.addressLine1 or "—" } },
+          { key: { text: "Address line 2" }, value: { text: addressFields.addressLine2 or "—" } },
+          { key: { text: "Town or city" }, value: { text: addressFields.townOrCity or "—" } },
+          { key: { text: "County" }, value: { text: addressFields.county or "—" } },
+          { key: { text: "Postcode" }, value: { text: addressFields.postcode or "—" } },
+          { key: { text: "Country" }, value: { text: addressFields.countryCode or "—" } }
         ]
       }) }}
 
-      {% if resultRows.length %}
-        <h2 class="govuk-heading-m">Results ({{ response.returnedResults }} of {{ response.totalResults }})</h2>
-        {{ govukTable({
-          head: [
-            { text: "Address line" },
-            { text: "Postcode" },
-            { text: "Match" },
-            { text: "UPRN" }
-          ],
-          rows: resultRows
-        }) }}
-      {% endif %}
-
-      {% if response.outcome == "FAILED" and response.failureReason %}
-        {{ govukWarningText({
-          text: "Lookup failed: " + response.failureReason,
-          iconFallbackText: "Warning"
-        }) }}
+      {% if mappingGaps.length %}
+        {% set gapsHtml %}
+          <p class="govuk-body">What the lookup could not fill:</p>
+          <ul class="govuk-list govuk-list--bullet">
+            {% for gap in mappingGaps %}<li>{{ gap }}</li>{% endfor %}
+          </ul>
+        {% endset %}
+        {{ govukInsetText({ html: gapsHtml }) }}
       {% endif %}
 
       {{ govukDetails({
-        summaryText: "Raw response",
-        html: '<pre class="govuk-body">' + (responseJson | escape) + '</pre>'
+        summaryText: "The raw result this came from",
+        html: '<pre class="govuk-body">' + (chosenJson | escape) + '</pre>'
       }) }}
-
     {% endif %}
 
   </div>
