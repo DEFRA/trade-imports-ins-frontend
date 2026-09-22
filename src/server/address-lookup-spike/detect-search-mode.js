@@ -12,6 +12,8 @@
  */
 const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i
 
+const INWARD_CODE_LENGTH = 3
+
 /**
  * Upper case with a single space before the final three characters, which is how the
  * lookup returns postcodes and how it expects to be asked. Lets "sw1a1aa" find
@@ -19,7 +21,8 @@ const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i
  */
 export function normalisePostcode(term) {
   const compact = term.replace(/\s+/g, '').toUpperCase()
-  return `${compact.slice(0, -3)} ${compact.slice(-3)}`
+  const split = compact.length - INWARD_CODE_LENGTH
+  return `${compact.slice(0, split)} ${compact.slice(split)}`
 }
 
 /**

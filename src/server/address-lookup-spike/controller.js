@@ -68,9 +68,11 @@ function buildTimings(backendTimings, roundTripMs) {
   if (entraMs != null) {
     hops.push(['Entra, exchanging it for an access token', entraMs])
   }
-  hops.push(['The address lookup gateway', lookupMs])
-  hops.push(['Everything the backend did', totalMs])
-  hops.push(['This page, including the call to the backend', roundTripMs])
+  hops.push(
+    ['The address lookup gateway', lookupMs],
+    ['Everything the backend did', totalMs],
+    ['This page, including the call to the backend', roundTripMs]
+  )
 
   return {
     tokenSource,
