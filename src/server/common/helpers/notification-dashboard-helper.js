@@ -1,11 +1,11 @@
 import { format, isValid, parseISO } from 'date-fns'
 
-import { config } from '#/config/config.js'
 import { SET_BASES } from '#/server/common/constants/journey-set-bases.js'
 import {
   buildPaginationLinks as buildSharedPaginationLinks,
   buildResultsLabel as buildSharedResultsLabel
 } from './pagination-helper.js'
+import { buildSetBaseUrl } from './set-base-url.js'
 
 const LIST_DATE_FORMAT = 'd MMM yyyy'
 const DASHBOARD_PATH = '/'
@@ -103,12 +103,8 @@ export function buildStartNewNotificationLink() {
 }
 
 /** The live-animals set's own base URL on the journey frontend. */
-function buildLiveAnimalsSetUrl() {
-  const baseUrl = config
-    .get('tradeImportsAnimalsFrontend.baseUrl')
-    .replace(/\/$/, '')
-  return `${baseUrl}${SET_BASES.LIVE_ANIMALS}`
-}
+const buildLiveAnimalsSetUrl = () =>
+  buildSetBaseUrl('tradeImportsAnimalsFrontend.baseUrl', SET_BASES.LIVE_ANIMALS)
 
 export function mapNotificationRows(notifications, countryNames = {}) {
   return notifications.map((notification) => ({

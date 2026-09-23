@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 
-import { startServer } from '#/server/common/helpers/start-server.js'
+import { createServer } from '#/server/server.js'
 import { statusCodes } from '#/server/common/constants/status-codes.js'
 import { mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
 
@@ -13,7 +13,12 @@ describe('#serveStaticFiles', () => {
 
   describe('When secure context is disabled', () => {
     beforeEach(async () => {
-      server = await startServer()
+      // `initialize` runs the full plugin registration that `start` would,
+      // but binds no port — `server.inject` needs no listener. Starting for
+      // real made this the only test in the suite that could not run while
+      // the local stack held the configured port.
+      server = await createServer()
+      await server.initialize()
     })
 
     afterEach(async () => {

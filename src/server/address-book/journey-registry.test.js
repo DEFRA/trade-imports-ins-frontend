@@ -1,7 +1,6 @@
 import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '#/config/config.js'
-import { SET_BASES } from '#/server/common/constants/journey-set-bases.js'
 import {
   buildReturnUrl,
   isKnownJourneyType,
@@ -48,7 +47,7 @@ describe('journey-registry', () => {
       })
     )
 
-    expect(url.pathname.startsWith(`${SET_BASES.LIVE_ANIMALS}/`)).toBe(true)
+    expect(url.pathname.startsWith('/live-animals/')).toBe(true)
   })
 
   test('buildReturnUrl omits addressId on cancel', () => {
