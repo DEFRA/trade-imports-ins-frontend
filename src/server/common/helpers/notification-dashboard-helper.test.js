@@ -1,15 +1,24 @@
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+
+const configState = vi.hoisted(() => {
+  const defaultAnimalsBaseUrl = 'http://localhost:3000'
+  return { defaultAnimalsBaseUrl, animalsBaseUrl: defaultAnimalsBaseUrl }
+})
 
 vi.mock('#/config/config.js', () => ({
   config: {
     get: vi.fn((key) => {
       if (key === 'tradeImportsAnimalsFrontend.baseUrl') {
-        return 'http://localhost:3000'
+        return configState.animalsBaseUrl
       }
       return undefined
     })
   }
 }))
+
+afterEach(() => {
+  configState.animalsBaseUrl = configState.defaultAnimalsBaseUrl
+})
 
 const {
   buildDashboardQueryString,
@@ -105,7 +114,7 @@ describe('#buildPaginationLinks', () => {
 describe('#buildNotificationLink', () => {
   test('SUBMITTED notifications link to the read-only notification-view page', () => {
     expect(buildNotificationLink('SUBMITTED', 'GBN-AG-26-000001')).toBe(
-      'http://localhost:3000/notifications/GBN-AG-26-000001/notification-view'
+      'http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view'
     )
   })
 
@@ -113,21 +122,39 @@ describe('#buildNotificationLink', () => {
     '%s notifications link back to the journey hub, not notification-view',
     (status) => {
       expect(buildNotificationLink(status, 'GBN-AG-26-000002')).toBe(
-        'http://localhost:3000/notifications/GBN-AG-26-000002'
+        'http://localhost:3000/live-animals/notifications/GBN-AG-26-000002'
       )
     }
   )
 
   test('encodes the reference number in the path', () => {
     expect(buildNotificationLink('SUBMITTED', 'GBN AG/1')).toBe(
-      'http://localhost:3000/notifications/GBN%20AG%2F1/notification-view'
+      'http://localhost:3000/live-animals/notifications/GBN%20AG%2F1/notification-view'
+    )
+  })
+
+  test('does not double the slash when the configured base URL ends in one', () => {
+    configState.animalsBaseUrl = 'http://localhost:3000/'
+
+    expect(buildNotificationLink('SUBMITTED', 'GBN-AG-26-000001')).toBe(
+      'http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view'
     )
   })
 })
 
 describe('#buildStartNewNotificationLink', () => {
-  test('links to the journey frontend base', () => {
-    expect(buildStartNewNotificationLink()).toBe('http://localhost:3000')
+  test("links to the live-animals set's base, not the journey frontend root", () => {
+    expect(buildStartNewNotificationLink()).toBe(
+      'http://localhost:3000/live-animals'
+    )
+  })
+
+  test('does not double the slash when the configured base URL ends in one', () => {
+    configState.animalsBaseUrl = 'http://localhost:3000/'
+
+    expect(buildStartNewNotificationLink()).toBe(
+      'http://localhost:3000/live-animals'
+    )
   })
 })
 
@@ -167,7 +194,7 @@ describe('#mapNotificationRows', () => {
         originCountry: 'France',
         commodity: '',
         arrivalDate: '10 Sep 2026',
-        href: 'http://localhost:3000/notifications/GBN-AG-26-000001/notification-view'
+        href: 'http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view'
       }
     ])
   })

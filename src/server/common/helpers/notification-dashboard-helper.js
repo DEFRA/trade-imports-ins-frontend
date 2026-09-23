@@ -1,10 +1,11 @@
 import { format, isValid, parseISO } from 'date-fns'
 
-import { config } from '#/config/config.js'
+import { SET_BASES } from '#/server/common/constants/journey-set-bases.js'
 import {
   buildPaginationLinks as buildSharedPaginationLinks,
   buildResultsLabel as buildSharedResultsLabel
 } from './pagination-helper.js'
+import { buildSetBaseUrl } from './set-base-url.js'
 
 const LIST_DATE_FORMAT = 'd MMM yyyy'
 const DASHBOARD_PATH = '/'
@@ -84,16 +85,26 @@ export function buildPaginationLinks(
  * which journey owns it (see EUDPA-306 plan, "Deferred to caller ticket").
  */
 export function buildNotificationLink(status, referenceNumber) {
-  const baseUrl = config.get('tradeImportsAnimalsFrontend.baseUrl')
+  const setUrl = buildLiveAnimalsSetUrl()
   const encodedReference = encodeURIComponent(referenceNumber)
   return status === 'SUBMITTED'
-    ? `${baseUrl}/notifications/${encodedReference}/notification-view`
-    : `${baseUrl}/notifications/${encodedReference}`
+    ? `${setUrl}/notifications/${encodedReference}/notification-view`
+    : `${setUrl}/notifications/${encodedReference}`
 }
 
+/**
+ * Links at the live-animals set base rather than the journey frontend's root.
+ * That frontend does redirect its root to the default set, but naming the set
+ * keeps the link correct once a second set is the default — and costs the
+ * trader nothing.
+ */
 export function buildStartNewNotificationLink() {
-  return config.get('tradeImportsAnimalsFrontend.baseUrl')
+  return buildLiveAnimalsSetUrl()
 }
+
+/** The live-animals set's own base URL on the journey frontend. */
+const buildLiveAnimalsSetUrl = () =>
+  buildSetBaseUrl('tradeImportsAnimalsFrontend.baseUrl', SET_BASES.LIVE_ANIMALS)
 
 export function mapNotificationRows(notifications, countryNames = {}) {
   return notifications.map((notification) => ({
