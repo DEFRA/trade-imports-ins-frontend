@@ -25,6 +25,9 @@ import {
 const logger = createLogger()
 const VIEW = 'address-book/add/index'
 const PAGE_TITLE = 'Add address details'
+const NO_STORE = 'no-store'
+
+const withNoStore = (response) => response.header('Cache-Control', NO_STORE)
 
 function emptyFormValues() {
   return {
@@ -91,8 +94,8 @@ const renderAddForm = (
   { formValues, countryItems, errorList, fieldErrors, handshake },
   statusCode
 ) =>
-  h
-    .view(
+  withNoStore(
+    h.view(
       VIEW,
       buildViewModel({
         formValues,
@@ -102,7 +105,7 @@ const renderAddForm = (
         handshakeContext: handshake
       })
     )
-    .code(statusCode)
+  ).code(statusCode)
 
 const submitAddress = async (
   request,
@@ -186,18 +189,20 @@ export const addController = {
       try {
         const countries = await getAddressFormCountries(traceId)
 
-        return h.view(
-          VIEW,
-          buildViewModel({
-            formValues: emptyFormValues(),
-            countryItems: buildCountrySelectItems(countries),
-            handshakeContext: handshake
-          })
+        return withNoStore(
+          h.view(
+            VIEW,
+            buildViewModel({
+              formValues: emptyFormValues(),
+              countryItems: buildCountrySelectItems(countries),
+              handshakeContext: handshake
+            })
+          )
         )
       } catch (err) {
         logger.error({ err, traceId }, 'Failed to load address form countries')
-        return h
-          .view(VIEW, {
+        return withNoStore(
+          h.view(VIEW, {
             ...buildViewModel({
               formValues: emptyFormValues(),
               countryItems: [],
@@ -205,7 +210,7 @@ export const addController = {
             }),
             errorList: [{ text: 'Something went wrong loading the form' }]
           })
-          .code(statusCodes.internalServerError)
+        ).code(statusCodes.internalServerError)
       }
     }
   },

@@ -52,6 +52,17 @@ describe.sequential('#addressBookAddController', () => {
     'handshake-token': 'handshake-token-value'
   }
 
+  test('GET sets Cache-Control: no-store', async () => {
+    const { headers, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book/add',
+      auth: sessionAuth('add-get-cache')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(headers['cache-control']).toBe('no-store')
+  })
+
   test('GET renders the add address details form', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
