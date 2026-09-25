@@ -10,7 +10,7 @@ service call, one template, both copy bundles, one controller test and one
 feature spec.
 
 - [`features/address-book/add/add.controller.js`](../features/address-book/add/add.controller.js)
-- [`features/address-book/add/template.njk`](../features/address-book/add/template.njk)
+- [`features/address-book/add/add.njk`](../features/address-book/add/add.njk)
 - [`features/address-book/add/add.controller.test.js`](../features/address-book/add/add.controller.test.js)
 - [`features/address-book/fit/add.fit.spec.js`](../features/address-book/fit/add.fit.spec.js)
 - [`features/address-book/fit/address-form.js`](../features/address-book/fit/address-form.js)
@@ -50,7 +50,7 @@ features/<name>/
 ```
 
 For a page joining `address-book`, create a `features/address-book/<page>/`
-folder with `<page>.controller.js`, `template.njk` and
+folder with `<page>.controller.js`, `<page>.njk` and
 `<page>.controller.test.js`; put its spec in the group's `fit/`, and its
 strings in the group's `copy/`.
 Create both locale bundles and their test as soon as the template exists —
@@ -81,7 +81,8 @@ GET/POST pair. A page under `/address-book/{id}` passes
 
 Follow the copy rule and the template rules at
 [features.md](features.md#copy-and-templates). The view name is
-`<feature>/<page>/template`. Run `npm test` and fix the local copy test,
+`<feature>/<page>/<page>` for a page joining a group, or
+`<feature>/template` for a new single-page feature. Run `npm test` and fix the local copy test,
 `copy-convention.test.js` and `copy-parity.test.js` before continuing.
 
 ## 5. Register the routes

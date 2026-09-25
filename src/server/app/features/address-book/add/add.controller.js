@@ -27,7 +27,7 @@ import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
 const logger = createLogger()
-const view = 'address-book/add/template'
+const view = 'address-book/add/add'
 const copy = copyFor({ en, cy })
 
 const countryItemsOf = (countries) =>

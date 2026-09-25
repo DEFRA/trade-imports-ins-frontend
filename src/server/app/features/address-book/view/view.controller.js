@@ -14,7 +14,7 @@ import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
 const logger = createLogger()
-const view = 'address-book/view/template'
+const view = 'address-book/view/view'
 const copy = copyFor({ en, cy })
 
 export const buildRows = (address, countryName) => [

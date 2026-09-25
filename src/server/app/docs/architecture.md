@@ -93,8 +93,8 @@ dist, `src/server/app` (resolves `shared/layout.njk`,
 `src/server/app/features` (resolves feature views); `src/server/common/components`
 is also listed but does not exist. Vision's `path` is `['server/app',
 'server/app/features']`, so a feature view name is its path under
-`features/` without the extension: `dashboard/template`,
-`address-book/add/template`.
+`features/` without the extension: `dashboard/template` for a
+single-page feature, `address-book/add/add` for a page joining a group.
 
 Every page template extends `shared/layout.njk` and fills the
 `journeyContent` block.

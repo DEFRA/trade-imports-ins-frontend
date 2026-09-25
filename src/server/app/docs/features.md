@@ -17,7 +17,7 @@ below.
 
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
 `add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
-`template.njk` and `<page>.controller.test.js`. Group-wide modules sit at the
+`<page>.njk` and `<page>.controller.test.js`. Group-wide modules sit at the
 root:
 
 - [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
