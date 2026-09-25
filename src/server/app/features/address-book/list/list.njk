@@ -1,0 +1,83 @@
+{% extends "shared/layout.njk" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+
+{% block journeyContent %}
+  {% if successBanner %}
+    {{ govukNotificationBanner({
+      type: "success",
+      titleText: copy.successBanner.title,
+      text: successBanner,
+      attributes: {
+        id: "address-book-success-banner"
+      }
+    }) }}
+  {% endif %}
+
+  <h1 class="govuk-heading-xl">{{ copy.list.title }}</h1>
+
+  <p class="govuk-body">{{ copy.list.intro }}</p>
+
+  <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">
+    {{ govukInput({
+      label: {
+        text: copy.list.search.label,
+        hint: copy.list.search.hint
+      },
+      id: "q",
+      name: "q",
+      type: "search",
+      value: q,
+      classes: "govuk-!-width-two-thirds"
+    }) }}
+    {{ govukButton({
+      text: copy.list.search.button,
+      classes: "govuk-!-margin-left-2"
+    }) }}
+  </form>
+
+  <div class="govuk-!-margin-bottom-6">
+    {{ govukButton({
+      text: copy.list.add,
+      href: addHref
+    }) }}
+  </div>
+
+  {% if isEmpty %}
+    <p class="govuk-body">{{ copy.list.empty }}</p>
+  {% elif noSearchResults %}
+    <p class="govuk-body">{{ copy.list.noMatchPrefix }} "{{ q }}".</p>
+    <p class="govuk-body">
+      <a class="govuk-link" href="{{ listHref }}">{{ copy.list.search.clear }}</a>
+    </p>
+  {% elif tableRows.length %}
+    {% if resultsLabel %}
+      <p class="govuk-body govuk-!-margin-bottom-4" data-testid="address-book-results-label">
+        {{ resultsLabel }}
+      </p>
+    {% endif %}
+
+    {% if hasSearch %}
+      <p class="govuk-body govuk-!-margin-bottom-4">
+        <a class="govuk-link" href="{{ listHref }}" data-testid="address-book-clear-search">{{ copy.list.search.clear }}</a>
+      </p>
+    {% endif %}
+
+    {{ govukTable({
+      head: [
+        { text: copy.list.table.name },
+        { text: copy.list.table.address },
+        { text: copy.list.table.country },
+        { html: '<span class="govuk-visually-hidden">' + copy.list.table.action + '</span>' }
+      ],
+      rows: tableRows
+    }) }}
+
+    {% if pagination %}
+      {{ govukPagination(pagination) }}
+    {% endif %}
+  {% endif %}
+{% endblock %}

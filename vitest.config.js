@@ -5,7 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     clearMocks: true,
-    exclude: [...configDefaults.exclude, '**/*.fit.spec.js'],
+    env: { STUB_MODE: 'true' },
+    exclude: [...configDefaults.exclude, 'fit/**', '**/*.fit.spec.js'],
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',

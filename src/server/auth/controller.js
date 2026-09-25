@@ -1,12 +1,15 @@
-import { getSignOutUrl } from '#/auth/get-sign-out-url.js'
-import { validateState } from '#/auth/state.js'
-import { verifyToken } from '#/auth/verify-token.js'
-import { getPermissions } from '#/auth/get-permissions.js'
-import { getSafeRedirect } from '#/auth/get-safe-redirect.js'
+import { getSignOutUrl } from '../../auth/get-sign-out-url.js'
+import { validateState } from '../../auth/state.js'
+import { verifyToken } from '../../auth/verify-token.js'
+import { getPermissions } from '../../auth/get-permissions.js'
+import { getSafeRedirect } from '../../auth/get-safe-redirect.js'
+import { base, sharedCopy } from '../app/shared/kit.js'
+
+const UNAUTHORISED_VIEW = 'auth/unauthorised'
 
 export const authController = {
   signin: {
-    handler: async function (request, h) {
+    handler: async function (_request, h) {
       return h.redirect('/')
     }
   },
@@ -25,17 +28,17 @@ export const authController = {
           },
           'Bell auth failed for /auth/sign-in-oidc'
         )
-        return h.view('auth/unauthorised')
+        return h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))
       }
 
       const { profile, token, refreshToken } = request.auth.credentials
 
       if (!profile.organisationId) {
         request.logger?.error(
-          { profile },
+          { crn: profile.crn },
           'Sign-in rejected: missing organisationId in Defra ID token'
         )
-        return h.view('auth/unauthorised')
+        return h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))
       }
 
       // verify token returned from Defra Identity against public key
@@ -46,7 +49,7 @@ export const authController = {
           { err },
           'Token verification failed for /auth/sign-in-oidc'
         )
-        return h.view('auth/unauthorised')
+        return h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))
       }
 
       // Typically permissions for the selected organisation would be available in the `roles` property of the token
@@ -66,7 +69,7 @@ export const authController = {
           { err },
           'Failed to load user permissions at sign-in'
         )
-        return h.view('auth/unauthorised')
+        return h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))
       }
 
       // Store token and all useful data in the session cache
@@ -95,6 +98,10 @@ export const authController = {
       if (!request.auth.isAuthenticated) {
         return h.redirect('/')
       }
+      if (request.auth.credentials?.sessionId) {
+        await request.server.app.cache.drop(request.auth.credentials.sessionId)
+      }
+      request.cookieAuth.clear()
       const signOutUrl = await getSignOutUrl(
         request,
         request.auth.credentials.token
@@ -123,7 +130,7 @@ export const authController = {
         )
       }
 
-      return h.redirect(await getSignOutUrl(request, null))
+      return h.redirect('/')
     }
   },
   organisation: {

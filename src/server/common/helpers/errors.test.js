@@ -1,11 +1,12 @@
+import Boom from '@hapi/boom'
 import { vi } from 'vitest'
 
 import { catchAll } from './errors.js'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../constants/status-codes.js'
-import { mockOidcConfig } from '#/server/common/test-helpers/mock-auth.js'
+import { mockOidcConfig } from '../test-helpers/mock-oidc-config.js'
 
-vi.mock('#/auth/get-oidc-config.js', () => ({
+vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
@@ -14,6 +15,22 @@ describe('#errors', () => {
 
   beforeAll(async () => {
     server = await createServer()
+    server.route({
+      method: 'GET',
+      path: '/test/programming-error',
+      options: { auth: false },
+      handler: () => {
+        throw new TypeError('programming failure')
+      }
+    })
+    server.route({
+      method: 'GET',
+      path: '/test/service-unavailable',
+      options: { auth: false },
+      handler: () => {
+        throw Boom.serverUnavailable()
+      }
+    })
     await server.initialize()
   })
 
@@ -28,16 +45,49 @@ describe('#errors', () => {
     })
 
     expect(result).toEqual(
-      expect.stringContaining('Page not found | trade-imports-ins-frontend')
+      expect.stringContaining('Page not found | Import notification service')
     )
     expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  test('Should render an unexpected programming error in the shared layout without the recoverable banner', async () => {
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/test/programming-error'
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toEqual(
+      expect.stringContaining(
+        'Something went wrong | Import notification service'
+      )
+    )
+    expect(result).toEqual(expect.stringContaining('>500</h1>'))
+    expect(result).not.toEqual(
+      expect.stringContaining('Try again in a few minutes.')
+    )
+  })
+
+  test('Should serve the shared error page as a 503 when a service behind the page is unavailable', async () => {
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/test/service-unavailable'
+    })
+
+    expect(statusCode).toBe(statusCodes.serviceUnavailable)
+    expect(result).toEqual(
+      expect.stringContaining(
+        'Something went wrong | Import notification service'
+      )
+    )
+    expect(result).toEqual(expect.stringContaining('>503</h1>'))
   })
 })
 
 describe('#catchAll', () => {
   const mockErrorLogger = vi.fn()
   const mockStack = 'Mock error stack'
-  const errorPage = 'routes/error/index'
+  const errorPage = 'shared/error'
   const mockRequest = (statusCode) => ({
     response: {
       isBoom: true,
@@ -52,18 +102,30 @@ describe('#catchAll', () => {
   const mockToolkitCode = vi.fn()
   const mockToolkit = {
     view: mockToolkitView.mockReturnThis(),
-    code: mockToolkitCode.mockReturnThis()
+    code: mockToolkitCode.mockReturnThis(),
+    continue: Symbol('continue')
   }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const expectedContext = (pageTitle, heading) =>
+    expect.objectContaining({
+      pageTitle,
+      heading,
+      message: pageTitle,
+      recoverableError: false
+    })
 
   test('Should provide expected "Not Found" page', () => {
     catchAll(mockRequest(statusCodes.notFound), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Page not found',
-      heading: statusCodes.notFound,
-      message: 'Page not found'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith(
+      errorPage,
+      expectedContext('Page not found', statusCodes.notFound)
+    )
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
   })
 
@@ -71,11 +133,10 @@ describe('#catchAll', () => {
     catchAll(mockRequest(statusCodes.forbidden), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Forbidden',
-      heading: statusCodes.forbidden,
-      message: 'Forbidden'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith(
+      errorPage,
+      expectedContext('Forbidden', statusCodes.forbidden)
+    )
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.forbidden)
   })
 
@@ -83,11 +144,13 @@ describe('#catchAll', () => {
     catchAll(mockRequest(statusCodes.unauthorized), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Unauthorized',
-      heading: statusCodes.unauthorized,
-      message: 'Unauthorized'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith(
+      errorPage,
+      expectedContext(
+        'You need to sign in to view this page',
+        statusCodes.unauthorized
+      )
+    )
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.unauthorized)
   })
 
@@ -95,11 +158,13 @@ describe('#catchAll', () => {
     catchAll(mockRequest(statusCodes.badRequest), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Bad Request',
-      heading: statusCodes.badRequest,
-      message: 'Bad Request'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith(
+      errorPage,
+      expectedContext(
+        'There is a problem with your request',
+        statusCodes.badRequest
+      )
+    )
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.badRequest)
   })
 
@@ -107,11 +172,10 @@ describe('#catchAll', () => {
     catchAll(mockRequest(statusCodes.imATeapot), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Something went wrong',
-      heading: statusCodes.imATeapot,
-      message: 'Something went wrong'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith(
+      errorPage,
+      expectedContext('Something went wrong', statusCodes.imATeapot)
+    )
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.imATeapot)
   })
 
@@ -119,13 +183,23 @@ describe('#catchAll', () => {
     catchAll(mockRequest(statusCodes.internalServerError), mockToolkit)
 
     expect(mockErrorLogger).toHaveBeenCalledWith(mockStack)
-    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
-      pageTitle: 'Something went wrong',
-      heading: statusCodes.internalServerError,
-      message: 'Something went wrong'
-    })
+    expect(mockToolkitView).toHaveBeenCalledWith(
+      errorPage,
+      expectedContext('Something went wrong', statusCodes.internalServerError)
+    )
     expect(mockToolkitCode).toHaveBeenCalledWith(
       statusCodes.internalServerError
     )
+  })
+
+  test('Should leave non-Boom responses untouched', () => {
+    const result = catchAll(
+      { response: { statusCode: 302 }, logger: { error: mockErrorLogger } },
+      mockToolkit
+    )
+
+    expect(result).toBe(mockToolkit.continue)
+    expect(mockToolkitView).not.toHaveBeenCalled()
+    expect(mockToolkitCode).not.toHaveBeenCalled()
   })
 })

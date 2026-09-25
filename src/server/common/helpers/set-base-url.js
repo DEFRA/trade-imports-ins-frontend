@@ -1,4 +1,4 @@
-import { config } from '#/config/config.js'
+import { config } from '../../../config/config.js'
 
 /**
  * Joins a journey frontend's configured base URL to a set base.

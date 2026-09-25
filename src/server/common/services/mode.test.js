@@ -1,59 +1,46 @@
-import { vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { isStubMode } from './mode.js'
 
-// Covers the runMode (INS_MODE) switch that selects between the real and
-// stub address-book/countries clients. isAuthStubMode is intentionally not
-// covered here - the sign-in stub it gates is exercised end-to-end
-// elsewhere.
-//
-// config.get() is mocked directly (rather than vi.stubEnv + re-import)
-// because convict resolves runMode once at config.js's module-load time -
-// mocking the module is how this repo already tests config-driven branches
-// (see config/nunjucks/context/context.test.js).
-const mockConfigGet = vi.fn()
+const configGetMock = vi.hoisted(() => vi.fn())
 
-vi.mock('#/config/config.js', () => ({
-  config: { get: (...args) => mockConfigGet(...args) }
+vi.mock('../../../config/config.js', () => ({
+  config: {
+    get: configGetMock
+  }
 }))
 
-const { isRealMode, isStubMode, mode } = await import('./mode.js')
+const withConfig = ({ stubMode, isProduction }) => {
+  configGetMock.mockImplementation((key) =>
+    key === 'stubMode' ? stubMode : isProduction
+  )
+}
 
-describe('#mode', () => {
+describe('#isStubMode', () => {
   beforeEach(() => {
-    mockConfigGet.mockReset()
+    vi.clearAllMocks()
   })
 
-  test('reads runMode from config', () => {
-    mockConfigGet.mockReturnValue('real')
+  test('Should be on when the flag is set outside production', () => {
+    withConfig({ stubMode: true, isProduction: false })
 
-    expect(mode()).toBe('real')
-    expect(mockConfigGet).toHaveBeenCalledWith('runMode')
+    expect(isStubMode()).toBe(true)
   })
 
-  describe('when runMode is real (the default)', () => {
-    beforeEach(() => {
-      mockConfigGet.mockReturnValue('real')
-    })
+  test('Should be off in production even when the flag is set', () => {
+    withConfig({ stubMode: true, isProduction: true })
 
-    test('isRealMode is true', () => {
-      expect(isRealMode()).toBe(true)
-    })
-
-    test('isStubMode is false', () => {
-      expect(isStubMode()).toBe(false)
-    })
+    expect(isStubMode()).toBe(false)
   })
 
-  describe('when runMode is stub', () => {
-    beforeEach(() => {
-      mockConfigGet.mockReturnValue('stub')
-    })
+  test('Should be off when the flag is not set', () => {
+    withConfig({ stubMode: false, isProduction: false })
 
-    test('isStubMode is true', () => {
-      expect(isStubMode()).toBe(true)
-    })
+    expect(isStubMode()).toBe(false)
+  })
 
-    test('isRealMode is false', () => {
-      expect(isRealMode()).toBe(false)
-    })
+  test('Should be off in production when the flag is not set', () => {
+    withConfig({ stubMode: false, isProduction: true })
+
+    expect(isStubMode()).toBe(false)
   })
 })

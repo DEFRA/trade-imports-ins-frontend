@@ -1,14 +1,5 @@
-import { config } from '#/config/config.js'
+import { config } from '../../../config/config.js'
 
-export const mode = () => config.get('runMode')
-
-export const isRealMode = () => mode() === 'real'
-
-export const isStubMode = () => mode() === 'stub'
-
-export const isAuthStubMode = () =>
-  config.get('auth.stubMode') && !config.get('isProduction')
-
-/** EUDPA-390: the address lookup spike page exists only for dev/local (plan D3) — no flag of our own. */
-export const isDevOrLocalEnvironment = () =>
-  ['dev', 'local'].includes(config.get('cdpEnvironment'))
+// Never honoured in production, whatever the environment says: stub mode hands a session to any unauthenticated caller, so obeying the flag there would let anyone able to set an env var sign in as the stub user.
+export const isStubMode = () =>
+  config.get('stubMode') && !config.get('isProduction')

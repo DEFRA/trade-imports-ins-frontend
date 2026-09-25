@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from 'vitest'
 
-import { config } from '#/config/config.js'
+import { config } from '../../../config/config.js'
 import { buildSetBaseUrl } from './set-base-url.js'
 
 const configKey = 'tradeImportsAnimalsFrontend.baseUrl'

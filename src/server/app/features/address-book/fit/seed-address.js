@@ -1,0 +1,2 @@
+export const SEED_ADDRESS_NAME = 'Stub Farm 1'
+export const SEED_ADDRESS_ID = '000000000000000000000001'

@@ -4,32 +4,33 @@ import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
 
+const env = process.env.NODE_ENV
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
 
-const isProduction = process.env.NODE_ENV === 'production'
-const isTest = process.env.NODE_ENV === 'test'
-const isDevelopment = process.env.NODE_ENV === 'development'
+const isProduction = env === 'production'
+const isTest = env === 'test'
+const isDevelopment = env === 'development'
 const isLocal = isDevelopment || isTest
 const isPlatform = !isLocal
-const csrfEnabled = !isTest
 
 const authCookieSameSite = 'Lax'
+const csrfEnabled = !isTest
 
 convict.addFormats(convictFormatWithValidator)
 
+const STRICT_BOOLEAN = 'strict-boolean'
+
 // convict's built-in Boolean format coerces any string other than exactly
 // 'false' to true (e.g. a typo like 'flase' silently enables the flag), so
-// security/environment-gating flags use this stricter format instead - it
-// only accepts an actual boolean, or the literal strings 'true'/'false' from
-// an env var, and fails config.validate() on anything else.
+// every env-backed boolean uses this stricter format instead.
 convict.addFormat({
-  name: 'strict-boolean',
+  name: STRICT_BOOLEAN,
   validate(val) {
     if (typeof val !== 'boolean') {
-      throw new Error("must be 'true' or 'false'")
+      throw new TypeError("must be 'true' or 'false'")
     }
   },
   coerce(val) {
@@ -103,7 +104,7 @@ export const config = convict({
   log: {
     enabled: {
       doc: 'Is logging enabled',
-      format: Boolean,
+      format: STRICT_BOOLEAN,
       default: process.env.NODE_ENV !== 'test',
       env: 'LOG_ENABLED'
     },
@@ -124,8 +125,7 @@ export const config = convict({
       format: Array,
       default: isProduction
         ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
-        : [],
-      env: 'LOG_REDACT'
+        : []
     }
   },
   httpProxy: {
@@ -137,7 +137,7 @@ export const config = convict({
   },
   isSecureContextEnabled: {
     doc: 'Enable Secure Context',
-    format: Boolean,
+    format: STRICT_BOOLEAN,
     default: isProduction,
     env: 'ENABLE_SECURE_CONTEXT'
   },
@@ -172,15 +172,15 @@ export const config = convict({
         env: 'SESSION_COOKIE_TTL'
       },
       password: {
-        doc: 'session cookie password',
+        doc: 'The cookie password.',
         format: String,
-        default: 'the-password-must-be-at-least-32-characters-long',
+        default: 'replace-with-at-least-32-chars-long-string-1234567890',
         env: 'SESSION_COOKIE_PASSWORD',
         sensitive: true
       },
       secure: {
         doc: 'set secure flag on cookie',
-        format: Boolean,
+        format: STRICT_BOOLEAN,
         default: isProduction,
         env: 'SESSION_COOKIE_SECURE'
       },
@@ -241,7 +241,7 @@ export const config = convict({
     signOutHostnameRewrite: {
       enabled: {
         doc: 'Rewrite internal OIDC hostnames in sign-out URL for local environments',
-        format: Boolean,
+        format: STRICT_BOOLEAN,
         default: !isProduction,
         env: 'DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_ENABLED'
       },
@@ -259,36 +259,10 @@ export const config = convict({
     },
     refreshTokens: {
       doc: 'True if Defra Identity refresh tokens are enabled.',
-      format: Boolean,
+      format: STRICT_BOOLEAN,
       default: true,
       env: 'DEFRA_ID_REFRESH_TOKENS'
     }
-  },
-  auth: {
-    cookieName: {
-      doc: 'Auth session cookie name. Override on localhost when multiple frontends share the host so INS sign-in does not overwrite animals-frontend cookies.',
-      format: String,
-      default: isDevelopment ? 'ins-sid' : 'sid',
-      env: 'AUTH_SESSION_COOKIE_NAME'
-    },
-    enabled: {
-      doc: 'Enable authentication (Bell + session cookie)',
-      format: Boolean,
-      default: true,
-      env: 'AUTH_ENABLED'
-    },
-    stubMode: {
-      doc: 'Skip the real Defra ID OIDC exchange and locally sign a stub session instead. Auth is still enforced - only the external OIDC round-trip is bypassed. Ignored outside non-production (see isAuthStubMode).',
-      format: 'strict-boolean',
-      default: false,
-      env: 'AUTH_STUB_MODE'
-    }
-  },
-  runMode: {
-    doc: "real calls the Address Book and Reference Data APIs; stub returns canned in-memory data with no network calls, mirroring trade-imports-animals-frontend's LIVE_ANIMALS_MODE.",
-    format: ['real', 'stub'],
-    default: 'real',
-    env: 'INS_MODE'
   },
   cdpEnvironment: {
     doc: "The CDP-injected environment name, or 'local' when it is unset (matches trade-imports-ins-backend's own ENVIRONMENT gate). EUDPA-390: the address lookup spike page is registered only for dev/local — see router.js.",
@@ -304,6 +278,26 @@ export const config = convict({
     ],
     default: 'local',
     env: 'ENVIRONMENT'
+  },
+  stubMode: {
+    doc: 'Run against stubs rather than real dependencies: stub data in place of the address book, backend and reference data, and a locally signed session in place of the Defra ID OIDC exchange. Auth is still enforced - only the external OIDC round-trip is bypassed. Ignored in production (see isStubMode).',
+    format: STRICT_BOOLEAN,
+    default: false,
+    env: 'STUB_MODE'
+  },
+  auth: {
+    cookieName: {
+      doc: 'Auth session cookie name. Each frontend uses a distinct name in development so signing in to one does not overwrite another frontend session on localhost.',
+      format: String,
+      default: isDevelopment ? 'ins-sid' : 'sid',
+      env: 'AUTH_SESSION_COOKIE_NAME'
+    },
+    enabled: {
+      doc: 'Enable authentication (Bell + session cookie)',
+      format: STRICT_BOOLEAN,
+      default: true,
+      env: 'AUTH_ENABLED'
+    }
   },
   redis: {
     host: {
@@ -333,13 +327,13 @@ export const config = convict({
     },
     useSingleInstanceCache: {
       doc: 'Connect to a single instance of redis instead of a cluster.',
-      format: Boolean,
+      format: STRICT_BOOLEAN,
       default: !isProduction,
       env: 'USE_SINGLE_INSTANCE_CACHE'
     },
     useTLS: {
       doc: 'Connect to redis using TLS',
-      format: Boolean,
+      format: STRICT_BOOLEAN,
       default: isProduction,
       env: 'REDIS_TLS'
     }
@@ -347,13 +341,13 @@ export const config = convict({
   nunjucks: {
     watch: {
       doc: 'Reload templates when they are changed.',
-      format: Boolean,
+      format: STRICT_BOOLEAN,
       default: isDevelopment,
       env: 'NUNJUCKS_WATCH'
     },
     noCache: {
       doc: 'Recompile every template on every render instead of caching it.',
-      format: Boolean,
+      format: STRICT_BOOLEAN,
       default: isDevelopment,
       env: 'NUNJUCKS_NO_CACHE'
     }
@@ -411,7 +405,20 @@ export const config = convict({
       default: 'http://localhost:3000',
       env: 'TRADE_IMPORTS_ANIMALS_FRONTEND_URL'
     }
+  },
+  tradeImportsPlantsFrontend: {
+    baseUrl: {
+      doc: "Trade Imports Plants Frontend base URL. Browser-visible — used to build deep links the trader's own browser navigates to, so it must resolve outside the Docker network (unlike the server-side API base URLs above).",
+      format: 'url',
+      default: 'http://localhost:3003',
+      env: 'TRADE_IMPORTS_PLANTS_FRONTEND_URL'
+    }
   }
 })
 
 config.validate({ allowed: 'strict' })
+
+export const siblingFrontendBaseUrls = [
+  config.get('tradeImportsAnimalsFrontend.baseUrl'),
+  config.get('tradeImportsPlantsFrontend.baseUrl')
+]
