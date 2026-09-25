@@ -1,0 +1,146 @@
+{% extends "shared/layout.njk" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% macro outcomeTag(outcome, copy) %}
+  {% if outcome == "RESULTS" %}
+    {{ govukTag({ text: copy.outcome.results, classes: "govuk-tag--green" }) }}
+  {% elif outcome == "NO_RESULTS" %}
+    {{ govukTag({ text: copy.outcome.noResults, classes: "govuk-tag--grey" }) }}
+  {% else %}
+    {{ govukTag({ text: copy.outcome.failed, classes: "govuk-tag--red" }) }}
+  {% endif %}
+{% endmacro %}
+
+{% macro searchResults(search, term, copy, crumb) %}
+  <h2 class="govuk-heading-m">
+    {{ copy.search.searched }} <code>{{ "postcode=" if search.mode == "POSTCODE" else "find=" }}{{ search.term }}</code>
+  </h2>
+  <p class="govuk-body-s">
+    {% if search.mode == "POSTCODE" %}
+      {{ copy.search.modePostcode }}
+    {% else %}
+      {{ copy.search.modeFind }}
+    {% endif %}
+  </p>
+
+  {{ outcomeTag(search.response.outcome, copy) }}
+
+  {% if search.timings %}
+    <h3 class="govuk-heading-s govuk-!-margin-top-4">{{ copy.timings.heading }}</h3>
+    <p class="govuk-body-s">
+      {% if search.timings.tokenSource == "CACHED" %}
+        {{ copy.timings.cached }}
+      {% else %}
+        {{ copy.timings.minted }}
+      {% endif %}
+    </p>
+    {{ govukTable({
+      head: [{ text: copy.timings.hop }, { text: copy.timings.time, format: "numeric" }],
+      rows: search.timings.rows
+    }) }}
+    {% if search.traceId %}
+      <p class="govuk-body-s">{{ copy.timings.traceIdLabel }} <code>{{ search.traceId }}</code> {{ copy.timings.traceIdSuffix }}</p>
+    {% endif %}
+  {% endif %}
+
+  {% if search.response.outcome == "FAILED" %}
+    {{ govukWarningText({
+      text: copy.search.failed(search.response.failureReason),
+      iconFallbackText: copy.warnings.iconFallbackText
+    }) }}
+  {% elif search.rows.length %}
+    <p class="govuk-body">{{ copy.search.returned(search.response.returnedResults, search.response.totalResults) }}</p>
+    {% for row in search.rows %}
+      <div class="govuk-!-margin-bottom-4">
+        <p class="govuk-body govuk-!-margin-bottom-1">{{ row.addressLine }}</p>
+        <p class="govuk-body-s govuk-!-margin-bottom-1">
+          {{ copy.search.matchLine(row.match, row.matchDescription, row.uprn) }}
+        </p>
+        <form method="post" novalidate>
+          <input type="hidden" name="crumb" value="{{ crumb }}" />
+          <input type="hidden" name="term" value="{{ term }}" />
+          <input type="hidden" name="chosen" value="{{ search.response.results[row.index] | dump }}" />
+          {{ govukButton({
+            text: copy.search.useAddress,
+            classes: "govuk-button--secondary govuk-!-margin-bottom-0"
+          }) }}
+        </form>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="govuk-body">{{ copy.search.nothingReturned }}</p>
+  {% endif %}
+{% endmacro %}
+
+{% block journeyContent %}
+  <h1 class="govuk-heading-xl govuk-!-margin-bottom-2">{{ heading }}</h1>
+  <span class="govuk-caption-m">{{ copy.caption }}</span>
+
+  <form method="post" novalidate class="govuk-!-margin-top-4">
+    <input type="hidden" name="crumb" value="{{ crumb }}" />
+    {{ govukInput({
+      label: { text: copy.form.label },
+      hint: { text: copy.form.hint },
+      id: "term",
+      name: "term",
+      value: term,
+      errorMessage: { text: termError } if termError
+    }) }}
+    {{ govukButton({ text: copy.form.button }) }}
+  </form>
+
+  {% if networkError %}
+    {{ govukWarningText({
+      text: copy.warnings.network,
+      iconFallbackText: copy.warnings.iconFallbackText
+    }) }}
+  {% endif %}
+
+  {% if chosenError %}
+    {{ govukWarningText({
+      text: copy.warnings.chosen,
+      iconFallbackText: copy.warnings.iconFallbackText
+    }) }}
+  {% endif %}
+
+  {% if search %}
+    {{ searchResults(search, term, copy, crumb) }}
+  {% endif %}
+
+  {% if addressFields %}
+    <h2 class="govuk-heading-m">{{ copy.mapped.heading }}</h2>
+
+    {{ govukSummaryList({
+      rows: [
+        { key: { text: copy.mapped.addressLine1 }, value: { text: addressFields.addressLine1 or "—" } },
+        { key: { text: copy.mapped.addressLine2 }, value: { text: addressFields.addressLine2 or "—" } },
+        { key: { text: copy.mapped.townOrCity }, value: { text: addressFields.townOrCity or "—" } },
+        { key: { text: copy.mapped.county }, value: { text: addressFields.county or "—" } },
+        { key: { text: copy.mapped.postcode }, value: { text: addressFields.postcode or "—" } },
+        { key: { text: copy.mapped.country }, value: { text: addressFields.countryCode or "—" } }
+      ]
+    }) }}
+
+    {% if mappingGaps.length %}
+      {% set gapsHtml %}
+        <p class="govuk-body">{{ copy.mapped.gapsIntro }}</p>
+        <ul class="govuk-list govuk-list--bullet">
+          {% for gap in mappingGaps %}<li>{{ gap }}</li>{% endfor %}
+        </ul>
+      {% endset %}
+      {{ govukInsetText({ html: gapsHtml }) }}
+    {% endif %}
+
+    {{ govukDetails({
+      summaryText: copy.mapped.raw,
+      html: '<pre class="govuk-body">' + (chosenJson | escape) + '</pre>'
+    }) }}
+  {% endif %}
+{% endblock %}

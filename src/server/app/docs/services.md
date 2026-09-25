@@ -17,7 +17,7 @@ Every barrel chooses per call (`isStubMode() ? stub : client`). There is no
 priming at boot, so a reference-data outage does not stop the server
 starting, and a test can switch modes with `config.set('stubMode', …)`.
 
-## The three services
+## The services
 
 ### address-book
 
@@ -60,6 +60,21 @@ puts GB first and rejects the same way on an empty list.
 page, sort, referenceNumber })` — the aggregated notifications the
 dashboard lists. The stub holds four, one soft-deleted and never returned.
 The dashboard is not scoped to an organisation.
+
+### address-lookup
+
+[`index.js`](../services/address-lookup/index.js) exports
+`lookupDefaultPostcode()`, `lookupByPostcode(postcode)` and
+`lookupByFind(find)`, which call `GET /address-lookup` on the INS backend
+(`tradeImportsInsBackendApi.baseUrl`) with no parameter, with `postcode=`
+or with `find=`. A lookup that fails downstream — for example a hop
+answering 503 — or finds nothing comes back as a 200 whose `outcome`
+says so (`FAILED` with a `failureReason`, or `RESULTS` with no results).
+A non-2xx response from the INS backend itself, or a network failure,
+makes the client reject through `throwOnError`, and the spike controller
+renders its network-error state. The stub serves the same three
+SW1A 1AA addresses for every search. The service is used only by the
+temporary dev/local `address-lookup-spike` page.
 
 ## Configuration
 

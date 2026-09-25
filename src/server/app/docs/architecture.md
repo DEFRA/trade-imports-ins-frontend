@@ -48,7 +48,11 @@ it with `base(sharedCopy.unauthorised.title)`.
 [`routes.js`](../routes.js) is the composition point: a Hapi plugin named
 `import-notification-service` whose `register` calls
 `server.route(allRoutes)`. It is the only production module outside
-`features/` that imports `features/**`.
+`features/` that imports `features/**`. When `isDevOrLocalEnvironment()`
+(the spike's own
+[`is-dev-or-local.js`](../features/address-lookup-spike/is-dev-or-local.js),
+reading `cdpEnvironment`) is true, it also registers the temporary
+EUDPA-390 `address-lookup-spike` routes, which sit outside `allRoutes`.
 
 [`features/index.js`](../features/index.js) imports each feature's
 controller namespace and spreads `routes` into `allRoutes` — nothing else.
@@ -57,9 +61,11 @@ barrel.
 
 Four directories:
 
-- `features/` — one folder per feature: `dashboard/`, `address-book/`.
+- `features/` — one folder per feature: `dashboard/`, `address-book/`,
+  `address-lookup-spike/` (temporary, dev/local only).
 - `services/` — one folder per upstream: `address-book/`, `countries/`,
-  `ins-backend/`, each `index.js` + `client.js` + `stub.js`.
+  `ins-backend/`, `address-lookup/`, each `index.js` + `client.js` +
+  `stub.js`.
 - `shared/` — `kit.js`, `paths.js`, `copy.js`, `copy-leaves.js`,
   `copy.en.js`, `copy.cy.js`, `layout.njk`, `error.njk`,
   `error-summary.njk`.
@@ -136,8 +142,9 @@ production code cannot use test exemptions.
   the fixed route list above.
 - there is no `prime()` step: the countries service loads itself on the
   first read and caches the list for the life of the process.
-- the address-book and ins-backend barrels choose stub or real per call
-  (`isStubMode() ? stub : client`), not through an injected adapter;
+- the address-book, ins-backend and address-lookup barrels choose stub or
+  real per call (`isStubMode() ? stub : client`), not through an injected
+  adapter;
   countries checks the mode once inside `ensureLoaded` and serves its
   module-scope cache thereafter.
 - browser tests share one address-form fixture

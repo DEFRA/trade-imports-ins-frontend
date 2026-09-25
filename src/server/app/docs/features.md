@@ -3,7 +3,11 @@
 `src/server/app/features/` holds one folder per feature. Each is a vertical
 slice of paths, controllers, copy, templates, view models and tests, and
 [`features/index.js`](../features/index.js) is the barrel whose
-`allRoutes` spreads every feature's routes.
+`allRoutes` spreads every permanent feature's routes. [`routes.js`](../routes.js)
+adds the temporary `address-lookup-spike` feature's routes on top,
+gated on `isDevOrLocalEnvironment()` (dev or local CDP environment
+only) — see [The temporary address-lookup-spike feature](#the-temporary-address-lookup-spike-feature)
+below.
 
 ## Two shapes
 
@@ -35,7 +39,9 @@ specs plus the fixtures `address-form.js`, `axe.js` and `seed-address.js`.
 ## Paths
 
 [`shared/paths.js`](../shared/paths.js) is the only module that writes a
-URL. Each public URL has a builder (`dashboardPath()`, `addressBookPath()`,
+URL, with one exception: the temporary `address-lookup-spike` feature
+keeps its own `'/address-lookup-spike'` literal in its controller (see
+below). Each public URL has a builder (`dashboardPath()`, `addressBookPath()`,
 `addressAddPath()`, `addressPath(id)`, `addressEditPath(id)`,
 `addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin
 carrying the Hapi `{id}` placeholder. Ids are `encodeURIComponent`ed.
@@ -136,6 +142,17 @@ stays on Joi directly because Hapi's `validate.params` takes a Joi schema.
 initialises the govuk components and `address-book-success-banner.js`. A
 page needing more adds a named `entry` to `webpack.config.js` and loads it
 with `getAssetPath('<entry>.js')`. Build config is load-bearing.
+
+## The temporary address-lookup-spike feature
+
+`address-lookup-spike/` is EUDPA-390's dev/local-only spike page, kept
+self-contained so that removing it means deleting the folder and its
+one line in [`routes.js`](../routes.js) — no permanent feature depends
+on it. It does not follow the dashboard or address-book shape for
+paths: it keeps its own `'/address-lookup-spike'` literal rather than a
+`shared/paths.js` builder, and its routes are added on top of
+`allRoutes` rather than through `features/index.js`, because
+`routes.js` only registers it when `isDevOrLocalEnvironment()` is true.
 
 ## Tests
 

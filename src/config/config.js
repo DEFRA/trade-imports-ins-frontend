@@ -266,6 +266,21 @@ export const config = convict({
       env: 'DEFRA_ID_REFRESH_TOKENS'
     }
   },
+  cdpEnvironment: {
+    doc: "The CDP-injected environment name, or 'local' when it is unset (matches trade-imports-ins-backend's own ENVIRONMENT gate). EUDPA-390: the address lookup spike page is registered only for dev/local — see router.js.",
+    format: [
+      'dev',
+      'test',
+      'perf-test',
+      'ext-test',
+      'prod',
+      'infra-dev',
+      'management',
+      'local'
+    ],
+    default: 'local',
+    env: 'ENVIRONMENT'
+  },
   stubMode: {
     doc: 'Run against stubs rather than real dependencies: stub data in place of the address book, backend and reference data, and a locally signed session in place of the Defra ID OIDC exchange. Auth is still enforced - only the external OIDC round-trip is bypassed. Ignored in production (see isStubMode).',
     format: STRICT_BOOLEAN,
