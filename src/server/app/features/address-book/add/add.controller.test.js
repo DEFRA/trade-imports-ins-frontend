@@ -68,6 +68,17 @@ describe.sequential('#addressBookAddController', () => {
     serveCountries(mockCountries)
   })
 
+  test('GET sets Cache-Control: no-store', async () => {
+    const { headers, statusCode } = await server.inject({
+      method: 'GET',
+      url: ADD_ADDRESS_URL,
+      auth: sessionAuth('add-get-cache')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(headers['cache-control']).toBe('no-store')
+  })
+
   test('GET renders the add address details form', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -115,7 +126,7 @@ describe.sequential('#addressBookAddController', () => {
         }
       })
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode, headers } = await server.inject({
       method: 'POST',
       url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-api-400'),
@@ -125,6 +136,7 @@ describe.sequential('#addressBookAddController', () => {
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain(EMAIL_FORMAT_ERROR)
     expect(scope.isDone()).toBe(true)
+    expect(headers['cache-control']).toBe('no-store')
   })
 
   test('POST creates address and redirects with success banner', async () => {
@@ -151,6 +163,7 @@ describe.sequential('#addressBookAddController', () => {
     expect(headers.location).toBe('/address-book')
     expect(scope.isDone()).toBe(true)
     expect(posted).toMatchObject(validPayload)
+    expect(headers['cache-control']).not.toBe('no-store')
   })
 
   test('POST shows the recoverable-error banner when the address book rejects the save with a server error', async () => {
@@ -158,7 +171,7 @@ describe.sequential('#addressBookAddController', () => {
       .post(ADDRESSES_PATH)
       .reply(503, { title: 'Service Unavailable' })
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode, headers } = await server.inject({
       method: 'POST',
       url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-500'),
@@ -171,6 +184,7 @@ describe.sequential('#addressBookAddController', () => {
       'Sorry, there is a problem with the service. Try again in a few minutes.'
     )
     expect(result).toContain('value="Highland Livestock Ltd"')
+    expect(headers['cache-control']).toBe('no-store')
   })
 
   test('POST sends the trimmed form fields and nothing else to the address book', async () => {
@@ -208,7 +222,7 @@ describe.sequential('#addressBookAddController', () => {
   test('POST with invalid data re-renders form with errors', async () => {
     // No address-book interceptor: a request would be refused by nock and
     // surface as a 500, not the 400 asserted here.
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode, headers } = await server.inject({
       method: 'POST',
       url: ADD_ADDRESS_URL,
       auth: sessionAuth('add-post-invalid'),
@@ -233,6 +247,7 @@ describe.sequential('#addressBookAddController', () => {
     expect(result).toContain('href="#email"')
     expect(result).toContain(EMAIL_FORMAT_ERROR)
     expect(result).toContain('govuk-error-message')
+    expect(headers['cache-control']).toBe('no-store')
   })
 
   test('Cancel returns to list without creating an address', async () => {
@@ -245,6 +260,7 @@ describe.sequential('#addressBookAddController', () => {
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe('/address-book')
+    expect(headers['cache-control']).not.toBe('no-store')
   })
 })
 

@@ -43,15 +43,17 @@ const buildView = (
     handshake = null
   }
 ) =>
-  h.view(view, {
-    ...kit.base(copy.add.title, { recoverableError }),
-    copy,
-    formValues,
-    countryItems,
-    errors,
-    errorSummary: kit.errorSummary(errors),
-    handshakeContext: handshake
-  })
+  h
+    .view(view, {
+      ...kit.base(copy.add.title, { recoverableError }),
+      copy,
+      formValues,
+      countryItems,
+      errors,
+      errorSummary: kit.errorSummary(errors),
+      handshakeContext: handshake
+    })
+    .header('Cache-Control', 'no-store')
 
 const loadCountryItems = async () =>
   countryItemsOf(await getAddressFormCountries())
