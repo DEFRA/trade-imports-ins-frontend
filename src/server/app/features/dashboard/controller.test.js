@@ -143,7 +143,7 @@ describe('#dashboard', () => {
     })
 
     expect(result).toContain(
-      `href="http://localhost:3000/notifications/${REFERENCE_NUMBER}/notification-view"`
+      `href="http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view"`
     )
   })
 
@@ -170,7 +170,7 @@ describe('#dashboard', () => {
     })
 
     expect(result).toContain(
-      `href="http://localhost:3000/notifications/${OTHER_REFERENCE_NUMBER}"`
+      `href="http://localhost:3000/live-animals/notifications/${OTHER_REFERENCE_NUMBER}"`
     )
     expect(result).not.toContain('notification-view')
   })
@@ -254,7 +254,7 @@ describe('#dashboard — search, sort and errors', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('There are no notifications yet.')
     expect(result).toContain('Start a new notification')
-    expect(result).toContain('href="http://localhost:3000"')
+    expect(result).toContain('href="http://localhost:3000/live-animals"')
     expect(result).not.toContain('No notifications found')
   })
 

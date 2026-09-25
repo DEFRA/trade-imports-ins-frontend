@@ -1,4 +1,5 @@
-import { config } from '../../../../config/config.js'
+import { SET_BASES } from '../../../common/constants/journey-set-bases.js'
+import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
 
 export const JOURNEY_TYPES = Object.freeze({
   GBN_AG: 'gbn-ag'
@@ -9,6 +10,8 @@ const RETURN_PATH_TEMPLATE =
 
 const registry = Object.freeze({
   [JOURNEY_TYPES.GBN_AG]: {
+    baseUrlConfigKey: 'tradeImportsAnimalsFrontend.baseUrl',
+    setBase: SET_BASES.LIVE_ANIMALS,
     returnPathTemplate: RETURN_PATH_TEMPLATE
   }
 })
@@ -32,14 +35,15 @@ export const buildReturnUrl = (context, { addressId } = {}) => {
 
   assertHandshakeIds(context)
 
-  const baseUrl = config
-    .get('tradeImportsAnimalsFrontend.baseUrl')
-    .replace(/\/$/, '')
-  const path = entry.returnPathTemplate
+  const returnPath = entry.returnPathTemplate
     .replace('{notification-id}', encodeURIComponent(context.notificationId))
     .replace('{fulfilment-id}', encodeURIComponent(context.fulfilmentId))
 
-  const url = new URL(path, baseUrl)
+  // The journey frontend serves this journey's set under its own mount, not at
+  // the root, so the return URL is the set base URL plus the template's path.
+  const url = new URL(
+    `${buildSetBaseUrl(entry.baseUrlConfigKey, entry.setBase)}${returnPath}`
+  )
   if (context.handshakeToken) {
     url.searchParams.set('handshake-token', context.handshakeToken)
   }

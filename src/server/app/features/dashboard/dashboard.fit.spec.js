@@ -67,7 +67,7 @@ test.describe('dashboard', () => {
     const link = page.getByRole('link', { name: /View.*GBN-AG-26-000001/s })
     await expect(link).toHaveAttribute(
       'href',
-      'http://localhost:3000/notifications/GBN-AG-26-000001/notification-view'
+      'http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view'
     )
   })
 
@@ -80,7 +80,7 @@ test.describe('dashboard', () => {
     const link = page.getByRole('link', { name: /View.*GBN-AG-26-000002/s })
     await expect(link).toHaveAttribute(
       'href',
-      'http://localhost:3000/notifications/GBN-AG-26-000002'
+      'http://localhost:3000/live-animals/notifications/GBN-AG-26-000002'
     )
   })
 

@@ -13,6 +13,10 @@ describe('#serveStaticFiles', () => {
 
   describe('When secure context is disabled', () => {
     beforeEach(async () => {
+      // `initialize` runs the full plugin registration that `start` would,
+      // but binds no port — `server.inject` needs no listener. Starting for
+      // real made this the only test in the suite that could not run while
+      // the local stack held the configured port.
       server = await createServer()
       await server.initialize()
     })
