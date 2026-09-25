@@ -1,9 +1,3 @@
-/**
- * Checks that the workspace services ins talks to are reachable before a
- * workspace-backed E2E run.
- *
- * Exit 1 means the stack is down.
- */
 const probeTimeoutMs = 5_000
 
 const services = [

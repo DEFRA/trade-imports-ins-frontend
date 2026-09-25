@@ -11,14 +11,8 @@ export const TARGETS_FILE = new URL(
   import.meta.url
 )
 
-/** GET routes Lighthouse deliberately does not audit. Every entry is checked
- * against the live route table, so a stale reason fails the build rather than
- * quietly shrinking the audit. Empty today — every page the service registers
- * is audited. */
 export const SKIPPED = new Map()
 
-/** Query strings a route needs before it will render rather than redirect.
- * Empty today — every audited page renders on its path alone. */
 export const QUERY = new Map()
 
 const getPathsOf = (routes) =>
@@ -50,8 +44,6 @@ export const assertTargetsAreCurrent = (routes = allRoutes) => {
   }
 }
 
-/** The route paths this run will audit, still carrying `{id}` because the
- * address behind it is created by the setup step, not known here. */
 export const auditableRoutePaths = (routes = allRoutes) => {
   assertTargetsAreCurrent(routes)
   return getPathsOf(routes).filter((path) => !SKIPPED.has(path))
@@ -79,9 +71,6 @@ export const auditPaths = (addressId, routes = allRoutes) =>
 export const auditUrls = (origin, addressId, routes = allRoutes) =>
   auditPaths(addressId, routes).map((path) => new URL(path, origin).toString())
 
-/** The report filename a route earns, taken from the route path rather than
- * the URL so the seeded address id never reaches a filename. Reports then
- * overwrite their predecessor instead of piling up a fresh set on every run. */
 export const reportName = (routePath) => {
   const name = routePath
     .split('/')

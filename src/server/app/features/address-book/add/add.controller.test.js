@@ -220,8 +220,6 @@ describe.sequential('#addressBookAddController', () => {
   })
 
   test('POST with invalid data re-renders form with errors', async () => {
-    // No address-book interceptor: a request would be refused by nock and
-    // surface as a 500, not the 400 asserted here.
     const { result, statusCode, headers } = await server.inject({
       method: 'POST',
       url: ADD_ADDRESS_URL,

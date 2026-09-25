@@ -28,9 +28,6 @@ const featuresWithCopy = readdirSync(FEATURES_DIR, { withFileTypes: true })
     readdirSync(path.join(FEATURES_DIR, feature, 'copy')).includes('copy.en.js')
   )
 
-// String leaves that may legitimately be byte-identical across en and cy
-// (proper nouns, codes, reference formats). Keyed `${module}:${path}` —
-// every addition must be justified here.
 const IDENTICAL_ALLOWLIST = new Set([])
 
 const kindOf = (value) => (typeof value === 'function' ? 'function' : 'string')

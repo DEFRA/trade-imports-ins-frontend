@@ -11,9 +11,6 @@ const headers = () => ({
   [tracingHeader]: getTraceId() ?? ''
 })
 
-// Deliberately unscoped — no organisation header. The dashboard lists every
-// notification in the aggregated store until a later ticket persists
-// organisationId on a notification and can filter here.
 export const listNotifications = async ({
   page = 1,
   sort,

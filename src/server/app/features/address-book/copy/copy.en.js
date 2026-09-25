@@ -1,9 +1,3 @@
-/**
- * The address book — one copy module for the five pages. `form` is shared by
- * add and edit (the same Standard Address Block); `errors` carries the
- * validation messages `fields.js` hands to `lib/validate`, one namespace per
- * field so a message and its rule sit together.
- */
 export const copy = {
   list: {
     title: 'Address book',

@@ -1,21 +1,9 @@
 import { addDays, addMonths, isValid, parse } from 'date-fns'
 
-// Every Date here is midnight UTC, whatever the process timezone: the app runs
-// UTC, vitest forces TZ=UTC, but the Playwright drivers run on the developer's
-// clock, and a helper that quietly meant something different there would be
-// worse than useless. date-fns `addDays`/`addMonths` preserve wall-clock time,
-// so they hold that invariant and bring month-end clamping with them.
-// `startOfDay` and `format` do NOT — both normalise to local — so day starts
-// and formatting are done through the UTC accessors instead.
 const DATE_TEXT_FORMAT = 'd/M/yyyy'
 const DATE_TEXT_SHAPE = /^\d{1,2}\/\d{1,2}\/\d{4}$/
 const MONTHS_IN_YEAR = 12
 
-/**
- * @param {number} year
- * @param {number} month - 1-based (1 = January).
- * @param {number} day
- */
 export const isRealDate = (year, month, day) => {
   if (![year, month, day].every(Number.isInteger)) {
     return false
@@ -34,21 +22,11 @@ export const isRealDate = (year, month, day) => {
   )
 }
 
-/**
- * @param {Date} date
- * @returns {Date} Midnight UTC on the same calendar day.
- */
 export const startOfUtcDay = (date) =>
   new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
   )
 
-/**
- * @param {Date} date
- * @param {string} timeZone - An IANA zone name.
- * @returns {Date} Midnight UTC standing for the calendar day the instant falls
- * on in `timeZone`.
- */
 export const startOfDayInZone = (date, timeZone) => {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone,
@@ -63,37 +41,18 @@ export const startOfDayInZone = (date, timeZone) => {
   )
 }
 
-/**
- * @param {Date} date
- * @param {number} days - May be negative.
- * @returns {Date} Midnight UTC, `days` whole days away.
- */
 export const addUtcDays = (date, days) => addDays(startOfUtcDay(date), days)
 
-/**
- * `addMonths` clamps to the last day of the target month, so 31 August plus six
- * months is 28 February rather than the 3 March plain rollover would give.
- * @param {Date} date
- * @param {number} months - May be negative.
- * @returns {Date} Midnight UTC in the target month.
- */
 export const addUtcMonths = (date, months) =>
   addMonths(startOfUtcDay(date), months)
 
-/**
- * @param {string} raw - A `d/m/yyyy` or `dd/mm/yyyy` value, four-digit year.
- * @returns {Date|null} Midnight UTC, or null when the value is not a real date.
- */
 export const parseDateText = (raw) => {
   const text = String(raw ?? '').trim()
-  // date-fns reads `yyyy` as one to four digits, so without this guard
-  // `27/3/26` parses as the year 26 and slips under a `max` bound.
+  // date-fns reads `yyyy` as one to four digits, so without this guard `27/3/26` parses as year 26 and slips under a `max` bound.
   if (!DATE_TEXT_SHAPE.test(text)) {
     return null
   }
   const parsed = parse(text, DATE_TEXT_FORMAT, new Date())
-  // `parse` returns a local-time Date; the calendar day it names is what
-  // matters, so it is re-anchored at midnight UTC.
   return isValid(parsed)
     ? new Date(
         Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
@@ -101,10 +60,5 @@ export const parseDateText = (raw) => {
     : null
 }
 
-/**
- * The shape the MoJ date picker itself writes back when `leadingZeros` is unset.
- * @param {Date} date
- * @returns {string} `d/m/yyyy`, no leading zeros.
- */
 export const formatDateText = (date) =>
   `${date.getUTCDate()}/${date.getUTCMonth() + 1}/${date.getUTCFullYear()}`

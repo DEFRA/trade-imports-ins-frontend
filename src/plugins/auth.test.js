@@ -119,11 +119,6 @@ describe('auth plugin', () => {
   })
 
   test('register skips Bell and the OIDC fetch in stub mode, still enforcing session auth', async () => {
-    // Stub mode replaces the Defra ID round-trip, not authentication itself:
-    // stub-sign-in.js writes the session that the cookie strategy then checks,
-    // so the strategy and the default must still be in place. Reaching for the
-    // OIDC config would also fail outright — there is no identity provider
-    // configured in the environments stub mode is meant for.
     isStubModeMock.mockReturnValue(true)
     const server = buildServer()
 

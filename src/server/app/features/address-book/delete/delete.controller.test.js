@@ -133,8 +133,6 @@ describe('#addressBookDeleteController', () => {
   })
 
   test('POST returns 404 for soft-deleted tombstones without deleting', async () => {
-    // No DELETE interceptor: a delete would be refused by nock and surface as a
-    // 500, not the 404 asserted here.
     addressBookApi()
       .get(ADDRESS_PATH)
       .reply(200, { ...mockAddress, deleted: true })

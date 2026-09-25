@@ -1,24 +1,4 @@
-/*
- * Prints the npm spec pinned in package.json's `packageManager` field, e.g.
- * `npm@11.6.2`, for use as:
- *
- *   npm install --global "$(node scripts/npm-version.js)"
- *
- * `packageManager` is a Corepack field: it may carry a `+sha512...` integrity
- * suffix, and nothing guarantees it is present or names npm. Passed unchecked
- * to `npm install --global`, a suffixed value is not a valid spec, and a
- * missing one becomes the literal string `undefined` — a real package on the
- * registry, so the install would succeed and CI would carry on with whatever
- * npm it already had.
- *
- * Consumed by .github/workflows/{check-pull-request,publish,publish-hotfix,
- * lighthouse}.yml and by both install stages of the Dockerfile.
- *
- * This file and `packageManager` in package.json stay past the rest of the npm-pin
- * removal because `workflow_run`-triggered workflows (lighthouse.yml) run main's copy
- * against this branch, and main's copy still calls this script — both go once this
- * change lands on main.
- */
+// Unchecked, `packageManager`'s optional `+sha512` suffix or absence would silently install the literal package "undefined". This file stays past the npm-pin removal because `workflow_run`-triggered workflows still run main's copy of it against this branch.
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -37,7 +17,6 @@ if (typeof packageManager !== 'string' || packageManager === '') {
   fail('`packageManager` missing — it pins the npm CI and Docker install')
 }
 
-// Corepack permits `npm@1.2.3+sha512.abc...`; `npm install` rejects it.
 const [spec] = packageManager.split('+')
 
 if (!NPM_SPEC.test(spec)) {

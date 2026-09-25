@@ -111,7 +111,6 @@ describe('#addressBookViewController', () => {
     expect(result).toContain('14 Drover&#39;s Way')
     expect(result).toContain('Inverness')
     expect(result).toContain('IV2 3JH')
-    // Each field renders on its own row, not concatenated into a single address line.
     expect(result).not.toContain(
       '14 Drover&#39;s Way, Unit 2, Inverness, Highland, IV2 3JH'
     )
@@ -137,8 +136,6 @@ describe('#addressBookViewController', () => {
   })
 
   test('GET returns 404 for malformed address id without reaching the address book', async () => {
-    // No interceptor: the route's id validation must answer before the handler
-    // runs, otherwise the refused request would surface as a 500.
     const { statusCode } = await server.inject({
       method: 'GET',
       url: '/address-book/not-a-valid-id',

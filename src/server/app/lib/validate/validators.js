@@ -5,15 +5,11 @@ import { copyFor } from '../../shared/copy.js'
 import { validatorDefaults as en } from '../../shared/copy.en.js'
 import { validatorDefaults as cy } from '../../shared/copy.cy.js'
 
-// Default messages when a call site passes no feature message — sourced
-// from the shared copy module so they swap with the locale.
 const defaults = copyFor({ en, cy })
 
 const POSTCODE = /^[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}$/
 const VEHICLE_REG = /^[A-Za-z]{2}\d{2}\s?[A-Za-z]{3}$/
 const PHONE_ALLOWED = /^[0-9+()\-.,;\s]+$/
-// 24-hour clock, 00:00 to 23:59. A colon and two digits either side: the shape
-// the hint asks for, so nothing else has to be guessed at.
 const TIME_24_HOUR = /^([01]\d|2[0-3]):[0-5]\d$/
 const UK_PHONE_MIN_DIGITS = 7
 const UK_PHONE_MAX_DIGITS = 15
@@ -64,17 +60,8 @@ export const maxText = (name, max, message) =>
       .messages({ 'string.max': message ?? defaults.maxLength(max) })
   )
 
-/**
- * Save-blocking text with a length cap. One primitive rather than
- * `compose(requiredText, maxText)` because `maxText` allows the empty string,
- * and composing schemas merges that allowance onto the required rule — blank
- * would then pass. `requiredExactDigits` exists for the same reason.
- * @param {string} name
- * @param {number} max
- * @param {object} messages
- * @param {string} messages.required - Shown when the value is blank or absent.
- * @param {string} [messages.maxLength] - Shown when the value is over the cap.
- */
+// Not `compose(requiredText, maxText)`: composing schemas merges `maxText`'s
+// `.allow('')` onto the required rule, so blank would then pass.
 export const requiredMaxText = (name, max, messages) =>
   single(
     name,
@@ -89,20 +76,6 @@ export const requiredMaxText = (name, max, messages) =>
       })
   )
 
-/**
- * Save-blocking email address with a length cap. One primitive for the same
- * reason as `requiredMaxText`: a shape rule on its own allows the empty
- * string, and composing it onto a required rule would let blank pass. The
- * length rule runs before the shape rule, so an over-long value that is also
- * malformed is told about its length.
- * @param {string} name
- * @param {number} max
- * @param {object} messages
- * @param {string} messages.required - Shown when the value is blank or absent.
- * @param {string} [messages.maxLength] - Shown when the value is over the cap.
- * @param {string} messages.format - Shown when the value is not an email
- * address.
- */
 export const requiredEmail = (name, max, messages) =>
   single(
     name,
@@ -158,14 +131,6 @@ export const ukPhone = (name, message = defaults.ukPhone) =>
       })
   )
 
-/**
- * Save-blocking membership of an allow-list. An empty allow-list rejects every
- * value: `Joi.valid()` with no arguments leaves the `only` flag unset, so the
- * rule would otherwise degrade to any non-empty string.
- * @param {string} name
- * @param {readonly string[]} values - the values the field accepts.
- * @param {string} message - shown when the value is blank, absent or unknown.
- */
 export const requiredOneOf = (name, values, message) => {
   const required = Joi.string().trim().required()
   const membership =
@@ -215,21 +180,6 @@ export const integerInRange = (name, { min, max, message } = {}) =>
       })
   )
 
-/**
- * Save-blocking whole number in a range. A separate primitive rather than
- * `compose(requiredText, integerInRange)` because `integerInRange` allows the
- * empty string, and composing schemas merges that allowance onto the required
- * rule — blank would then pass. `requiredMaxText` exists for the same reason.
- * @param {string} name
- * @param {object} options
- * @param {number} [options.min] - Inclusive lower bound.
- * @param {number} [options.max] - Inclusive upper bound.
- * @param {object} options.messages
- * @param {string} options.messages.required - Shown when the value is blank or
- * absent.
- * @param {string} [options.messages.invalid] - Shown when the value is not a
- * whole number, and when it falls outside the bounds.
- */
 export const requiredIntegerInRange = (name, { min, max, messages }) =>
   single(
     name,
@@ -246,8 +196,6 @@ export const requiredIntegerInRange = (name, { min, max, messages }) =>
       })
   )
 
-// A date field's fill state: none of the three parts entered, some but not
-// all, or all three.
 const classifyDateFill = (filledCount, totalCount) => {
   if (filledCount === 0) {
     return 'empty'
@@ -306,20 +254,6 @@ const dateWithinBounds = (min, max) => (raw, helpers) => {
     : raw
 }
 
-/**
- * Blank passes, so the range rule never makes an optional field required.
- * @param {string} name
- * @param {object} [options]
- * @param {Date} [options.min] - Inclusive, and midnight UTC: the comparison is
- * on raw timestamps, so a `new Date()` carrying a time silently loses that day.
- * Build bounds with the `calendar.js` helpers.
- * @param {Date} [options.max] - Inclusive, midnight UTC, same contract.
- * @param {string} [options.invalidMessage] - Shown when the value is not a real
- * calendar date, and when the value is out of range but no `rangeMessage` is
- * given.
- * @param {string} [options.rangeMessage] - Shown when a real date falls outside
- * the bounds.
- */
 export const dateTextInRange = (
   name,
   { min, max, invalidMessage = defaults.date, rangeMessage } = {}
@@ -339,25 +273,6 @@ export const dateTextInRange = (
 export const dateText = (name, message = defaults.date) =>
   dateTextInRange(name, { invalidMessage: message })
 
-/**
- * Save-blocking date text, optionally bounded. A separate primitive rather than
- * `compose(requiredText, dateTextInRange)` because `dateTextInRange` allows the
- * empty string, and composing schemas merges that allowance onto the required
- * rule — blank would then pass. `requiredMaxText` and `requiredIntegerInRange`
- * exist for the same reason.
- * @param {string} name
- * @param {object} options
- * @param {Date} [options.min] - Inclusive, midnight UTC. Build bounds with the
- * `calendar.js` helpers; a `new Date()` carrying a time loses that whole day.
- * @param {Date} [options.max] - Inclusive, midnight UTC, same contract.
- * @param {object} options.messages
- * @param {string} options.messages.required - Shown when the value is blank or
- * absent.
- * @param {string} [options.messages.invalid] - Shown when the value is not a
- * real calendar date.
- * @param {string} [options.messages.range] - Shown when a real date falls
- * outside the bounds. Falls back to `invalid`.
- */
 export const requiredDateTextInRange = (name, { min, max, messages }) =>
   single(
     name,
@@ -373,15 +288,6 @@ export const requiredDateTextInRange = (name, { min, max, messages }) =>
       })
   )
 
-/**
- * Save-blocking time of day on the 24-hour clock. Required and format in one
- * primitive for the same reason as `requiredDateTextInRange`.
- * @param {string} name
- * @param {object} messages
- * @param {string} messages.required - Shown when the value is blank or absent.
- * @param {string} [messages.invalid] - Shown when the value is not a real
- * 24-hour time.
- */
 export const requiredTime = (name, messages) =>
   single(
     name,
@@ -396,6 +302,5 @@ export const requiredTime = (name, messages) =>
       })
   )
 
-/** Save-blocking date text without a date-window policy. */
 export const requiredDateText = (name, messages) =>
   requiredDateTextInRange(name, { messages })

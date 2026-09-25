@@ -78,11 +78,6 @@ const validatedSessionContext = (request) => {
   return fromSession
 }
 
-/**
- * The handshake a POST is acting on: the form's own hidden fields when they
- * are there, otherwise the one the GET stored. A journey type the registry no
- * longer knows is cleared rather than trusted.
- */
 export const resolveHandshakeContext = (request) => {
   const fromPayload = readHandshakePayload(request.payload)
   if (fromPayload) {
@@ -92,11 +87,6 @@ export const resolveHandshakeContext = (request) => {
   return validatedSessionContext(request)
 }
 
-/**
- * Brings the session into line with the GET that is being served: a handshake
- * query starts one, and a plain visit to the page ends any that was running,
- * so a trader who navigates here themselves is not returned to a journey.
- */
 export const syncHandshakeContext = (request) => {
   const fromQuery = readHandshakeQuery(request)
   if (fromQuery) {

@@ -6,10 +6,6 @@ import {
 const HTTP_OK = 200
 const HTTP_FOUND = 302
 
-/** The one address the audit reads the `{id}` pages on, named so a run finds
- * the record an earlier run created rather than adding another. Every field
- * is filled, the optional two included, so no field rule can be why the
- * address book refuses it. */
 export const SEED_ADDRESS = {
   name: 'Lighthouse seed address',
   addressLine1: '1 Audit Street',
@@ -30,8 +26,6 @@ export const addressIdIn = (href) => decodeURIComponent(href.split('/').at(-1))
 const isSeedLink = (link) =>
   link.find('.govuk-visually-hidden').text().trim() === SEED_ADDRESS.name
 
-/** The stub ignores the search and lists every row, so the row is matched by
- * name here rather than trusted to be the only one. */
 const seedLinkHref = ($) =>
   $('table a')
     .toArray()

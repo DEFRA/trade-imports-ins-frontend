@@ -207,8 +207,6 @@ describe('against the real address book', () => {
 
   describe('without an organisation', () => {
     test('Should refuse to reach the address book rather than ask for an organisation named "undefined"', async () => {
-      // No interceptor is defined and net connect is refused, so a request
-      // would reject with nock's own error, not the message matched here.
       const refusal = /without an organisation/
 
       await expect(addressBook.listAddresses(undefined)).rejects.toThrow(

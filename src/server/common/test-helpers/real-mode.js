@@ -4,8 +4,6 @@ import { afterAll, afterEach, beforeAll } from 'vitest'
 import { config } from '../../../config/config.js'
 import { statusCodes } from '../constants/status-codes.js'
 
-/** Refuses every outbound HTTP request that no nock interceptor answers, so a
- * test can never reach a service that happens to be running locally. */
 export const refuseOutboundHttp = () => {
   beforeAll(() => {
     nock.disableNetConnect()
@@ -20,8 +18,6 @@ export const refuseOutboundHttp = () => {
   })
 }
 
-/** Runs the enclosing describe against the real HTTP clients — the suite
- * default is stub mode (vitest.config.js) — with every request intercepted. */
 export const runInRealMode = () => {
   const originalStubMode = config.get('stubMode')
 
@@ -45,7 +41,6 @@ export const referenceDataApi = () =>
 export const insBackendApi = () =>
   nock(config.get('tradeImportsInsBackendApi.baseUrl'))
 
-/** Every request for the country list, for as long as the test runs. */
 export const serveCountries = (countries) =>
   referenceDataApi()
     .persist()

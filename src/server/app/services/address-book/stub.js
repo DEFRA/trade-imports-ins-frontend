@@ -1,21 +1,8 @@
 import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
 
-/**
- * In-memory stand-in for the real Address Book API, selected by STUB_MODE=true
- * (see mode.js). No network call, no Mongo - deterministic per organisationId
- * so specs stay isolated from each other without any cross-process seeding.
- *
- * Org id convention (a spec picks which by signing in with ?organisationId=...):
- *   *-empty      -> starts with zero addresses
- *   *-paginated  -> starts with 30 addresses (two pages at the real page size)
- *   anything else -> starts with a single seed address
- */
 const PAGE_SIZE = 25
 const PAGINATED_SEED_COUNT = 30
 
-// Every /address-book/{id} route validates its param as a Mongo ObjectId and
-// 404s on a mismatch (address-id-params.js), so stub ids have to be 24 hex
-// characters or the view, edit and delete pages are unreachable in stub mode.
 const OBJECT_ID_LENGTH = 24
 
 const store = new Map()

@@ -21,7 +21,6 @@ describe('#startOfUtcDay', () => {
 
 describe('#startOfDayInZone', () => {
   it('takes the London day, not the UTC one, in the hour they disagree', () => {
-    // 00:30 on 12 August in London is still 23:30 on the 11th in UTC.
     expect(
       startOfDayInZone(new Date('2026-08-11T23:30:00Z'), 'Europe/London')
     ).toEqual(utc(2026, 8, 12))

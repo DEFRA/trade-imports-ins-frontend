@@ -9,12 +9,6 @@ const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 const addressBookUrl = config.get('tradeImportsAddressBookApi.baseUrl')
 const tracingHeader = config.get('tracing.header')
 
-/** The organisation is part of the path, so a missing one does not fail — it
- * asks for an organisation literally named "undefined", which the address book
- * answers truthfully with an empty book. That reads as "this organisation has
- * saved no addresses", or on a resolve as "this address was deleted", when what
- * actually happened is that nobody was signed in. Refuse instead: a read with
- * no organisation is a bug in the caller, and it should say so. */
 const addressesUrl = (orgId, addressId) => {
   if (!orgId) {
     throw new Error(
@@ -25,10 +19,7 @@ const addressesUrl = (orgId, addressId) => {
   return addressId ? `${base}/${encodeURIComponent(addressId)}` : base
 }
 
-/** The organisation is the authorisation — the address book runs no in-service
- * authentication and trusts this header (see its IdentityHeaderFilter). It must
- * always come from the authenticated session, never a payload or a stored
- * field, and it must match the orgId in the path (cv-010). */
+// The organisation header is the authorisation — the address book trusts it with no further authentication (see its IdentityHeaderFilter). It must come only from the authenticated session, and must match the orgId in the path (cv-010).
 const headers = (orgId) => ({
   'Content-Type': 'application/json',
   [ORGANISATION_ID_HEADER]: orgId,

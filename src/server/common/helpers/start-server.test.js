@@ -6,8 +6,6 @@ vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-// Wrap createServer so server.start() calls initialize() instead of binding
-// to a port — inject() works after initialize(), no available port needed.
 vi.mock('../../server.js', async (importOriginal) => {
   const actual = await importOriginal()
   return {

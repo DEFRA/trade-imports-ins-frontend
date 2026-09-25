@@ -48,8 +48,6 @@ const signIn = async (request, h) => {
     contactId: DEFAULT_STUB_USER.contactId,
     name: DEFAULT_STUB_USER.name,
     email: DEFAULT_STUB_USER.email,
-    // Real Defra ID maps organisationId from currentRelationshipId; both
-    // are read downstream (organisationIdOf / buildActor).
     organisationId,
     currentRelationshipId: organisationId,
     role: 'Farmer',
@@ -60,16 +58,9 @@ const signIn = async (request, h) => {
 
   request.cookieAuth.set({ sessionId })
 
-  // Sanitised for the same reason the real handlers sanitise it: this route is
-  // unauthenticated and `redirect` comes off the query string, so an absolute
-  // URL would make sign-in a redirector to anywhere. The cookie strategy sends
-  // people here with a relative path, which survives unchanged.
   return h.redirect(getSafeRedirect(request.query.redirect))
 }
 
-/** The stub counterpart of the real sign-out: there is no identity provider
- * to send the browser to, so the session is dropped here and the caller lands
- * on the root. `mode: 'try'` so a caller with no session lands there too. */
 const signOut = async (request, h) => {
   if (request.auth.credentials?.sessionId) {
     await request.server.app.cache.drop(request.auth.credentials.sessionId)
@@ -78,14 +69,6 @@ const signOut = async (request, h) => {
   return h.redirect('/')
 }
 
-/** Both paths mint the same stub session.
- *
- * `/auth/sign-in` is registered as well as the explicit stub path because it is
- * what the rest of the service already points at — the session cookie's
- * `redirectTo` (plugins/auth.js) and the "try again" link on unauthorised.njk —
- * and in stub mode the real route that would serve it is not registered at all
- * (server.js swaps authRoutes for this plugin), so an unauthenticated request
- * would otherwise be redirected to a 404 instead of being signed in. */
 const SIGN_IN_PATHS = ['/auth/stub-sign-in', '/auth/sign-in']
 const SIGN_OUT_PATH = '/auth/sign-out'
 
@@ -94,8 +77,7 @@ const SIGN_OUT_PATH = '/auth/sign-out'
  * (see mode.js / plugins/auth.js). Auth is still enforced everywhere else -
  * this only produces the same end state the real sign-in-oidc handler does
  * (cached session + session cookie), signed locally rather than verified
- * against a real identity provider, and ends it at the same sign-out path the
- * layout links.
+ * against a real identity provider.
  */
 export const stubSignInRoutes = {
   plugin: {

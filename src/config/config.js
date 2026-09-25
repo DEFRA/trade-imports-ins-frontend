@@ -14,7 +14,7 @@ const isProduction = env === 'production'
 const isTest = env === 'test'
 const isDevelopment = env === 'development'
 const isLocal = isDevelopment || isTest
-const isPlatform = !isLocal // Deployed to CDP platform
+const isPlatform = !isLocal
 
 const authCookieSameSite = 'Lax'
 const csrfEnabled = !isTest
@@ -25,9 +25,7 @@ const STRICT_BOOLEAN = 'strict-boolean'
 
 // convict's built-in Boolean format coerces any string other than exactly
 // 'false' to true (e.g. a typo like 'flase' silently enables the flag), so
-// every env-backed boolean uses this stricter format instead - it only
-// accepts an actual boolean, or the literal strings 'true'/'false' from an
-// env var, and fails config.validate() on anything else.
+// every env-backed boolean uses this stricter format instead.
 convict.addFormat({
   name: STRICT_BOOLEAN,
   validate(val) {

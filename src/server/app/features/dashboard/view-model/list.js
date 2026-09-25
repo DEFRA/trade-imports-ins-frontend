@@ -23,11 +23,6 @@ export function formatDisplayDate(value) {
   return isValid(date) ? format(date, LIST_DATE_FORMAT) : ''
 }
 
-/**
- * Builds a query string carrying the dashboard's current state (sort,
- * referenceNumber, page) so search/sort/pagination round-trip each other's
- * state rather than clobbering it.
- */
 export function buildDashboardQueryString({
   page,
   sort,
@@ -59,7 +54,6 @@ const pageRange = ({ page, size, totalElements, totalPages }) => {
   }
 }
 
-/** The results range for the current page, in the copy's words, or null with no results. */
 export function buildResultsLabel(pagination, formatLabel) {
   if (pagination.totalElements < 1) {
     return null
@@ -68,7 +62,6 @@ export function buildResultsLabel(pagination, formatLabel) {
   return formatLabel(from, to, count)
 }
 
-/** Builds numbered govukPagination links from the backend's pagination metadata. */
 export function buildPaginationLinks(
   pagination,
   { sort, referenceNumber } = {}
@@ -93,17 +86,6 @@ export function buildPaginationLinks(
   }
 }
 
-/**
- * The journey frontend that owns a notification is addressable by its
- * reference number — trade-imports-animals-frontend's `journeyId` route
- * param is, in practice, that same reference number, and the target routes
- * resolve a fresh request with no session state. SUBMITTED notifications
- * have a read-only view page; DRAFT and AMEND resume at the hub, matching
- * that app's own row-action logic.
- *
- * Single-journey only: there is nothing on a notification yet that says
- * which journey owns it (see EUDPA-306 plan, "Deferred to caller ticket").
- */
 export function buildNotificationLink(status, referenceNumber) {
   const setUrl = buildLiveAnimalsSetUrl()
   const encodedReference = encodeURIComponent(referenceNumber)
@@ -112,17 +94,10 @@ export function buildNotificationLink(status, referenceNumber) {
     : `${setUrl}/notifications/${encodedReference}`
 }
 
-/**
- * Links at the live-animals set base rather than the journey frontend's root.
- * That frontend does redirect its root to the default set, but naming the set
- * keeps the link correct once a second set is the default — and costs the
- * trader nothing.
- */
 export function buildStartNewNotificationLink() {
   return buildLiveAnimalsSetUrl()
 }
 
-/** The live-animals set's own base URL on the journey frontend. */
 const buildLiveAnimalsSetUrl = () =>
   buildSetBaseUrl('tradeImportsAnimalsFrontend.baseUrl', SET_BASES.LIVE_ANIMALS)
 

@@ -1,9 +1,3 @@
-/**
- * The dashboard — the notifications an organisation has made, searchable by
- * reference and sortable by arrival or last update. `sort.options` is keyed
- * by the `copyKey` of each `SORT_OPTIONS` entry in `view-model/list.js`, so a
- * new sort arrives as one more leaf rather than a branch in the controller.
- */
 export const copy = {
   title: 'Dashboard',
   search: {

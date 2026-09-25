@@ -19,16 +19,6 @@ const manifestPath = path.join(
 
 let webpackManifest
 
-/**
- * Which service-navigation item the current request sits under, so the layout
- * can mark it active. Section-wide, not page-wide: every address-book page is
- * inside the address book's section of the service, which is why the answer
- * for `/address-book/123/edit` is still `addressBook`.
- *
- * @param {string} [requestPath] - the request path.
- * @returns {string|null} the id of the active navigation item, or null when the
- * request is under none of them.
- */
 export function activeNavigationItem(requestPath = '') {
   if (inDashboardSection(requestPath)) {
     return 'dashboard'
@@ -48,8 +38,6 @@ async function context(request) {
     }
   }
 
-  // If the user is authenticated, add the user's details to the view context
-  // This allows the view to display the user's session details and the ability to conditionally render content
   const sessionId = request.auth?.credentials?.sessionId
   const authData = sessionId
     ? await request.server.app.cache.get(sessionId)

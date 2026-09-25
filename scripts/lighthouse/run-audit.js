@@ -47,8 +47,6 @@ const renameTo = (from, filename) => {
   return to
 }
 
-/** Drops the previous run's reports, so everything left afterwards is what this
- * run produced and a stale manifest cannot be mistaken for a fresh one. */
 const clearPreviousReports = () => {
   if (!existsSync(REPORT_DIR)) {
     return
@@ -60,10 +58,6 @@ const clearPreviousReports = () => {
   }
 }
 
-/** LHCI names each report after the URL's pathname, which carries the seeded
- * address id and so changes every run. Renaming to the route's own name — and
- * rewriting the manifest the publish steps read — keeps one report per page
- * however many times the audit runs. */
 const useStableReportNames = () => {
   const { reports = {} } = JSON.parse(readFileSync(TARGETS_FILE, 'utf8'))
   const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'))

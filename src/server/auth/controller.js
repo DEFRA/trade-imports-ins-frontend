@@ -98,10 +98,6 @@ export const authController = {
       if (!request.auth.isAuthenticated) {
         return h.redirect('/')
       }
-      // Drop the session locally at sign-out initiation rather than relying on
-      // the OIDC provider redirecting back to /auth/sign-out-oidc. The provider
-      // round-trip is not guaranteed (Entra/CDP-WAF reject an id_token_hint that
-      // exceeds the querystring limit), so the local session must be cleared here.
       if (request.auth.credentials?.sessionId) {
         await request.server.app.cache.drop(request.auth.credentials.sessionId)
       }
@@ -134,9 +130,6 @@ export const authController = {
         )
       }
 
-      // Already signed out: land back in the app rather than bouncing to the
-      // provider again, which would loop when the provider honours
-      // post_logout_redirect_uri without an id_token_hint.
       return h.redirect('/')
     }
   },

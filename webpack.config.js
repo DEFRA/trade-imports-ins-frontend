@@ -71,8 +71,6 @@ export default {
           extends: path.join(dirname, 'babel.config.cjs'),
           presets: [['@babel/preset-env']]
         },
-
-        // Flag loaded modules as side effect free
         sideEffects: false
       },
       {
@@ -134,25 +132,15 @@ export default {
     minimizer: [
       new TerserPlugin({
         terserOptions: {
-          // Use webpack default compress options
-          // https://webpack.js.org/configuration/optimization/#optimizationminimizer
           compress: { passes: 2 },
-
-          // Allow Terser to remove @preserve comments
           format: { comments: false },
-
-          // Include sources content from dependency source maps
           sourceMap: {
             includeSources: true
           },
-
-          // Compatibility workarounds
           safari10: true
         }
       })
     ],
-
-    // Skip bundling unused modules
     providedExports: true,
     sideEffects: true,
     usedExports: true

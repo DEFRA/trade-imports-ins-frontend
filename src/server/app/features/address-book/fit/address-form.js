@@ -2,12 +2,6 @@ import { expect } from '@playwright/test'
 
 import { FIELD_RULES } from '../fields.js'
 
-/**
- * Shared fixture for the address form specs. Add and edit render the same
- * Standard Address Block against the same schema (fields.js), so the
- * labels, the valid payload and both validation tables are common to them.
- */
-
 export const NAME_LABEL = 'Name or organisation name'
 const ADDRESS_LINE_1_LABEL = 'Address line 1'
 const TOWN_OR_CITY_LABEL = 'Town or city'
@@ -58,18 +52,6 @@ export async function fillValidAddress(page, overrides = {}) {
 export const errorLink = (page, message) =>
   page.getByRole('alert').getByRole('link', { name: message })
 
-/**
- * Follows an error-summary link and asserts the GDS error pattern held - the
- * form stayed put, focus moved to the offending field, and what was typed
- * survived the round trip.
- *
- * @param {import('@playwright/test').Page} page
- * @param {object} options
- * @param {string} options.message - Error text, as it appears in the summary
- * @param {string} options.label - Label of the field the summary links to
- * @param {string} options.expectedValue - Value that field should still hold
- * @param {RegExp} options.url - URL the form should have stayed on
- */
 export async function expectErrorFocusOn(
   page,
   { message, label, expectedValue, url }
@@ -83,8 +65,6 @@ export async function expectErrorFocusOn(
   await expect(control).toHaveValue(expectedValue)
 }
 
-// [field, label, "enter a ..." error]. Address Line 2 and County are optional
-// - deliberately excluded.
 export const requiredValidations = [
   ['name', NAME_LABEL, 'Enter a name'],
   ['addressLine1', ADDRESS_LINE_1_LABEL, 'Enter address line 1'],
@@ -95,8 +75,6 @@ export const requiredValidations = [
   ['email', EMAIL_LABEL, 'Enter an email address']
 ]
 
-// [field, label, maxLength, "must be N characters or fewer" error] - every
-// field with a stated max length, mandatory or not, matching fields.js.
 export const maxLengthValidations = [
   [
     'name',

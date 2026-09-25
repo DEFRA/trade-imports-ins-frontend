@@ -28,9 +28,6 @@ const signedInCookies = async () => {
   }
 }
 
-/** Every URL is fetched once more before Lighthouse sees it, so a page that
- * redirects or 404s — a seeded address the book no longer holds, say — fails
- * here with its status rather than silently auditing whatever it landed on. */
 const assertUrlsRenderTheirOwnPage = async (urls, client) => {
   const failures = []
   for (const url of urls) {

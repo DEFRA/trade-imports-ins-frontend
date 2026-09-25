@@ -1,8 +1,4 @@
-/**
- * In-memory stand-in for the INS backend's address lookup, selected by
- * `STUB_MODE=true` (see mode.js). Holds the same three addresses as
- * trade-imports-stub's address lookup simulator.
- */
+// In-memory stand-in for the INS backend's address lookup, selected by STUB_MODE=true (see mode.js). Holds the same three addresses as trade-imports-stub's address lookup simulator.
 const DEFAULT_POSTCODE = 'SW1A 1AA'
 
 const RESULTS = [

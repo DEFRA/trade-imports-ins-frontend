@@ -35,8 +35,6 @@ const STATUS_PATH = '/address-book/{id}/status'
 
 const withRoute = (path) => [...allRoutes, { method: 'GET', path }]
 
-/** The two maps are empty until a page needs them, so a test registers the
- * entries it needs for its own length and takes them back out again. */
 const withEntries = (map, entries, run) => {
   for (const [key, value] of entries) {
     map.set(key, value)

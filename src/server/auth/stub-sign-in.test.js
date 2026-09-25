@@ -6,11 +6,6 @@ import { stubSignInRoutes } from './stub-sign-in.js'
 const HTTP_STATUS_FOUND = 302
 const COOKIE_PASSWORD = 'stub-sign-in-test-cookie-password-32-chars-long'
 
-/** The plugin needs two things the real server provides: a session cache to
- * write into and drop from, and the cookie strategy that decorates
- * `request.cookieAuth` and reads a session back from the cookie. A Map stands
- * in for the cache; the strategy is the real one, validating against that Map,
- * so a sign-in's cookie signs the next request in and a sign-out clears it. */
 const buildServer = async () => {
   const server = Hapi.server()
   const cached = new Map()
@@ -47,9 +42,6 @@ describe('stub sign-in', () => {
   test.each(['/auth/stub-sign-in', '/auth/sign-in'])(
     'Should mint a session at %s',
     async (path) => {
-      // Both paths sign the caller in. /auth/sign-in matters because it is where
-      // the session cookie and the unauthorised page already send people, and in
-      // stub mode the real route that would serve it is not registered.
       const { server, cached } = await buildServer()
 
       const response = await server.inject({ method: 'GET', url: path })
@@ -61,7 +53,6 @@ describe('stub sign-in', () => {
       expect(session.isAuthenticated).toBe(true)
       expect(session.contactId).toBe(2100010101)
       expect(session.organisationId).toBe('stub-org-1')
-      // Real Defra ID carries both keys and different readers use each.
       expect(session.currentRelationshipId).toBe('stub-org-1')
     }
   )
@@ -79,11 +70,6 @@ describe('stub sign-in', () => {
     expect(session.currentRelationshipId).toBe('5900002')
   })
 
-  /** Where sign-in sends the caller afterwards. The route is unauthenticated and
-   * `redirect` is attacker-supplied, so only a relative path is honoured — the
-   * shape the session cookie's own redirectTo produces. An absolute URL would
-   * turn sign-in into an open redirector, so it falls back to the root, as does
-   * a request that names no destination at all. */
   test.each([
     {
       case: 'returns to the page the caller was sent here from',

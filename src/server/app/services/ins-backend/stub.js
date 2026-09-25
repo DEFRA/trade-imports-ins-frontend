@@ -1,9 +1,3 @@
-/**
- * In-memory stand-in for the real INS Backend API, selected by STUB_MODE=true
- * (see mode.js). The dashboard is deliberately unscoped to an organisation,
- * so — unlike the address-book stub — there is a single fixed dataset
- * rather than one keyed per organisation.
- */
 const PAGE_SIZE = 25
 const DELETED_STATUS = 'DELETED'
 

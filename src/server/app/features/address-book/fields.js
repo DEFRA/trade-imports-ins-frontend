@@ -42,13 +42,6 @@ const requiredTextRule = (field) =>
 const optionalTextRule = (field) =>
   maxText(field, maxLengthOf(field), maxLengthMessageFor(field))
 
-/**
- * The Standard Address Block rules, composed in the order the form asks the
- * fields — the order the error summary lists them in.
- *
- * @param {readonly string[]} countryCodes - the alpha-2 codes the country
- * select offers; anything else is refused as if blank.
- */
 export const addressRules = (countryCodes) =>
   compose(
     requiredTextRule('name'),

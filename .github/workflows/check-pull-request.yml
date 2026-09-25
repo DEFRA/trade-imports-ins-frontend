@@ -47,13 +47,6 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # Deliberately a separate job from pr-validator. `npm audit` scans the whole
-  # installed tree against a live advisory feed, so a newly published advisory
-  # turns every open PR red regardless of what that PR changed — and advisories
-  # on indirect dependencies often have no upgrade path, needing a hand-written
-  # `overrides` entry on main to clear. Folded into pr-validator, that failure
-  # mode blocks the very PR carrying the fix. Kept separate, the audit stays
-  # visible on every PR without being the check that gates the merge.
   security-audit:
     name: Security audit
     runs-on: ubuntu-latest
@@ -73,12 +66,6 @@ jobs:
       - name: Security audit
         run: npm run security-audit
 
-  # The frontend owns two Playwright projects — `smoke` and `features` — which
-  # boot the app themselves with STUB_MODE=true: stub data and a locally signed
-  # session in place of the Defra ID round-trip, auth still enforced (see
-  # src/server/auth/stub-sign-in.js), so they need no workspace stack. Kept out
-  # of pr-validator so a browser run does not sit in front of the rest of the
-  # PR checks.
   playwright:
     name: FIT Tests
     runs-on: ubuntu-latest
@@ -96,7 +83,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Chromium only: both projects use devices['Desktop Chrome'].
       - name: Install the Playwright browser
         run: npm run playwright:install
 

@@ -58,11 +58,6 @@ const buildView = (
 const loadCountryItems = async () =>
   countryItemsOf(await getAddressFormCountries())
 
-/**
- * Where the trader goes once the address is saved. A trader who arrived
- * through a journey handshake is returned to the journey that sent them,
- * carrying the new address; anyone else goes back to their address book.
- */
 const redirectAfterAdd = (h, handshake, created) =>
   handshake
     ? h.redirect(buildReturnUrl(handshake, { addressId: created.id }))

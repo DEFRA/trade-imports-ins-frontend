@@ -1,9 +1,3 @@
-// Logs in via the Defra ID stub before each Lighthouse audit.
-// The stub form uses name="crn" / name="password"; with a single-org user
-// (2100010101) the stub auto-selects the org and redirects back to the frontend.
-// Sign-in is needed on the first URL only: after that the browser lands on the
-// frontend rather than the stub, so waiting for the form would cost the full
-// timeout on every remaining page.
 const SIGN_IN_TIMEOUT_MS = 10000
 
 const signInForm = (page, url) => {
