@@ -110,11 +110,12 @@ as its `ins` Playwright project:
 against the workspace stack or CDP. A cross-repo change must use the same branch name in every
 repository it touches.
 
-This repository has no delegating `e2e-tests.yml` workflow.
-`check-pull-request.yml`'s two jobs — `pr-validator` and `FIT Tests` — are
-the checks a pull request shows, so a PR here proves unit, format, lint,
-coverage and the FIT suite, and nothing more. Say so plainly rather than
-implying E2E ran.
+`.github/workflows/e2e-tests.yml` delegates to the workspace's reusable
+`e2e-tests.yml` once the branch image is published, passing its branch name
+and the `ins` project, then reports an `E2E Tests` check back to the pull
+request. It runs only the `ins` project's specs. `check-pull-request.yml`'s
+two jobs — `pr-validator` and `FIT Tests` — remain the source for unit,
+format, lint, coverage and the FIT suite.
 
 ## Architecture and formatting
 
