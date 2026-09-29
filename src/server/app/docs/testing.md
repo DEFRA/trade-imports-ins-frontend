@@ -104,11 +104,10 @@ answer `/health`.
 
 Multi-service coverage does not live in this repository. It belongs in
 the shared tests repository
-[`DEFRA/trade-imports-animals-tests`](https://github.com/DEFRA/trade-imports-animals-tests),
+[`DEFRA/trade-imports-ins-tests`](https://github.com/DEFRA/trade-imports-ins-tests),
 as its `ins` Playwright project:
-`tests/e2e/features/ins/*.spec.ts` and
-`tests/security/ins/address-book.spec.ts`, run against the workspace
-stack or CDP. A cross-repo change must use the same branch name in every
+`tests/ins/e2e/**/*.spec.ts` and `tests/ins/security/**/*.spec.ts`, run
+against the workspace stack or CDP. A cross-repo change must use the same branch name in every
 repository it touches.
 
 This repository has no delegating `e2e-tests.yml` workflow.

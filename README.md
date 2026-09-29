@@ -23,7 +23,7 @@ also serves `/address-book` with `add`, `{id}`, `{id}/edit` and
 [The served surface](src/server/app/docs/README.md#the-served-surface).
 
 Deployed end-to-end tests for this service live in the shared tests
-repository `trade-imports-animals-tests`, as its `ins` Playwright project
+repository `trade-imports-ins-tests`, as its `ins` Playwright project
 — see
 [Deployed end-to-end tests](src/server/app/docs/testing.md#deployed-end-to-end-tests).
 
