@@ -86,7 +86,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",
-    "@babel/preset-env": "8.0.2",
+    "@babel/preset-env": "8.0.6",
     "@defra/hapi-connect": "1.0.1",
     "@lhci/cli": "0.15.1",
     "@playwright/test": "1.63.0",
