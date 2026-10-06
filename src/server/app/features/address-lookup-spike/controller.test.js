@@ -91,7 +91,7 @@ const lookupByPostcode = (postcode) =>
 
 const lookupByFind = (find) => insBackendApi().get(LOOKUP_PATH).query({ find })
 
-describe.sequential('#addressLookupSpikeController', () => {
+describe('#addressLookupSpikeController', { concurrent: false }, () => {
   let server
 
   runInRealMode()
@@ -265,8 +265,9 @@ describe.sequential('#addressLookupSpikeController', () => {
   })
 })
 
-describe.sequential(
+describe(
   '#addressLookupSpikeController — choosing and errors',
+  { concurrent: false },
   () => {
     let server
 
