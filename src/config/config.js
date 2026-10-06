@@ -9,6 +9,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
+const SERVICE_NAME = 'trade-imports-ins-frontend'
 
 const isProduction = env === 'production'
 const isTest = env === 'test'
@@ -73,7 +74,7 @@ export const config = convict({
   serviceName: {
     doc: 'Applications Service Name',
     format: String,
-    default: 'trade-imports-ins-frontend'
+    default: SERVICE_NAME
   },
   root: {
     doc: 'Project root',
@@ -378,7 +379,7 @@ export const config = convict({
     namespace: {
       doc: 'CloudWatch namespace the service publishes its own metrics to',
       format: String,
-      default: 'trade-imports-ins-frontend',
+      default: SERVICE_NAME,
       env: 'AWS_EMF_NAMESPACE'
     }
   },
