@@ -1,10 +1,14 @@
-import neostandard from 'neostandard'
+import { globalIgnores } from 'eslint/config'
+import { neostandard, resolveIgnoresFromGitignore } from 'neostandard'
 import sonarjs from 'eslint-plugin-sonarjs'
 
 export default [
+  // neostandard 0.14 scopes its `ignores` to its own layers, so gitignored
+  // paths (.public bundles, coverage reports) need a global ignore here.
+  globalIgnores(resolveIgnoresFromGitignore()),
   ...neostandard({
     env: ['node', 'vitest'],
-    ignores: [...neostandard.resolveIgnoresFromGitignore()],
+    ignores: resolveIgnoresFromGitignore(),
     noJsx: true,
     noStyle: true
   }),
