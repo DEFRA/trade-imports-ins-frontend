@@ -84,7 +84,7 @@
     "pino-pretty": "13.2.0"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.12.1",
+    "@axe-core/playwright": "4.13.0",
     "@babel/preset-env": "8.0.6",
     "@lhci/cli": "0.15.1",
     "@playwright/test": "1.63.0",
