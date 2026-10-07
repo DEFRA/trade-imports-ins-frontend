@@ -48,7 +48,7 @@ const handshakeFields = {
 }
 const RETURN_URL = `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value`
 
-describe.sequential('#addressBookAddController', () => {
+describe('#addressBookAddController', { concurrent: false }, () => {
   let server
 
   runInRealMode()
@@ -262,116 +262,120 @@ describe.sequential('#addressBookAddController', () => {
   })
 })
 
-describe.sequential('#addressBookAddController — journey handshake', () => {
-  let server
+describe(
+  '#addressBookAddController — journey handshake',
+  { concurrent: false },
+  () => {
+    let server
 
-  runInRealMode()
+    runInRealMode()
 
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  beforeEach(() => {
-    config.set('csrf.enabled', false)
-    config.set('tradeImportsAnimalsFrontend.baseUrl', ANIMALS_BASE_URL)
-    serveCountries(mockCountries)
-  })
-
-  test('GET arriving through a journey handshake carries the journey forward in hidden fields and the cancel label', async () => {
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: `/address-book/add${HANDSHAKE_QUERY}`,
-      auth: sessionAuth('add-get-handshake')
+    beforeAll(async () => {
+      server = await createServer()
+      await server.initialize()
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toContain('Add address details')
-    expect(result).toContain('name="journey-type"')
-    expect(result).toContain('value="gbn-ag"')
-    expect(result).toContain('name="notification-id"')
-    expect(result).toContain('name="fulfilment-id"')
-    expect(result).toContain('name="handshake-token"')
-    expect(result).toContain('Cancel and return to address page')
-    expect(result).not.toContain('Cancel and return to address book')
-  })
-
-  test('GET refuses an unrecognised journey type', async () => {
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url: '/address-book/add?journey-type=not-a-journey&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value',
-      auth: sessionAuth('add-get-unknown-journey')
+    afterAll(async () => {
+      await server.stop({ timeout: 0 })
     })
 
-    expect(statusCode).toBe(statusCodes.notFound)
-  })
-
-  test('GET rejects an incomplete handshake query', async () => {
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url: '/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P',
-      auth: sessionAuth('add-get-incomplete-handshake')
+    beforeEach(() => {
+      config.set('csrf.enabled', false)
+      config.set('tradeImportsAnimalsFrontend.baseUrl', ANIMALS_BASE_URL)
+      serveCountries(mockCountries)
     })
 
-    expect(statusCode).toBe(statusCodes.badRequest)
-  })
-
-  test('POST from a handshake returns to the journey with the new address id and no address-book banner', async () => {
-    const scope = addressBookApi().post(ADDRESSES_PATH).reply(201, {
-      id: '665f1c2ab3e4d51a2c9d0e77',
-      name: BUSINESS_NAME
-    })
-
-    const { statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-handshake'),
-      payload: { ...handshakeFields, ...validPayload }
-    })
-
-    expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toBe(
-      `${RETURN_URL}&addressId=665f1c2ab3e4d51a2c9d0e77`
-    )
-    expect(scope.isDone()).toBe(true)
-  })
-
-  test('POST from a handshake keeps the journey on the form when the API rejects the address', async () => {
-    addressBookApi()
-      .post(ADDRESSES_PATH)
-      .reply(statusCodes.badRequest, {
-        type: 'https://api.cdp.defra.cloud/problems/validation-error',
-        errors: {
-          email: [EMAIL_FORMAT_ERROR]
-        }
+    test('GET arriving through a journey handshake carries the journey forward in hidden fields and the cancel label', async () => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/address-book/add${HANDSHAKE_QUERY}`,
+        auth: sessionAuth('add-get-handshake')
       })
 
-    const { result, statusCode } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-handshake-api-400'),
-      payload: { ...handshakeFields, ...validPayload }
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Add address details')
+      expect(result).toContain('name="journey-type"')
+      expect(result).toContain('value="gbn-ag"')
+      expect(result).toContain('name="notification-id"')
+      expect(result).toContain('name="fulfilment-id"')
+      expect(result).toContain('name="handshake-token"')
+      expect(result).toContain('Cancel and return to address page')
+      expect(result).not.toContain('Cancel and return to address book')
     })
 
-    expect(statusCode).toBe(statusCodes.badRequest)
-    expect(result).toContain(EMAIL_FORMAT_ERROR)
-    expect(result).toContain('name="handshake-token"')
-    expect(result).toContain('Cancel and return to address page')
-  })
+    test('GET refuses an unrecognised journey type', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/address-book/add?journey-type=not-a-journey&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value',
+        auth: sessionAuth('add-get-unknown-journey')
+      })
 
-  test('Cancel from a handshake returns to the journey without creating an address', async () => {
-    const { statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-handshake-cancel'),
-      payload: { cancel: 'true', ...handshakeFields }
+      expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toBe(RETURN_URL)
-  })
-})
+    test('GET rejects an incomplete handshake query', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P',
+        auth: sessionAuth('add-get-incomplete-handshake')
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('POST from a handshake returns to the journey with the new address id and no address-book banner', async () => {
+      const scope = addressBookApi().post(ADDRESSES_PATH).reply(201, {
+        id: '665f1c2ab3e4d51a2c9d0e77',
+        name: BUSINESS_NAME
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: ADD_ADDRESS_URL,
+        auth: sessionAuth('add-post-handshake'),
+        payload: { ...handshakeFields, ...validPayload }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirectFound)
+      expect(headers.location).toBe(
+        `${RETURN_URL}&addressId=665f1c2ab3e4d51a2c9d0e77`
+      )
+      expect(scope.isDone()).toBe(true)
+    })
+
+    test('POST from a handshake keeps the journey on the form when the API rejects the address', async () => {
+      addressBookApi()
+        .post(ADDRESSES_PATH)
+        .reply(statusCodes.badRequest, {
+          type: 'https://api.cdp.defra.cloud/problems/validation-error',
+          errors: {
+            email: [EMAIL_FORMAT_ERROR]
+          }
+        })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: ADD_ADDRESS_URL,
+        auth: sessionAuth('add-post-handshake-api-400'),
+        payload: { ...handshakeFields, ...validPayload }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(EMAIL_FORMAT_ERROR)
+      expect(result).toContain('name="handshake-token"')
+      expect(result).toContain('Cancel and return to address page')
+    })
+
+    test('Cancel from a handshake returns to the journey without creating an address', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: ADD_ADDRESS_URL,
+        auth: sessionAuth('add-post-handshake-cancel'),
+        payload: { cancel: 'true', ...handshakeFields }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirectFound)
+      expect(headers.location).toBe(RETURN_URL)
+    })
+  }
+)

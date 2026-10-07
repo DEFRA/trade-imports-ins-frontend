@@ -108,8 +108,8 @@ entry module under `src/client/javascripts/`, name it as an `entry` in
 Write `controller.test.js` in the shape of
 [`add/add.controller.test.js`](../features/address-book/add/add.controller.test.js):
 
-- `vi.mock` of `get-oidc-config.js`, `describe.sequential`,
-  `runInRealMode()`.
+- `vi.mock` of `get-oidc-config.js`, `runInRealMode()`, and
+  `describe(name, { concurrent: false }, fn)`.
 - `createServer()` and `initialize()` in `beforeAll`; `server.stop({
 timeout: 0 })` in `afterAll`.
 - `config.set('csrf.enabled', false)` and `serveCountries(...)` in
