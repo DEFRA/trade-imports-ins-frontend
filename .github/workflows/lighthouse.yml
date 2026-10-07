@@ -80,6 +80,12 @@ jobs:
         run: npm ci
         working-directory: frontend
 
+      # .npmrc sets ignore-scripts=true, so puppeteer's postinstall never
+      # downloads Chrome during npm ci; the seed script needs it to sign in.
+      - name: Install Chrome for Puppeteer
+        run: npx puppeteer browsers install chrome
+        working-directory: frontend
+
       - name: Run Lighthouse CI
         id: lhci
         run: npm run lighthouse
