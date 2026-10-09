@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../config/config.js'
 import { refuseOutboundHttp } from '../../common/test-helpers/real-mode.js'
+import { countries as CAPTURED_COUNTRIES } from './_capture/fixtures.js'
 
 const getTraceIdMock = vi.hoisted(() => vi.fn())
 
@@ -14,12 +15,6 @@ const REFERENCE_DATA_URL = config.get('tradeImportsReferenceDataApi.baseUrl')
 const TRACING_HEADER = config.get('tracing.header')
 const TRACE_ID = 'trace-123'
 const ZEDLAND = { code: 'ZZ', name: 'Zedland' }
-const STUB_SEED = [
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'FR', name: 'France' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'IE', name: 'Ireland' }
-]
 const originalMode = process.env.STUB_MODE
 const COUNTRIES_PATH = '/countries'
 
@@ -84,10 +79,12 @@ describe('countries service', () => {
   })
 
   describe('in stub mode', () => {
-    test('Should serve the seeded stub list through getCountries', async () => {
+    test('Should serve the captured reference-data list through getCountries', async () => {
       const countries = await importCountriesIn('true')
 
-      await expect(countries.getCountries()).resolves.toEqual(STUB_SEED)
+      await expect(countries.getCountries()).resolves.toEqual(
+        CAPTURED_COUNTRIES
+      )
     })
 
     test('Should short-circuit ensureLoaded and never call reference data', async () => {
@@ -96,7 +93,9 @@ describe('countries service', () => {
 
       await countries.ensureLoaded()
 
-      await expect(countries.getCountries()).resolves.toEqual(STUB_SEED)
+      await expect(countries.getCountries()).resolves.toEqual(
+        CAPTURED_COUNTRIES
+      )
       expect(scope.isDone()).toBe(false)
     })
   })
