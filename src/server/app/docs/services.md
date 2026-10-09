@@ -45,12 +45,15 @@ ObjectId.
 ### countries
 
 [`index.js`](../services/countries/index.js) exports `getCountries()` and
-`ensureLoaded()` — the reference-data `/countries` list, or the stub's
-`COUNTRIES`. The list is fetched on the first read and cached at module
-scope for the life of the process; a failed load leaves the cache unloaded
-so the next read retries, and rejects with `Boom.serverUnavailable`, which
-`catchAll` renders as the shared error page with a 503. In stub mode the
-seed plays the role of a loaded cache and nothing is fetched.
+`ensureLoaded()` — the reference-data `/countries` list, or, in stub mode,
+the list captured from reference-data's unfiltered `/countries`
+(`services/_capture/fixtures/countries.json`, refreshed with
+`npm run capture:reference-data`). The list is fetched on the first read
+and cached at module scope for the life of the process; a failed load
+leaves the cache unloaded so the next read retries, and rejects with
+`Boom.serverUnavailable`, which `catchAll` renders as the shared error
+page with a 503. In stub mode the captured list plays the role of a
+loaded cache and nothing is fetched.
 Feature-side, [`address-countries.js`](../features/address-book/address-countries.js)
 puts GB first and rejects the same way on an empty list.
 
