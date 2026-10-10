@@ -88,6 +88,8 @@ temporary dev/local `address-lookup-spike` page.
 
 The last two are browser-visible (the dashboard's row links, and the journey
 origins the content-security-policy trusts for the handshake's form-action),
+and both build the notification type question's hand-over links
+(`<base><set>/start`) as well as deep links,
 so under the workspace stack they stay `localhost` while the three API URLs
 use `host.docker.internal`.
 

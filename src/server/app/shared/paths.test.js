@@ -11,7 +11,8 @@ import {
   addressRoutePath,
   dashboardPath,
   inAddressBookSection,
-  inDashboardSection
+  inDashboardSection,
+  notificationTypePath
 } from './paths.js'
 
 const ADDRESS_ID = '000000000000000000000001'
@@ -20,6 +21,7 @@ describe('public paths', () => {
   it('Should build every public URL the service exposes', () => {
     expect([
       dashboardPath(),
+      notificationTypePath(),
       addressBookPath(),
       addressAddPath(),
       addressPath(ADDRESS_ID),
@@ -27,6 +29,7 @@ describe('public paths', () => {
       addressDeletePath(ADDRESS_ID)
     ]).toEqual([
       '/',
+      '/notification-type',
       '/address-book',
       '/address-book/add',
       '/address-book/000000000000000000000001',
@@ -53,8 +56,9 @@ describe('public paths', () => {
 })
 
 describe('navigation sections', () => {
-  it('Should place only the dashboard itself in the dashboard section', () => {
+  it('Should place the dashboard and the notification type question in the dashboard section, and nothing else', () => {
     expect(inDashboardSection(dashboardPath())).toBe(true)
+    expect(inDashboardSection(notificationTypePath())).toBe(true)
     expect(inDashboardSection(addressBookPath())).toBe(false)
   })
 

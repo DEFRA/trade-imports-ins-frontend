@@ -3,6 +3,9 @@ export const copy = {
   layout: {
     serviceName: 'Gwasanaeth hysbysu mewnforio',
     errorTitlePrefix: 'Gwall: ',
+    // The GOV.UK brand word that closes the notification type page title. A
+    // brand name, not translated copy, so the Welsh pair carries the same value.
+    govukSuffix: 'GOV.UK',
     back: 'Yn ôl',
     phaseBanner: {
       tag: 'Alffa',

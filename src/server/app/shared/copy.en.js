@@ -2,6 +2,9 @@ export const copy = {
   layout: {
     serviceName: 'Import notification service',
     errorTitlePrefix: 'Error: ',
+    // The GOV.UK brand word that closes the notification type page title. A
+    // brand name, not translated copy, so the Welsh pair carries the same value.
+    govukSuffix: 'GOV.UK',
     back: 'Back',
     phaseBanner: {
       tag: 'Alpha',
