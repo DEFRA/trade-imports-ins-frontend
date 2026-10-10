@@ -18,6 +18,7 @@
     "fit:start": "NODE_ENV=development node .",
     "fit:start:workspace": "npm run check:workspace-stack && npm run fit:start",
     "check:workspace-stack": "node scripts/check-workspace-stack.js",
+    "capture:reference-data": "node scripts/capture-reference-data.js",
     "test:fit": "npm run build:frontend && playwright test",
     "test:fit:smoke": "npm run test:fit -- --project=smoke",
     "test:fit:features": "npm run test:fit -- --project=features",
