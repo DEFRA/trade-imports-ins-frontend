@@ -16,7 +16,8 @@ vi.mock('../../../auth/get-oidc-config.js', () => ({
 
 const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
-const ERROR_PAGE_TITLE = 'Something went wrong | Import notification service'
+const ERROR_PAGE_TITLE =
+  'Something went wrong - Import notification service - GOV.UK'
 
 const refuseCountries = () =>
   referenceDataApi()
