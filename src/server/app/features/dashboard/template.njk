@@ -9,8 +9,8 @@
   <h1 class="govuk-heading-xl">{{ copy.title }}</h1>
 
   {{ govukButton({
-    text: copy.startButton,
-    href: startNewNotificationHref
+    text: copy.createNew,
+    href: createNewHref
   }) }}
 
   <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">

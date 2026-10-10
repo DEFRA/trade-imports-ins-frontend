@@ -27,7 +27,7 @@ export const copy = {
     action: 'Action',
     view: 'View'
   },
-  startButton: 'Start a new notification',
+  createNew: 'Create new',
   empty: {
     text: 'There are no notifications yet.'
   }

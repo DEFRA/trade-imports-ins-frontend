@@ -28,7 +28,7 @@ export const copy = {
     action: 'Cam gweithredu',
     view: 'Gweld'
   },
-  startButton: 'Dechrau hysbysiad newydd',
+  createNew: 'Creu newydd',
   empty: {
     text: 'Nid oes unrhyw hysbysiadau eto.'
   }

@@ -48,6 +48,10 @@ describe('#copy', () => {
     expect(copy.search.label).toBe('Search by notification reference')
     expect(copy.search.noResults).toBe('No notifications found')
     expect(copy.empty).toEqual({ text: 'There are no notifications yet.' })
-    expect(copy.startButton).toBe('Start a new notification')
+    expect(copy.createNew).toBe('Create new')
+  })
+
+  it('Should carry the Welsh draft of Create new under the same key', () => {
+    expect(cy.createNew).toBe('Creu newydd')
   })
 })

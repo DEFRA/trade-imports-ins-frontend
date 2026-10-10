@@ -19,6 +19,9 @@ const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
 const ARRIVAL_DATE = '2026-09-10T00:00:00Z'
+const CREATE_NEW = 'Create new'
+const TYPE_HREF = 'href="/notification-type"'
+const RETIRED_LABEL = 'Start a new notification'
 
 const pageOf = (content, overrides = {}) => ({
   content,
@@ -85,7 +88,7 @@ describe('#dashboard', () => {
     expect(result).toContain('Showing 1-1 of 1')
   })
 
-  test('offers a way to start a new notification even when notifications are listed', async () => {
+  test('offers Create new under the heading and above the search when notifications are listed', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -110,8 +113,14 @@ describe('#dashboard', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain(REFERENCE_NUMBER)
-    expect(result).toContain('Start a new notification')
-    expect(result).toContain('href="/notification-type"')
+    expect(result).toContain(CREATE_NEW)
+    expect(result).toContain(TYPE_HREF)
+    expect(result).not.toContain(RETIRED_LABEL)
+    expect(result).not.toContain('govuk-button--start')
+    expect(result.indexOf(CREATE_NEW)).toBeGreaterThan(result.indexOf('<h1'))
+    expect(result.indexOf(CREATE_NEW)).toBeLessThan(
+      result.indexOf('Search by notification reference')
+    )
   })
 
   test('notifications from more than one status all appear in the same list (AC2)', async () => {
@@ -266,9 +275,38 @@ describe('#dashboard — search, sort and errors', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('No notifications found')
+    expect(result).toContain(CREATE_NEW)
+    expect(result).toContain(TYPE_HREF)
+    expect(result).not.toContain(RETIRED_LABEL)
   })
 
-  test('empty aggregated store shows an empty state with a way to start a new notification (AC6)', async () => {
+  test('still offers Create new after a search that matches a notification', async () => {
+    insBackendApi()
+      .get(NOTIFICATIONS_PATH)
+      .query({ ...DEFAULT_QUERY, referenceNumber: REFERENCE_NUMBER })
+      .reply(
+        200,
+        pageOf([
+          {
+            referenceNumber: REFERENCE_NUMBER,
+            status: 'SUBMITTED',
+            originCountry: 'GB',
+            arrivalDate: ARRIVAL_DATE
+          }
+        ])
+      )
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/?referenceNumber=${REFERENCE_NUMBER}`,
+      auth: sessionAuth('dashboard-search-match-create-new')
+    })
+
+    expect(result).toContain(CREATE_NEW)
+    expect(result).toContain(TYPE_HREF)
+  })
+
+  test('empty aggregated store shows an empty state and still offers Create new (AC6)', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -282,8 +320,9 @@ describe('#dashboard — search, sort and errors', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('There are no notifications yet.')
-    expect(result).toContain('Start a new notification')
-    expect(result).toContain('href="/notification-type"')
+    expect(result).toContain(CREATE_NEW)
+    expect(result).not.toContain(RETIRED_LABEL)
+    expect(result).toContain(TYPE_HREF)
     expect(result).not.toContain('href="http://localhost:3000/live-animals"')
     expect(result).not.toContain('No notifications found')
   })
