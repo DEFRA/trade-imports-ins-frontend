@@ -180,16 +180,20 @@ describe('recoverable error banner', () => {
 })
 
 describe('page title', () => {
-  it('Should follow the page title with the service name', () => {
+  it('Should join the page name, the service name and GOV.UK with hyphens', () => {
     expect(pageTitleOf(renderLayout(signedIn))).toBe(
-      'Dashboard | Import notification service'
+      'Dashboard - Import notification service - GOV.UK'
     )
   })
 
-  it('Should prefix the title when the page carries an error summary', () => {
+  it('Should keep the error prefix in front of the whole title', () => {
     expect(
       pageTitleOf(renderLayout(signedIn, { errorSummary: { errorList: [] } }))
-    ).toBe('Error: Dashboard | Import notification service')
+    ).toBe('Error: Dashboard - Import notification service - GOV.UK')
+  })
+
+  it('Should not separate the title with a pipe', () => {
+    expect(pageTitleOf(renderLayout(signedIn))).not.toContain('|')
   })
 })
 
