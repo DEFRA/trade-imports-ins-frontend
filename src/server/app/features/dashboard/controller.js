@@ -3,13 +3,12 @@ import { listNotifications } from '../../services/ins-backend/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../lib/http-status.js'
 import * as kit from '../../shared/kit.js'
 import { copyFor } from '../../shared/copy.js'
-import { dashboardPath } from '../../shared/paths.js'
+import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
 import {
   SORT_OPTIONS,
   buildPaginationLinks,
   buildResultsLabel,
-  buildStartNewNotificationLink,
   mapNotificationRows
 } from './view-model/list.js'
 import { copy as en } from './copy/copy.en.js'
@@ -79,7 +78,7 @@ const buildView = (
     sortOptions: sortOptionsOf(sort),
     referenceNumber,
     hasSearch,
-    startNewNotificationHref: buildStartNewNotificationLink(),
+    startNewNotificationHref: notificationTypePath(),
     ...model
   })
 

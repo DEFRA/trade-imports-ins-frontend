@@ -28,7 +28,8 @@ const featuresWithCopy = readdirSync(FEATURES_DIR, { withFileTypes: true })
     readdirSync(path.join(FEATURES_DIR, feature, 'copy')).includes('copy.en.js')
   )
 
-const IDENTICAL_ALLOWLIST = new Set([])
+// The GOV.UK brand word is a brand name, not translated copy.
+const IDENTICAL_ALLOWLIST = new Set(['shared:layout.govukSuffix'])
 
 const kindOf = (value) => (typeof value === 'function' ? 'function' : 'string')
 

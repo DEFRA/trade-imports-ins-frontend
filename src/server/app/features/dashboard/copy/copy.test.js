@@ -47,9 +47,7 @@ describe('#copy', () => {
     expect(copy.title).toBe('Dashboard')
     expect(copy.search.label).toBe('Search by notification reference')
     expect(copy.search.noResults).toBe('No notifications found')
-    expect(copy.empty).toEqual({
-      text: 'There are no notifications yet.',
-      startButton: 'Start a new notification'
-    })
+    expect(copy.empty).toEqual({ text: 'There are no notifications yet.' })
+    expect(copy.startButton).toBe('Start a new notification')
   })
 })

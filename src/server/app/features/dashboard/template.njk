@@ -8,6 +8,11 @@
 {% block journeyContent %}
   <h1 class="govuk-heading-xl">{{ copy.title }}</h1>
 
+  {{ govukButton({
+    text: copy.startButton,
+    href: startNewNotificationHref
+  }) }}
+
   <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">
     <input type="hidden" name="sort" value="{{ sort }}" />
     {{ govukInput({
@@ -46,10 +51,6 @@
 
   {% if isEmpty %}
     <p class="govuk-body" data-testid="dashboard-empty">{{ copy.empty.text }}</p>
-    {{ govukButton({
-      text: copy.empty.startButton,
-      href: startNewNotificationHref
-    }) }}
   {% elif noSearchResults %}
     <p class="govuk-body" data-testid="dashboard-no-results">{{ copy.search.noResults }}</p>
     <p class="govuk-body">

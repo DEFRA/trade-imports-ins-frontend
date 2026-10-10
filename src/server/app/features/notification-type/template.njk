@@ -1,0 +1,31 @@
+{% extends "shared/layout.njk" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+{% block pageTitle %}{% if errorSummary %}{{ sharedCopy.layout.errorTitlePrefix }}{% endif %}{{ pageTitle }} - {{ sharedCopy.layout.serviceName }} - {{ sharedCopy.layout.govukSuffix }}{% endblock %}
+
+{% block journeyContent %}
+  {% include "shared/error-summary.njk" %}
+
+  <form method="post" novalidate>
+    <input type="hidden" name="crumb" value="{{ crumb }}" />
+
+    {% set legendHtml %}<span class="govuk-caption-l">{{ copy.caption }}</span> {{ copy.title }}{% endset %}
+
+    {{ govukRadios({
+      name: "notificationType",
+      idPrefix: "notificationType",
+      fieldset: {
+        legend: {
+          html: legendHtml,
+          isPageHeading: true,
+          classes: "govuk-fieldset__legend--l"
+        }
+      },
+      errorMessage: errors.notificationType and { text: errors.notificationType },
+      items: items
+    }) }}
+
+    {{ govukButton({ text: copy.continue }) }}
+  </form>
+{% endblock %}

@@ -51,6 +51,20 @@ test.describe('dashboard', () => {
     ).toHaveCount(0)
   })
 
+  test('offers a way to start a new notification, opening the notification type question', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto('/')
+
+    await page.getByRole('button', { name: 'Start a new notification' }).click()
+
+    await expect(page).toHaveURL(/\/notification-type$/)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /What are you importing\?/ })
+    ).toBeVisible()
+  })
+
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page)
     await page.goto('/')

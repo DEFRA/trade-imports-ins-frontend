@@ -85,6 +85,35 @@ describe('#dashboard', () => {
     expect(result).toContain('Showing 1-1 of 1')
   })
 
+  test('offers a way to start a new notification even when notifications are listed', async () => {
+    insBackendApi()
+      .get(NOTIFICATIONS_PATH)
+      .query(DEFAULT_QUERY)
+      .reply(
+        200,
+        pageOf([
+          {
+            referenceNumber: REFERENCE_NUMBER,
+            status: 'SUBMITTED',
+            originCountry: 'FR',
+            commodity: null,
+            arrivalDate: ARRIVAL_DATE
+          }
+        ])
+      )
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/',
+      auth: sessionAuth('dashboard-start-when-listed')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain(REFERENCE_NUMBER)
+    expect(result).toContain('Start a new notification')
+    expect(result).toContain('href="/notification-type"')
+  })
+
   test('notifications from more than one status all appear in the same list (AC2)', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
@@ -254,7 +283,8 @@ describe('#dashboard — search, sort and errors', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('There are no notifications yet.')
     expect(result).toContain('Start a new notification')
-    expect(result).toContain('href="http://localhost:3000/live-animals"')
+    expect(result).toContain('href="/notification-type"')
+    expect(result).not.toContain('href="http://localhost:3000/live-animals"')
     expect(result).not.toContain('No notifications found')
   })
 

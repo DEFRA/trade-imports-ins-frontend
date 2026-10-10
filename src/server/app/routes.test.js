@@ -15,6 +15,8 @@ describe('promoted route authentication', () => {
   it('Should promote every public page of the service, and nothing else', () => {
     expect(allRoutes.map((route) => `${route.method} ${route.path}`)).toEqual([
       'GET /',
+      'GET /notification-type',
+      'POST /notification-type',
       'GET /address-book',
       'GET /address-book/add',
       'POST /address-book/add',
