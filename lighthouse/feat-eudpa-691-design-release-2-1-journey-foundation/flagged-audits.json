@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-10-10T08:24:30.557Z",
+  "pages": [
+    {
+      "pageUrl": "/",
+      "requestedUrl": "http://localhost:3002/",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book",
+      "requestedUrl": "http://localhost:3002/address-book",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/add",
+      "requestedUrl": "http://localhost:3002/address-book/add",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/6ac9f5f6eba7df068946cc04",
+      "requestedUrl": "http://localhost:3002/address-book/6ac9f5f6eba7df068946cc04",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/6ac9f5f6eba7df068946cc04/edit",
+      "requestedUrl": "http://localhost:3002/address-book/6ac9f5f6eba7df068946cc04/edit",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/6ac9f5f6eba7df068946cc04/delete",
+      "requestedUrl": "http://localhost:3002/address-book/6ac9f5f6eba7df068946cc04/delete",
+      "audits": []
+    }
+  ]
+}

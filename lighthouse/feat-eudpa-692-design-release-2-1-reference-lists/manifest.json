@@ -1,0 +1,80 @@
+[
+  {
+    "url": "http://localhost:3002/",
+    "isRepresentativeRun": true,
+    "htmlPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/home.report.html",
+    "jsonPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/home.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.9,
+      "agentic-browsing": 1
+    }
+  },
+  {
+    "url": "http://localhost:3002/address-book",
+    "isRepresentativeRun": true,
+    "htmlPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book.report.html",
+    "jsonPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.9,
+      "agentic-browsing": 1
+    }
+  },
+  {
+    "url": "http://localhost:3002/address-book/add",
+    "isRepresentativeRun": true,
+    "htmlPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_add.report.html",
+    "jsonPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_add.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.9,
+      "agentic-browsing": 1
+    }
+  },
+  {
+    "url": "http://localhost:3002/address-book/6ac965df6bcb6f8260f2cca7",
+    "isRepresentativeRun": true,
+    "htmlPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id.report.html",
+    "jsonPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.9,
+      "agentic-browsing": 1
+    }
+  },
+  {
+    "url": "http://localhost:3002/address-book/6ac965df6bcb6f8260f2cca7/edit",
+    "isRepresentativeRun": true,
+    "htmlPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id_edit.report.html",
+    "jsonPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id_edit.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.9,
+      "agentic-browsing": 1
+    }
+  },
+  {
+    "url": "http://localhost:3002/address-book/6ac965df6bcb6f8260f2cca7/delete",
+    "isRepresentativeRun": true,
+    "htmlPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id_delete.report.html",
+    "jsonPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id_delete.report.json",
+    "summary": {
+      "performance": 1,
+      "accessibility": 1,
+      "best-practices": 1,
+      "seo": 0.9,
+      "agentic-browsing": 1
+    }
+  }
+]
