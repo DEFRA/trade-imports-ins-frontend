@@ -5,6 +5,10 @@ import { signIn } from '../../../../../fit/sign-in.js'
 
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const CREATE_NEW = 'Create new'
+const USE_TEMPLATE = 'Use template'
+const UNMATCHED_REFERENCE = 'GBN-AG-26-999999'
+const NO_RESULTS = 'No notifications found'
+const MANAGE_TEMPLATES_HREF = 'http://localhost:3000/live-animals/templates'
 const SEARCH_LABEL = 'Search by notification reference'
 
 const expectNoSeriousOrCriticalViolations = async (page, subject) => {
@@ -89,10 +93,10 @@ test.describe('dashboard', () => {
     await signIn(page)
     await page.goto('/')
 
-    await page.getByLabel(SEARCH_LABEL).fill('GBN-AG-26-999999')
+    await page.getByLabel(SEARCH_LABEL).fill(UNMATCHED_REFERENCE)
     await page.getByRole('button', { name: 'Search' }).click()
 
-    await expect(page.getByText('No notifications found')).toBeVisible()
+    await expect(page.getByText(NO_RESULTS)).toBeVisible()
     await expect(
       page.getByRole('button', { name: CREATE_NEW, exact: true })
     ).toBeVisible()
@@ -102,6 +106,44 @@ test.describe('dashboard', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: /What are you importing\?/ })
     ).toBeVisible()
+  })
+
+  test('offers Use template beside Create new, linking to Manage templates in the live animals service', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto('/')
+
+    const useTemplate = page.getByRole('button', {
+      name: USE_TEMPLATE,
+      exact: true
+    })
+
+    await expect(useTemplate).toBeVisible()
+    await expect(useTemplate).toHaveAttribute('href', MANAGE_TEMPLATES_HREF)
+    await expect(
+      page.getByRole('button', { name: CREATE_NEW, exact: true })
+    ).toBeVisible()
+  })
+
+  test('still offers Use template after a search that matches nothing', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto('/')
+
+    await page.getByLabel(SEARCH_LABEL).fill(UNMATCHED_REFERENCE)
+    await page.getByRole('button', { name: 'Search' }).click()
+
+    await expect(page.getByText(NO_RESULTS)).toBeVisible()
+
+    const useTemplate = page.getByRole('button', {
+      name: USE_TEMPLATE,
+      exact: true
+    })
+
+    await expect(useTemplate).toBeVisible()
+    await expect(useTemplate).toHaveAttribute('href', MANAGE_TEMPLATES_HREF)
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
@@ -160,9 +202,9 @@ test.describe('dashboard', () => {
     await signIn(page)
     await page.goto('/')
 
-    await page.getByLabel(SEARCH_LABEL).fill('GBN-AG-26-999999')
+    await page.getByLabel(SEARCH_LABEL).fill(UNMATCHED_REFERENCE)
     await page.getByRole('button', { name: 'Search' }).click()
 
-    await expect(page.getByText('No notifications found')).toBeVisible()
+    await expect(page.getByText(NO_RESULTS)).toBeVisible()
   })
 })

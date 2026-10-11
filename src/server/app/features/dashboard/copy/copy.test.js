@@ -49,9 +49,11 @@ describe('#copy', () => {
     expect(copy.search.noResults).toBe('No notifications found')
     expect(copy.empty).toEqual({ text: 'There are no notifications yet.' })
     expect(copy.createNew).toBe('Create new')
+    expect(copy.useTemplate).toBe('Use template')
   })
 
-  it('Should carry the Welsh draft of Create new under the same key', () => {
+  it('Should carry the Welsh drafts of Create new and Use template under the same keys', () => {
     expect(cy.createNew).toBe('Creu newydd')
+    expect(cy.useTemplate).toBe('Defnyddio templed')
   })
 })

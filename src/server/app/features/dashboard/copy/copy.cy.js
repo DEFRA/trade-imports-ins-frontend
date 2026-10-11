@@ -29,6 +29,7 @@ export const copy = {
     view: 'Gweld'
   },
   createNew: 'Creu newydd',
+  useTemplate: 'Defnyddio templed',
   empty: {
     text: 'Nid oes unrhyw hysbysiadau eto.'
   }
