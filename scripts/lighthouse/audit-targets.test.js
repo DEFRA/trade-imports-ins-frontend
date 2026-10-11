@@ -17,6 +17,7 @@ const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 
 const DASHBOARD_PATH = '/'
 const NOTIFICATION_TYPE_PATH = '/notification-type'
+const TEMPLATE_NOTIFICATION_TYPE_PATH = '/notification-type/template'
 const LIST_PATH = '/address-book'
 const ADD_PATH = '/address-book/add'
 const VIEW_PATH = '/address-book/{id}'
@@ -26,6 +27,7 @@ const DELETE_PATH = '/address-book/{id}/delete'
 const REGISTERED_PATHS = [
   DASHBOARD_PATH,
   NOTIFICATION_TYPE_PATH,
+  TEMPLATE_NOTIFICATION_TYPE_PATH,
   LIST_PATH,
   ADD_PATH,
   VIEW_PATH,
@@ -71,6 +73,7 @@ describe('#auditPaths', () => {
     expect(auditPaths(ADDRESS_ID)).toEqual([
       DASHBOARD_PATH,
       NOTIFICATION_TYPE_PATH,
+      TEMPLATE_NOTIFICATION_TYPE_PATH,
       LIST_PATH,
       ADD_PATH,
       `/address-book/${ADDRESS_ID}`,
@@ -157,6 +160,7 @@ describe('#reportNames', () => {
     expect(Object.values(names)).toEqual([
       'home',
       'notification_type',
+      'notification_type_template',
       'address_book',
       'address_book_add',
       'address_book_id',

@@ -16,6 +16,7 @@ const ACTIVE_FALLBACK = 'govuk-service-navigation__active-fallback'
 const NOTIFICATION_BANNER = 'govuk-notification-banner'
 const ADDRESS_BOOK_URL = '/address-book'
 const TEMPLATES_URL = 'http://animals.test/live-animals/templates'
+const ARIA_CURRENT = 'aria-current'
 const { serviceNavigation } = sharedCopy.layout
 
 const signedIn = {
@@ -81,13 +82,23 @@ describe('service navigation', () => {
     expect($(`.${ACTIVE_FALLBACK}`).text()).toBe(serviceNavigation.addressBook)
   })
 
-  it('Should never mark the Templates item active, as no templates page is served here', () => {
+  it('Should mark the Templates item active on the template type question', () => {
+    const $ = load(
+      renderLayout(signedIn, { activeNavigationItem: 'templates' })
+    )
+
+    expect($(`.${ACTIVE_ITEM}`)).toHaveLength(1)
+    expect($(`.${ACTIVE_FALLBACK}`).text()).toBe(serviceNavigation.templates)
+    expect($(`a[href="${TEMPLATES_URL}"]`).attr(ARIA_CURRENT)).toBe('true')
+  })
+
+  it('Should not mark the Templates item active anywhere else', () => {
     const $ = load(
       renderLayout(signedIn, { activeNavigationItem: 'addressBook' })
     )
 
     expect($(`.${ACTIVE_FALLBACK}`).text()).toBe(serviceNavigation.addressBook)
-    expect($(`a[href="${TEMPLATES_URL}"]`).attr('aria-current')).toBeUndefined()
+    expect($(`a[href="${TEMPLATES_URL}"]`).attr(ARIA_CURRENT)).toBeUndefined()
   })
 
   it('Should mark nothing active outside any navigation section', () => {

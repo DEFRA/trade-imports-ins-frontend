@@ -7,10 +7,10 @@ import {
   addressBookPath,
   dashboardPath,
   inAddressBookSection,
-  inDashboardSection
+  inDashboardSection,
+  inTemplatesSection
 } from '../../../server/app/shared/paths.js'
-import { buildSetBaseUrl } from '../../../server/common/helpers/set-base-url.js'
-import { SET_BASES } from '../../../server/common/constants/journey-set-bases.js'
+import { manageTemplatesUrl } from '../../../server/app/features/notification-type/destinations.js'
 
 const logger = createLogger()
 const assetPath = config.get('assetPath')
@@ -22,6 +22,9 @@ const manifestPath = path.join(
 let webpackManifest
 
 export function activeNavigationItem(requestPath = '') {
+  if (inTemplatesSection(requestPath)) {
+    return 'templates'
+  }
   if (inDashboardSection(requestPath)) {
     return 'dashboard'
   }
@@ -30,15 +33,6 @@ export function activeNavigationItem(requestPath = '') {
   }
   return null
 }
-
-/**
- * The Manage templates link. Manage templates is served by the animals
- * frontend, and the link is browser-visible.
- *
- * @returns {string} the absolute URL of Manage templates.
- */
-const animalsTemplatesUrl = () =>
-  `${buildSetBaseUrl('tradeImportsAnimalsFrontend.baseUrl', SET_BASES.LIVE_ANIMALS)}/templates`
 
 async function context(request) {
   if (!webpackManifest) {
@@ -61,7 +55,7 @@ async function context(request) {
     authEnabled: config.get('auth.enabled'),
     activeNavigationItem: activeNavigationItem(request.path),
     dashboardUrl: dashboardPath(),
-    templatesUrl: animalsTemplatesUrl(),
+    templatesUrl: manageTemplatesUrl(),
     addressBookUrl: addressBookPath(),
     userSession: authData
       ? {

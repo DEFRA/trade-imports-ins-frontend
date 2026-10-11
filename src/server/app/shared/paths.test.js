@@ -12,7 +12,9 @@ import {
   dashboardPath,
   inAddressBookSection,
   inDashboardSection,
-  notificationTypePath
+  inTemplatesSection,
+  notificationTypePath,
+  templateNotificationTypePath
 } from './paths.js'
 
 const ADDRESS_ID = '000000000000000000000001'
@@ -60,6 +62,13 @@ describe('navigation sections', () => {
     expect(inDashboardSection(dashboardPath())).toBe(true)
     expect(inDashboardSection(notificationTypePath())).toBe(true)
     expect(inDashboardSection(addressBookPath())).toBe(false)
+  })
+
+  it('Should place the template type question in the templates section, and nothing else', () => {
+    expect(templateNotificationTypePath()).toBe('/notification-type/template')
+    expect(inTemplatesSection(templateNotificationTypePath())).toBe(true)
+    expect(inTemplatesSection(notificationTypePath())).toBe(false)
+    expect(inDashboardSection(templateNotificationTypePath())).toBe(false)
   })
 
   it('Should place every address-book page in the address book section, and nothing that merely starts with its name', () => {

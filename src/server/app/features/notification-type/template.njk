@@ -9,6 +9,9 @@
 
   <form method="post" novalidate>
     <input type="hidden" name="crumb" value="{{ crumb }}" />
+    {% if templateId %}
+      <input type="hidden" name="templateId" value="{{ templateId }}" />
+    {% endif %}
 
     {% set legendHtml %}<span class="govuk-caption-l">{{ copy.caption }}</span> {{ copy.title }}{% endset %}
 

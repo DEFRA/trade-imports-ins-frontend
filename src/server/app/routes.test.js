@@ -17,6 +17,8 @@ describe('promoted route authentication', () => {
       'GET /',
       'GET /notification-type',
       'POST /notification-type',
+      'GET /notification-type/template',
+      'POST /notification-type/template',
       'GET /address-book',
       'GET /address-book/add',
       'POST /address-book/add',

@@ -194,6 +194,13 @@ describe('#activeNavigationItem', () => {
     expect(activeNavigationItem('/')).toBe('dashboard')
   })
 
+  test('Should mark Templates on the template type question, and Dashboard on the notification one', () => {
+    expect(activeNavigationItem('/notification-type/template')).toBe(
+      'templates'
+    )
+    expect(activeNavigationItem('/notification-type')).toBe('dashboard')
+  })
+
   test('Should mark the address book on the address book', () => {
     expect(activeNavigationItem('/address-book')).toBe('addressBook')
   })

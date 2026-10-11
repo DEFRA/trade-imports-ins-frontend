@@ -23,6 +23,8 @@ vi.mock('../../../../auth/get-oidc-config.js', () => ({
 }))
 
 const NOTIFICATION_TYPE_URL = '/notification-type'
+const LIVE_ANIMALS = 'live-animals'
+const GERMINAL_PRODUCTS = 'germinal-products'
 const TITLE = 'What are you importing?'
 const TITLE_PATTERN = ' - Import notification service - GOV.UK'
 const ERROR_MESSAGE = 'Select what you are importing'
@@ -141,8 +143,8 @@ describe('#notificationTypeController', { concurrent: false }, () => {
   })
 
   test.each([
-    ['live-animals', `${ANIMALS_BASE_URL}/live-animals/start`],
-    ['germinal-products', `${ANIMALS_BASE_URL}/germinal-products/start`],
+    [LIVE_ANIMALS, `${ANIMALS_BASE_URL}/live-animals/start`],
+    [GERMINAL_PRODUCTS, `${ANIMALS_BASE_URL}/germinal-products/start`],
     ['plants-for-planting', `${PLANTS_BASE_URL}/high-risk-plants/start`],
     ['potatoes', `${PLANTS_BASE_URL}/high-risk-plants/start`],
     ['wood-products', `${PLANTS_BASE_URL}/high-risk-plants/start`]
@@ -164,7 +166,7 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     try {
       const page = await getPage('type-no-upstream-get')
       const chosen = await postType('type-no-upstream-post', {
-        notificationType: 'live-animals'
+        notificationType: LIVE_ANIMALS
       })
 
       expect(page.statusCode).toBe(statusCodes.ok)
@@ -177,3 +179,200 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     }
   })
 })
+
+describe(
+  '#notificationTypeController in template mode',
+  { concurrent: false },
+  () => {
+    const TEMPLATE_TYPE_URL = '/notification-type/template'
+    const MANAGE_TEMPLATES = `${ANIMALS_BASE_URL}/live-animals/templates`
+    const TEMPLATE_LABELS = [
+      'Live animals',
+      'Germinal products (semen, ova, embryos)'
+    ]
+    let server
+
+    runInRealMode()
+
+    beforeAll(async () => {
+      server = await createServer()
+      await server.initialize()
+    })
+
+    afterAll(async () => {
+      await server.stop({ timeout: 0 })
+    })
+
+    beforeEach(() => {
+      config.set('csrf.enabled', false)
+      config.set('tradeImportsAnimalsFrontend.baseUrl', ANIMALS_BASE_URL)
+      config.set('tradeImportsPlantsFrontend.baseUrl', PLANTS_BASE_URL)
+    })
+
+    const getPage = (user, query = '') =>
+      server.inject({
+        method: 'GET',
+        url: `${TEMPLATE_TYPE_URL}${query}`,
+        auth: sessionAuth(user)
+      })
+
+    const postType = (user, payload) =>
+      server.inject({
+        method: 'POST',
+        url: TEMPLATE_TYPE_URL,
+        auth: sessionAuth(user),
+        payload
+      })
+
+    test('GET asks the same question and offers only live animals and germinal products, none selected', async () => {
+      const { result, statusCode } = await getPage('tpl-get')
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(`<title>${TITLE}${TITLE_PATTERN}</title>`)
+      expect(result).toMatch(
+        /About the consignment[\s\S]*What are you importing\?/
+      )
+      for (const label of TEMPLATE_LABELS) {
+        expect(result).toContain(label)
+      }
+      for (const label of LABELS_IN_ORDER.slice(2)) {
+        expect(result).not.toContain(label)
+      }
+      expect(result).not.toContain('checked')
+      expect(result).not.toContain('Template</')
+    })
+
+    test('GET links Back to Manage templates', async () => {
+      const { result } = await getPage('tpl-back')
+
+      expect(load(result)('.govuk-back-link').attr('href')).toBe(
+        MANAGE_TEMPLATES
+      )
+    })
+
+    test('GET ends with a single Continue button', async () => {
+      const { result } = await getPage('tpl-button')
+
+      expect(result.match(/class="govuk-button"/g)).toHaveLength(1)
+    })
+
+    test('GET shows the type already chosen when it is one templates can have', async () => {
+      const { result } = await getPage(
+        'tpl-selected',
+        '?type=germinal-products'
+      )
+
+      const checked = load(result)('input[type=radio][checked]')
+      expect(checked).toHaveLength(1)
+      expect(checked.attr('value')).toBe(GERMINAL_PRODUCTS)
+    })
+
+    test('GET selects nothing for a type templates cannot have', async () => {
+      const { result } = await getPage(
+        'tpl-plants',
+        '?type=plants-for-planting'
+      )
+
+      expect(result).not.toContain('checked')
+    })
+
+    test('GET carries a template in progress in a hidden field', async () => {
+      const { result } = await getPage('tpl-carry', '?template=abc-123')
+
+      expect(load(result)('input[name=templateId]').attr('value')).toBe(
+        'abc-123'
+      )
+    })
+
+    test('GET drops a template id that is not the shape of one', async () => {
+      const { result } = await getPage('tpl-bad-id', '?template=a/b')
+
+      expect(result).not.toContain('name="templateId"')
+    })
+
+    test('POST with nothing chosen shows the usual error linked to the first option', async () => {
+      const { result, statusCode } = await postType('tpl-empty', {})
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('href="#notificationType"')
+      expect(result).toContain(`<title>Error: ${TITLE}${TITLE_PATTERN}</title>`)
+      expect(result).toContain(ERROR_MESSAGE)
+    })
+
+    test('POST with a template in progress and nothing chosen keeps the template id in the error page', async () => {
+      const { result, statusCode } = await postType('tpl-empty-id', {
+        templateId: 'abc-123'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(load(result)('input[name=templateId]').attr('value')).toBe(
+        'abc-123'
+      )
+    })
+
+    test('POST refuses a type templates cannot have', async () => {
+      const { statusCode } = await postType('tpl-plants', {
+        notificationType: 'plants-for-planting'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test.each([LIVE_ANIMALS, GERMINAL_PRODUCTS])(
+      'POST %s hands over to the template name page',
+      async (value) => {
+        const { statusCode, headers } = await postType(`tpl-post-${value}`, {
+          notificationType: value
+        })
+
+        expect(statusCode).toBe(statusCodes.redirectFound)
+        expect(headers.location).toBe(`${MANAGE_TEMPLATES}/new?type=${value}`)
+      }
+    )
+
+    test('POST with a template in progress hands over to that template’s name page', async () => {
+      const { headers } = await postType('tpl-post-id', {
+        notificationType: LIVE_ANIMALS,
+        templateId: 'abc-123'
+      })
+
+      expect(headers.location).toBe(
+        `${MANAGE_TEMPLATES}/abc-123/name?type=live-animals`
+      )
+    })
+
+    test('POST drops a template id that is not the shape of one', async () => {
+      const { headers } = await postType('tpl-post-bad-id', {
+        notificationType: LIVE_ANIMALS,
+        templateId: '../notifications'
+      })
+
+      expect(headers.location).toBe(`${MANAGE_TEMPLATES}/new?type=live-animals`)
+    })
+
+    test('GET and POST call no other service', async () => {
+      nock.disableNetConnect()
+      const attempts = []
+      const onNoMatch = (req) => attempts.push(req)
+      nock.emitter.on('no match', onNoMatch)
+
+      try {
+        await getPage('tpl-no-upstream-get')
+        await postType('tpl-no-upstream-post', {
+          notificationType: LIVE_ANIMALS
+        })
+
+        expect(attempts).toEqual([])
+      } finally {
+        nock.emitter.removeListener('no match', onNoMatch)
+        nock.enableNetConnect()
+        nock.cleanAll()
+      }
+    })
+
+    test('puts the template question in the Templates navigation section', () => {
+      expect(activeNavigationItem(TEMPLATE_TYPE_URL)).toBe('templates')
+      expect(activeNavigationItem(NOTIFICATION_TYPE_URL)).toBe('dashboard')
+    })
+  }
+)
