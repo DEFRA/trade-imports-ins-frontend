@@ -15,6 +15,7 @@ const ACTIVE_ITEM = 'govuk-service-navigation__item--active'
 const ACTIVE_FALLBACK = 'govuk-service-navigation__active-fallback'
 const NOTIFICATION_BANNER = 'govuk-notification-banner'
 const ADDRESS_BOOK_URL = '/address-book'
+const TEMPLATES_URL = 'http://animals.test/live-animals/templates'
 const { serviceNavigation } = sharedCopy.layout
 
 const signedIn = {
@@ -30,6 +31,7 @@ const renderLayout = (userSession, context = {}) =>
     sharedCopy,
     userSession,
     dashboardUrl: '/',
+    templatesUrl: TEMPLATES_URL,
     addressBookUrl: ADDRESS_BOOK_URL,
     getAssetPath: (asset) => `/assets/${asset}`,
     ...context
@@ -38,20 +40,22 @@ const renderLayout = (userSession, context = {}) =>
 const pageTitleOf = (html) => load(html)('head > title').text()
 
 describe('service navigation', () => {
-  it('Should offer the four Design release 1 items on a signed-in page', () => {
+  it('Should offer the five Design release 2.1 items on a signed-in page', () => {
     const $ = load(renderLayout(signedIn))
     const items = $('.govuk-service-navigation__item')
     const links = items.find('a')
 
-    expect(items).toHaveLength(4)
+    expect(items).toHaveLength(5)
     expect(links.map((_, anchor) => $(anchor).text().trim()).get()).toEqual([
       serviceNavigation.dashboard,
+      serviceNavigation.templates,
       serviceNavigation.addressBook,
       serviceNavigation.manageAccount,
       serviceNavigation.logOut
     ])
     expect(links.map((_, anchor) => $(anchor).attr('href')).get()).toEqual([
       '/',
+      TEMPLATES_URL,
       ADDRESS_BOOK_URL,
       '#',
       '/auth/sign-out'
@@ -77,6 +81,15 @@ describe('service navigation', () => {
     expect($(`.${ACTIVE_FALLBACK}`).text()).toBe(serviceNavigation.addressBook)
   })
 
+  it('Should never mark the Templates item active, as no templates page is served here', () => {
+    const $ = load(
+      renderLayout(signedIn, { activeNavigationItem: 'addressBook' })
+    )
+
+    expect($(`.${ACTIVE_FALLBACK}`).text()).toBe(serviceNavigation.addressBook)
+    expect($(`a[href="${TEMPLATES_URL}"]`).attr('aria-current')).toBeUndefined()
+  })
+
   it('Should mark nothing active outside any navigation section', () => {
     const html = renderLayout(signedIn, { activeNavigationItem: null })
 
@@ -100,6 +113,7 @@ describe('service navigation', () => {
     expect(html).not.toContain(NAVIGATION_LIST)
     expect(html).not.toContain('href="/auth/sign-out"')
     expect(html).not.toContain(serviceNavigation.logOut)
+    expect(html).not.toContain(serviceNavigation.templates)
   })
 })
 

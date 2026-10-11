@@ -15,6 +15,7 @@ export const copy = {
     serviceNavigation: {
       menuButton: 'Dewislen',
       dashboard: 'Dangosfwrdd',
+      templates: 'Templedi',
       addressBook: 'Llyfr cyfeiriadau',
       manageAccount: 'Rheoli cyfrif',
       logOut: 'Allgofnodi'
