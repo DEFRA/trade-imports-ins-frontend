@@ -202,7 +202,9 @@ test.describe('dashboard', () => {
     expect(useTemplateBox.x).toBeGreaterThan(createNewBox.x)
     await expect(useTemplate).toHaveAttribute('href', MANAGE_TEMPLATES_HREF)
   })
+})
 
+test.describe('dashboard notifications', () => {
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page)
     await page.goto('/')
