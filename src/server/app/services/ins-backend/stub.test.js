@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { listNotifications } from './stub.js'
+import { listNotifications, UNAVAILABLE_REFERENCE } from './stub.js'
 
 const STUB_1 = 'agg-stub-1'
 const STUB_2 = 'agg-stub-2'
@@ -34,6 +34,14 @@ describe('#listNotifications (stub)', () => {
         STUB_1,
         STUB_3
       ])
+    })
+  })
+
+  describe('listNotifications unavailable', () => {
+    test('fails when searching for the unavailable reference', async () => {
+      await expect(
+        listNotifications({ page: 1, referenceNumber: UNAVAILABLE_REFERENCE })
+      ).rejects.toThrow('INS backend unavailable')
     })
   })
 

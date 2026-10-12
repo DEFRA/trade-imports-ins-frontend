@@ -7,6 +7,7 @@ const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const CREATE_NEW = 'Create new'
 const USE_TEMPLATE = 'Use template'
 const UNMATCHED_REFERENCE = 'GBN-AG-26-999999'
+const UNAVAILABLE_REFERENCE = 'GBN-AG-26-500000'
 const NO_RESULTS = 'No notifications found'
 const MANAGE_TEMPLATES_HREF = 'http://localhost:3000/live-animals/templates'
 const SEARCH_LABEL = 'Search by notification reference'
@@ -154,6 +155,51 @@ test.describe('dashboard', () => {
     })
 
     await expect(useTemplate).toBeVisible()
+    await expect(useTemplate).toHaveAttribute('href', MANAGE_TEMPLATES_HREF)
+  })
+
+  test('still offers Create new and Use template when the notifications cannot be loaded', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto('/')
+    await page.getByLabel(SEARCH_LABEL).fill(UNAVAILABLE_REFERENCE)
+    await page.getByRole('button', { name: 'Search' }).click()
+
+    await expect(
+      page.getByText(
+        'Sorry, there is a problem with the service. Try again in a few minutes.'
+      )
+    ).toBeVisible()
+    await expect(page.getByRole('cell')).toHaveCount(0)
+
+    const heading = page.getByRole('heading', {
+      name: 'Dashboard',
+      exact: true
+    })
+    const createNew = page.getByRole('button', {
+      name: CREATE_NEW,
+      exact: true
+    })
+    const useTemplate = page.getByRole('button', {
+      name: USE_TEMPLATE,
+      exact: true
+    })
+    const searchField = page.getByLabel(SEARCH_LABEL)
+    await expect(createNew).toBeVisible()
+    await expect(useTemplate).toBeVisible()
+
+    const [headingBox, createNewBox, useTemplateBox, searchBox] =
+      await Promise.all([
+        heading.boundingBox(),
+        createNew.boundingBox(),
+        useTemplate.boundingBox(),
+        searchField.boundingBox()
+      ])
+    expect(createNewBox.y).toBeGreaterThan(headingBox.y)
+    expect(createNewBox.y).toBeLessThan(searchBox.y)
+    expect(useTemplateBox.y).toBe(createNewBox.y)
+    expect(useTemplateBox.x).toBeGreaterThan(createNewBox.x)
     await expect(useTemplate).toHaveAttribute('href', MANAGE_TEMPLATES_HREF)
   })
 
