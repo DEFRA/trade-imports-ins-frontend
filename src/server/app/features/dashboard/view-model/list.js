@@ -86,10 +86,15 @@ export function buildPaginationLinks(
   }
 }
 
+const READ_ONLY_VIEW_STATUSES = new Set([
+  'SUBMITTED',
+  'SUBMITTED_ACTION_REQUIRED'
+])
+
 export function buildNotificationLink(status, referenceNumber) {
   const setUrl = buildLiveAnimalsSetUrl()
   const encodedReference = encodeURIComponent(referenceNumber)
-  return status === 'SUBMITTED'
+  return READ_ONLY_VIEW_STATUSES.has(status)
     ? `${setUrl}/notifications/${encodedReference}/notification-view`
     : `${setUrl}/notifications/${encodedReference}`
 }

@@ -41,6 +41,16 @@ const NOTIFICATIONS = [
     commodity: null,
     arrivalDate: '2026-09-09T00:00:00Z',
     lastUpdated: '2026-09-06T10:00:00Z'
+  },
+  {
+    aggregateId: 'agg-stub-5',
+    aggregateVersion: 2,
+    referenceNumber: 'GBN-AG-26-000005',
+    status: 'SUBMITTED_ACTION_REQUIRED',
+    originCountry: 'FR',
+    commodity: 'Cattle',
+    arrivalDate: '2026-09-11T00:00:00Z',
+    lastUpdated: '2026-09-05T10:00:00Z'
   }
 ]
 

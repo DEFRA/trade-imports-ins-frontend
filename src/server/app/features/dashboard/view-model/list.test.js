@@ -120,11 +120,14 @@ describe('#buildPaginationLinks', () => {
 })
 
 describe('#buildNotificationLink', () => {
-  test('SUBMITTED notifications link to the read-only notification-view page', () => {
-    expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
-      `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
-    )
-  })
+  test.each(['SUBMITTED', 'SUBMITTED_ACTION_REQUIRED'])(
+    '%s notifications link to the read-only notification-view page',
+    (status) => {
+      expect(buildNotificationLink(status, REFERENCE_NUMBER)).toBe(
+        `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
+      )
+    }
+  )
 
   test.each(['DRAFT', 'AMEND'])(
     '%s notifications link back to the journey hub, not notification-view',
