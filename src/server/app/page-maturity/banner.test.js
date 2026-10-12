@@ -61,10 +61,8 @@ describe('page maturity banner', () => {
       expect(normalised(banner.text())).toBe(`Alpha ${SERVICE_SENTENCE}`)
     })
 
-    it('Should render the same banner as when the value is explicitly undefined', () => {
-      const explicit = load(renderLayout({ pageMaturity: null }))
-
-      expect(explicit(PHASE_BANNER).html()).toBe(banner.html())
+    it('Should add nothing to the layout from the banner snippet', () => {
+      expect(environment.render('page-maturity/banner.njk', {})).toBe('')
     })
   })
 

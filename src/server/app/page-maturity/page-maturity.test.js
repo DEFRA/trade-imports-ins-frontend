@@ -79,6 +79,17 @@ describe('#pageMaturityContext', () => {
     expect(pageMaturityContext({ route: { path: EXPLORING_PAGE } })).toEqual({})
   })
 
+  it('Should return nothing when the error page is rendered on a listed route', () => {
+    config.set(FLAG, true)
+
+    expect(
+      pageMaturityContext({
+        route: { path: EXPLORING_PAGE },
+        response: { source: { template: 'shared/error' } }
+      })
+    ).toEqual({})
+  })
+
   it('Should return nothing for a request with no route', () => {
     config.set(FLAG, true)
 

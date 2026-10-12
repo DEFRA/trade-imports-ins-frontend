@@ -7,6 +7,11 @@ import { PAGE_LEVELS, SECTION_LEVELS } from './page-levels.js'
 
 const copy = copyFor({ en: copyEn, cy: copyCy })
 
+const ERROR_TEMPLATE = 'shared/error'
+
+const isErrorPage = (request) =>
+  request.response?.source?.template === ERROR_TEMPLATE
+
 const inSection = (routePath, section) =>
   routePath === section || routePath.startsWith(`${section}/`)
 
@@ -32,12 +37,12 @@ export const pageLevelFor = (routePath) => {
 /**
  * Builds the view context that puts a page's maturity level in the phase banner.
  *
- * @param {{ route?: { path?: string } }} request - the hapi request being rendered
+ * @param {{ route?: { path?: string }, response?: { source?: { template?: string } } }} request - the hapi request being rendered
  * @returns {{ pageMaturity?: { tag: { text: string, classes: string }, text: string, hiddenPrefix: string } }}
- *   an empty object when the banner is switched off or the page is not listed
+ *   an empty object when the banner is switched off, the page is not listed, or the response is the error page
  */
 export const pageMaturityContext = (request) => {
-  if (!config.get('pageMaturityBanner.enabled')) {
+  if (!config.get('pageMaturityBanner.enabled') || isErrorPage(request)) {
     return {}
   }
   const level = pageLevelFor(request.route?.path)
