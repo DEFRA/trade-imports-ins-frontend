@@ -7,8 +7,10 @@ import {
   addressBookPath,
   dashboardPath,
   inAddressBookSection,
-  inDashboardSection
+  inDashboardSection,
+  inTemplatesSection
 } from '../../../server/app/shared/paths.js'
+import { manageTemplatesUrl } from '../../../server/app/features/notification-type/destinations.js'
 
 const logger = createLogger()
 const assetPath = config.get('assetPath')
@@ -20,6 +22,9 @@ const manifestPath = path.join(
 let webpackManifest
 
 export function activeNavigationItem(requestPath = '') {
+  if (inTemplatesSection(requestPath)) {
+    return 'templates'
+  }
   if (inDashboardSection(requestPath)) {
     return 'dashboard'
   }
@@ -50,6 +55,7 @@ async function context(request) {
     authEnabled: config.get('auth.enabled'),
     activeNavigationItem: activeNavigationItem(request.path),
     dashboardUrl: dashboardPath(),
+    templatesUrl: manageTemplatesUrl(),
     addressBookUrl: addressBookPath(),
     userSession: authData
       ? {

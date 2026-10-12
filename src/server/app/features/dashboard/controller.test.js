@@ -19,6 +19,12 @@ const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
 const ARRIVAL_DATE = '2026-09-10T00:00:00Z'
+const CREATE_NEW = 'Create new'
+const USE_TEMPLATE = 'Use template'
+const USE_TEMPLATE_BUTTON =
+  /<a href="http:\/\/localhost:3000\/live-animals\/templates" role="button" draggable="false" class="govuk-button govuk-button--secondary" data-module="govuk-button">\s*Use template\s*<\/a>/
+const TYPE_HREF = 'href="/notification-type"'
+const RETIRED_LABEL = 'Start a new notification'
 
 const pageOf = (content, overrides = {}) => ({
   content,
@@ -83,6 +89,75 @@ describe('#dashboard', () => {
     expect(result).not.toContain('>FR<')
     expect(result).toContain('10 Sep 2026')
     expect(result).toContain('Showing 1-1 of 1')
+  })
+
+  test('offers Create new under the heading and above the search when notifications are listed', async () => {
+    insBackendApi()
+      .get(NOTIFICATIONS_PATH)
+      .query(DEFAULT_QUERY)
+      .reply(
+        200,
+        pageOf([
+          {
+            referenceNumber: REFERENCE_NUMBER,
+            status: 'SUBMITTED',
+            originCountry: 'FR',
+            commodity: null,
+            arrivalDate: ARRIVAL_DATE
+          }
+        ])
+      )
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/',
+      auth: sessionAuth('dashboard-start-when-listed')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain(REFERENCE_NUMBER)
+    expect(result).toContain(CREATE_NEW)
+    expect(result).toContain(TYPE_HREF)
+    expect(result).not.toContain(RETIRED_LABEL)
+    expect(result).not.toContain('govuk-button--start')
+    expect(result.indexOf(CREATE_NEW)).toBeGreaterThan(result.indexOf('<h1'))
+    expect(result.indexOf(CREATE_NEW)).toBeLessThan(
+      result.indexOf('Search by notification reference')
+    )
+  })
+
+  test('offers Use template beside Create new, as a secondary button to Manage templates, when notifications are listed', async () => {
+    insBackendApi()
+      .get(NOTIFICATIONS_PATH)
+      .query(DEFAULT_QUERY)
+      .reply(
+        200,
+        pageOf([
+          {
+            referenceNumber: REFERENCE_NUMBER,
+            status: 'SUBMITTED',
+            originCountry: 'FR',
+            commodity: null,
+            arrivalDate: ARRIVAL_DATE
+          }
+        ])
+      )
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/',
+      auth: sessionAuth('dashboard-use-template-when-listed')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toMatch(USE_TEMPLATE_BUTTON)
+    expect(result).toContain('govuk-button-group')
+    expect(result.indexOf(USE_TEMPLATE)).toBeGreaterThan(
+      result.indexOf(CREATE_NEW)
+    )
+    expect(result.indexOf(USE_TEMPLATE)).toBeLessThan(
+      result.indexOf('Search by notification reference')
+    )
   })
 
   test('notifications from more than one status all appear in the same list (AC2)', async () => {
@@ -237,9 +312,40 @@ describe('#dashboard — search, sort and errors', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('No notifications found')
+    expect(result).toContain(CREATE_NEW)
+    expect(result).toMatch(USE_TEMPLATE_BUTTON)
+    expect(result).toContain(TYPE_HREF)
+    expect(result).not.toContain(RETIRED_LABEL)
   })
 
-  test('empty aggregated store shows an empty state with a way to start a new notification (AC6)', async () => {
+  test('still offers Create new after a search that matches a notification', async () => {
+    insBackendApi()
+      .get(NOTIFICATIONS_PATH)
+      .query({ ...DEFAULT_QUERY, referenceNumber: REFERENCE_NUMBER })
+      .reply(
+        200,
+        pageOf([
+          {
+            referenceNumber: REFERENCE_NUMBER,
+            status: 'SUBMITTED',
+            originCountry: 'GB',
+            arrivalDate: ARRIVAL_DATE
+          }
+        ])
+      )
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/?referenceNumber=${REFERENCE_NUMBER}`,
+      auth: sessionAuth('dashboard-search-match-create-new')
+    })
+
+    expect(result).toContain(CREATE_NEW)
+    expect(result).toContain(TYPE_HREF)
+    expect(result).toMatch(USE_TEMPLATE_BUTTON)
+  })
+
+  test('empty aggregated store shows an empty state and still offers Create new (AC6)', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -253,8 +359,11 @@ describe('#dashboard — search, sort and errors', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('There are no notifications yet.')
-    expect(result).toContain('Start a new notification')
-    expect(result).toContain('href="http://localhost:3000/live-animals"')
+    expect(result).toContain(CREATE_NEW)
+    expect(result).toMatch(USE_TEMPLATE_BUTTON)
+    expect(result).not.toContain(RETIRED_LABEL)
+    expect(result).toContain(TYPE_HREF)
+    expect(result).not.toContain('href="http://localhost:3000/live-animals"')
     expect(result).not.toContain('No notifications found')
   })
 
@@ -306,6 +415,7 @@ describe('#dashboard — search, sort and errors', () => {
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(result).toContain('govuk-notification-banner')
+    expect(result).toMatch(USE_TEMPLATE_BUTTON)
     expect(result).toContain(
       'Sorry, there is a problem with the service. Try again in a few minutes.'
     )

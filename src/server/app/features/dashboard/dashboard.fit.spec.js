@@ -4,6 +4,12 @@ import { test, expect } from '@playwright/test'
 import { signIn } from '../../../../../fit/sign-in.js'
 
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
+const CREATE_NEW = 'Create new'
+const USE_TEMPLATE = 'Use template'
+const UNMATCHED_REFERENCE = 'GBN-AG-26-999999'
+const NO_RESULTS = 'No notifications found'
+const MANAGE_TEMPLATES_HREF = 'http://localhost:3000/live-animals/templates'
+const SEARCH_LABEL = 'Search by notification reference'
 
 const expectNoSeriousOrCriticalViolations = async (page, subject) => {
   const results = await new AxeBuilder({ page })
@@ -62,6 +68,95 @@ test.describe('dashboard', () => {
     ).toHaveCount(0)
   })
 
+  test('offers Create new under the heading, opening the type question with nothing selected and Germinal products second', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto('/')
+
+    await expect(
+      page.getByRole('button', { name: CREATE_NEW, exact: true })
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Start a new notification' })
+    ).toHaveCount(0)
+
+    await page.getByRole('button', { name: CREATE_NEW, exact: true }).click()
+
+    await expect(page).toHaveURL(/\/notification-type$/)
+    await expect(
+      page.getByRole('heading', { level: 1, name: /What are you importing\?/ })
+    ).toBeVisible()
+
+    const radios = page.getByRole('radio')
+    await expect(radios).toHaveCount(5)
+    await expect(radios.nth(1)).toHaveAccessibleName(
+      'Germinal products (semen, ova, embryos)'
+    )
+    for (let index = 0; index < 5; index++) {
+      await expect(radios.nth(index)).not.toBeChecked()
+    }
+  })
+
+  test('still offers Create new after a search that matches nothing, and it opens the type question', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto('/')
+
+    await page.getByLabel(SEARCH_LABEL).fill(UNMATCHED_REFERENCE)
+    await page.getByRole('button', { name: 'Search' }).click()
+
+    await expect(page.getByText(NO_RESULTS)).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: CREATE_NEW, exact: true })
+    ).toBeVisible()
+
+    await page.getByRole('button', { name: CREATE_NEW, exact: true }).click()
+
+    await expect(
+      page.getByRole('heading', { level: 1, name: /What are you importing\?/ })
+    ).toBeVisible()
+  })
+
+  test('offers Use template beside Create new, linking to Manage templates in the live animals service', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto('/')
+
+    const useTemplate = page.getByRole('button', {
+      name: USE_TEMPLATE,
+      exact: true
+    })
+
+    await expect(useTemplate).toBeVisible()
+    await expect(useTemplate).toHaveAttribute('href', MANAGE_TEMPLATES_HREF)
+    await expect(
+      page.getByRole('button', { name: CREATE_NEW, exact: true })
+    ).toBeVisible()
+  })
+
+  test('still offers Use template after a search that matches nothing', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto('/')
+
+    await page.getByLabel(SEARCH_LABEL).fill(UNMATCHED_REFERENCE)
+    await page.getByRole('button', { name: 'Search' }).click()
+
+    await expect(page.getByText(NO_RESULTS)).toBeVisible()
+
+    const useTemplate = page.getByRole('button', {
+      name: USE_TEMPLATE,
+      exact: true
+    })
+
+    await expect(useTemplate).toBeVisible()
+    await expect(useTemplate).toHaveAttribute('href', MANAGE_TEMPLATES_HREF)
+  })
+
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page)
     await page.goto('/')
@@ -114,9 +209,7 @@ test.describe('dashboard', () => {
     await signIn(page)
     await page.goto('/')
 
-    await page
-      .getByLabel('Search by notification reference')
-      .fill(REFERENCE_NUMBER)
+    await page.getByLabel(SEARCH_LABEL).fill(REFERENCE_NUMBER)
     await page.getByRole('button', { name: 'Search' }).click()
 
     await expect(
@@ -133,11 +226,9 @@ test.describe('dashboard', () => {
     await signIn(page)
     await page.goto('/')
 
-    await page
-      .getByLabel('Search by notification reference')
-      .fill('GBN-AG-26-999999')
+    await page.getByLabel(SEARCH_LABEL).fill(UNMATCHED_REFERENCE)
     await page.getByRole('button', { name: 'Search' }).click()
 
-    await expect(page.getByText('No notifications found')).toBeVisible()
+    await expect(page.getByText(NO_RESULTS)).toBeVisible()
   })
 })
