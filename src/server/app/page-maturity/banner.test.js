@@ -56,7 +56,8 @@ describe('page maturity banner', () => {
     const $ = load(renderLayout())
     const banner = $(PHASE_BANNER)
 
-    it('Should leave the phase banner with the Alpha tag and the feedback sentence only', () => {
+    it('Should leave one phase banner with the Alpha tag and the feedback sentence only', () => {
+      expect(banner).toHaveLength(1)
       expect(banner.find('.govuk-tag')).toHaveLength(1)
       expect(normalised(banner.text())).toBe(`Alpha ${SERVICE_SENTENCE}`)
     })
@@ -68,37 +69,43 @@ describe('page maturity banner', () => {
 
   describe('when the page has a level', () => {
     const $ = load(renderLayout({ pageMaturity }))
-    const banner = $(PHASE_BANNER)
-    const tags = banner.find('.govuk-tag')
+    const banners = $(PHASE_BANNER)
+    const alpha = banners.eq(0)
+    const level = banners.eq(1)
+    const levelTag = level.find('.govuk-tag')
 
-    it('Should show the Alpha tag, then the level tag with its class, then the line', () => {
-      expect(tags).toHaveLength(2)
-      expect($(tags[0]).text().trim()).toBe('Alpha')
-      expect($(tags[1]).text().trim()).toBe(copy.levels.detailing.tag)
-      expect($(tags[1]).hasClass(TAG_CLASSES.detailing)).toBe(true)
-      expect(normalised(banner.text())).toContain(
-        `${copy.levels.detailing.tag} ${copy.levels.detailing.text}`
+    it('Should add a second phase banner for the level, after the Alpha one', () => {
+      expect(banners).toHaveLength(2)
+      expect(normalised(alpha.text())).toBe(`Alpha ${SERVICE_SENTENCE}`)
+      expect(levelTag).toHaveLength(1)
+      expect(levelTag.text().trim()).toBe(copy.levels.detailing.tag)
+      expect(levelTag.hasClass(TAG_CLASSES.detailing)).toBe(true)
+      expect(levelTag.hasClass('govuk-phase-banner__content__tag')).toBe(true)
+      expect(normalised(level.text())).toBe(
+        `${copy.levels.detailing.tag} ${copy.hiddenPrefix} ${copy.levels.detailing.text}`
       )
     })
 
+    it('Should leave no line break or spacing utilities in the level row', () => {
+      expect(level.find('br')).toHaveLength(0)
+      expect(level.html()).not.toContain('govuk-!-margin')
+    })
+
     it('Should keep exactly one link, the feedback email', () => {
-      const links = banner.find('a')
+      const links = banners.find('a')
 
       expect(links).toHaveLength(1)
       expect(links.attr('href')).toMatch(/^mailto:/)
     })
 
-    it('Should put the hidden prefix in visually hidden text before the level tag', () => {
-      const hidden = banner.find('.govuk-visually-hidden')
-
-      expect(hidden.text()).toBe(copy.hiddenPrefix)
-      expect(banner.html().indexOf(copy.hiddenPrefix)).toBeLessThan(
-        banner.html().indexOf(TAG_CLASSES.detailing)
+    it('Should put the hidden prefix in visually hidden text in the level row', () => {
+      expect(level.find('.govuk-visually-hidden').text()).toBe(
+        copy.hiddenPrefix
       )
     })
 
-    it('Should keep the service sentence', () => {
-      expect(normalised(banner.text())).toContain(SERVICE_SENTENCE)
+    it('Should keep the service sentence in the Alpha row', () => {
+      expect(normalised(alpha.text())).toContain(SERVICE_SENTENCE)
     })
   })
 

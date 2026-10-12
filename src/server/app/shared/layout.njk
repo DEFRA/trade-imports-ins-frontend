@@ -58,11 +58,12 @@
 {% endblock %}
 
 {% block beforeContent %}
-  {% set phaseBannerHtml %}{{ sharedCopy.layout.phaseBanner.bodyPrefix }} <a class="govuk-link" href="{{ feedbackUrl }}">{{ sharedCopy.layout.phaseBanner.feedbackLinkText }}</a>.{% include "page-maturity/banner.njk" %}{% endset %}
+  {% set phaseBannerHtml %}{{ sharedCopy.layout.phaseBanner.bodyPrefix }} <a class="govuk-link" href="{{ feedbackUrl }}">{{ sharedCopy.layout.phaseBanner.feedbackLinkText }}</a>.{% endset %}
   {{ govukPhaseBanner({
     tag: { text: sharedCopy.layout.phaseBanner.tag, classes: "govuk-tag--grey" },
     html: phaseBannerHtml
   }) }}
+  {%- include "page-maturity/banner.njk" %}
   {% if backLink %}
     {{ govukBackLink({ text: sharedCopy.layout.back, href: backLink }) }}
   {% endif %}
