@@ -238,7 +238,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
     expect(result).toContain(
-      'Error: Add address details | Import notification service'
+      'Error: Add address details - Import notification service - GOV.UK'
     )
     expect(result).toContain('href="#name"')
     expect(result).toContain('Enter a name')
