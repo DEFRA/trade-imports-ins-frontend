@@ -33,13 +33,12 @@ describe('#pageLevelFor', () => {
     const sections = [{ section: '/example/section', level: LEVELS.detailing }]
     const NEW_PAGE = '/example/section/new'
 
-    it.each([
-      '/example/section',
-      NEW_PAGE,
-      '/example/section/{id}/child'
-    ])('Should treat %s as in the section', (path) => {
-      expect(pageLevelFor(path, sections)).toBe(LEVELS.detailing)
-    })
+    it.each(['/example/section', NEW_PAGE, '/example/section/{id}/child'])(
+      'Should treat %s as in the section',
+      (path) => {
+        expect(pageLevelFor(path, sections)).toBe(LEVELS.detailing)
+      }
+    )
 
     it.each(['/example/sectionsomething', '/other'])(
       'Should return undefined for %s, which is not in the section',
