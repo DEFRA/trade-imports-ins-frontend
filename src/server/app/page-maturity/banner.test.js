@@ -196,5 +196,21 @@ describe('page maturity banner', () => {
 
       expect(await getBannerTags('maturity-off')).toEqual(['Alpha'])
     })
+
+    it('Should show only the Alpha tag on the not found page, though every route has a level', async () => {
+      config.set(FLAG, true)
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/no-such-page',
+        auth: sessionAuth('maturity-not-found')
+      })
+      const tags = load(result)(`${PHASE_BANNER} ${TAG}`)
+        .map((_, tag) => normalised(load(tag).text()))
+        .get()
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(tags).toEqual(['Alpha'])
+    })
   })
 })

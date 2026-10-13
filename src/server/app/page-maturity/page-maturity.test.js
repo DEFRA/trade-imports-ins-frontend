@@ -47,6 +47,14 @@ describe('#pageLevelFor', () => {
       }
     )
 
+    it('Should let an exact page entry win over the section that holds it', () => {
+      expect(
+        pageLevelFor('/example/section/new', sections, {
+          '/example/section/new': LEVELS.agreed
+        })
+      ).toBe(LEVELS.agreed)
+    })
+
     it('Should use the first section that holds the route', () => {
       expect(
         pageLevelFor('/example/section/new', [
@@ -65,8 +73,8 @@ describe('#pageMaturityContext', () => {
     config.set(FLAG, initial)
   })
 
-  it('Should be on by default', () => {
-    expect(initial).toBe(true)
+  it('Should default the switch to on', () => {
+    expect(config.default(FLAG)).toBe(true)
   })
 
   it('Should return the tag, class, line and hidden prefix for a page with a level', () => {
