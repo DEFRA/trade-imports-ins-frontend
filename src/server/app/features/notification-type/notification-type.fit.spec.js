@@ -82,7 +82,7 @@ test.describe('notification type question', () => {
   test('shows the alpha phase banner with an email feedback link', async ({
     page
   }) => {
-    const banner = page.locator('.govuk-phase-banner')
+    const banner = page.locator('.govuk-phase-banner', { hasText: 'Alpha' })
 
     await expect(banner).toContainText('Alpha')
     await expect(banner).toContainText(

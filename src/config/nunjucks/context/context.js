@@ -12,6 +12,8 @@ import {
 } from '../../../server/app/shared/paths.js'
 import { manageTemplatesUrl } from '../../../server/app/features/notification-type/destinations.js'
 
+import { pageMaturityContext } from '../../../server/app/page-maturity/page-maturity.js'
+
 const logger = createLogger()
 const assetPath = config.get('assetPath')
 const manifestPath = path.join(
@@ -70,7 +72,8 @@ async function context(request) {
       const webpackAssetPath = webpackManifest?.[asset]
       return `${assetPath}/${webpackAssetPath ?? asset}`
     },
-    crumb: request.plugins?.crumb ?? request.state?.crumb ?? ''
+    crumb: request.plugins?.crumb ?? request.state?.crumb ?? '',
+    ...pageMaturityContext(request)
   }
 }
 

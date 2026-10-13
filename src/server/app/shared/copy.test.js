@@ -76,16 +76,16 @@ describe('layout copy', () => {
     })
   })
 
-  it('Should close every page title with the GOV.UK brand word in both locales', () => {
-    expect(sharedEn.layout.govukSuffix).toBe('GOV.UK')
-    expect(sharedCy.layout.govukSuffix).toBe('GOV.UK')
-  })
-
   it('Should draft the Templates label in Welsh', () => {
     expect(sharedCy.layout.serviceNavigation.templates).toBe('Templedi')
     expect(sharedCy.layout.serviceNavigation.templates).not.toBe(
       sharedEn.layout.serviceNavigation.templates
     )
+  })
+
+  it('Should close every page title with the GOV.UK brand word in both locales', () => {
+    expect(sharedEn.layout.govukSuffix).toBe('GOV.UK')
+    expect(sharedCy.layout.govukSuffix).toBe('GOV.UK')
   })
 
   it('Should tell the user to try again when a service behind a page fails', () => {

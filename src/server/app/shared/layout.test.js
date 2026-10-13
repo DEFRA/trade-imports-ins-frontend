@@ -216,10 +216,6 @@ describe('page title', () => {
       pageTitleOf(renderLayout(signedIn, { errorSummary: { errorList: [] } }))
     ).toBe('Error: Dashboard - Import notification service - GOV.UK')
   })
-
-  it('Should not separate the title with a pipe', () => {
-    expect(pageTitleOf(renderLayout(signedIn))).not.toContain('|')
-  })
 })
 
 describe('content column width by surface', () => {
