@@ -6,32 +6,21 @@ import { BANNER_CLASSES, LEVELS, TAG_CLASSES } from './levels.js'
 import { pageLevelFor, pageMaturityContext } from './page-maturity.js'
 
 const FLAG = 'pageMaturityBanner.enabled'
-const EXPLORING_PAGE = '/'
+const LISTED_ROUTE = '/'
+
+const requestFor = (path) => ({ route: { path } })
 
 describe('#pageLevelFor', () => {
   it.each([
-    ['/', LEVELS.exploring],
-    ['/address-book', LEVELS.detailing],
-    ['/address-book/add', LEVELS.agreed],
-    ['/address-book/{id}', LEVELS.readyForLive]
-  ])('Should return the level of the listed path %s', (routePath, level) => {
-    expect(pageLevelFor(routePath)).toBe(level)
-  })
-
-  it('Should return undefined for a path that is not listed', () => {
-    expect(pageLevelFor('/auth/sign-out')).toBeUndefined()
-  })
-
-  it.each([
+    '/',
+    '/notification-type',
+    '/address-book',
+    '/address-book/add',
     '/address-book/{id}/edit',
-    '/address-book-x',
-    '/address-book/add/x'
-  ])(
-    'Should return undefined for %s, which only shares a prefix with a listed path',
-    (routePath) => {
-      expect(pageLevelFor(routePath)).toBeUndefined()
-    }
-  )
+    '/auth/sign-out'
+  ])('Should make %s Exploring, like every INS page', (routePath) => {
+    expect(pageLevelFor(routePath)).toBe(LEVELS.exploring)
+  })
 
   it.each([undefined, ''])(
     'Should return undefined for the path %j',
@@ -40,8 +29,32 @@ describe('#pageLevelFor', () => {
     }
   )
 
-  it('Should not treat an inherited Object property as a listed path', () => {
-    expect(pageLevelFor('constructor')).toBeUndefined()
+  describe('with a section', () => {
+    const sections = [{ section: '/example/section', level: LEVELS.detailing }]
+
+    it.each([
+      '/example/section',
+      '/example/section/new',
+      '/example/section/{id}/child'
+    ])('Should treat %s as in the section', (path) => {
+      expect(pageLevelFor(path, sections)).toBe(LEVELS.detailing)
+    })
+
+    it.each(['/example/sectionsomething', '/other'])(
+      'Should return undefined for %s, which is not in the section',
+      (path) => {
+        expect(pageLevelFor(path, sections)).toBeUndefined()
+      }
+    )
+
+    it('Should use the first section that holds the route', () => {
+      expect(
+        pageLevelFor('/example/section/new', [
+          ...sections,
+          { section: '/', level: LEVELS.exploring }
+        ])
+      ).toBe(LEVELS.detailing)
+    })
   })
 })
 
@@ -52,10 +65,12 @@ describe('#pageMaturityContext', () => {
     config.set(FLAG, initial)
   })
 
-  it('Should return the tag, class, line and hidden prefix for a listed route when the switch is on', () => {
-    config.set(FLAG, true)
+  it('Should be on by default', () => {
+    expect(initial).toBe(true)
+  })
 
-    expect(pageMaturityContext({ route: { path: EXPLORING_PAGE } })).toEqual({
+  it('Should return the tag, class, line and hidden prefix for a page with a level', () => {
+    expect(pageMaturityContext(requestFor(LISTED_ROUTE))).toEqual({
       pageMaturity: {
         tag: {
           text: copy.levels.exploring.tag,
@@ -68,38 +83,22 @@ describe('#pageMaturityContext', () => {
     })
   })
 
-  it('Should return nothing for an unlisted route', () => {
-    config.set(FLAG, true)
-
-    expect(pageMaturityContext({ route: { path: '/auth/sign-out' } })).toEqual(
-      {}
-    )
-  })
-
-  it('Should return nothing for a listed route when the switch is off', () => {
+  it('Should return nothing when the switch is off', () => {
     config.set(FLAG, false)
 
-    expect(pageMaturityContext({ route: { path: EXPLORING_PAGE } })).toEqual({})
+    expect(pageMaturityContext(requestFor(LISTED_ROUTE))).toEqual({})
   })
 
-  it('Should return nothing when the error page is rendered on a listed route', () => {
-    config.set(FLAG, true)
-
+  it('Should return nothing when the error page is rendered on a page with a level', () => {
     expect(
       pageMaturityContext({
-        route: { path: EXPLORING_PAGE },
+        ...requestFor(LISTED_ROUTE),
         response: { source: { template: 'shared/error' } }
       })
     ).toEqual({})
   })
 
   it('Should return nothing for a request with no route', () => {
-    config.set(FLAG, true)
-
-    expect(pageMaturityContext({ path: EXPLORING_PAGE })).toEqual({})
-  })
-
-  it('Should be on by default', () => {
-    expect(initial).toBe(true)
+    expect(pageMaturityContext({ path: LISTED_ROUTE })).toEqual({})
   })
 })

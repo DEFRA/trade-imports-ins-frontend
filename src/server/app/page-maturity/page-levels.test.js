@@ -4,12 +4,13 @@ import { createServer } from '../../server.js'
 import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
 import { LEVELS } from './levels.js'
 import { PAGE_LEVELS, SECTION_LEVELS } from './page-levels.js'
+import { isInSection } from './page-maturity.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-describe('#page levels', () => {
+describe('page maturity page levels', () => {
   let server
 
   beforeAll(async () => {
@@ -21,40 +22,41 @@ describe('#page levels', () => {
     await server.stop({ timeout: 0 })
   })
 
-  const getRoutePaths = () =>
-    new Set(
-      server
-        .table()
-        .filter(({ method }) => method === 'get')
-        .map(({ path }) => path)
-    )
+  const registeredGetPaths = () =>
+    server
+      .table()
+      .filter((route) => route.method === 'get')
+      .map((route) => route.path)
 
-  it('Should list only paths that are registered GET routes', () => {
-    const routePaths = getRoutePaths()
+  it('Should list only GET routes the server really registers', () => {
+    const registered = new Set(registeredGetPaths())
 
     for (const routePath of Object.keys(PAGE_LEVELS)) {
-      expect(routePaths, `${routePath} must be a GET route`).toContain(
-        routePath
+      expect(registered.has(routePath), `${routePath} is not a route`).toBe(
+        true
       )
     }
   })
 
-  it('Should list only sections that are registered GET routes', () => {
-    const routePaths = getRoutePaths()
+  it('Should list only sections that hold at least one registered GET route', () => {
+    const registered = registeredGetPaths()
 
     for (const { section } of SECTION_LEVELS) {
-      expect(routePaths, `${section} must be a GET route`).toContain(section)
+      expect(
+        registered.some((routePath) => isInSection(routePath, section)),
+        `${section} holds no route`
+      ).toBe(true)
     }
   })
 
   it('Should give every page and section a known level', () => {
-    const levels = new Set(Object.values(LEVELS))
-
-    for (const level of [
+    const levels = [
       ...Object.values(PAGE_LEVELS),
-      ...SECTION_LEVELS.map(({ level: sectionLevel }) => sectionLevel)
-    ]) {
-      expect(levels).toContain(level)
+      ...SECTION_LEVELS.map(({ level }) => level)
+    ]
+
+    for (const level of levels) {
+      expect(Object.values(LEVELS)).toContain(level)
     }
   })
 })
