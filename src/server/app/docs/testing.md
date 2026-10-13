@@ -105,15 +105,15 @@ answer `/health`.
 Multi-service coverage does not live in this repository. It belongs in
 the shared tests repository
 [`DEFRA/trade-imports-ins-tests`](https://github.com/DEFRA/trade-imports-ins-tests),
-as its `ins` Playwright project:
+as its `ins` domain:
 `tests/ins/e2e/**/*.spec.ts` and `tests/ins/security/**/*.spec.ts`, run
 against the workspace stack or CDP. A cross-repo change must use the same branch name in every
 repository it touches.
 
 `.github/workflows/e2e-tests.yml` delegates to the workspace's reusable
 `e2e-tests.yml` once the branch image is published, passing its branch name
-and the `ins` project, then reports an `E2E Tests` check back to the pull
-request. It runs only the `ins` project's specs. `check-pull-request.yml`'s
+and the `tests/ins/` test suite, then reports an `E2E Tests` check back to the
+pull request. It runs only the `ins` domain's specs. `check-pull-request.yml`'s
 two jobs — `pr-validator` and `FIT Tests` — remain the source for unit,
 format, lint, coverage and the FIT suite.
 

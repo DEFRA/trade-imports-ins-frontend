@@ -4,16 +4,7 @@ import { dirname, join } from 'node:path'
 
 const referenceDataUrl =
   process.env.TRADE_IMPORTS_REFERENCE_DATA_URL ?? 'http://localhost:8086'
-const outDir = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  'src',
-  'server',
-  'app',
-  'services',
-  '_capture',
-  'fixtures'
-)
+const outDir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
 const JSON_INDENT_SPACES = 2
 
 const targets = [{ name: 'countries', url: `${referenceDataUrl}/countries` }]
