@@ -3,9 +3,9 @@ import { LEVELS } from './levels.js'
 export const PAGE_LEVELS = Object.freeze({
   '/': LEVELS.exploring,
   '/notification-type': LEVELS.exploring,
-  '/notification-type/template': LEVELS.exploring,
+  '/notification-type/template': LEVELS.readyForLive,
   '/address-book': LEVELS.detailing,
-  '/address-book/add': LEVELS.detailing
+  '/address-book/add': LEVELS.agreed
 })
 
 export const SECTION_LEVELS = Object.freeze([])

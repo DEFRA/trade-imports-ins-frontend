@@ -18,7 +18,7 @@ import { sessionAuth } from '../../common/test-helpers/session-auth.js'
 import { runInRealMode } from '../../common/test-helpers/real-mode.js'
 import { sharedCopy } from '../shared/kit.js'
 import { copy } from './copy/copy.en.js'
-import { TAG_CLASSES } from './levels.js'
+import { BANNER_CLASSES, LEVELS, TAG_CLASSES } from './levels.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
@@ -27,17 +27,18 @@ vi.mock('../../../auth/get-oidc-config.js', () => ({
 const environment = nunjucksConfig.options.compileOptions.environment
 
 const PHASE_BANNER = '.govuk-phase-banner'
+const TAG = '.govuk-tag'
 const SERVICE_SENTENCE =
   'This is a new service. Help us improve it and give your feedback by email.'
 
-const pageMaturity = {
-  tag: {
-    text: copy.levels.detailing.tag,
-    classes: TAG_CLASSES.detailing
-  },
-  text: copy.levels.detailing.text,
+const pageMaturityFor = (level) => ({
+  tag: { text: copy.levels[level].tag, classes: TAG_CLASSES[level] },
+  text: copy.levels[level].text,
+  classes: BANNER_CLASSES[level],
   hiddenPrefix: copy.hiddenPrefix
-}
+})
+
+const pageMaturity = pageMaturityFor(LEVELS.detailing)
 
 const renderLayout = (context = {}) =>
   environment.render('shared/layout.njk', {
@@ -58,7 +59,7 @@ describe('page maturity banner', () => {
 
     it('Should leave one phase banner with the Alpha tag and the feedback sentence only', () => {
       expect(banner).toHaveLength(1)
-      expect(banner.find('.govuk-tag')).toHaveLength(1)
+      expect(banner.find(TAG)).toHaveLength(1)
       expect(normalised(banner.text())).toBe(`Alpha ${SERVICE_SENTENCE}`)
     })
 
@@ -72,19 +73,35 @@ describe('page maturity banner', () => {
     const banners = $(PHASE_BANNER)
     const alpha = banners.eq(0)
     const level = banners.eq(1)
-    const levelTag = level.find('.govuk-tag')
+    const levelTag = level.find(TAG)
 
     it('Should add a second phase banner for the level, after the Alpha one', () => {
       expect(banners).toHaveLength(2)
       expect(normalised(alpha.text())).toBe(`Alpha ${SERVICE_SENTENCE}`)
       expect(levelTag).toHaveLength(1)
-      expect(levelTag.text().trim()).toBe(copy.levels.detailing.tag)
       expect(levelTag.hasClass(TAG_CLASSES.detailing)).toBe(true)
       expect(levelTag.hasClass('govuk-phase-banner__content__tag')).toBe(true)
       expect(normalised(level.text())).toBe(
-        `${copy.levels.detailing.tag} ${copy.hiddenPrefix} ${copy.levels.detailing.text}`
+        `${copy.hiddenPrefix} ${copy.levels.detailing.tag}. ${copy.levels.detailing.text}`
       )
     })
+
+    it.each(Object.values(LEVELS))(
+      'Should give the %s row its own modifier class and tag colour',
+      (levelId) => {
+        const levelBanners = load(
+          renderLayout({ pageMaturity: pageMaturityFor(levelId) })
+        )(PHASE_BANNER)
+
+        expect(levelBanners.eq(1).hasClass(BANNER_CLASSES[levelId])).toBe(true)
+        expect(
+          levelBanners.eq(1).find(TAG).hasClass(TAG_CLASSES[levelId])
+        ).toBe(true)
+        expect(levelBanners.eq(0).attr('class')).not.toContain(
+          'app-page-maturity'
+        )
+      }
+    )
 
     it('Should leave no line break or spacing utilities in the level row', () => {
       expect(level.find('br')).toHaveLength(0)
@@ -98,8 +115,14 @@ describe('page maturity banner', () => {
       expect(links.attr('href')).toMatch(/^mailto:/)
     })
 
-    it('Should put the hidden prefix in visually hidden text in the level row', () => {
-      expect(level.find('.govuk-visually-hidden').text()).toBe(
+    it('Should read the hidden status prefix inside the tag, before the level', () => {
+      expect(
+        levelTag.find('.govuk-visually-hidden').first().text().trim()
+      ).toBe(copy.hiddenPrefix)
+      expect(normalised(levelTag.text())).toBe(
+        `${copy.hiddenPrefix} ${copy.levels.detailing.tag}.`
+      )
+      expect(level.find('.govuk-phase-banner__text').text()).not.toContain(
         copy.hiddenPrefix
       )
     })
@@ -136,8 +159,8 @@ describe('page maturity banner', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      return load(result)(`${PHASE_BANNER} .govuk-tag`)
-        .map((_, tag) => load(tag).text().trim())
+      return load(result)(`${PHASE_BANNER} ${TAG}`)
+        .map((_, tag) => normalised(load(tag).text()))
         .get()
     }
 
@@ -147,7 +170,7 @@ describe('page maturity banner', () => {
 
       expect(await getBannerTags('maturity-on')).toEqual([
         'Alpha',
-        copy.levels.exploring.tag
+        `${copy.hiddenPrefix} ${copy.levels.exploring.tag}.`
       ])
     })
 

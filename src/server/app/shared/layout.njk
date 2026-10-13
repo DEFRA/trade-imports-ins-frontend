@@ -63,7 +63,7 @@
     tag: { text: sharedCopy.layout.phaseBanner.tag, classes: "govuk-tag--grey" },
     html: phaseBannerHtml
   }) }}
-  {%- include "page-maturity/banner.njk" %}
+  {% include "page-maturity/banner.njk" %}
   {% if backLink %}
     {{ govukBackLink({ text: sharedCopy.layout.back, href: backLink }) }}
   {% endif %}

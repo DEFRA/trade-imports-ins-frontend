@@ -2,7 +2,7 @@ import { config } from '../../../config/config.js'
 import { copyFor } from '../shared/copy.js'
 import { copy as copyEn } from './copy/copy.en.js'
 import { copy as copyCy } from './copy/copy.cy.js'
-import { TAG_CLASSES } from './levels.js'
+import { BANNER_CLASSES, TAG_CLASSES } from './levels.js'
 import { PAGE_LEVELS, SECTION_LEVELS } from './page-levels.js'
 
 const copy = copyFor({ en: copyEn, cy: copyCy })
@@ -38,7 +38,7 @@ export const pageLevelFor = (routePath) => {
  * Builds the view context that puts a page's maturity level in the phase banner.
  *
  * @param {{ route?: { path?: string }, response?: { source?: { template?: string } } }} request - the hapi request being rendered
- * @returns {{ pageMaturity?: { tag: { text: string, classes: string }, text: string, hiddenPrefix: string } }}
+ * @returns {{ pageMaturity?: { classes: string, tag: { text: string, classes: string }, text: string, hiddenPrefix: string } }}
  *   an empty object when the banner is switched off, the page is not listed, or the response is the error page
  */
 export const pageMaturityContext = (request) => {
@@ -51,6 +51,7 @@ export const pageMaturityContext = (request) => {
   }
   return {
     pageMaturity: {
+      classes: BANNER_CLASSES[level],
       tag: { text: copy.levels[level].tag, classes: TAG_CLASSES[level] },
       text: copy.levels[level].text,
       hiddenPrefix: copy.hiddenPrefix
