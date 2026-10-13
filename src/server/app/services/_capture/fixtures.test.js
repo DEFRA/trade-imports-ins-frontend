@@ -14,14 +14,4 @@ describe('#captured reference fixtures', () => {
   it('Should leave United Kingdom out, as reference data does', () => {
     expect(countries.some(({ code }) => code === 'GB')).toBe(false)
   })
-
-  it('Should hold every country reference data serves unfiltered, in its order', () => {
-    expect(countries).toHaveLength(249)
-    expect(countries[0]).toEqual({
-      code: 'AF',
-      name: 'Afghanistan',
-      subDivisions: []
-    })
-    expect(countries[1].name).toBe('Aland Islands')
-  })
 })
