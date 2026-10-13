@@ -6,14 +6,14 @@ import { BANNER_CLASSES, LEVELS, TAG_CLASSES } from './levels.js'
 import { pageLevelFor, pageMaturityContext } from './page-maturity.js'
 
 const FLAG = 'pageMaturityBanner.enabled'
-const EXPLORING_PAGE = '/notification-type'
+const EXPLORING_PAGE = '/'
 
 describe('#pageLevelFor', () => {
   it.each([
-    ['/notification-type', LEVELS.exploring],
+    ['/', LEVELS.exploring],
     ['/address-book', LEVELS.detailing],
     ['/address-book/add', LEVELS.agreed],
-    ['/notification-type/template', LEVELS.readyForLive]
+    ['/address-book/{id}', LEVELS.readyForLive]
   ])('Should return the level of the listed path %s', (routePath, level) => {
     expect(pageLevelFor(routePath)).toBe(level)
   })
@@ -23,8 +23,8 @@ describe('#pageLevelFor', () => {
   })
 
   it.each([
-    '/address-book/{id}',
-    '/notification-type-x',
+    '/address-book/{id}/edit',
+    '/address-book-x',
     '/address-book/add/x'
   ])(
     'Should return undefined for %s, which only shares a prefix with a listed path',

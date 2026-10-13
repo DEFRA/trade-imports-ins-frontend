@@ -15,7 +15,11 @@ import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../common/test-helpers/session-auth.js'
-import { runInRealMode } from '../../common/test-helpers/real-mode.js'
+import {
+  insBackendApi,
+  runInRealMode,
+  serveCountries
+} from '../../common/test-helpers/real-mode.js'
 import { sharedCopy } from '../shared/kit.js'
 import { copy } from './copy/copy.en.js'
 import { BANNER_CLASSES, LEVELS, TAG_CLASSES } from './levels.js'
@@ -152,9 +156,21 @@ describe('page maturity banner', () => {
     })
 
     const getBannerTags = async (user) => {
+      serveCountries([{ code: 'GB', name: 'United Kingdom' }])
+      insBackendApi()
+        .get('/notifications')
+        .query({ page: '1', sort: 'arrivalDate,desc' })
+        .reply(statusCodes.ok, {
+          content: [],
+          page: 1,
+          size: 25,
+          numberOfElements: 0,
+          totalElements: 0,
+          totalPages: 0
+        })
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/notification-type',
+        url: '/',
         auth: sessionAuth(user)
       })
 
