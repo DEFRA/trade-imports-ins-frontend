@@ -428,6 +428,14 @@ export const config = convict({
       default: 'http://localhost:3003',
       env: 'TRADE_IMPORTS_PLANTS_FRONTEND_URL'
     }
+  },
+  pageMaturityBanner: {
+    enabled: {
+      doc: 'Show each page’s maturity level (Exploring, Detailing, Agreed, Ready for live) in the phase banner',
+      format: STRICT_BOOLEAN,
+      default: true,
+      env: 'PAGE_MATURITY_BANNER_ENABLED'
+    }
   }
 })
 
