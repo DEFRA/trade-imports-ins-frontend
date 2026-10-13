@@ -31,10 +31,11 @@ describe('#pageLevelFor', () => {
 
   describe('with a section', () => {
     const sections = [{ section: '/example/section', level: LEVELS.detailing }]
+    const NEW_PAGE = '/example/section/new'
 
     it.each([
       '/example/section',
-      '/example/section/new',
+      NEW_PAGE,
       '/example/section/{id}/child'
     ])('Should treat %s as in the section', (path) => {
       expect(pageLevelFor(path, sections)).toBe(LEVELS.detailing)
@@ -49,15 +50,15 @@ describe('#pageLevelFor', () => {
 
     it('Should let an exact page entry win over the section that holds it', () => {
       expect(
-        pageLevelFor('/example/section/new', sections, {
-          '/example/section/new': LEVELS.agreed
+        pageLevelFor(NEW_PAGE, sections, {
+          [NEW_PAGE]: LEVELS.agreed
         })
       ).toBe(LEVELS.agreed)
     })
 
     it('Should use the first section that holds the route', () => {
       expect(
-        pageLevelFor('/example/section/new', [
+        pageLevelFor(NEW_PAGE, [
           ...sections,
           { section: '/', level: LEVELS.exploring }
         ])
