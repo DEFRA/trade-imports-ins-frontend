@@ -52,6 +52,14 @@ const RETURN_URL = `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7
 describe('#addressBookAddController', { concurrent: false }, () => {
   let server
 
+  const postAdd = (session, payload) =>
+    server.inject({
+      method: 'POST',
+      url: ADD_ADDRESS_URL,
+      auth: sessionAuth(session),
+      payload
+    })
+
   runInRealMode()
 
   beforeAll(async () => {
@@ -221,19 +229,14 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('POST with invalid data re-renders form with errors', async () => {
-    const { result, statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-invalid'),
-      payload: {
-        name: '',
-        addressLine1: '',
-        townOrCity: '',
-        postcode: '',
-        countryCode: '',
-        phone: '',
-        email: 'bad'
-      }
+    const { result, statusCode, headers } = await postAdd('add-post-invalid', {
+      name: '',
+      addressLine1: '',
+      townOrCity: '',
+      postcode: '',
+      countryCode: '',
+      phone: '',
+      email: 'bad'
     })
 
     expect(statusCode).toBe(statusCodes.badRequest)
@@ -250,11 +253,9 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('POST with a country the reference data does not list shows the select-a-country error', async () => {
-    const { result, statusCode } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-unlisted-country'),
-      payload: { ...validPayload, countryCode: 'ZZ' }
+    const { result, statusCode } = await postAdd('add-post-unlisted-country', {
+      ...validPayload,
+      countryCode: 'ZZ'
     })
 
     expect(statusCode).toBe(statusCodes.badRequest)
