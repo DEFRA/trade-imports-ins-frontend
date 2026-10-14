@@ -206,7 +206,14 @@ describe('#addressBookEditController', () => {
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
     expect(result).toContain('href="#name"')
-    expect(result).toContain('Enter a name')
+    expect(result).toMatch(
+      /href="#name"[^>]*>\s*Enter a name or organisation name\s*</
+    )
+    expect(result).toMatch(
+      /href="#postcode"[^>]*>\s*Enter a postcode or Zip code\s*</
+    )
+    expect(result).toMatch(/href="#countryCode"[^>]*>\s*Select a country\s*</)
+    expect(result).toMatch(/href="#phone"[^>]*>\s*Enter a phone number\s*</)
     expect(result).toContain('href="#email"')
     expect(result).toContain('Enter an email address in the correct format')
     expect(result).toContain('govuk-error-message')

@@ -69,7 +69,7 @@ test.describe('edit address', () => {
     await save(page)
 
     await expectErrorFocusOn(page, {
-      message: 'Enter a name',
+      message: 'Enter a name or organisation name',
       label: fieldLabels.name,
       expectedValue: '',
       url: EDIT_URL

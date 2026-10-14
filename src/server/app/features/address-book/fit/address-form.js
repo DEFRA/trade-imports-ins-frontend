@@ -50,7 +50,7 @@ export async function fillValidAddress(page, overrides = {}) {
 }
 
 export const errorLink = (page, message) =>
-  page.getByRole('alert').getByRole('link', { name: message })
+  page.getByRole('alert').getByRole('link', { name: message, exact: true })
 
 export async function expectErrorFocusOn(
   page,
@@ -66,12 +66,12 @@ export async function expectErrorFocusOn(
 }
 
 export const requiredValidations = [
-  ['name', NAME_LABEL, 'Enter a name'],
+  ['name', NAME_LABEL, 'Enter a name or organisation name'],
   ['addressLine1', ADDRESS_LINE_1_LABEL, 'Enter address line 1'],
   ['townOrCity', TOWN_OR_CITY_LABEL, 'Enter a town or city'],
-  ['postcode', POSTCODE_LABEL, 'Enter a postcode'],
-  ['countryCode', 'Country', 'Enter a country'],
-  ['phone', PHONE_LABEL, 'Enter a telephone number'],
+  ['postcode', POSTCODE_LABEL, 'Enter a postcode or Zip code'],
+  ['countryCode', 'Country', 'Select a country'],
+  ['phone', PHONE_LABEL, 'Enter a phone number'],
   ['email', EMAIL_LABEL, 'Enter an email address']
 ]
 

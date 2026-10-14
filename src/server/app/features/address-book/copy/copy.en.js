@@ -68,7 +68,7 @@ export const copy = {
   },
   errors: {
     name: {
-      required: 'Enter a name',
+      required: 'Enter a name or organisation name',
       maxLength: (max) => `Name must be ${max} characters or fewer`
     },
     addressLine1: {
@@ -86,14 +86,14 @@ export const copy = {
       maxLength: (max) => `County must be ${max} characters or fewer`
     },
     postcode: {
-      required: 'Enter a postcode',
+      required: 'Enter a postcode or Zip code',
       maxLength: (max) => `Postcode must be ${max} characters or fewer`
     },
     countryCode: {
-      required: 'Enter a country'
+      required: 'Select a country'
     },
     phone: {
-      required: 'Enter a telephone number',
+      required: 'Enter a phone number',
       maxLength: (max) => `Telephone number must be ${max} characters or fewer`
     },
     email: {

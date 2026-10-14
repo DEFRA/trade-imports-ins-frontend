@@ -70,7 +70,7 @@ export const copy = {
   },
   errors: {
     name: {
-      required: 'Rhowch enw',
+      required: 'Rhowch enw neu enw’r sefydliad',
       maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`
     },
     addressLine1: {
@@ -88,11 +88,11 @@ export const copy = {
       maxLength: (max) => `Rhaid i’r sir fod yn ${max} nod neu lai`
     },
     postcode: {
-      required: 'Rhowch god post',
+      required: 'Rhowch god post neu god zip',
       maxLength: (max) => `Rhaid i’r cod post fod yn ${max} nod neu lai`
     },
     countryCode: {
-      required: 'Rhowch wlad'
+      required: 'Dewiswch wlad'
     },
     phone: {
       required: 'Rhowch rif ffôn',
