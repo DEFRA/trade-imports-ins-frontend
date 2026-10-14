@@ -1,4 +1,6 @@
 // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+const SELECT_COUNTRY = 'Dewiswch wlad'
+
 export const copy = {
   list: {
     title: 'Llyfr cyfeiriadau',
@@ -43,7 +45,7 @@ export const copy = {
       email: 'Cyfeiriad e-bost'
     },
     phoneHint: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad',
-    countryPlaceholder: 'Dewiswch wlad'
+    countryPlaceholder: SELECT_COUNTRY
   },
   add: {
     title: 'Ychwanegu manylion cyfeiriad',
@@ -92,7 +94,7 @@ export const copy = {
       maxLength: (max) => `Rhaid i’r cod post fod yn ${max} nod neu lai`
     },
     countryCode: {
-      required: 'Dewiswch wlad'
+      required: SELECT_COUNTRY
     },
     phone: {
       required: 'Rhowch rif ffôn',

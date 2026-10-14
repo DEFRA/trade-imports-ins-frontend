@@ -1,3 +1,5 @@
+const SELECT_COUNTRY = 'Select a country'
+
 export const copy = {
   list: {
     title: 'Address book',
@@ -41,7 +43,7 @@ export const copy = {
       email: 'Email address'
     },
     phoneHint: 'For international numbers include the country code',
-    countryPlaceholder: 'Select a country'
+    countryPlaceholder: SELECT_COUNTRY
   },
   add: {
     title: 'Add address details',
@@ -90,7 +92,7 @@ export const copy = {
       maxLength: (max) => `Postcode must be ${max} characters or fewer`
     },
     countryCode: {
-      required: 'Select a country'
+      required: SELECT_COUNTRY
     },
     phone: {
       required: 'Enter a phone number',
