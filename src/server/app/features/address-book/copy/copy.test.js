@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
 import { FIELDS, FIELD_RULES } from '../fields.js'
+import { REQUIRED_MESSAGES } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
 
@@ -81,9 +82,8 @@ describe('#copy', () => {
   })
 
   it('Should word the name, postcode, country and phone required messages as their field labels do', () => {
-    expect(copy.errors.name.required).toBe('Enter a name or organisation name')
-    expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
-    expect(copy.errors.countryCode.required).toBe('Select a country')
-    expect(copy.errors.phone.required).toBe('Enter a phone number')
+    for (const [field, message] of Object.entries(REQUIRED_MESSAGES)) {
+      expect(copy.errors[field].required).toBe(message)
+    }
   })
 })

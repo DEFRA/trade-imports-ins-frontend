@@ -4,6 +4,7 @@ import { createServer } from '../../../../server.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
+import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import {
   addressBookApi,
   runInRealMode,
@@ -19,20 +20,6 @@ const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const ADDRESSES_PATH = `/organisation/${ORG_ID}/addresses`
 const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 const ADD_ADDRESS_URL = '/address-book/add'
-
-// The summary link, not the field or the select's placeholder, carries the message.
-const expectSummaryLinks = (result) => {
-  for (const [field, message] of [
-    ['name', 'Enter a name or organisation name'],
-    ['postcode', 'Enter a postcode or Zip code'],
-    ['countryCode', 'Select a country'],
-    ['phone', 'Enter a phone number']
-  ]) {
-    expect(result).toMatch(
-      new RegExp(`href="#${field}"[^>]*>\\s*${message}\\s*<`)
-    )
-  }
-}
 const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 

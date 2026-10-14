@@ -4,6 +4,7 @@ import { createServer } from '../../../../server.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
+import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import {
   addressBookApi,
   runInRealMode,
@@ -206,14 +207,7 @@ describe('#addressBookEditController', () => {
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
     expect(result).toContain('href="#name"')
-    expect(result).toMatch(
-      /href="#name"[^>]*>\s*Enter a name or organisation name\s*</
-    )
-    expect(result).toMatch(
-      /href="#postcode"[^>]*>\s*Enter a postcode or Zip code\s*</
-    )
-    expect(result).toMatch(/href="#countryCode"[^>]*>\s*Select a country\s*</)
-    expect(result).toMatch(/href="#phone"[^>]*>\s*Enter a phone number\s*</)
+    expectSummaryLinks(result)
     expect(result).toContain('href="#email"')
     expect(result).toContain('Enter an email address in the correct format')
     expect(result).toContain('govuk-error-message')
