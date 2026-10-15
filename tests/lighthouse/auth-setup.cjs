@@ -29,5 +29,15 @@ module.exports = async (browser, { url }) => {
     ])
   }
 
+  // The address form redirects to the type step until a type is chosen.
+  await page.goto(new URL('/address-book/add/address-type', url).toString(), {
+    waitUntil: 'domcontentloaded'
+  })
+  await page.click('input[name="addressType"]')
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    page.click('form button[type="submit"], form .govuk-button')
+  ])
+
   await page.close()
 }

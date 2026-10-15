@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test'
 
 import { signIn } from '../../../../fit/sign-in.js'
+import {
+  ADDRESS_TYPE_PATH,
+  openAddForm
+} from './address-book/fit/address-form.js'
 import { copy as sharedCopy } from '../shared/copy.en.js'
 import { copy as addressBookCopy } from './address-book/copy/copy.en.js'
 import { copy as dashboardCopy } from './dashboard/copy/copy.en.js'
@@ -43,13 +47,32 @@ test.describe('page title', () => {
   test('puts the error prefix in front of the whole title when the page shows errors', async ({
     page
   }) => {
-    await page.goto('/address-book/add')
+    await openAddForm(page)
 
     await page.getByRole('button', { name: addressBookCopy.add.save }).click()
 
     await expect(page.getByRole('alert')).toBeVisible()
     await expect(page).toHaveTitle(
       `${errorTitlePrefix}${addressBookCopy.add.title} - ${serviceName} - ${govukSuffix}`
+    )
+  })
+
+  test('titles Choose an address type the same way, with the error prefix when nothing is chosen', async ({
+    page
+  }) => {
+    await page.goto(ADDRESS_TYPE_PATH)
+
+    await expect(page).toHaveTitle(
+      `${addressBookCopy.addressType.title} - ${serviceName} - ${govukSuffix}`
+    )
+
+    await page
+      .getByRole('button', { name: addressBookCopy.addressType.continue })
+      .click()
+
+    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(page).toHaveTitle(
+      `${errorTitlePrefix}${addressBookCopy.addressType.title} - ${serviceName} - ${govukSuffix}`
     )
   })
 

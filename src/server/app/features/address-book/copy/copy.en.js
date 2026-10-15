@@ -1,3 +1,5 @@
+const SELECT_COUNTRY = 'Select a country'
+
 export const copy = {
   list: {
     title: 'Address book',
@@ -27,8 +29,8 @@ export const copy = {
     deleted: (name) => `${name} deleted from your address book`
   },
   form: {
-    addressHeading: 'Enter address details',
-    contactHeading: 'Enter contact details',
+    addressHeading: 'Address',
+    contactHeading: 'Contact details',
     fields: {
       name: 'Name or organisation name',
       addressLine1: 'Address line 1',
@@ -41,13 +43,32 @@ export const copy = {
       email: 'Email address'
     },
     phoneHint: 'For international numbers include the country code',
-    countryPlaceholder: 'Select a country'
+    countryPlaceholder: SELECT_COUNTRY
   },
   add: {
-    title: 'Add address details',
+    title: 'Add address and contact details',
+    caption: 'Add new address',
     save: 'Save and continue',
     cancel: 'Cancel and return to address book',
-    cancelToJourney: 'Cancel and return to address page'
+    cancelToJourney: 'Cancel and return to address page',
+    nameLabel: 'Name or organisation',
+    countryPlaceholder: 'Select one'
+  },
+  addressType: {
+    caption: 'Add a new address',
+    title: 'Choose an address type',
+    continue: 'Continue',
+    options: {
+      ORIGIN_OR_CONSIGNOR: {
+        text: 'Origin or Consignor',
+        hint: 'Place of origin, Consignor'
+      },
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
+        text: 'Destination, Consignee or Importer',
+        hint: 'Place of destination, Consignee, Importer'
+      },
+      BRANCH: { text: 'Branch', hint: 'Branch address' }
+    }
   },
   edit: {
     title: 'Edit address details',
@@ -67,8 +88,11 @@ export const copy = {
     cancel: 'Cancel'
   },
   errors: {
+    addressType: {
+      required: 'Select an address type'
+    },
     name: {
-      required: 'Enter a name',
+      required: 'Enter a name or organisation name',
       maxLength: (max) => `Name must be ${max} characters or fewer`
     },
     addressLine1: {
@@ -86,14 +110,14 @@ export const copy = {
       maxLength: (max) => `County must be ${max} characters or fewer`
     },
     postcode: {
-      required: 'Enter a postcode',
+      required: 'Enter a postcode or Zip code',
       maxLength: (max) => `Postcode must be ${max} characters or fewer`
     },
     countryCode: {
-      required: 'Enter a country'
+      required: SELECT_COUNTRY
     },
     phone: {
-      required: 'Enter a telephone number',
+      required: 'Enter a phone number',
       maxLength: (max) => `Telephone number must be ${max} characters or fewer`
     },
     email: {

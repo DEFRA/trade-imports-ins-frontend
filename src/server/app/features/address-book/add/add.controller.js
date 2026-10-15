@@ -10,14 +10,20 @@ import {
 import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
-import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
+import {
+  addressAddPath,
+  addressBookPath,
+  addressTypePath
+} from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
   buildCountrySelectItems,
-  getAddressFormCountries
+  getAddressFormCountries,
+  GB_COUNTRY
 } from '../address-countries.js'
 import { addressRules, formValuesOf } from '../fields.js'
 import { setSuccessBanner } from '../success-banner.js'
+import { chosenAddressType, clearAddInProgress } from '../add-in-progress.js'
 import {
   resolveHandshakeContext,
   syncHandshakeContext
@@ -31,7 +37,12 @@ const view = 'address-book/add/add'
 const copy = copyFor({ en, cy })
 
 const countryItemsOf = (countries) =>
-  buildCountrySelectItems(countries, copy.form.countryPlaceholder)
+  buildCountrySelectItems(countries, copy.add.countryPlaceholder)
+
+const DEFAULT_COUNTRY_BY_TYPE = { ORIGIN_OR_CONSIGNOR: GB_COUNTRY.code }
+
+const openingFormValues = (addressType) =>
+  formValuesOf({ countryCode: DEFAULT_COUNTRY_BY_TYPE[addressType] })
 
 const buildView = (
   h,
@@ -45,13 +56,18 @@ const buildView = (
 ) =>
   h
     .view(view, {
-      ...kit.base(copy.add.title, { recoverableError }),
+      ...kit.base(copy.add.title, {
+        recoverableError,
+        backLink: handshake ? undefined : addressTypePath()
+      }),
+      caption: handshake ? null : copy.add.caption,
       copy,
       formValues,
       countryItems,
       errors,
       errorSummary: kit.errorSummary(errors),
-      handshakeContext: handshake
+      handshakeContext: handshake,
+      cancelHref: handshake ? null : addressBookPath()
     })
     .header('Cache-Control', 'no-store')
 
@@ -70,11 +86,18 @@ const redirectAfterCancel = (h, handshake) =>
 
 const get = async (request, h) => {
   const handshake = syncHandshakeContext(request)
+  if (!handshake && !chosenAddressType(request)) {
+    return h.redirect(addressTypePath())
+  }
+
+  const formValues = openingFormValues(
+    handshake ? null : chosenAddressType(request)
+  )
 
   try {
     const countries = await getAddressFormCountries()
     return buildView(h, {
-      formValues: formValuesOf(),
+      formValues,
       countryItems: countryItemsOf(countries),
       handshake
     })
@@ -84,7 +107,7 @@ const get = async (request, h) => {
     }
     logger.error({ err }, 'Failed to load address form countries')
     return buildView(h, {
-      formValues: formValuesOf(),
+      formValues,
       countryItems: [],
       recoverableError: true,
       handshake
@@ -108,6 +131,7 @@ const submitAddress = async (request, h, { handshake, orgId, formValues }) => {
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     const created = await createAddress(orgId, value)
+    clearAddInProgress(request)
     if (!handshake) {
       setSuccessBanner(request, copy.successBanner.added(created.name))
     }
@@ -138,6 +162,7 @@ const post = async (request, h) => {
   const handshake = resolveHandshakeContext(request)
   const payload = request.payload ?? {}
   if (payload.cancel) {
+    clearAddInProgress(request)
     return redirectAfterCancel(h, handshake)
   }
   const orgId = kit.requireOrganisationId(request)

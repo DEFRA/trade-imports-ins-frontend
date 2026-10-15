@@ -3,7 +3,7 @@ import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
-  addressAddPath,
+  addressAddStartPath,
   addressBookPath,
   addressPath
 } from '../../../shared/paths.js'
@@ -63,7 +63,7 @@ const buildView = (h, { recoverableError = false, ...model }) =>
     contentColumnClass: kit.surfaceClass('display'),
     copy,
     listHref: addressBookPath(),
-    addHref: addressAddPath(),
+    addHref: addressAddStartPath(),
     ...model
   })
 

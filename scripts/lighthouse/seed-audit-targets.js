@@ -7,7 +7,7 @@ import puppeteer from 'puppeteer'
 import signIn from '../../tests/lighthouse/auth-setup.cjs'
 import { auditUrls, reportNames, TARGETS_FILE } from './audit-targets.js'
 import { createPageClient } from './page-client.js'
-import { seedAddress } from './seed-address.js'
+import { chooseSeedType, seedAddress } from './seed-address.js'
 
 const HTTP_OK = 200
 
@@ -52,6 +52,8 @@ const write = (payload) => {
 
 const client = createPageClient(origin, await signedInCookies())
 const addressId = await seedAddress(client)
+// The address form redirects to the type step until a type is chosen, and saving the seed clears that choice.
+await chooseSeedType(client)
 const urls = auditUrls(origin, addressId)
 await assertUrlsRenderTheirOwnPage(urls, client)
 write({ origin, addressId, urls, reports: reportNames(origin, addressId) })

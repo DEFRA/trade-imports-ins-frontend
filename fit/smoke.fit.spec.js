@@ -33,6 +33,15 @@ test('a trader signs in, sees the dashboard, and adds, views and deletes an addr
   ).toBeVisible()
 
   await page.getByRole('button', { name: addressBookCopy.list.add }).click()
+  await expect(page).toHaveURL(/\/address-book\/add\/address-type\?start=new$/)
+  await page
+    .getByLabel(addressBookCopy.addressType.options.BRANCH.text, {
+      exact: true
+    })
+    .check()
+  await page
+    .getByRole('button', { name: addressBookCopy.addressType.continue })
+    .click()
   await expect(page).toHaveURL(/\/address-book\/add$/)
   await fillValidAddress(page)
   await page.getByRole('button', { name: addressBookCopy.add.save }).click()

@@ -6,6 +6,7 @@ import {
   fieldLabels,
   fillValidAddress,
   maxLengthValidations,
+  openAddForm,
   requiredValidations,
   validAddress
 } from './address-form.js'
@@ -13,7 +14,6 @@ import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 const ADD_URL = /\/address-book\/add$/
-const ADD_PATH = '/address-book/add'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -23,10 +23,10 @@ test.describe('add address', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-render' })
-    await page.goto(ADD_PATH)
+    await openAddForm(page)
 
     await expect(
-      page.getByRole('heading', { name: 'Add address details' })
+      page.getByRole('heading', { name: 'Add address and contact details' })
     ).toBeVisible()
     for (const [, label] of [
       ...requiredValidations,
@@ -40,15 +40,21 @@ test.describe('add address', () => {
     ).toBeVisible()
 
     const country = page.getByLabel('Country')
-    await expect(country).toHaveValue('')
+    await expect(country).toHaveValue('GB')
     await expect(
       country.getByRole('option', { name: 'United Kingdom' })
     ).toHaveCount(1)
+    for (const name of ['Address', 'Contact details']) {
+      await expect(
+        page.getByRole('heading', { level: 2, name, exact: true })
+      ).toBeVisible()
+    }
+    await expect(page.getByLabel(NAME_LABEL, { exact: true })).toBeVisible()
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-axe' })
-    await page.goto(ADD_PATH)
+    await openAddForm(page)
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address')
   })
@@ -60,7 +66,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-required' })
-      await page.goto(ADD_PATH)
+      await openAddForm(page)
 
       await fillValidAddress(page, { [field]: '' })
       await submit(page)
@@ -82,7 +88,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-maxlength' })
-      await page.goto(ADD_PATH)
+      await openAddForm(page)
 
       const value = 'A'.repeat(maxLength + 1)
       await fillValidAddress(page, { [field]: value })
@@ -102,7 +108,7 @@ test.describe('add address validation', () => {
 
   test('rejects a malformed email address', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-email' })
-    await page.goto(ADD_PATH)
+    await openAddForm(page)
 
     await fillValidAddress(page, { email: 'not-an-email' })
     await submit(page)
@@ -119,7 +125,7 @@ test.describe('add address validation', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-validation-axe' })
-    await page.goto(ADD_PATH)
+    await openAddForm(page)
 
     await fillValidAddress(page, { name: '' })
     await submit(page)
@@ -139,7 +145,7 @@ test.describe('save and confirm', () => {
     await signIn(page, {
       organisationId: `stub-org-add-save-${crypto.randomUUID()}`
     })
-    await page.goto(ADD_PATH)
+    await openAddForm(page)
 
     await fillValidAddress(page)
     await submit(page)
@@ -162,12 +168,12 @@ test.describe('cancel', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-cancel' })
-    await page.goto(ADD_PATH)
+    await openAddForm(page)
 
     await page.getByLabel(NAME_LABEL).fill('Should not be saved')
 
     await page
-      .getByRole('button', { name: 'Cancel and return to address book' })
+      .getByRole('link', { name: 'Cancel and return to address book' })
       .click()
 
     await expect(page).toHaveURL(/\/address-book$/)

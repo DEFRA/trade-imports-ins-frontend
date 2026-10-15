@@ -12,6 +12,7 @@ Every GET route the service registers, derived from
 
 - `/` — the dashboard
 - `/address-book` — the list
+- `/address-book/add/address-type`
 - `/address-book/add`
 - `/address-book/{id}` — view
 - `/address-book/{id}/edit`
@@ -20,6 +21,9 @@ Every GET route the service registers, derived from
 The three `{id}` pages are audited on one address the setup step creates
 through the app's own add page, named `Lighthouse seed address`. A run
 that finds it already in the book reuses it rather than adding another.
+The seed step and the LHCI sign-in both choose an address type, so that
+`/address-book/add` is audited as the form rather than the redirect to the
+type step.
 
 `scripts/lighthouse/audit-targets.js` (with `audit-targets.test.js`) holds
 the derivation and two maps, both empty today: `SKIPPED`, for a GET route

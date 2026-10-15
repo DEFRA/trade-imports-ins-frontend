@@ -62,7 +62,7 @@ test.describe('list and pagination', () => {
     ).toBeVisible()
   })
 
-  test('clicking Add a new address navigates to the add form', async ({
+  test('clicking Add a new address opens Choose an address type', async ({
     page
   }) => {
     await signIn(page, { organisationId: ORG_DEFAULT })
@@ -70,9 +70,11 @@ test.describe('list and pagination', () => {
 
     await page.getByRole('button', { name: ADD_NEW_ADDRESS }).click()
 
-    await expect(page).toHaveURL(/\/address-book\/add$/)
+    await expect(page).toHaveURL(
+      /\/address-book\/add\/address-type\?start=new$/
+    )
     await expect(
-      page.getByRole('heading', { name: 'Add address details' })
+      page.getByRole('heading', { name: 'Choose an address type' })
     ).toBeVisible()
   })
 

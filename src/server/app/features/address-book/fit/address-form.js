@@ -2,7 +2,22 @@ import { expect } from '@playwright/test'
 
 import { FIELD_RULES } from '../fields.js'
 
-export const NAME_LABEL = 'Name or organisation name'
+export const ADDRESS_TYPE_PATH = '/address-book/add/address-type'
+
+export async function openAddForm(page, addressType = 'Origin or Consignor') {
+  await page.goto(ADDRESS_TYPE_PATH)
+  await page.getByLabel(addressType, { exact: true }).check()
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Add address and contact details'
+    })
+  ).toBeVisible()
+}
+
+export const NAME_LABEL = 'Name or organisation'
+export const EDIT_NAME_LABEL = 'Name or organisation name'
 const ADDRESS_LINE_1_LABEL = 'Address line 1'
 const TOWN_OR_CITY_LABEL = 'Town or city'
 const POSTCODE_LABEL = 'Postcode or Zip code'
@@ -50,7 +65,7 @@ export async function fillValidAddress(page, overrides = {}) {
 }
 
 export const errorLink = (page, message) =>
-  page.getByRole('alert').getByRole('link', { name: message })
+  page.getByRole('alert').getByRole('link', { name: message, exact: true })
 
 export async function expectErrorFocusOn(
   page,
@@ -66,12 +81,12 @@ export async function expectErrorFocusOn(
 }
 
 export const requiredValidations = [
-  ['name', NAME_LABEL, 'Enter a name'],
+  ['name', NAME_LABEL, 'Enter a name or organisation name'],
   ['addressLine1', ADDRESS_LINE_1_LABEL, 'Enter address line 1'],
   ['townOrCity', TOWN_OR_CITY_LABEL, 'Enter a town or city'],
-  ['postcode', POSTCODE_LABEL, 'Enter a postcode'],
-  ['countryCode', 'Country', 'Enter a country'],
-  ['phone', PHONE_LABEL, 'Enter a telephone number'],
+  ['postcode', POSTCODE_LABEL, 'Enter a postcode or Zip code'],
+  ['countryCode', 'Country', 'Select a country'],
+  ['phone', PHONE_LABEL, 'Enter a phone number'],
   ['email', EMAIL_LABEL, 'Enter an email address']
 ]
 
