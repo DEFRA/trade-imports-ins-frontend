@@ -16,6 +16,8 @@ describe('promoted route authentication', () => {
     expect(allRoutes.map((route) => `${route.method} ${route.path}`)).toEqual([
       'GET /',
       'GET /address-book',
+      'GET /address-book/add/address-type',
+      'POST /address-book/add/address-type',
       'GET /address-book/add',
       'POST /address-book/add',
       'GET /address-book/{id}',

@@ -92,6 +92,7 @@ describe('#addressBookListController', () => {
     expect(result).toContain('United Kingdom')
     expect(result).not.toContain('>GB<')
     expect(result).toContain('Add a new address')
+    expect(result).toContain('href="/address-book/add/address-type?start=new"')
     expect(result).not.toContain('operator')
   })
 

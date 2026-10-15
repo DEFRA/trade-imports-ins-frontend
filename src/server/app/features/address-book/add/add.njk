@@ -6,6 +6,7 @@
 {% block journeyContent %}
   {% include "shared/error-summary.njk" %}
 
+  {% if caption %}<span class="govuk-caption-l">{{ caption }}</span>{% endif %}
   <h1 class="govuk-heading-l">{{ copy.add.title }}</h1>
 
   <form method="post" novalidate>

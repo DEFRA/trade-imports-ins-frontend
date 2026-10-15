@@ -42,7 +42,7 @@ specs plus the fixtures `address-form.js`, `axe.js` and `seed-address.js`.
 URL, with one exception: the temporary `address-lookup-spike` feature
 keeps its own `'/address-lookup-spike'` literal in its controller (see
 below). Each public URL has a builder (`dashboardPath()`, `addressBookPath()`,
-`addressAddPath()`, `addressPath(id)`, `addressEditPath(id)`,
+`addressTypePath()`, `addressAddStartPath()`, `addressAddPath()`, `addressPath(id)`, `addressEditPath(id)`,
 `addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin
 carrying the Hapi `{id}` placeholder. Ids are `encodeURIComponent`ed.
 Controllers pass a `*RoutePath()` to `kit.pageRoutes` and put every href

@@ -1,0 +1,31 @@
+{% extends "shared/layout.njk" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+
+{% block journeyContent %}
+  {% include "shared/error-summary.njk" %}
+
+  <span class="govuk-caption-l">{{ copy.addressType.caption }}</span>
+  <h1 class="govuk-heading-l">{{ copy.addressType.title }}</h1>
+
+  <form method="post" novalidate>
+    <input type="hidden" name="crumb" value="{{ crumb }}" />
+
+    {{ govukRadios({
+      name: "addressType",
+      idPrefix: "addressType",
+      value: chosen,
+      fieldset: {
+        legend: {
+          text: copy.addressType.title,
+          classes: "govuk-visually-hidden"
+        }
+      },
+      items: items,
+      errorMessage: errors.addressType and { text: errors.addressType }
+    }) }}
+
+    {{ govukButton({ text: copy.addressType.continue }) }}
+  </form>
+
+{% endblock %}

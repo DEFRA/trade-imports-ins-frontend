@@ -10,7 +10,11 @@ import {
 import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
-import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
+import {
+  addressAddPath,
+  addressBookPath,
+  addressTypePath
+} from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
   buildCountrySelectItems,
@@ -18,6 +22,7 @@ import {
 } from '../address-countries.js'
 import { addressRules, formValuesOf } from '../fields.js'
 import { setSuccessBanner } from '../success-banner.js'
+import { chosenAddressType, clearAddInProgress } from '../add-in-progress.js'
 import {
   resolveHandshakeContext,
   syncHandshakeContext
@@ -45,7 +50,11 @@ const buildView = (
 ) =>
   h
     .view(view, {
-      ...kit.base(copy.add.title, { recoverableError }),
+      ...kit.base(copy.add.title, {
+        recoverableError,
+        backLink: handshake ? undefined : addressTypePath()
+      }),
+      caption: handshake ? null : copy.add.caption,
       copy,
       formValues,
       countryItems,
@@ -70,6 +79,9 @@ const redirectAfterCancel = (h, handshake) =>
 
 const get = async (request, h) => {
   const handshake = syncHandshakeContext(request)
+  if (!handshake && !chosenAddressType(request)) {
+    return h.redirect(addressTypePath())
+  }
 
   try {
     const countries = await getAddressFormCountries()
@@ -108,6 +120,7 @@ const submitAddress = async (request, h, { handshake, orgId, formValues }) => {
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     const created = await createAddress(orgId, value)
+    clearAddInProgress(request)
     if (!handshake) {
       setSuccessBanner(request, copy.successBanner.added(created.name))
     }
@@ -138,6 +151,7 @@ const post = async (request, h) => {
   const handshake = resolveHandshakeContext(request)
   const payload = request.payload ?? {}
   if (payload.cancel) {
+    clearAddInProgress(request)
     return redirectAfterCancel(h, handshake)
   }
   const orgId = kit.requireOrganisationId(request)

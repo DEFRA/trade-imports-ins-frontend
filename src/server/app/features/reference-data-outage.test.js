@@ -4,6 +4,7 @@ import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../common/test-helpers/session-auth.js'
+import { startAddAs } from '../../common/test-helpers/add-in-progress.js'
 import {
   addressBookApi,
   referenceDataApi,
@@ -71,12 +72,15 @@ describe('#referenceDataOutage', () => {
 
   test('Should serve the add address form as a 503 error page', async () => {
     refuseCountries()
+    const auth = sessionAuth('outage-add')
+    const cookie = await startAddAs(server, auth, 'ORIGIN_OR_CONSIGNOR')
 
     expectServiceUnavailablePage(
       await server.inject({
         method: 'GET',
         url: '/address-book/add',
-        auth: sessionAuth('outage-add')
+        auth,
+        headers: { cookie }
       })
     )
   })

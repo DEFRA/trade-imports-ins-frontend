@@ -46,10 +46,27 @@ export const copy = {
     countryPlaceholder: SELECT_COUNTRY
   },
   add: {
-    title: 'Add address details',
+    title: 'Add address and contact details',
+    caption: 'Add new address',
     save: 'Save and continue',
     cancel: 'Cancel and return to address book',
     cancelToJourney: 'Cancel and return to address page'
+  },
+  addressType: {
+    caption: 'Add a new address',
+    title: 'Choose an address type',
+    continue: 'Continue',
+    options: {
+      ORIGIN_OR_CONSIGNOR: {
+        text: 'Origin or Consignor',
+        hint: 'Place of origin, Consignor'
+      },
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
+        text: 'Destination, Consignee or Importer',
+        hint: 'Place of destination, Consignee, Importer'
+      },
+      BRANCH: { text: 'Branch', hint: 'Branch address' }
+    }
   },
   edit: {
     title: 'Edit address details',
@@ -69,6 +86,9 @@ export const copy = {
     cancel: 'Cancel'
   },
   errors: {
+    addressType: {
+      required: 'Select an address type'
+    },
     name: {
       required: 'Enter a name or organisation name',
       maxLength: (max) => `Name must be ${max} characters or fewer`

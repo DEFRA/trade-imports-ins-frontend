@@ -2,6 +2,20 @@ import { expect } from '@playwright/test'
 
 import { FIELD_RULES } from '../fields.js'
 
+export const ADDRESS_TYPE_PATH = '/address-book/add/address-type'
+
+export async function openAddForm(page, addressType = 'Origin or Consignor') {
+  await page.goto(ADDRESS_TYPE_PATH)
+  await page.getByLabel(addressType, { exact: true }).check()
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Add address and contact details'
+    })
+  ).toBeVisible()
+}
+
 export const NAME_LABEL = 'Name or organisation name'
 const ADDRESS_LINE_1_LABEL = 'Address line 1'
 const TOWN_OR_CITY_LABEL = 'Town or city'
