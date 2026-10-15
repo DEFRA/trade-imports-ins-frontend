@@ -18,7 +18,8 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
   buildCountrySelectItems,
-  getAddressFormCountries
+  getAddressFormCountries,
+  GB_COUNTRY
 } from '../address-countries.js'
 import { addressRules, formValuesOf } from '../fields.js'
 import { setSuccessBanner } from '../success-banner.js'
@@ -36,7 +37,12 @@ const view = 'address-book/add/add'
 const copy = copyFor({ en, cy })
 
 const countryItemsOf = (countries) =>
-  buildCountrySelectItems(countries, copy.form.countryPlaceholder)
+  buildCountrySelectItems(countries, copy.add.countryPlaceholder)
+
+const DEFAULT_COUNTRY_BY_TYPE = { ORIGIN_OR_CONSIGNOR: GB_COUNTRY.code }
+
+const openingFormValues = (addressType) =>
+  formValuesOf({ countryCode: DEFAULT_COUNTRY_BY_TYPE[addressType] })
 
 const buildView = (
   h,
@@ -60,7 +66,8 @@ const buildView = (
       countryItems,
       errors,
       errorSummary: kit.errorSummary(errors),
-      handshakeContext: handshake
+      handshakeContext: handshake,
+      cancelHref: handshake ? null : addressBookPath()
     })
     .header('Cache-Control', 'no-store')
 
@@ -83,10 +90,14 @@ const get = async (request, h) => {
     return h.redirect(addressTypePath())
   }
 
+  const formValues = openingFormValues(
+    handshake ? null : chosenAddressType(request)
+  )
+
   try {
     const countries = await getAddressFormCountries()
     return buildView(h, {
-      formValues: formValuesOf(),
+      formValues,
       countryItems: countryItemsOf(countries),
       handshake
     })
@@ -96,7 +107,7 @@ const get = async (request, h) => {
     }
     logger.error({ err }, 'Failed to load address form countries')
     return buildView(h, {
-      formValues: formValuesOf(),
+      formValues,
       countryItems: [],
       recoverableError: true,
       handshake

@@ -29,8 +29,8 @@ export const copy = {
     deleted: (name) => `${name} deleted from your address book`
   },
   form: {
-    addressHeading: 'Enter address details',
-    contactHeading: 'Enter contact details',
+    addressHeading: 'Address',
+    contactHeading: 'Contact details',
     fields: {
       name: 'Name or organisation name',
       addressLine1: 'Address line 1',
@@ -50,7 +50,9 @@ export const copy = {
     caption: 'Add new address',
     save: 'Save and continue',
     cancel: 'Cancel and return to address book',
-    cancelToJourney: 'Cancel and return to address page'
+    cancelToJourney: 'Cancel and return to address page',
+    nameLabel: 'Name or organisation',
+    countryPlaceholder: 'Select one'
   },
   addressType: {
     caption: 'Add a new address',

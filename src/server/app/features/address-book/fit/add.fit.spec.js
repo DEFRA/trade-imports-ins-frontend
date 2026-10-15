@@ -40,10 +40,16 @@ test.describe('add address', () => {
     ).toBeVisible()
 
     const country = page.getByLabel('Country')
-    await expect(country).toHaveValue('')
+    await expect(country).toHaveValue('GB')
     await expect(
       country.getByRole('option', { name: 'United Kingdom' })
     ).toHaveCount(1)
+    for (const name of ['Address', 'Contact details']) {
+      await expect(
+        page.getByRole('heading', { level: 2, name, exact: true })
+      ).toBeVisible()
+    }
+    await expect(page.getByLabel(NAME_LABEL, { exact: true })).toBeVisible()
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
@@ -167,7 +173,7 @@ test.describe('cancel', () => {
     await page.getByLabel(NAME_LABEL).fill('Should not be saved')
 
     await page
-      .getByRole('button', { name: 'Cancel and return to address book' })
+      .getByRole('link', { name: 'Cancel and return to address book' })
       .click()
 
     await expect(page).toHaveURL(/\/address-book$/)

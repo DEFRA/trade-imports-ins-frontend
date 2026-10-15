@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 import {
+  EDIT_NAME_LABEL,
   expectErrorFocusOn,
   fieldLabels,
   setFieldValue
@@ -42,6 +43,14 @@ test.describe('edit address', () => {
     for (const [field, value] of Object.entries(seedValues)) {
       await expect(page.getByLabel(fieldLabels[field])).toHaveValue(value)
     }
+    for (const name of ['Address', 'Contact details']) {
+      await expect(
+        page.getByRole('heading', { level: 2, name, exact: true })
+      ).toBeVisible()
+    }
+    await expect(
+      page.getByLabel(EDIT_NAME_LABEL, { exact: true })
+    ).toBeVisible()
     await expect(
       page.getByText('For international numbers include the country code')
     ).toBeVisible()

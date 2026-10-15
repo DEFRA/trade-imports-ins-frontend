@@ -55,7 +55,7 @@ leaves the cache unloaded so the next read retries, and rejects with
 page with a 503. In stub mode the captured list plays the role of a
 loaded cache and nothing is fetched.
 Feature-side, [`address-countries.js`](../features/address-book/address-countries.js)
-puts GB first and rejects the same way on an empty list.
+lists the countries alphabetically, United Kingdom included in its place, and rejects the same way on an empty list.
 
 ### ins-backend
 

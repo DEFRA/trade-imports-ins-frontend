@@ -32,8 +32,8 @@ export const copy = {
     deleted: (name) => `${name} wedi’i ddileu o’ch llyfr cyfeiriadau`
   },
   form: {
-    addressHeading: 'Rhowch fanylion y cyfeiriad',
-    contactHeading: 'Rhowch fanylion cyswllt',
+    addressHeading: 'Cyfeiriad',
+    contactHeading: 'Manylion cyswllt',
     fields: {
       name: 'Enw neu enw’r sefydliad',
       addressLine1: 'Llinell gyfeiriad 1',
@@ -53,7 +53,9 @@ export const copy = {
     caption: ADD_NEW_ADDRESS,
     save: 'Cadw a pharhau',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
-    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad'
+    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
+    nameLabel: 'Enw neu sefydliad',
+    countryPlaceholder: 'Dewiswch un'
   },
   addressType: {
     caption: ADD_NEW_ADDRESS,

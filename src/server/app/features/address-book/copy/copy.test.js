@@ -31,6 +31,15 @@ describe('#copy', () => {
     }
   )
 
+  it('Should word the add-details form as Design Release 2.1 does', () => {
+    expect(copy.form.addressHeading).toBe('Address')
+    expect(copy.form.contactHeading).toBe('Contact details')
+    expect(copy.add.nameLabel).toBe('Name or organisation')
+    expect(copy.form.fields.name).toBe('Name or organisation name')
+    expect(copy.add.countryPlaceholder).toBe('Select one')
+    expect(copy.add.cancel).toBe('Cancel and return to address book')
+  })
+
   it.each(LOCALES)(
     'Should label every %s form field, and no other',
     (_locale, bundle) => {

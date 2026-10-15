@@ -80,6 +80,9 @@ describe('#addressBookEditController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('Edit address details')
+    expect(result).toContain('<h2 class="govuk-heading-m">Address</h2>')
+    expect(result).toContain('<h2 class="govuk-heading-m">Contact details</h2>')
+    expect(result).toMatch(/for="name">\s*Name or organisation name\s*</)
     expect(result).toContain('value="Highland Livestock Ltd"')
     expect(result).toContain('value="Unit 2"')
     expect(result).not.toContain('operator')

@@ -16,7 +16,8 @@ export async function openAddForm(page, addressType = 'Origin or Consignor') {
   ).toBeVisible()
 }
 
-export const NAME_LABEL = 'Name or organisation name'
+export const NAME_LABEL = 'Name or organisation'
+export const EDIT_NAME_LABEL = 'Name or organisation name'
 const ADDRESS_LINE_1_LABEL = 'Address line 1'
 const TOWN_OR_CITY_LABEL = 'Town or city'
 const POSTCODE_LABEL = 'Postcode or Zip code'

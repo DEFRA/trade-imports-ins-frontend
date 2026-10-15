@@ -23,7 +23,7 @@ root:
 - [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
   `FIELDS`, `formValuesOf` and `addressRules(countryCodes)`.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
-  puts GB first, rejects with a 503 Boom when reference data is empty,
+  lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems`, `resolveCountryCodeFromSearchTerm`.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `addressIdRouteOptions`.

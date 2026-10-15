@@ -34,18 +34,23 @@ describe('#getAddressFormCountries', () => {
     }
   })
 
-  test('Should put GB first and keep it once', async () => {
+  test('Should list countries alphabetically with United Kingdom in its place, once', async () => {
     serveCountryList([
+      { code: 'US', name: 'United States' },
       { code: 'FR', name: 'France' },
-      { code: 'GB', name: 'United Kingdom duplicate' }
+      { code: 'GB', name: 'United Kingdom duplicate' },
+      { code: 'AE', name: 'United Arab Emirates' }
     ])
     const { getAddressFormCountries } = await importAddressCountries()
 
     const countries = await getAddressFormCountries()
 
-    expect(countries[0]).toEqual(GB_COUNTRY)
-    expect(countries[1]).toEqual({ code: 'FR', name: 'France' })
-    expect(countries.filter((country) => country.code === 'GB')).toHaveLength(1)
+    expect(countries).toEqual([
+      { code: 'FR', name: 'France' },
+      { code: 'AE', name: 'United Arab Emirates' },
+      GB_COUNTRY,
+      { code: 'US', name: 'United States' }
+    ])
   })
 
   test('Should reject with a serverUnavailable Boom when the list is empty', async () => {

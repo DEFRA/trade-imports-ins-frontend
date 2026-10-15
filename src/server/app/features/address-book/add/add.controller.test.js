@@ -44,6 +44,8 @@ const validPayload = {
 }
 
 const ANIMALS_BASE_URL = 'http://localhost:3000'
+const BLANK_COUNTRY_OPTION = '<option value="">Select one</option>'
+const SAVE_AND_CONTINUE = 'Save and continue'
 const HANDSHAKE_QUERY =
   '?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value'
 const handshakeFields = {
@@ -127,16 +129,24 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(result).toContain('<span class="govuk-caption-l">Add new address')
     expect(result).toContain('href="/address-book/add/address-type"')
     expect(result).not.toContain('app-journey-strip')
-    expect(result).toContain('Enter address details')
-    expect(result).toContain('Enter contact details')
-    expect(result).toContain('Name or organisation name')
+    expect(result).toContain('<h2 class="govuk-heading-m">Address</h2>')
+    expect(result).toContain('<h2 class="govuk-heading-m">Contact details</h2>')
+    expect(result).toMatch(/for="name">\s*Name or organisation\s*</)
+    expect(result).toContain('County (optional)')
     expect(result).toContain('Postcode or Zip code')
     expect(result).toContain('Phone number')
     expect(result).toContain(
       'For international numbers include the country code'
     )
-    expect(result).toContain('Save and continue')
-    expect(result).toContain('Cancel and return to address book')
+    expect(result).toContain(SAVE_AND_CONTINUE)
+    expect(result).toMatch(
+      /<a class="govuk-link" href="\/address-book">\s*Cancel and return to address book\s*<\/a>/
+    )
+    expect(result.indexOf(SAVE_AND_CONTINUE)).toBeGreaterThan(-1)
+    expect(result.indexOf(SAVE_AND_CONTINUE)).toBeLessThan(
+      result.indexOf('Cancel and return to address book')
+    )
+    expect(result).not.toContain('name="cancel"')
     expect(result).not.toContain('operator')
     expect(result).not.toContain('Save changes')
   })
@@ -391,7 +401,30 @@ describe(
       expect(result).toContain('name="fulfilment-id"')
       expect(result).toContain('name="handshake-token"')
       expect(result).toContain('Cancel and return to address page')
+      expect(result).toContain('name="cancel"')
       expect(result).not.toContain('Cancel and return to address book')
+      expect(result).not.toMatch(/value="GB" selected/)
+    })
+
+    test('GET through a handshake ignores a type left in the session and opens on Select one', async () => {
+      const session = 'add-get-handshake-stale-type'
+      const cookie = await startAddAs(
+        server,
+        sessionAuth(session),
+        'ORIGIN_OR_CONSIGNOR'
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/address-book/add${HANDSHAKE_QUERY}`,
+        auth: sessionAuth(session),
+        headers: { cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(BLANK_COUNTRY_OPTION)
+      expect(result).not.toMatch(/<option value="[^"]+" selected/)
+      expect(result).not.toMatch(/value="GB" selected/)
     })
 
     test('GET through a handshake opens the form with no type chosen, without a caption or a Back link to the type step', async () => {
@@ -479,6 +512,61 @@ describe(
 
       expect(statusCode).toBe(statusCodes.redirectFound)
       expect(headers.location).toBe(RETURN_URL)
+    })
+  }
+)
+
+describe(
+  '#addressBookAddController — Design Release 2.1 layout',
+  { concurrent: false },
+  () => {
+    let server
+    const running = useAddServer()
+
+    beforeAll(() => {
+      server = running.server
+    })
+
+    test('GET lays out the fields at Design Release 2.1 widths', async () => {
+      const { result } = await getAddWithTypeChosen(server, 'add-get-widths')
+
+      const classOf = (id) =>
+        new RegExp(`<input class="([^"]*)" id="${id}"`).exec(result)?.[1]
+
+      for (const id of ['name', 'addressLine1', 'addressLine2', 'email']) {
+        expect(classOf(id)).toBe('govuk-input')
+      }
+      for (const id of ['townOrCity', 'postcode']) {
+        expect(classOf(id)).toContain('govuk-!-width-one-half')
+      }
+      expect(classOf('phone')).toContain('govuk-!-width-two-thirds')
+    })
+
+    test('GET for Origin or Consignor opens the Country select on United Kingdom, its blank option reading Select one', async () => {
+      const { result } = await getAddWithTypeChosen(server, 'add-get-origin-gb')
+
+      expect(result).toContain('<option value="GB" selected>')
+      expect(result).toContain(BLANK_COUNTRY_OPTION)
+    })
+
+    test('GET for Branch opens the Country select on Select one', async () => {
+      const session = 'add-get-branch'
+      const cookie = await startAddAs(server, sessionAuth(session), 'BRANCH')
+
+      const { result, statusCode } = await getAdd(server, session, cookie)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(BLANK_COUNTRY_OPTION)
+      expect(result).not.toMatch(/<option value="[^"]+" selected/)
+      expect(result).not.toMatch(/value="GB" selected/)
+    })
+
+    test('GET lists the countries alphabetically with United Kingdom in its place', async () => {
+      const { result } = await getAddWithTypeChosen(server, 'add-get-order')
+
+      expect(result.indexOf('value="FR"')).toBeLessThan(
+        result.indexOf('value="GB"')
+      )
     })
   }
 )
