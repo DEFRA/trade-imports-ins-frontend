@@ -41,9 +41,20 @@ test.describe('dashboard', () => {
     await expect(
       page.getByRole('cell', { name: 'GBN-AG-26-000003', exact: true })
     ).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'SUBMITTED' })).toBeVisible()
+    await expect(
+      page.getByRole('cell', { name: 'SUBMITTED', exact: true })
+    ).toBeVisible()
     await expect(page.getByRole('cell', { name: 'DRAFT' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'AMEND' })).toBeVisible()
+    await expect(
+      page.getByRole('cell', { name: 'GBN-AG-26-000005', exact: true })
+    ).toBeVisible()
+    await expect(
+      page.getByRole('cell', {
+        name: 'SUBMITTED_ACTION_REQUIRED',
+        exact: true
+      })
+    ).toBeVisible()
 
     // The soft-deleted stub notification must never appear.
     await expect(
@@ -68,6 +79,19 @@ test.describe('dashboard', () => {
     await expect(link).toHaveAttribute(
       'href',
       'http://localhost:3000/live-animals/notifications/GBN-AG-26-000001/notification-view'
+    )
+  })
+
+  test('opening a notification submitted with action required links into the read-only notification-view page (AC3)', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto('/')
+
+    const link = page.getByRole('link', { name: /View.*GBN-AG-26-000005/s })
+    await expect(link).toHaveAttribute(
+      'href',
+      'http://localhost:3000/live-animals/notifications/GBN-AG-26-000005/notification-view'
     )
   })
 

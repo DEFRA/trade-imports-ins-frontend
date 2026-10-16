@@ -111,9 +111,10 @@ describe('in stub mode', () => {
   test('Should serve the canned notifications without a request', async () => {
     const { content, totalElements } = await listNotifications({ page: 1 })
 
-    expect(totalElements).toBe(3)
+    expect(totalElements).toBe(4)
     expect(content.map((n) => n.referenceNumber)).toEqual([
       OTHER_REFERENCE_NUMBER,
+      'GBN-AG-26-000005',
       REFERENCE_NUMBER,
       'GBN-AG-26-000003'
     ])
