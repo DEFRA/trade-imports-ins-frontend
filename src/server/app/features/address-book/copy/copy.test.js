@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
-import { ADDRESS_TYPES } from '../address-types.js'
 import { FIELDS, FIELD_RULES } from '../fields.js'
 import { REQUIRED_MESSAGES } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import { copy } from './copy.en.js'
@@ -89,31 +88,6 @@ describe('#copy', () => {
     expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
       'Name must be 255 characters or fewer'
     )
-  })
-
-  it('Should word the address type step as Design Release 2.1 does', () => {
-    const options = ADDRESS_TYPES.map((type) => copy.addressType.options[type])
-
-    expect(copy.addressType.caption).toBe('Add a new address')
-    expect(copy.addressType.title).toBe('Choose an address type')
-    expect(copy.addressType.continue).toBe('Continue')
-    expect(options).toEqual([
-      {
-        text: 'Origin or Consignor',
-        hint: 'Place of origin, Consignor'
-      },
-      {
-        text: 'Destination, Consignee or Importer',
-        hint: 'Place of destination, Consignee, Importer'
-      },
-      { text: 'Branch', hint: 'Branch address' }
-    ])
-    for (const { text } of options) {
-      expect(text).not.toMatch(/Transporter/)
-    }
-    expect(copy.errors.addressType.required).toBe('Select an address type')
-    expect(copy.add.title).toBe('Add address and contact details')
-    expect(copy.add.caption).toBe('Add new address')
   })
 
   it('Should word the name, postcode, country and phone required messages as their field labels do', () => {

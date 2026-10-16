@@ -6,7 +6,6 @@ import {
   fieldLabels,
   fillValidAddress,
   maxLengthValidations,
-  openAddForm,
   requiredValidations,
   validAddress
 } from './address-form.js'
@@ -14,6 +13,7 @@ import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 const ADD_URL = /\/address-book\/add$/
+const ADD_PATH = '/address-book/add'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -23,11 +23,14 @@ test.describe('add address', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-render' })
-    await openAddForm(page)
+    await page.goto(ADD_PATH)
 
     await expect(
-      page.getByRole('heading', { name: 'Add address and contact details' })
+      page.getByRole('heading', { name: 'Add address details' })
     ).toBeVisible()
+    await expect(
+      page.getByRole('link', { name: 'Back', exact: true })
+    ).toHaveAttribute('href', '/address-book')
     for (const [, label] of [
       ...requiredValidations,
       ['addressLine2', 'Address line 2 (optional)'],
@@ -40,7 +43,8 @@ test.describe('add address', () => {
     ).toBeVisible()
 
     const country = page.getByLabel('Country')
-    await expect(country).toHaveValue('GB')
+    await expect(country).toHaveValue('')
+    await expect(country.getByRole('option').first()).toHaveText('Select one')
     await expect(
       country.getByRole('option', { name: 'United Kingdom' })
     ).toHaveCount(1)
@@ -54,7 +58,7 @@ test.describe('add address', () => {
 
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-axe' })
-    await openAddForm(page)
+    await page.goto(ADD_PATH)
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address')
   })
@@ -66,7 +70,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-required' })
-      await openAddForm(page)
+      await page.goto(ADD_PATH)
 
       await fillValidAddress(page, { [field]: '' })
       await submit(page)
@@ -88,7 +92,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-maxlength' })
-      await openAddForm(page)
+      await page.goto(ADD_PATH)
 
       const value = 'A'.repeat(maxLength + 1)
       await fillValidAddress(page, { [field]: value })
@@ -108,7 +112,7 @@ test.describe('add address validation', () => {
 
   test('rejects a malformed email address', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-email' })
-    await openAddForm(page)
+    await page.goto(ADD_PATH)
 
     await fillValidAddress(page, { email: 'not-an-email' })
     await submit(page)
@@ -125,7 +129,7 @@ test.describe('add address validation', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-validation-axe' })
-    await openAddForm(page)
+    await page.goto(ADD_PATH)
 
     await fillValidAddress(page, { name: '' })
     await submit(page)
@@ -145,7 +149,7 @@ test.describe('save and confirm', () => {
     await signIn(page, {
       organisationId: `stub-org-add-save-${crypto.randomUUID()}`
     })
-    await openAddForm(page)
+    await page.goto(ADD_PATH)
 
     await fillValidAddress(page)
     await submit(page)
@@ -168,7 +172,7 @@ test.describe('cancel', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-cancel' })
-    await openAddForm(page)
+    await page.goto(ADD_PATH)
 
     await page.getByLabel(NAME_LABEL).fill('Should not be saved')
 

@@ -1,6 +1,5 @@
 // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
 const SELECT_COUNTRY = 'Dewiswch wlad'
-const ADD_NEW_ADDRESS = 'Ychwanegu cyfeiriad newydd'
 
 export const copy = {
   list: {
@@ -13,7 +12,7 @@ export const copy = {
       button: 'Chwilio',
       clear: 'Clirio’r chwiliad'
     },
-    add: ADD_NEW_ADDRESS,
+    add: 'Ychwanegu cyfeiriad newydd',
     empty: 'Nid oes gennych unrhyw gyfeiriadau eto.',
     noMatchPrefix: 'Nid oes unrhyw gyfeiriadau yn cyfateb i',
     results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,
@@ -49,29 +48,12 @@ export const copy = {
     countryPlaceholder: SELECT_COUNTRY
   },
   add: {
-    title: 'Ychwanegu manylion cyfeiriad a chyswllt',
-    caption: ADD_NEW_ADDRESS,
+    title: 'Ychwanegu manylion cyfeiriad',
     save: 'Cadw a pharhau',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
     cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
     nameLabel: 'Enw neu sefydliad',
     countryPlaceholder: 'Dewiswch un'
-  },
-  addressType: {
-    caption: ADD_NEW_ADDRESS,
-    title: 'Dewis math o gyfeiriad',
-    continue: 'Parhau',
-    options: {
-      ORIGIN_OR_CONSIGNOR: {
-        text: 'Tarddiad neu Draddodwr',
-        hint: 'Man tarddiad, Traddodwr'
-      },
-      DESTINATION_CONSIGNEE_OR_IMPORTER: {
-        text: 'Cyrchfan, Traddodai neu Fewnforiwr',
-        hint: 'Man cyrchfan, Traddodai, Mewnforiwr'
-      },
-      BRANCH: { text: 'Cangen', hint: 'Cyfeiriad cangen' }
-    }
   },
   edit: {
     title: 'Golygu manylion cyfeiriad',
@@ -91,9 +73,6 @@ export const copy = {
     cancel: 'Canslo'
   },
   errors: {
-    addressType: {
-      required: 'Dewiswch fath o gyfeiriad'
-    },
     name: {
       required: 'Rhowch enw neu enw’r sefydliad',
       maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`

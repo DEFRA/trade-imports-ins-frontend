@@ -52,10 +52,10 @@ describe('#csrfPlugin', () => {
     }
   })
 
-  test('address type page renders hidden crumb field on GET', async () => {
+  test('add form renders hidden crumb field on GET', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/address-book/add/address-type',
+      url: '/address-book/add',
       auth: sessionAuth('csrf-get')
     })
 

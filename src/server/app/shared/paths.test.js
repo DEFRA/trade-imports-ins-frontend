@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import {
   addressAddPath,
-  addressAddStartPath,
   addressBookPath,
   addressDeletePath,
   addressDeleteRoutePath,
@@ -10,7 +9,6 @@ import {
   addressEditRoutePath,
   addressPath,
   addressRoutePath,
-  addressTypePath,
   dashboardPath,
   inAddressBookSection,
   inDashboardSection
@@ -23,8 +21,6 @@ describe('public paths', () => {
     expect([
       dashboardPath(),
       addressBookPath(),
-      addressTypePath(),
-      addressAddStartPath(),
       addressAddPath(),
       addressPath(ADDRESS_ID),
       addressEditPath(ADDRESS_ID),
@@ -32,8 +28,6 @@ describe('public paths', () => {
     ]).toEqual([
       '/',
       '/address-book',
-      '/address-book/add/address-type',
-      '/address-book/add/address-type?start=new',
       '/address-book/add',
       '/address-book/000000000000000000000001',
       '/address-book/000000000000000000000001/edit',
@@ -68,12 +62,11 @@ describe('navigation sections', () => {
     expect(
       [
         addressBookPath(),
-        addressTypePath(),
         addressAddPath(),
         addressEditPath(ADDRESS_ID),
         '/address-bookkeeping',
         dashboardPath()
       ].map(inAddressBookSection)
-    ).toEqual([true, true, true, true, false, false])
+    ).toEqual([true, true, true, false, false])
   })
 })

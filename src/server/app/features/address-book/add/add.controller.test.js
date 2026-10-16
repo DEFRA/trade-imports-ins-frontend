@@ -4,10 +4,6 @@ import { createServer } from '../../../../server.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
-import {
-  cookieOf,
-  startAddAs
-} from '../../../../common/test-helpers/add-in-progress.js'
 import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import {
   addressBookApi,
@@ -24,7 +20,6 @@ const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const ADDRESSES_PATH = `/organisation/${ORG_ID}/addresses`
 const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 const ADD_ADDRESS_URL = '/address-book/add'
-const ADDRESS_TYPE_URL = '/address-book/add/address-type'
 const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
@@ -56,29 +51,20 @@ const handshakeFields = {
 }
 const RETURN_URL = `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value`
 
-const postAdd = (server, session, payload, cookie) =>
+const postAdd = (server, session, payload) =>
   server.inject({
     method: 'POST',
     url: ADD_ADDRESS_URL,
     auth: sessionAuth(session),
-    headers: cookie ? { cookie } : {},
     payload
   })
 
-const getAdd = (server, session, cookie) =>
+const getAdd = (server, session) =>
   server.inject({
     method: 'GET',
     url: ADD_ADDRESS_URL,
-    auth: sessionAuth(session),
-    headers: cookie ? { cookie } : {}
+    auth: sessionAuth(session)
   })
-
-const getAddWithTypeChosen = async (server, session) =>
-  getAdd(
-    server,
-    session,
-    await startAddAs(server, sessionAuth(session), 'ORIGIN_OR_CONSIGNOR')
-  )
 
 const useAddServer = () => {
   const running = {}
@@ -112,22 +98,21 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('GET sets Cache-Control: no-store', async () => {
-    const { headers, statusCode } = await getAddWithTypeChosen(
-      server,
-      'add-get-cache'
-    )
+    const { headers, statusCode } = await getAdd(server, 'add-get-cache')
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(headers['cache-control']).toBe('no-store')
   })
 
   test('GET renders the add address details form', async () => {
-    const { result, statusCode } = await getAddWithTypeChosen(server, 'add-get')
+    const { result, statusCode } = await getAdd(server, 'add-get')
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toContain('Add address and contact details')
-    expect(result).toContain('<span class="govuk-caption-l">Add new address')
-    expect(result).toContain('href="/address-book/add/address-type"')
+    expect(result).toContain('Add address details')
+    expect(result).not.toContain('govuk-caption-l')
+    expect(result).toMatch(
+      /<a href="\/address-book" class="govuk-back-link">\s*Back\s*<\/a>/
+    )
     expect(result).not.toContain('app-journey-strip')
     expect(result).toContain('<h2 class="govuk-heading-m">Address</h2>')
     expect(result).toContain('<h2 class="govuk-heading-m">Contact details</h2>')
@@ -152,10 +137,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('GET renders country select options from reference data', async () => {
-    const { result, statusCode } = await getAddWithTypeChosen(
-      server,
-      'add-get-countries'
-    )
+    const { result, statusCode } = await getAdd(server, 'add-get-countries')
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('value="GB"')
@@ -285,7 +267,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
     expect(result).toContain(
-      'Error: Add address and contact details - Import notification service - GOV.UK'
+      'Error: Add address details - Import notification service - GOV.UK'
     )
     expect(result).toContain('href="#name"')
     expectSummaryLinks(result)
@@ -324,58 +306,6 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 })
 
 describe(
-  '#addressBookAddController — add in progress',
-  { concurrent: false },
-  () => {
-    const running = useAddServer()
-
-    const startedAs = (session) =>
-      startAddAs(running.server, sessionAuth(session), 'BRANCH')
-
-    test('GET with no address type chosen redirects to Choose an address type', async () => {
-      const { statusCode, headers } = await getAdd(
-        running.server,
-        'add-get-no-type'
-      )
-
-      expect(statusCode).toBe(statusCodes.redirectFound)
-      expect(headers.location).toBe(ADDRESS_TYPE_URL)
-    })
-
-    test('POST that saves clears the chosen type, so the next form GET goes back to Choose an address type', async () => {
-      const session = 'add-post-clears'
-      const chosen = await startedAs(session)
-      addressBookApi()
-        .post(ADDRESSES_PATH)
-        .reply(201, { id: '665f1c2ab3e4d51a2c9d0e77', name: BUSINESS_NAME })
-
-      const saved = await postAdd(running.server, session, validPayload, chosen)
-      const next = await getAdd(running.server, session, cookieOf(saved))
-
-      expect(saved.statusCode).toBe(statusCodes.redirectFound)
-      expect(next.statusCode).toBe(statusCodes.redirectFound)
-      expect(next.headers.location).toBe(ADDRESS_TYPE_URL)
-    })
-
-    test('Cancel clears the chosen type', async () => {
-      const session = 'add-cancel-clears'
-      const chosen = await startedAs(session)
-
-      const cancelled = await postAdd(
-        running.server,
-        session,
-        { cancel: 'true' },
-        chosen
-      )
-      const next = await getAdd(running.server, session, cookieOf(cancelled))
-
-      expect(cancelled.statusCode).toBe(statusCodes.redirectFound)
-      expect(next.headers.location).toBe(ADDRESS_TYPE_URL)
-    })
-  }
-)
-
-describe(
   '#addressBookAddController — journey handshake',
   { concurrent: false },
   () => {
@@ -394,7 +324,7 @@ describe(
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Add address and contact details')
+      expect(result).toContain('Add address details')
       expect(result).toContain('name="journey-type"')
       expect(result).toContain('value="gbn-ag"')
       expect(result).toContain('name="notification-id"')
@@ -406,37 +336,15 @@ describe(
       expect(result).not.toMatch(/value="GB" selected/)
     })
 
-    test('GET through a handshake ignores a type left in the session and opens on Select one', async () => {
-      const session = 'add-get-handshake-stale-type'
-      const cookie = await startAddAs(
-        server,
-        sessionAuth(session),
-        'ORIGIN_OR_CONSIGNOR'
-      )
-
+    test('GET through a handshake opens the form without a Back link to the address book', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
         url: `/address-book/add${HANDSHAKE_QUERY}`,
-        auth: sessionAuth(session),
-        headers: { cookie }
+        auth: sessionAuth('add-get-handshake-no-back')
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(BLANK_COUNTRY_OPTION)
-      expect(result).not.toMatch(/<option value="[^"]+" selected/)
-      expect(result).not.toMatch(/value="GB" selected/)
-    })
-
-    test('GET through a handshake opens the form with no type chosen, without a caption or a Back link to the type step', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: `/address-book/add${HANDSHAKE_QUERY}`,
-        auth: sessionAuth('add-get-handshake-no-type')
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).not.toContain('govuk-caption-l')
-      expect(result).not.toContain('address-book/add/address-type')
+      expect(result).not.toContain('govuk-back-link')
     })
 
     test('GET refuses an unrecognised journey type', async () => {
@@ -528,7 +436,7 @@ describe(
     })
 
     test('GET lays out the fields at Design Release 2.1 widths', async () => {
-      const { result } = await getAddWithTypeChosen(server, 'add-get-widths')
+      const { result } = await getAdd(server, 'add-get-widths')
 
       const classOf = (id) =>
         new RegExp(`<input class="([^"]*)" id="${id}"`).exec(result)?.[1]
@@ -542,18 +450,8 @@ describe(
       expect(classOf('phone')).toContain('govuk-!-width-two-thirds')
     })
 
-    test('GET for Origin or Consignor opens the Country select on United Kingdom, its blank option reading Select one', async () => {
-      const { result } = await getAddWithTypeChosen(server, 'add-get-origin-gb')
-
-      expect(result).toContain('<option value="GB" selected>')
-      expect(result).toContain(BLANK_COUNTRY_OPTION)
-    })
-
-    test('GET for Branch opens the Country select on Select one', async () => {
-      const session = 'add-get-branch'
-      const cookie = await startAddAs(server, sessionAuth(session), 'BRANCH')
-
-      const { result, statusCode } = await getAdd(server, session, cookie)
+    test('GET opens the Country select on its blank first option, Select one, with nothing selected', async () => {
+      const { result, statusCode } = await getAdd(server, 'add-get-select-one')
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(BLANK_COUNTRY_OPTION)
@@ -562,7 +460,7 @@ describe(
     })
 
     test('GET lists the countries alphabetically with United Kingdom in its place', async () => {
-      const { result } = await getAddWithTypeChosen(server, 'add-get-order')
+      const { result } = await getAdd(server, 'add-get-order')
 
       expect(result.indexOf('value="FR"')).toBeLessThan(
         result.indexOf('value="GB"')

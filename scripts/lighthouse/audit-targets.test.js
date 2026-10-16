@@ -17,7 +17,6 @@ const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 
 const DASHBOARD_PATH = '/'
 const LIST_PATH = '/address-book'
-const TYPE_PATH = '/address-book/add/address-type'
 const ADD_PATH = '/address-book/add'
 const VIEW_PATH = '/address-book/{id}'
 const EDIT_PATH = '/address-book/{id}/edit'
@@ -26,7 +25,6 @@ const DELETE_PATH = '/address-book/{id}/delete'
 const REGISTERED_PATHS = [
   DASHBOARD_PATH,
   LIST_PATH,
-  TYPE_PATH,
   ADD_PATH,
   VIEW_PATH,
   EDIT_PATH,
@@ -71,7 +69,6 @@ describe('#auditPaths', () => {
     expect(auditPaths(ADDRESS_ID)).toEqual([
       DASHBOARD_PATH,
       LIST_PATH,
-      TYPE_PATH,
       ADD_PATH,
       `/address-book/${ADDRESS_ID}`,
       `/address-book/${ADDRESS_ID}/edit`,
@@ -157,7 +154,6 @@ describe('#reportNames', () => {
     expect(Object.values(names)).toEqual([
       'home',
       'address_book',
-      'address_book_add_address_type',
       'address_book_add',
       'address_book_id',
       'address_book_id_edit',

@@ -92,7 +92,7 @@ describe('#addressBookListController', () => {
     expect(result).toContain('United Kingdom')
     expect(result).not.toContain('>GB<')
     expect(result).toContain('Add a new address')
-    expect(result).toContain('href="/address-book/add/address-type?start=new"')
+    expect(result).toContain('href="/address-book/add"')
     expect(result).not.toContain('operator')
   })
 
@@ -111,6 +111,7 @@ describe('#addressBookListController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('You have no addresses yet')
     expect(result).toContain('Add a new address')
+    expect(result).toContain('href="/address-book/add"')
     expect(result).not.toContain('No addresses match')
   })
 

@@ -10,7 +10,6 @@ import { refuseOutboundHttp } from '../../src/server/common/test-helpers/real-mo
 import { createPageClient } from './page-client.js'
 import {
   addressIdIn,
-  chooseSeedType,
   findSeedAddressId,
   SEED_ADDRESS,
   seedAddress
@@ -47,15 +46,6 @@ const listing = (...links) =>
     .query(SEARCH)
     .reply(HTTP_OK, listPage(...links))
 
-const TYPE_PATH = '/address-book/add/address-type'
-
-const typeChosen = () =>
-  app()
-    .get(TYPE_PATH)
-    .reply(HTTP_OK, page('<form></form>'), { 'set-cookie': [CRUMB_COOKIE] })
-    .post(TYPE_PATH, { crumb: CRUMB, addressType: 'ORIGIN_OR_CONSIGNOR' })
-    .reply(HTTP_FOUND, '', { location: '/address-book/add' })
-
 describe('#SEED_ADDRESS', () => {
   test('Should send exactly the fields the add form asks, in the order it asks them', () => {
     expect(Object.keys(SEED_ADDRESS)).toEqual(FIELDS)
@@ -77,31 +67,6 @@ describe('#SEED_ADDRESS', () => {
 describe('#addressIdIn', () => {
   test('Should read the id from the view link of a row', () => {
     expect(addressIdIn(`/address-book/${ADDRESS_ID}`)).toBe(ADDRESS_ID)
-  })
-})
-
-describe('#chooseSeedType', () => {
-  refuseOutboundHttp()
-
-  test('Should choose the first address type, posting the crumb the page issued', async () => {
-    const scope = typeChosen()
-
-    await expect(
-      chooseSeedType(createPageClient(ORIGIN))
-    ).resolves.toBeUndefined()
-    expect(scope.isDone()).toBe(true)
-  })
-
-  test('Should refuse when the choice does not redirect to the add form', async () => {
-    app()
-      .get(TYPE_PATH)
-      .reply(HTTP_OK, page('<form></form>'), { 'set-cookie': [CRUMB_COOKIE] })
-      .post(TYPE_PATH)
-      .reply(HTTP_FOUND, '', { location: TYPE_PATH })
-
-    await expect(chooseSeedType(createPageClient(ORIGIN))).rejects.toThrow(
-      /rejected the seed type \(302\)/
-    )
   })
 })
 
@@ -130,7 +95,6 @@ describe('#seedAddress', () => {
 
   test('Should create the seed address through the add page when the book lists none, posting the crumb the page issued', async () => {
     listing(viewLink(STUB_ADDRESS_ID, 'Stub Farm 1'))
-    typeChosen()
     const created = app()
       .get('/address-book/add')
       .reply(HTTP_OK, page('<form></form>'), { 'set-cookie': [CRUMB_COOKIE] })
@@ -148,25 +112,8 @@ describe('#seedAddress', () => {
     expect(created.isDone()).toBe(true)
   })
 
-  test('Should refuse when the address type page rejects the seed type', async () => {
-    listing()
-    app()
-      .get(TYPE_PATH)
-      .reply(HTTP_OK, page('<form></form>'))
-      .post(TYPE_PATH)
-      .reply(
-        HTTP_BAD_REQUEST,
-        page('<div role="alert">There is a problem</div>')
-      )
-
-    await expect(seedAddress(createPageClient(ORIGIN))).rejects.toThrow(
-      /rejected the seed type \(400\)/
-    )
-  })
-
   test('Should refuse when the add page rejects the seed', async () => {
     listing()
-    typeChosen()
     app()
       .get('/address-book/add')
       .reply(HTTP_OK, page('<form></form>'))
@@ -183,7 +130,6 @@ describe('#seedAddress', () => {
 
   test('Should refuse when the address book does not list the address it just accepted', async () => {
     listing()
-    typeChosen()
     app()
       .get('/address-book/add')
       .reply(HTTP_OK, page('<form></form>'))
