@@ -94,10 +94,6 @@ export function buildNotificationLink(status, referenceNumber) {
     : `${setUrl}/notifications/${encodedReference}`
 }
 
-export function buildStartNewNotificationLink() {
-  return buildLiveAnimalsSetUrl()
-}
-
 const buildLiveAnimalsSetUrl = () =>
   buildSetBaseUrl('tradeImportsAnimalsFrontend.baseUrl', SET_BASES.LIVE_ANIMALS)
 

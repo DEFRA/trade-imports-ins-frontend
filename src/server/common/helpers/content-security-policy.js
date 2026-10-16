@@ -1,10 +1,16 @@
 import Blankie from 'blankie'
 
-import { siblingFrontendBaseUrls } from '../../../config/config.js'
+import { config, siblingFrontendBaseUrls } from '../../../config/config.js'
 
 const siblingFrontendOrigins = siblingFrontendBaseUrls.map(
   (baseUrl) => new URL(baseUrl).origin
 )
+
+// form-action is checked at every redirect hop of a form submission, so the
+// Defra ID origin a journey frontend redirects to must be listed too.
+const defraIdFormActionOrigins = config
+  .get('defraId.formActionOrigins')
+  .map((value) => new URL(value).origin)
 
 const contentSecurityPolicy = {
   plugin: Blankie,
@@ -22,7 +28,11 @@ const contentSecurityPolicy = {
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
-    formAction: ['self', ...siblingFrontendOrigins],
+    formAction: [
+      'self',
+      ...siblingFrontendOrigins,
+      ...defraIdFormActionOrigins
+    ],
     manifestSrc: ['self'],
     generateNonces: false
   }

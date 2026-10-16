@@ -64,15 +64,23 @@ describe('error-page copy', () => {
 })
 
 describe('layout copy', () => {
-  it('Should name the service and the four navigation items the fit specs click', () => {
+  it('Should name the service and the five navigation items the fit specs click', () => {
     expect(sharedEn.layout.serviceName).toBe('Import notification service')
     expect(sharedEn.layout.serviceNavigation).toEqual({
       menuButton: 'Menu',
       dashboard: 'Dashboard',
+      templates: 'Templates',
       addressBook: 'Address book',
       manageAccount: 'Manage account',
       logOut: 'Log out'
     })
+  })
+
+  it('Should draft the Templates label in Welsh', () => {
+    expect(sharedCy.layout.serviceNavigation.templates).toBe('Templedi')
+    expect(sharedCy.layout.serviceNavigation.templates).not.toBe(
+      sharedEn.layout.serviceNavigation.templates
+    )
   })
 
   it('Should close every page title with the GOV.UK brand word in both locales', () => {
