@@ -41,6 +41,16 @@ const NOTIFICATIONS = [
     commodity: null,
     arrivalDate: '2026-09-09T00:00:00Z',
     lastUpdated: '2026-09-06T10:00:00Z'
+  },
+  {
+    aggregateId: 'agg-stub-5',
+    aggregateVersion: 2,
+    referenceNumber: 'GBN-AG-26-000005',
+    status: 'SUBMITTED_ACTION_REQUIRED',
+    originCountry: 'FR',
+    commodity: 'Cattle',
+    arrivalDate: '2026-09-11T00:00:00Z',
+    lastUpdated: '2026-09-05T10:00:00Z'
   }
 ]
 
@@ -52,11 +62,19 @@ const sortComparator = (sort) => {
     multiplier * (new Date(a[sortField]) - new Date(b[sortField]))
 }
 
+// Searching for this reference makes the stub fail the way the backend does
+// when it is down, so the dashboard's cannot-load state can be reached.
+export const UNAVAILABLE_REFERENCE = 'GBN-AG-26-500000'
+
 export const listNotifications = async ({
   page = 1,
   sort,
   referenceNumber
 } = {}) => {
+  if (referenceNumber === UNAVAILABLE_REFERENCE) {
+    throw new Error('INS backend unavailable (stub)')
+  }
+
   const visible = NOTIFICATIONS.filter((n) => n.status !== DELETED_STATUS)
 
   const matches = referenceNumber

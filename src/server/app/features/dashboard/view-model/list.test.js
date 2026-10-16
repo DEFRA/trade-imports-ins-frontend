@@ -29,7 +29,6 @@ const {
   buildNotificationLink,
   buildPaginationLinks,
   buildResultsLabel,
-  buildStartNewNotificationLink,
   formatDisplayDate,
   mapNotificationRows
 } = await import('./list.js')
@@ -120,11 +119,14 @@ describe('#buildPaginationLinks', () => {
 })
 
 describe('#buildNotificationLink', () => {
-  test('SUBMITTED notifications link to the read-only notification-view page', () => {
-    expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
-      `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
-    )
-  })
+  test.each(['SUBMITTED', 'SUBMITTED_ACTION_REQUIRED'])(
+    '%s notifications link to the read-only notification-view page',
+    (status) => {
+      expect(buildNotificationLink(status, REFERENCE_NUMBER)).toBe(
+        `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
+      )
+    }
+  )
 
   test.each(['DRAFT', 'AMEND'])(
     '%s notifications link back to the journey hub, not notification-view',
@@ -146,22 +148,6 @@ describe('#buildNotificationLink', () => {
 
     expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
       `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
-    )
-  })
-})
-
-describe('#buildStartNewNotificationLink', () => {
-  test("links to the live-animals set's base, not the journey frontend root", () => {
-    expect(buildStartNewNotificationLink()).toBe(
-      'http://localhost:3000/live-animals'
-    )
-  })
-
-  test('does not double the slash when the configured base URL ends in one', () => {
-    configState.animalsBaseUrl = 'http://localhost:3000/'
-
-    expect(buildStartNewNotificationLink()).toBe(
-      'http://localhost:3000/live-animals'
     )
   })
 })

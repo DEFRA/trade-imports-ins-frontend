@@ -100,7 +100,7 @@ Every page template extends `shared/layout.njk` and fills the
 `journeyContent` block.
 [`context.js`](../../../config/nunjucks/context/context.js) supplies
 `assetPath`, `getAssetPath()` (from webpack's `.public/assets-manifest.json`),
-`dashboardUrl`, `addressBookUrl`, `activeNavigationItem`, `userSession` and
+`dashboardUrl`, `templatesUrl`, `addressBookUrl`, `activeNavigationItem`, `userSession` and
 `crumb` to every render.
 
 ## Client assets

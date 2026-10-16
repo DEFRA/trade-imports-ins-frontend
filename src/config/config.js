@@ -201,6 +201,12 @@ export const config = convict({
         'http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration',
       env: 'DEFRA_ID_OIDC_CONFIGURATION_URL'
     },
+    formActionOrigins: {
+      doc: 'Browser-facing Defra ID origins a form submission may be redirected to (CSP form-action), e.g. when a journey frontend sends an unsigned-in worker to sign in',
+      format: Array,
+      default: ['http://localhost:3007'],
+      env: 'DEFRA_ID_FORM_ACTION_ORIGINS'
+    },
     clientId: {
       doc: 'Defra ID client ID',
       format: String,

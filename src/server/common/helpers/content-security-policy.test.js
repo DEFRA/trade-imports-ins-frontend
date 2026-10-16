@@ -41,7 +41,19 @@ describe('#contentSecurityPolicy', () => {
 
     expect(formAction.trim().split(' ')).toEqual([
       "'self'",
-      ...siblingFrontendBaseUrls.map((baseUrl) => new URL(baseUrl).origin)
+      ...siblingFrontendBaseUrls.map((baseUrl) => new URL(baseUrl).origin),
+      'http://localhost:3007'
     ])
+  })
+
+  test('Should allow the Defra ID origin in form-action, which is checked at every redirect hop', async () => {
+    const resp = await server.inject({
+      method: 'GET',
+      url: '/health'
+    })
+
+    expect(resp.headers['content-security-policy']).toMatch(
+      /form-action [^;]*http:\/\/localhost:3007/
+    )
   })
 })

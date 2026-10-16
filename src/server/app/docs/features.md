@@ -13,7 +13,8 @@ below.
 
 **`dashboard/`** is the single-page shape: `controller.js`, `template.njk`,
 `controller.test.js`, `copy/`, `view-model/list.js` (plus its test), and
-`dashboard.fit.spec.js` beside the controller.
+`dashboard.fit.spec.js` beside the controller. `notification-type/` is the
+second single-page feature (no view-model; it adds `destinations.js`).
 
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
 `add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
@@ -41,7 +42,8 @@ specs plus the fixtures `address-form.js`, `axe.js` and `seed-address.js`.
 [`shared/paths.js`](../shared/paths.js) is the only module that writes a
 URL, with one exception: the temporary `address-lookup-spike` feature
 keeps its own `'/address-lookup-spike'` literal in its controller (see
-below). Each public URL has a builder (`dashboardPath()`, `addressBookPath()`,
+below). Each public URL has a builder (`dashboardPath()`,
+`notificationTypePath()`, `addressBookPath()`,
 `addressAddPath()`, `addressPath(id)`, `addressEditPath(id)`,
 `addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin
 carrying the Hapi `{id}` placeholder. Ids are `encodeURIComponent`ed.
@@ -98,7 +100,8 @@ non-empty string or a string-returning function (parameterised copy, for
 example `successBanner.added(name)`); `cy` must have the same paths, leaf
 kinds and function arities as `en`, and every string leaf must differ from
 its English counterpart unless listed in
-`copy-parity.test.js`'s `IDENTICAL_ALLOWLIST`, which is empty; no copy file
+`copy-parity.test.js`'s `IDENTICAL_ALLOWLIST`, which holds only
+`shared:layout.govukSuffix`, the GOV.UK brand word; no copy file
 may sit at a feature root.
 
 The controller resolves `const copy = copyFor({ en, cy })` from

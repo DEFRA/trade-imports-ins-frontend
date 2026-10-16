@@ -23,6 +23,7 @@ const expectedContext = {
   authEnabled: true,
   activeNavigationItem: 'dashboard',
   dashboardUrl: '/',
+  templatesUrl: 'http://localhost:3000/live-animals/templates',
   addressBookUrl: '/address-book',
   userSession: { isAuthenticated: false },
   crumb: ''
@@ -58,6 +59,12 @@ describe('context and cache', () => {
 
       test('Should provide expected context', () => {
         expect(contextResult).toEqual(expectedContext)
+      })
+
+      test('Should link Templates to the animals frontend’s Manage templates', () => {
+        expect(contextResult.templatesUrl).toBe(
+          'http://localhost:3000/live-animals/templates'
+        )
       })
 
       test('Should mark no navigation item outside the dashboard section', async () => {
@@ -185,6 +192,13 @@ describe('#activeNavigationItem', () => {
 
   test('Should mark the dashboard on the dashboard', () => {
     expect(activeNavigationItem('/')).toBe('dashboard')
+  })
+
+  test('Should mark Templates on the template type question, and Dashboard on the notification one', () => {
+    expect(activeNavigationItem('/notification-type/template')).toBe(
+      'templates'
+    )
+    expect(activeNavigationItem('/notification-type')).toBe('dashboard')
   })
 
   test('Should mark the address book on the address book', () => {
