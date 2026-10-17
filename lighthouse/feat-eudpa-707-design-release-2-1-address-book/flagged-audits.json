@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-10-15T14:26:00.152Z",
+  "pages": [
+    {
+      "pageUrl": "/",
+      "requestedUrl": "http://localhost:3002/",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book",
+      "requestedUrl": "http://localhost:3002/address-book",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/add/address-type",
+      "requestedUrl": "http://localhost:3002/address-book/add/address-type",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/add",
+      "requestedUrl": "http://localhost:3002/address-book/add",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/6ad0e21d6cf16fad287d9c5a",
+      "requestedUrl": "http://localhost:3002/address-book/6ad0e21d6cf16fad287d9c5a",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/6ad0e21d6cf16fad287d9c5a/edit",
+      "requestedUrl": "http://localhost:3002/address-book/6ad0e21d6cf16fad287d9c5a/edit",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/6ad0e21d6cf16fad287d9c5a/delete",
+      "requestedUrl": "http://localhost:3002/address-book/6ad0e21d6cf16fad287d9c5a/delete",
+      "audits": []
+    }
+  ]
+}
