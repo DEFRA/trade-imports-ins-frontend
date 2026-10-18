@@ -4,6 +4,8 @@ import { includeIgnoreFile } from 'eslint/config'
 import { neostandard } from 'neostandard'
 import sonarjs from 'eslint-plugin-sonarjs'
 
+import { codeQuality } from './eslint-rules/code-quality.js'
+
 export default [
   // neostandard 0.14 scopes its `ignores` to its own layers, so gitignored
   // paths (.public bundles, coverage reports) need a global ignore here.
@@ -13,6 +15,15 @@ export default [
     noJsx: true,
     noStyle: true
   }),
+  {
+    files: ['**/*.{js,cjs,mjs}'],
+    plugins: { 'code-quality': codeQuality },
+    rules: {
+      'code-quality/no-tracking-references': 'error',
+      'code-quality/no-silent-catch': 'error',
+      'code-quality/no-message-only-error-log': 'error'
+    }
+  },
   {
     files: ['**/*.fit.spec.js'],
     languageOptions: {
