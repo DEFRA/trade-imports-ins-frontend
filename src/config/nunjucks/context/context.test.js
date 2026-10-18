@@ -132,8 +132,9 @@ describe('context and cache', () => {
         return contextImport.context(mockRequest)
       })
 
-      test('Should log that the Webpack Manifest file is not available', () => {
+      test('Should log the read error and that the Webpack Manifest file is not available', () => {
         expect(mockLoggerError).toHaveBeenCalledWith(
+          { err: expect.any(Error) },
           'Webpack assets-manifest.json not found'
         )
       })
