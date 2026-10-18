@@ -266,7 +266,7 @@ export const config = convict({
     }
   },
   cdpEnvironment: {
-    doc: "The CDP-injected environment name, or 'local' when it is unset (matches trade-imports-ins-backend's own ENVIRONMENT gate). EUDPA-390: the address lookup spike page is registered only for dev/local — see router.js.",
+    doc: "The CDP-injected environment name, or 'local' when it is unset (matches trade-imports-ins-backend's own ENVIRONMENT gate). The address lookup spike page is registered only for dev/local — see router.js.",
     format: [
       'dev',
       'test',

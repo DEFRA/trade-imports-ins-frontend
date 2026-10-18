@@ -1,5 +1,5 @@
 /**
- * EUDPA-390: decide whether what was typed is a postcode or free text, so the page can
+ * Decide whether what was typed is a postcode or free text, so the page can
  * have one search box instead of asking the user to pick a mode they have no reason to
  * care about.
  *

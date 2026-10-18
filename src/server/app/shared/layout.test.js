@@ -38,7 +38,7 @@ const renderLayout = (userSession, context = {}) =>
 const pageTitleOf = (html) => load(html)('head > title').text()
 
 describe('service navigation', () => {
-  it('Should offer the four Design release 1 items on a signed-in page', () => {
+  it('Should offer dashboard, address book, manage account and sign out links on a signed-in page', () => {
     const $ = load(renderLayout(signedIn))
     const items = $('.govuk-service-navigation__item')
     const links = items.find('a')
@@ -85,7 +85,7 @@ describe('service navigation', () => {
     expect(html).not.toContain('aria-current')
   })
 
-  it('Should not show the signed-in user anywhere, as Design release 1 does not', () => {
+  it("Should not show the signed-in user's name or email", () => {
     const html = renderLayout(signedIn)
 
     expect(html).not.toContain('Sam Example')
@@ -145,7 +145,7 @@ describe('back link', () => {
 })
 
 describe('breadcrumbs', () => {
-  it('Should render no breadcrumb trail, as Design release 1 has none', () => {
+  it('Should render no breadcrumb trail beside a back link', () => {
     const html = renderLayout(signedIn, { backLink: ADDRESS_BOOK_URL })
 
     expect(html).not.toContain(BREADCRUMBS)

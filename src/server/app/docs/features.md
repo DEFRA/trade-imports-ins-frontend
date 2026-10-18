@@ -145,7 +145,7 @@ with `getAssetPath('<entry>.js')`. Build config is load-bearing.
 
 ## The temporary address-lookup-spike feature
 
-`address-lookup-spike/` is EUDPA-390's dev/local-only spike page, kept
+`address-lookup-spike/` is a dev/local-only spike page, kept
 self-contained so that removing it means deleting the folder and its
 one line in [`routes.js`](../routes.js) — no permanent feature depends
 on it. It does not follow the dashboard or address-book shape for

@@ -1,5 +1,5 @@
 /**
- * EUDPA-390 (D8): map one lookup result onto the address book's own fields
+ * Map one lookup result onto the address book's own fields
  * (`address-book/address-schema.js` — address line 1 and 2, town or city, county,
  * postcode, country code).
  *
