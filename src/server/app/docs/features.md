@@ -145,7 +145,7 @@ with `getAssetPath('<entry>.js')`. Build config is load-bearing.
 
 ## The temporary address-lookup-spike feature
 
-`address-lookup-spike/` is EUDPA-390's dev/local-only spike page, kept
+`address-lookup-spike/` is a dev/local-only spike page, kept
 self-contained so that removing it means deleting the folder and its
 one line in [`routes.js`](../routes.js) — no permanent feature depends
 on it. It does not follow the dashboard or address-book shape for
@@ -153,6 +153,34 @@ paths: it keeps its own `'/address-lookup-spike'` literal rather than a
 `shared/paths.js` builder, and its routes are added on top of
 `allRoutes` rather than through `features/index.js`, because
 `routes.js` only registers it when `isDevOrLocalEnvironment()` is true.
+
+The page has one search box. `detect-search-mode.js` sends anything
+shaped like a UK postcode as `postcode=` and everything else as `find=`.
+The pattern is deliberately simple: a wrong guess only returns no
+results. `GIR 0AA` and a partial postcode such as `SW1A` go to `find`.
+A postcode is sent upper case with one space before the last three
+characters, which is how the lookup returns and expects it, so `sw1a1aa`
+still finds a match.
+
+`map-to-address-fields.js` maps one lookup result onto the address
+book's fields in `address-book/address-schema.js`. Nothing is saved; the
+mapping is a proposal for the permanent build. The lookup returns
+nothing shaped like the form, and the spike shows three gaps:
+
+1. Address line 1 has to be composed, and the fields that carry the name
+   vary by address. Dev returned Buckingham Palace with the whole name
+   in `subBuildingName` and `buildingName`, `buildingNumber` and
+   `street` all null.
+2. The lookup has no county.
+3. `country` is upper-case free text (`ENGLAND`), where the form wants an
+   ISO code from reference data.
+
+Line 1 is the premises (sub-building, then building name, as in "Unit 1,
+Downing House"), and line 2 is the number and street with the locality.
+With no premises, line 1 is the number and street ("1 Downing Street").
+With neither, line 1 falls back to `addressLine`, the whole formatted
+address including town and postcode, because an empty line 1 fails the
+form's validation; the page lists that as a gap.
 
 ## Tests
 

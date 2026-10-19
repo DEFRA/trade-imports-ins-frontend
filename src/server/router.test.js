@@ -46,7 +46,7 @@ describe('#router auth gating', () => {
   })
 })
 
-describe('#router EUDPA-390 address lookup spike gating', () => {
+describe('#router address lookup spike gating', () => {
   afterAll(() => {
     config.set('cdpEnvironment', 'local')
   })

@@ -52,7 +52,7 @@ it with `base(sharedCopy.unauthorised.title)`.
 (the spike's own
 [`is-dev-or-local.js`](../features/address-lookup-spike/is-dev-or-local.js),
 reading `cdpEnvironment`) is true, it also registers the temporary
-EUDPA-390 `address-lookup-spike` routes, which sit outside `allRoutes`.
+`address-lookup-spike` routes, which sit outside `allRoutes`.
 
 [`features/index.js`](../features/index.js) imports each feature's
 controller namespace and spreads `routes` into `allRoutes` — nothing else.

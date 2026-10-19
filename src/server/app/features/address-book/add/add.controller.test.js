@@ -428,7 +428,7 @@ describe(
 )
 
 describe(
-  '#addressBookAddController — Design Release 2.1 layout',
+  '#addressBookAddController — field layout',
   { concurrent: false },
   () => {
     let server
@@ -438,7 +438,7 @@ describe(
       server = running.server
     })
 
-    test('GET lays out the fields at Design Release 2.1 widths', async () => {
+    test('GET renders name, address lines and email full width, town and postcode at one half, and phone at two thirds', async () => {
       const { result } = await getAdd(server, 'add-get-widths')
 
       const $ = load(result)
