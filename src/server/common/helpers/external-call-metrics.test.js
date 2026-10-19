@@ -3,7 +3,7 @@ import { Metrics } from '@defra/cdp-metrics'
 
 import {
   measureExternalCall,
-  recordExternalCall
+  recordExternalCallInBackground
 } from './external-call-metrics.js'
 import { config } from '../../../config/config.js'
 import { readEmfDocuments } from '../test-helpers/emf-documents.js'
@@ -111,24 +111,25 @@ describe('external call metrics', () => {
     expect(metricsLogger.flush).toHaveBeenCalledTimes(1)
   })
 
-  test('recordExternalCall resolves and logs a warning when the flush rejects', async () => {
+  test('recording in the background logs a warning with the call and the error when the flush rejects', async () => {
+    const flushError = new Error('agent unavailable')
     const metricsLogger = {
       setNamespace: vi.fn(() => metricsLogger),
       putMetric: vi.fn(() => metricsLogger),
       setProperty: vi.fn(() => metricsLogger),
-      flush: vi.fn().mockRejectedValue(new Error('agent unavailable'))
+      flush: vi.fn().mockRejectedValue(flushError)
     }
     vi.spyOn(Metrics.prototype, 'getMetricsLogger').mockReturnValue(
       metricsLogger
     )
 
-    await expect(
-      recordExternalCall(JWKS_CALL, { durationMs: 5, failed: false })
-    ).resolves.toBeUndefined()
+    recordExternalCallInBackground(JWKS_CALL, { durationMs: 5, failed: false })
 
-    expect(loggerWarnMock).toHaveBeenCalledWith(
-      expect.objectContaining({ dependency: 'defra-id', operation: 'jwks' }),
-      'Could not record external call'
+    await vi.waitFor(() =>
+      expect(loggerWarnMock).toHaveBeenCalledWith(
+        { err: flushError, dependency: 'defra-id', operation: 'jwks' },
+        'Could not record external call'
+      )
     )
   })
 })
