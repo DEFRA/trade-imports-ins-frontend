@@ -7,8 +7,6 @@ import sonarjs from 'eslint-plugin-sonarjs'
 import { codeQuality } from './eslint-rules/code-quality.js'
 
 export default [
-  // neostandard 0.14 scopes its `ignores` to its own layers, so gitignored
-  // paths (.public bundles, coverage reports) need a global ignore here.
   includeIgnoreFile(path.join(import.meta.dirname, '.gitignore')),
   ...neostandard({
     env: ['node', 'vitest'],
