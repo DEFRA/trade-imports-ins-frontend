@@ -43,6 +43,13 @@ test.describe('edit address', () => {
     for (const [field, value] of Object.entries(seedValues)) {
       await expect(page.getByLabel(editFieldLabels[field])).toHaveValue(value)
     }
+    const countryNames = await page
+      .getByLabel(editFieldLabels.countryCode)
+      .locator('option:not([value=""])')
+      .allTextContents()
+    expect(countryNames).toEqual(
+      countryNames.toSorted((left, right) => left.localeCompare(right, 'en'))
+    )
     for (const name of ['Address', 'Contact details']) {
       await expect(
         page.getByRole('heading', { level: 2, name, exact: true })
