@@ -26,7 +26,9 @@ const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
 const mockCountries = [
   { code: 'GB', name: 'United Kingdom' },
-  { code: 'FR', name: 'France' }
+  { code: 'FR', name: 'France' },
+  { code: 'CH', name: 'Switzerland' },
+  { code: 'DE', name: 'Germany' }
 ]
 
 const validPayload = {
@@ -464,9 +466,14 @@ describe(
     test('GET lists the countries alphabetically with United Kingdom in its place', async () => {
       const { result } = await getAdd(server, 'add-get-order')
 
-      expect(result.indexOf('value="FR"')).toBeLessThan(
-        result.indexOf('value="GB"')
-      )
+      const $ = load(result)
+      const codes = $('#countryCode option')
+        .map((_, option) => $(option).attr('value'))
+        .get()
+        .filter(Boolean)
+
+      // CH/DE sort the other way by code, so this fails a sort by code
+      expect(codes).toEqual(['FR', 'DE', 'CH', 'GB'])
     })
   }
 )
