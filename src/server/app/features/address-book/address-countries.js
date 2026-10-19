@@ -31,6 +31,14 @@ export function buildCountrySelectItems(countries, placeholder) {
   return [{ value: '', text: placeholder }, ...buildCountryItems(countries)]
 }
 
+/** Resolves a country code to its name in the given list, falling back to the code. */
+export function countryNameOf(countries, countryCode) {
+  return (
+    countries.find((country) => country.code === countryCode)?.name ??
+    countryCode
+  )
+}
+
 /**
  * Resolves a search term to an ISO alpha-2 country code when it matches an MDM country name
  * (cv-048 FE-resolve). Comparison is case-insensitive on the full trimmed term.

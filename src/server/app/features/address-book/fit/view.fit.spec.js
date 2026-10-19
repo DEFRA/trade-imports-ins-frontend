@@ -164,7 +164,7 @@ test.describe('view address', () => {
       })
       await page.goto(`/address-book/${SEED_ADDRESS_ID}/delete`)
       await page
-        .getByRole('button', { name: 'Yes, delete this address' })
+        .getByRole('button', { name: 'Yes, delete', exact: true })
         .click()
       await page.goto(`/address-book/${SEED_ADDRESS_ID}`)
 

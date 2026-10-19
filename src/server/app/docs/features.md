@@ -62,7 +62,9 @@ pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
   `contentColumnClass: kit.surfaceClass('display')`.
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
-'session' }`; the `{id}` pages pass `addressIdRouteOptions`.
+'session' }`; the edit page passes `addressIdRouteOptions`; the view and
+  delete pages pass `deadLinkRouteOptions(addressBookPath)`, so a dead link
+  returns to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
 - **`requireOrganisationId(request)`** throws `Boom.forbidden` when the
@@ -88,8 +90,10 @@ The shape every ins controller takes, citing
   `mapApiErrorsToFormErrors(err.body)`.
 - `export const routes = kit.pageRoutes(...)`.
 
-The `{id}` pages load through `loadStoredAddress` and throw `boomFor(err,
-() => logger.error(...))`.
+The edit page loads through `loadStoredAddress`. The view and delete pages
+load through `findLiveAddress` and redirect to the list when it finds
+nothing. All throw `boomFor(err, () => logger.error(...))` for anything
+else.
 
 ## Copy and templates
 

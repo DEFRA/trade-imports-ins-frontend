@@ -7,7 +7,7 @@ import {
   addressRoutePath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { getAddressFormCountries } from '../address-countries.js'
+import { countryNameOf, getAddressFormCountries } from '../address-countries.js'
 import { deadLinkRouteOptions } from '../address-id-params.js'
 import { boomFor, findLiveAddress } from '../stored-address.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -55,9 +55,6 @@ export const buildRows = (address, countryName) =>
   ]
     .filter(({ field, text }) => !OPTIONAL_ROWS.has(field) || hasText(text))
     .map(({ label, text }) => ({ key: { text: label }, value: { text } }))
-
-const countryNameOf = (countries, countryCode) =>
-  countries.find((country) => country.code === countryCode)?.name ?? countryCode
 
 const get = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)

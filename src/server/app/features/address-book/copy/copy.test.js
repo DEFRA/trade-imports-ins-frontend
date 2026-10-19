@@ -76,8 +76,20 @@ describe('#copy', () => {
       'Green Farm updated in your address book'
     )
     expect(copy.successBanner.deleted(addressName)).toBe(
-      'Green Farm deleted from your address book'
+      'Green Farm address deleted'
     )
+    expect(copy.successBanner.deletedUnnamed).toBe('Address deleted')
+  })
+
+  it('Should word the delete confirmation as Design Release 2.1 does', () => {
+    expect(copy.delete.summaryAddress).toBe('Address')
+    expect(copy.delete.confirmation).toBe(
+      'Confirm that you want to delete this address.'
+    )
+    expect(copy.delete.warning).toBe('This action cannot be undone.')
+    expect(copy.delete.notApplicable).toBe('Not applicable')
+    expect(copy.delete.confirm).toBe('Yes, delete')
+    expect(copy.delete.cancel).toBe('No, cancel')
   })
 
   it('Should carry the labels the form and summary specs pin', () => {
