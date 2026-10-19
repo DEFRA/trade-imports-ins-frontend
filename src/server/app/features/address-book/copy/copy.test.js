@@ -80,9 +80,9 @@ describe('#copy', () => {
     )
   })
 
-  it('Should carry the labels the form and summary specs pin, including the bare County row', () => {
+  it('Should carry the labels the form and summary specs pin', () => {
     expect(copy.form.fields.county).toBe('County (optional)')
-    expect(copy.view.countyRowLabel).toBe('County')
+    expect(copy.delete.title).toBe('Delete this address?')
     expect(copy.form.fields.postcode).toBe('Postcode or Zip code')
     expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
       'Name must be 255 characters or fewer'

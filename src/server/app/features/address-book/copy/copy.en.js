@@ -60,11 +60,10 @@ export const copy = {
   },
   view: {
     edit: 'Edit',
-    delete: 'Delete',
-    countyRowLabel: 'County'
+    delete: 'Delete'
   },
   delete: {
-    title: 'Delete address',
+    title: 'Delete this address?',
     confirmPrefix: 'Are you sure you want to delete',
     confirmSuffix: 'from your address book?',
     confirm: 'Yes, delete this address',

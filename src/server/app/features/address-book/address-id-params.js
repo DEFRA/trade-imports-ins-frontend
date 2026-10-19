@@ -12,6 +12,22 @@ export const addressIdParams = Joi.object({
   })
 })
 
+/**
+ * Route options for a page where a malformed id is a dead link: it goes to
+ * `fallbackPathOf(request)` instead of a 404.
+ *
+ * @param {(request: object) => string} fallbackPathOf - Where a dead link returns to
+ * @returns {object} Hapi route options
+ */
+export const deadLinkRouteOptions = (fallbackPathOf) => ({
+  ...routeOptions,
+  validate: {
+    params: addressIdParams,
+    failAction: (request, toolkit) =>
+      toolkit.redirect(fallbackPathOf(request)).takeover()
+  }
+})
+
 export const addressIdRouteOptions = {
   ...routeOptions,
   validate: {

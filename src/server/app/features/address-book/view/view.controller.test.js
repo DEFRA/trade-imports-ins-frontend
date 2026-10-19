@@ -1,3 +1,4 @@
+import { load } from 'cheerio'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../../../../server.js'
@@ -22,6 +23,7 @@ const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL = 'exports@example.com'
 const UK_NAME = 'United Kingdom'
+const ADDRESS_BOOK_PATH = '/address-book'
 
 const mockAddress = {
   id: addressId,
@@ -38,7 +40,32 @@ const mockAddress = {
 }
 
 describe('#buildRows', () => {
-  test('renders each Standard Address Block field on its own row, labelled as on the edit form', () => {
+  test('leaves out address line 2 and county when the address has neither', () => {
+    const rows = buildRows(
+      { ...mockAddress, addressLine2: '', county: null },
+      UK_NAME
+    )
+
+    expect(rows.map((row) => row.key.text)).toEqual([
+      'Name or organisation name',
+      'Address line 1',
+      'Town or city',
+      'Postcode or Zip code',
+      'Country',
+      'Email address',
+      'Phone number'
+    ])
+  })
+
+  test('treats a whitespace-only optional field as blank', () => {
+    const rows = buildRows({ ...mockAddress, addressLine2: '   ' }, UK_NAME)
+
+    expect(rows.map((row) => row.key.text)).not.toContain(
+      'Address line 2 (optional)'
+    )
+  })
+
+  test('renders each Standard Address Block field on its own row, labelled as on the edit form, county and line 2 marked optional', () => {
     const rows = buildRows(mockAddress, UK_NAME)
 
     expect(rows.map((row) => row.key.text)).toEqual([
@@ -46,7 +73,7 @@ describe('#buildRows', () => {
       'Address line 1',
       'Address line 2 (optional)',
       'Town or city',
-      'County',
+      'County (optional)',
       'Postcode or Zip code',
       'Country',
       'Email address',
@@ -121,42 +148,83 @@ describe('#addressBookViewController', () => {
     expect(result).toContain(`/address-book/${addressId}/delete`)
     expect(result).not.toContain('operator')
     expect(result).not.toContain('Type')
+
+    const $ = load(result)
+    const group = $('.govuk-button-group')
+    expect(
+      group.find(`a[href="/address-book/${addressId}/edit"]`)
+    ).toHaveLength(1)
+    expect(
+      group.find(`a[href="/address-book/${addressId}/delete"]`)
+    ).toHaveLength(1)
+    expect(
+      group
+        .find(`a[href="/address-book/${addressId}/edit"]`)
+        .hasClass('govuk-button--secondary')
+    ).toBe(true)
+    expect(
+      group
+        .find(`a[href="/address-book/${addressId}/delete"]`)
+        .hasClass('govuk-button--warning')
+    ).toBe(true)
+    expect($('head > title').text().replace(/\s+/g, ' ').trim()).toBe(
+      'Highland Livestock Ltd - Import notification service - GOV.UK'
+    )
   })
 
-  test('GET returns 404 when address is not found', async () => {
+  test('GET redirects to the address book when the address is not found', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
-    const { statusCode } = await server.inject({
+    const { headers, statusCode } = await server.inject({
       method: 'GET',
       url: `/address-book/${addressId}`,
       auth: sessionAuth('view-not-found')
     })
 
-    expect(statusCode).toBe(statusCodes.notFound)
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
   })
 
-  test('GET returns 404 for malformed address id without reaching the address book', async () => {
-    const { statusCode } = await server.inject({
+  test("GET redirects to the address book for another organisation's address", async () => {
+    addressBookApi()
+      .get(ADDRESS_PATH)
+      .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+      .reply(404, { message: 'Not found' })
+
+    const { headers, statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}`,
+      auth: sessionAuth('view-other-org')
+    })
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
+  })
+
+  test('GET redirects to the address book for a malformed address id without reaching the address book', async () => {
+    const { headers, statusCode } = await server.inject({
       method: 'GET',
       url: '/address-book/not-a-valid-id',
       auth: sessionAuth('view-bad-id')
     })
 
-    expect(statusCode).toBe(statusCodes.notFound)
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
   })
 
-  test('GET returns 404 for soft-deleted tombstones', async () => {
+  test('GET redirects to the address book for soft-deleted tombstones', async () => {
     addressBookApi()
       .get(ADDRESS_PATH)
       .reply(200, { ...mockAddress, deleted: true })
 
-    const { statusCode } = await server.inject({
+    const { headers, statusCode } = await server.inject({
       method: 'GET',
       url: `/address-book/${addressId}`,
       auth: sessionAuth('view-get-tombstone')
     })
 
-    expect(statusCode).toBe(statusCodes.notFound)
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
   })
 
   test('GET returns 500 when the address book cannot be reached', async () => {

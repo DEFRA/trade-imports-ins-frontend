@@ -8,8 +8,8 @@ import {
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { getAddressFormCountries } from '../address-countries.js'
-import { addressIdRouteOptions } from '../address-id-params.js'
-import { boomFor, loadStoredAddress } from '../stored-address.js'
+import { deadLinkRouteOptions } from '../address-id-params.js'
+import { boomFor, findLiveAddress } from '../stored-address.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
@@ -17,44 +17,59 @@ const logger = createLogger()
 const view = 'address-book/view/view'
 const copy = copyFor({ en, cy })
 
-export const buildRows = (address, countryName) => [
-  { key: { text: copy.form.fields.name }, value: { text: address.name } },
-  {
-    key: { text: copy.form.fields.addressLine1 },
-    value: { text: address.addressLine1 }
-  },
-  {
-    key: { text: copy.form.fields.addressLine2 },
-    value: { text: address.addressLine2 }
-  },
-  {
-    key: { text: copy.form.fields.townOrCity },
-    value: { text: address.townOrCity }
-  },
-  { key: { text: copy.view.countyRowLabel }, value: { text: address.county } },
-  {
-    key: { text: copy.form.fields.postcode },
-    value: { text: address.postcode }
-  },
-  {
-    key: { text: copy.form.fields.countryCode },
-    value: { text: countryName ?? address.countryCode }
-  },
-  { key: { text: copy.form.fields.email }, value: { text: address.email } },
-  { key: { text: copy.form.fields.phone }, value: { text: address.phone } }
-]
+const OPTIONAL_ROWS = new Set(['addressLine2', 'county'])
+
+const hasText = (value) => Boolean(value?.trim?.())
+
+export const buildRows = (address, countryName) =>
+  [
+    { field: 'name', label: copy.form.fields.name, text: address.name },
+    {
+      field: 'addressLine1',
+      label: copy.form.fields.addressLine1,
+      text: address.addressLine1
+    },
+    {
+      field: 'addressLine2',
+      label: copy.form.fields.addressLine2,
+      text: address.addressLine2
+    },
+    {
+      field: 'townOrCity',
+      label: copy.form.fields.townOrCity,
+      text: address.townOrCity
+    },
+    { field: 'county', label: copy.form.fields.county, text: address.county },
+    {
+      field: 'postcode',
+      label: copy.form.fields.postcode,
+      text: address.postcode
+    },
+    {
+      field: 'countryCode',
+      label: copy.form.fields.countryCode,
+      text: countryName ?? address.countryCode
+    },
+    { field: 'email', label: copy.form.fields.email, text: address.email },
+    { field: 'phone', label: copy.form.fields.phone, text: address.phone }
+  ]
+    .filter(({ field, text }) => !OPTIONAL_ROWS.has(field) || hasText(text))
+    .map(({ label, text }) => ({ key: { text: label }, value: { text } }))
 
 const countryNameOf = (countries, countryCode) =>
   countries.find((country) => country.code === countryCode)?.name ?? countryCode
 
-const get = async (request, h) => {
+const get = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)
   const { id } = request.params
 
   try {
-    const address = await loadStoredAddress(orgId, id)
+    const address = await findLiveAddress(orgId, id)
+    if (!address) {
+      return toolkit.redirect(addressBookPath())
+    }
     const countries = await getAddressFormCountries()
-    return h.view(view, {
+    return toolkit.view(view, {
       ...kit.base(address.name, { backLink: addressBookPath() }),
       copy,
       heading: address.name,
@@ -75,5 +90,5 @@ const get = async (request, h) => {
 export const routes = kit.pageRoutes(
   addressRoutePath(),
   { get },
-  addressIdRouteOptions
+  deadLinkRouteOptions(addressBookPath)
 )

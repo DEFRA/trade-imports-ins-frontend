@@ -1,3 +1,4 @@
+import { load } from 'cheerio'
 import { describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../../../../server.js'
@@ -54,7 +55,10 @@ describe('#addressBookDeleteController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toContain('Delete address')
+    expect(result).toContain('Delete this address?')
+    expect(
+      load(result)('head > title').text().replace(/\s+/g, ' ').trim()
+    ).toBe('Delete this address? - Import notification service - GOV.UK')
     expect(result).toContain('Highland Livestock Ltd')
     expect(result).toContain('Yes, delete this address')
     expect(result).not.toContain('Delete operator')

@@ -4,7 +4,7 @@ import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { SEED_ADDRESS_ID, SEED_ADDRESS_NAME } from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
-const CONFIRM_PAGE_TITLE = 'Delete address'
+const CONFIRM_PAGE_TITLE = 'Delete this address?'
 
 async function openDeleteConfirmation(page, organisationId) {
   await signIn(page, { organisationId })

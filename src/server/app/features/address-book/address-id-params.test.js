@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
-import { addressIdParams } from './address-id-params.js'
+import { addressIdParams, deadLinkRouteOptions } from './address-id-params.js'
 
 describe('#addressIdParams', () => {
   test('accepts a 24-character hex Mongo ObjectId', () => {
@@ -16,5 +16,20 @@ describe('#addressIdParams', () => {
 
     expect(error).toBeDefined()
     expect(error.details[0].message).toBe('Enter a valid address id')
+  })
+})
+
+describe('#deadLinkRouteOptions', () => {
+  test('deadLinkRouteOptions redirects a failed id to the fallback path', () => {
+    const options = deadLinkRouteOptions(() => '/address-book')
+    const takeover = vi.fn(() => 'taken-over')
+    const toolkit = { redirect: vi.fn(() => ({ takeover })) }
+
+    const result = options.validate.failAction({}, toolkit)
+
+    expect(toolkit.redirect).toHaveBeenCalledWith('/address-book')
+    expect(result).toBe('taken-over')
+    expect(options.validate.params).toBe(addressIdParams)
+    expect(options.auth).toBe('session')
   })
 })

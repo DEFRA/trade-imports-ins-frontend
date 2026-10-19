@@ -26,9 +26,10 @@ root:
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems`, `resolveCountryCodeFromSearchTerm`.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
-  `addressIdParams`, `addressIdRouteOptions`.
+  `addressIdParams`, `addressIdRouteOptions`, `deadLinkRouteOptions`.
 - [`stored-address.js`](../features/address-book/stored-address.js) —
-  `loadStoredAddress` 404s a tombstoned record; `boomFor` maps client
+  `loadStoredAddress` 404s a tombstoned record; `findLiveAddress` resolves
+  an unknown or deleted address to `undefined`; `boomFor` maps client
   errors to Boom.
 - [`success-banner.js`](../features/address-book/success-banner.js) —
   yar-backed, read-once.

@@ -62,11 +62,10 @@ export const copy = {
   },
   view: {
     edit: 'Golygu',
-    delete: 'Dileu',
-    countyRowLabel: 'Sir'
+    delete: 'Dileu'
   },
   delete: {
-    title: 'Dileu cyfeiriad',
+    title: 'Dileu’r cyfeiriad hwn?',
     confirmPrefix: 'Ydych chi’n siŵr eich bod am ddileu',
     confirmSuffix: 'o’ch llyfr cyfeiriadau?',
     confirm: 'Ie, dileu’r cyfeiriad hwn',
