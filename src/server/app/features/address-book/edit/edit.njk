@@ -11,6 +11,8 @@
   <form method="post" novalidate>
     <input type="hidden" name="crumb" value="{{ crumb }}" />
 
+    <h2 class="govuk-heading-m">{{ copy.form.addressHeading }}</h2>
+
     {{ govukInput({
       label: { text: copy.form.fields.name },
       id: "name",
@@ -73,6 +75,8 @@
       value: formValues.countryCode,
       errorMessage: errors.countryCode and { text: errors.countryCode }
     }) }}
+
+    <h2 class="govuk-heading-m">{{ copy.form.contactHeading }}</h2>
 
     {{ govukInput({
       label: { text: copy.form.fields.phone },

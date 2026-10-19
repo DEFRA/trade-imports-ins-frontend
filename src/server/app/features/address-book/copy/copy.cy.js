@@ -1,4 +1,6 @@
 // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+const SELECT_COUNTRY = 'Dewiswch wlad'
+
 export const copy = {
   list: {
     title: 'Llyfr cyfeiriadau',
@@ -29,8 +31,8 @@ export const copy = {
     deleted: (name) => `${name} wedi’i ddileu o’ch llyfr cyfeiriadau`
   },
   form: {
-    addressHeading: 'Rhowch fanylion y cyfeiriad',
-    contactHeading: 'Rhowch fanylion cyswllt',
+    addressHeading: 'Cyfeiriad',
+    contactHeading: 'Manylion cyswllt',
     fields: {
       name: 'Enw neu enw’r sefydliad',
       addressLine1: 'Llinell gyfeiriad 1',
@@ -43,13 +45,15 @@ export const copy = {
       email: 'Cyfeiriad e-bost'
     },
     phoneHint: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad',
-    countryPlaceholder: 'Dewiswch wlad'
+    countryPlaceholder: SELECT_COUNTRY
   },
   add: {
     title: 'Ychwanegu manylion cyfeiriad',
     save: 'Cadw a pharhau',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
-    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad'
+    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
+    nameLabel: 'Enw neu sefydliad',
+    countryPlaceholder: 'Dewiswch un'
   },
   edit: {
     title: 'Golygu manylion cyfeiriad',
@@ -70,7 +74,7 @@ export const copy = {
   },
   errors: {
     name: {
-      required: 'Rhowch enw',
+      required: 'Rhowch enw neu enw’r sefydliad',
       maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`
     },
     addressLine1: {
@@ -88,11 +92,11 @@ export const copy = {
       maxLength: (max) => `Rhaid i’r sir fod yn ${max} nod neu lai`
     },
     postcode: {
-      required: 'Rhowch god post',
+      required: 'Rhowch god post neu god zip',
       maxLength: (max) => `Rhaid i’r cod post fod yn ${max} nod neu lai`
     },
     countryCode: {
-      required: 'Rhowch wlad'
+      required: SELECT_COUNTRY
     },
     phone: {
       required: 'Rhowch rif ffôn',

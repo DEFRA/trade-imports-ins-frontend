@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
 
 import {
+  EDIT_NAME_LABEL,
+  editFieldLabels,
   expectErrorFocusOn,
-  fieldLabels,
   setFieldValue
 } from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
@@ -40,8 +41,23 @@ test.describe('edit address', () => {
       page.getByRole('heading', { level: 1, name: PAGE_TITLE })
     ).toBeVisible()
     for (const [field, value] of Object.entries(seedValues)) {
-      await expect(page.getByLabel(fieldLabels[field])).toHaveValue(value)
+      await expect(page.getByLabel(editFieldLabels[field])).toHaveValue(value)
     }
+    const countryNames = await page
+      .getByLabel(editFieldLabels.countryCode)
+      .locator('option:not([value=""])')
+      .allTextContents()
+    expect(countryNames).toEqual(
+      countryNames.toSorted((left, right) => left.localeCompare(right, 'en'))
+    )
+    for (const name of ['Address', 'Contact details']) {
+      await expect(
+        page.getByRole('heading', { level: 2, name, exact: true })
+      ).toBeVisible()
+    }
+    await expect(
+      page.getByLabel(EDIT_NAME_LABEL, { exact: true })
+    ).toBeVisible()
     await expect(
       page.getByText('For international numbers include the country code')
     ).toBeVisible()
@@ -64,17 +80,17 @@ test.describe('edit address', () => {
     // Clearing a required field bounces the save. The town is edited at the
     // same time so the redisplay has to choose between what was typed and
     // what is stored - re-rendering from the record would silently discard it.
-    await setFieldValue(page, 'townOrCity', 'Fort William')
-    await setFieldValue(page, 'name', '')
+    await setFieldValue(page, 'townOrCity', 'Fort William', editFieldLabels)
+    await setFieldValue(page, 'name', '', editFieldLabels)
     await save(page)
 
     await expectErrorFocusOn(page, {
-      message: 'Enter a name',
-      label: fieldLabels.name,
+      message: 'Enter a name or organisation name',
+      label: editFieldLabels.name,
       expectedValue: '',
       url: EDIT_URL
     })
-    await expect(page.getByLabel(fieldLabels.townOrCity)).toHaveValue(
+    await expect(page.getByLabel(editFieldLabels.townOrCity)).toHaveValue(
       'Fort William'
     )
   })
@@ -84,12 +100,12 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-email')
 
-    await setFieldValue(page, 'email', 'not-an-email')
+    await setFieldValue(page, 'email', 'not-an-email', editFieldLabels)
     await save(page)
 
     await expectErrorFocusOn(page, {
       message: 'Enter an email address in the correct format',
-      label: fieldLabels.email,
+      label: editFieldLabels.email,
       expectedValue: 'not-an-email',
       url: EDIT_URL
     })
@@ -100,7 +116,7 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-validation-axe')
 
-    await setFieldValue(page, 'name', '')
+    await setFieldValue(page, 'name', '', editFieldLabels)
     await save(page)
     await expect(page.getByRole('alert')).toBeVisible()
 
@@ -115,8 +131,8 @@ test.describe('edit address', () => {
     // parallel workers, so this test needs an organisation of its own.
     await openEditForm(page, `stub-org-edit-save-${crypto.randomUUID()}`)
 
-    await setFieldValue(page, 'name', 'Glen Tanar Estate')
-    await setFieldValue(page, 'townOrCity', 'Aboyne')
+    await setFieldValue(page, 'name', 'Glen Tanar Estate', editFieldLabels)
+    await setFieldValue(page, 'townOrCity', 'Aboyne', editFieldLabels)
     await save(page)
 
     await expect(page).toHaveURL(/\/address-book$/)
@@ -136,7 +152,7 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-cancel')
 
-    await setFieldValue(page, 'name', 'Should not be saved')
+    await setFieldValue(page, 'name', 'Should not be saved', editFieldLabels)
     await page.getByRole('button', { name: 'Cancel' }).click()
 
     await expect(page).toHaveURL(/\/address-book$/)
