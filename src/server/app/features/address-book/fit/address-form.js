@@ -22,6 +22,8 @@ export const fieldLabels = {
   email: EMAIL_LABEL
 }
 
+export const editFieldLabels = { ...fieldLabels, name: EDIT_NAME_LABEL }
+
 export const validAddress = {
   name: 'Highland Livestock Ltd',
   addressLine1: "14 Drover's Way",
@@ -34,8 +36,8 @@ export const validAddress = {
   phone: '+44 1463 234567'
 }
 
-export async function setFieldValue(page, field, value) {
-  const control = page.getByLabel(fieldLabels[field])
+export async function setFieldValue(page, field, value, labels = fieldLabels) {
+  const control = page.getByLabel(labels[field])
   if (field === 'countryCode') {
     await control.selectOption(value)
   } else {
