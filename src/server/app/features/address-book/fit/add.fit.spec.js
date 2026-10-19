@@ -28,6 +28,7 @@ test.describe('add address', () => {
     await expect(
       page.getByRole('heading', { name: 'Add address details' })
     ).toBeVisible()
+    await expect(page.getByLabel(NAME_LABEL, { exact: true })).toBeVisible()
     for (const [, label] of [
       ...requiredValidations,
       ['addressLine2', 'Address line 2 (optional)'],
@@ -41,9 +42,30 @@ test.describe('add address', () => {
 
     const country = page.getByLabel('Country')
     await expect(country).toHaveValue('')
+    await expect(country.getByRole('option').first()).toHaveText('Select one')
     await expect(
       country.getByRole('option', { name: 'United Kingdom' })
     ).toHaveCount(1)
+  })
+
+  test('has a Back link to the address book', async ({ page }) => {
+    await signIn(page, { organisationId: 'stub-org-add-back' })
+    await page.goto(ADD_PATH)
+
+    await expect(
+      page.getByRole('link', { name: 'Back', exact: true })
+    ).toHaveAttribute('href', '/address-book')
+  })
+
+  test('groups fields under Address and Contact details', async ({ page }) => {
+    await signIn(page, { organisationId: 'stub-org-add-sections' })
+    await page.goto(ADD_PATH)
+
+    for (const name of ['Address', 'Contact details']) {
+      await expect(
+        page.getByRole('heading', { level: 2, name, exact: true })
+      ).toBeVisible()
+    }
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
@@ -167,7 +189,7 @@ test.describe('cancel', () => {
     await page.getByLabel(NAME_LABEL).fill('Should not be saved')
 
     await page
-      .getByRole('button', { name: 'Cancel and return to address book' })
+      .getByRole('link', { name: 'Cancel and return to address book' })
       .click()
 
     await expect(page).toHaveURL(/\/address-book$/)

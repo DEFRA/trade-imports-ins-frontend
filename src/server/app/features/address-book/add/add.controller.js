@@ -31,7 +31,7 @@ const view = 'address-book/add/add'
 const copy = copyFor({ en, cy })
 
 const countryItemsOf = (countries) =>
-  buildCountrySelectItems(countries, copy.form.countryPlaceholder)
+  buildCountrySelectItems(countries, copy.add.countryPlaceholder)
 
 const buildView = (
   h,
@@ -45,13 +45,17 @@ const buildView = (
 ) =>
   h
     .view(view, {
-      ...kit.base(copy.add.title, { recoverableError }),
+      ...kit.base(copy.add.title, {
+        recoverableError,
+        backLink: handshake ? undefined : addressBookPath()
+      }),
       copy,
       formValues,
       countryItems,
       errors,
       errorSummary: kit.errorSummary(errors),
-      handshakeContext: handshake
+      handshakeContext: handshake,
+      cancelHref: handshake ? null : addressBookPath()
     })
     .header('Cache-Control', 'no-store')
 
@@ -71,10 +75,12 @@ const redirectAfterCancel = (h, handshake) =>
 const get = async (request, h) => {
   const handshake = syncHandshakeContext(request)
 
+  const formValues = formValuesOf()
+
   try {
     const countries = await getAddressFormCountries()
     return buildView(h, {
-      formValues: formValuesOf(),
+      formValues,
       countryItems: countryItemsOf(countries),
       handshake
     })
@@ -84,7 +90,7 @@ const get = async (request, h) => {
     }
     logger.error({ err }, 'Failed to load address form countries')
     return buildView(h, {
-      formValues: formValuesOf(),
+      formValues,
       countryItems: [],
       recoverableError: true,
       handshake

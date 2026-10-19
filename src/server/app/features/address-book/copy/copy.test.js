@@ -29,6 +29,15 @@ describe('#copy', () => {
     }
   )
 
+  it('Should word the add-details form as Design Release 2.1 does', () => {
+    expect(copy.form.addressHeading).toBe('Address')
+    expect(copy.form.contactHeading).toBe('Contact details')
+    expect(copy.add.nameLabel).toBe('Name or organisation')
+    expect(copy.form.fields.name).toBe('Name or organisation name')
+    expect(copy.add.countryPlaceholder).toBe('Select one')
+    expect(copy.add.cancel).toBe('Cancel and return to address book')
+  })
+
   it.each(LOCALES)(
     'Should label every %s form field, and no other',
     (_locale, bundle) => {
@@ -78,5 +87,12 @@ describe('#copy', () => {
     expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
       'Name must be 255 characters or fewer'
     )
+  })
+
+  it('Should ask for the missing name, postcode, country or phone in its required message', () => {
+    expect(copy.errors.name.required).toBe('Enter a name or organisation name')
+    expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
+    expect(copy.errors.countryCode.required).toBe('Select a country')
+    expect(copy.errors.phone.required).toBe('Enter a phone number')
   })
 })

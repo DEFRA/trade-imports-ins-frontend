@@ -1,9 +1,11 @@
+import { load } from 'cheerio'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../../../../server.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
+import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import {
   addressBookApi,
   runInRealMode,
@@ -21,7 +23,9 @@ const UPDATED_NAME = 'Updated Farm Ltd'
 
 const mockCountries = [
   { code: 'GB', name: 'United Kingdom' },
-  { code: 'FR', name: 'France' }
+  { code: 'FR', name: 'France' },
+  { code: 'CH', name: 'Switzerland' },
+  { code: 'DE', name: 'Germany' }
 ]
 
 const mockAddress = {
@@ -79,9 +83,31 @@ describe('#addressBookEditController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('Edit address details')
+    expect(result).toContain('<h2 class="govuk-heading-m">Address</h2>')
+    expect(result).toContain('<h2 class="govuk-heading-m">Contact details</h2>')
+    expect(result).toMatch(/for="name">\s*Name or organisation name\s*</)
     expect(result).toContain('value="Highland Livestock Ltd"')
     expect(result).toContain('value="Unit 2"')
     expect(result).not.toContain('operator')
+  })
+
+  test('GET lists the countries alphabetically', async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}/edit`,
+      auth: sessionAuth('edit-get-order')
+    })
+
+    const $ = load(result)
+    const codes = $('#countryCode option')
+      .map((_, option) => $(option).attr('value'))
+      .get()
+      .filter(Boolean)
+
+    // CH/DE sort the other way by code, so this fails a sort by code
+    expect(codes).toEqual(['FR', 'DE', 'CH', 'GB'])
   })
 
   test('GET returns 404 when address is not found', async () => {
@@ -206,7 +232,7 @@ describe('#addressBookEditController', () => {
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
     expect(result).toContain('href="#name"')
-    expect(result).toContain('Enter a name')
+    expectSummaryLinks(result)
     expect(result).toContain('href="#email"')
     expect(result).toContain('Enter an email address in the correct format')
     expect(result).toContain('govuk-error-message')

@@ -4,6 +4,8 @@ import { getCountries } from '../../services/countries/index.js'
 
 const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }
 
+const byName = (left, right) => left.name.localeCompare(right.name, 'en')
+
 export async function getAddressFormCountries() {
   const countries = await getCountries()
 
@@ -15,7 +17,7 @@ export async function getAddressFormCountries() {
 
   const withoutGb = countries.filter((country) => country.code !== 'GB')
 
-  return [GB_COUNTRY, ...withoutGb]
+  return [GB_COUNTRY, ...withoutGb].toSorted(byName)
 }
 
 export function buildCountryItems(countries) {
