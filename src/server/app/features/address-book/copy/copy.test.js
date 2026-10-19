@@ -29,7 +29,7 @@ describe('#copy', () => {
     }
   )
 
-  it('Should word the add-details form as Design Release 2.1 does', () => {
+  it('Should word the add-details form with its own name label, country placeholder and section headings', () => {
     expect(copy.form.addressHeading).toBe('Address')
     expect(copy.form.contactHeading).toBe('Contact details')
     expect(copy.add.nameLabel).toBe('Name or organisation')
