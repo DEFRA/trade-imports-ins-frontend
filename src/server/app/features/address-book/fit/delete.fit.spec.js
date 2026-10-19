@@ -6,6 +6,8 @@ import { signIn } from '../../../../../../fit/sign-in.js'
 
 const CONFIRM_PAGE_TITLE = 'Delete this address?'
 const CONFIRM_BUTTON = 'Yes, delete'
+const CANCEL_LINK = 'No, cancel'
+const DELETED_BANNER = 'Stub farm 1 address deleted'
 
 async function openDeleteConfirmation(page, organisationId) {
   await signIn(page, { organisationId })
@@ -44,7 +46,7 @@ test.describe('delete address', () => {
   }) => {
     await openDeleteConfirmation(page, 'stub-org-delete-cancel')
 
-    await page.getByRole('link', { name: 'No, cancel' }).click()
+    await page.getByRole('link', { name: CANCEL_LINK }).click()
 
     await expect(page).toHaveURL(
       new RegExp(`/address-book/${SEED_ADDRESS_ID}$`)
@@ -75,11 +77,97 @@ test.describe('delete address', () => {
       .click()
 
     await expect(page).toHaveURL(/\/address-book$/)
-    await expect(page.getByText('Stub farm 1 address deleted')).toBeVisible()
+    await expect(page.getByText(DELETED_BANNER)).toBeVisible()
     await expect(
       page.getByRole('link', { name: `View ${SEED_ADDRESS_NAME}` })
     ).toHaveCount(0)
     await expect(page.getByText('You have no addresses yet.')).toBeVisible()
+  })
+
+  test.describe('return', () => {
+    const withReturnOf = (path, returnTo) =>
+      `${path}?return=${encodeURIComponent(returnTo)}`
+
+    test('reached with a return, Back and No, cancel go to the view page still carrying it', async ({
+      page
+    }) => {
+      await signIn(page, { organisationId: 'stub-org-delete-return' })
+      await page.goto(
+        withReturnOf(`/address-book/${SEED_ADDRESS_ID}/delete`, '/')
+      )
+
+      const viewHref = `/address-book/${SEED_ADDRESS_ID}?return=%2F`
+      await expect(
+        page.getByRole('link', { name: 'Back', exact: true })
+      ).toHaveAttribute('href', viewHref)
+      await expect(
+        page.getByRole('link', { name: CANCEL_LINK })
+      ).toHaveAttribute('href', viewHref)
+
+      await page.getByRole('link', { name: CANCEL_LINK }).click()
+
+      await expect(page).toHaveURL(/\?return=%2F$/)
+      await expect(
+        page.getByRole('heading', { level: 1, name: SEED_ADDRESS_NAME })
+      ).toBeVisible()
+    })
+
+    test('Yes, delete lands on the return page', async ({ page }) => {
+      await signIn(page, {
+        organisationId: `stub-org-delete-return-land-${crypto.randomUUID()}`
+      })
+      await page.goto(
+        withReturnOf(`/address-book/${SEED_ADDRESS_ID}/delete`, '/')
+      )
+
+      await page
+        .getByRole('button', { name: CONFIRM_BUTTON, exact: true })
+        .click()
+
+      await expect(page).toHaveURL(/\/$/)
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'Dashboard' })
+      ).toBeVisible()
+
+      await page.goto('/address-book')
+      await expect(page.getByText(DELETED_BANNER)).toHaveCount(0)
+      await expect(page.getByText('You have no addresses yet.')).toBeVisible()
+    })
+
+    test("Yes, delete with a return to the deleted address's own page lands on the list", async ({
+      page
+    }) => {
+      await signIn(page, {
+        organisationId: `stub-org-delete-return-own-${crypto.randomUUID()}`
+      })
+      await page.goto(
+        withReturnOf(
+          `/address-book/${SEED_ADDRESS_ID}/delete`,
+          `/address-book/${SEED_ADDRESS_ID}`
+        )
+      )
+
+      await page
+        .getByRole('button', { name: CONFIRM_BUTTON, exact: true })
+        .click()
+
+      await expect(page).toHaveURL(/\/address-book$/)
+      await expect(page.getByText(DELETED_BANNER)).toBeVisible()
+    })
+
+    test('ignores a return on another origin', async ({ page }) => {
+      await signIn(page, { organisationId: 'stub-org-delete-return-ignored' })
+      await page.goto(
+        withReturnOf(
+          `/address-book/${SEED_ADDRESS_ID}/delete`,
+          'https://evil.example/'
+        )
+      )
+
+      await expect(
+        page.getByRole('link', { name: 'Back', exact: true })
+      ).toHaveAttribute('href', `/address-book/${SEED_ADDRESS_ID}`)
+    })
   })
 
   test.describe('dead links', () => {
@@ -98,6 +186,17 @@ test.describe('delete address', () => {
       await page.goto('/address-book/ffffffffffffffffffffffff/delete')
 
       await expectAddressBookList(page)
+    })
+
+    test('a dead delete link carrying an honoured return lands on it', async ({
+      page
+    }) => {
+      await signIn(page, { organisationId: 'stub-org-delete-dead-return' })
+      await page.goto(
+        '/address-book/ffffffffffffffffffffffff/delete?return=%2F'
+      )
+
+      await expect(page).toHaveURL(/\/$/)
     })
 
     test('a malformed address id returns to the address book', async ({
@@ -122,7 +221,7 @@ test.describe('delete address', () => {
       await other
         .getByRole('button', { name: CONFIRM_BUTTON, exact: true })
         .click()
-      await expect(other.getByText('Stub farm 1 address deleted')).toBeVisible()
+      await expect(other.getByText(DELETED_BANNER)).toBeVisible()
       await other.close()
 
       await page

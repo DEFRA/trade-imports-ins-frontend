@@ -1,6 +1,7 @@
 import { load } from 'cheerio'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
+import { config } from '../../../../../config/config.js'
 import { createServer } from '../../../../server.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
@@ -24,6 +25,7 @@ const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL = 'exports@example.com'
 const UK_NAME = 'United Kingdom'
 const ADDRESS_BOOK_PATH = '/address-book'
+const BACK_LINK = 'a.govuk-back-link'
 
 const mockAddress = {
   id: addressId,
@@ -225,6 +227,94 @@ describe('#addressBookViewController', () => {
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
+  })
+
+  test('GET with an INS return links Back to it and carries it on Edit and Delete', async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}?return=%2F`,
+      auth: sessionAuth('view-return-ins')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    expect($(BACK_LINK).attr('href')).toBe('/')
+    const group = $('.govuk-button-group')
+    expect(
+      group.find(`a[href="/address-book/${addressId}/edit?return=%2F"]`)
+    ).toHaveLength(1)
+    expect(
+      group.find(`a[href="/address-book/${addressId}/delete?return=%2F"]`)
+    ).toHaveLength(1)
+  })
+
+  test("GET with a return to the address's own page points Back at the address book", async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    const ownPage = `/address-book/${addressId}`
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: `${ownPage}?return=${encodeURIComponent(ownPage)}`,
+      auth: sessionAuth('view-return-own-page')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(load(result)(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+  })
+
+  test('GET honours a return on the animals frontend origin', async () => {
+    const animalsUrl = `${new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin}/live-animals/notifications/abc`
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}?return=${encodeURIComponent(animalsUrl)}`,
+      auth: sessionAuth('view-return-animals')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(load(result)(BACK_LINK).attr('href')).toBe(animalsUrl)
+  })
+
+  test('GET ignores a return on another origin', async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}?return=https%3A%2F%2Fevil.example%2F`,
+      auth: sessionAuth('view-return-other-origin')
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    expect($(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect(result).not.toContain('?return')
+  })
+
+  test('GET for a not-found address with an honoured return redirects to it', async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
+
+    const { headers, statusCode } = await server.inject({
+      method: 'GET',
+      url: `/address-book/${addressId}?return=%2F`,
+      auth: sessionAuth('view-return-not-found')
+    })
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe('/')
+  })
+
+  test('GET for a malformed id with an honoured return redirects to it', async () => {
+    const { headers, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/address-book/not-a-valid-id?return=%2F',
+      auth: sessionAuth('view-return-bad-id')
+    })
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe('/')
   })
 
   test('GET returns 500 when the address book cannot be reached', async () => {

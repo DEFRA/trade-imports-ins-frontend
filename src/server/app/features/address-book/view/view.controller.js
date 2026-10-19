@@ -1,7 +1,6 @@
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
-  addressBookPath,
   addressDeletePath,
   addressEditPath,
   addressRoutePath
@@ -10,6 +9,12 @@ import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { countryNameOf, getAddressFormCountries } from '../address-countries.js'
 import { deadLinkRouteOptions } from '../address-id-params.js'
 import { boomFor, findLiveAddress } from '../stored-address.js'
+import {
+  deadLinkDestination,
+  readReturn,
+  returnAwayFrom,
+  withReturn
+} from '../return-to.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
@@ -59,19 +64,20 @@ export const buildRows = (address, countryName) =>
 const get = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)
   const { id } = request.params
+  const returnTo = readReturn(request)
 
   try {
     const address = await findLiveAddress(orgId, id)
     if (!address) {
-      return toolkit.redirect(addressBookPath())
+      return toolkit.redirect(returnAwayFrom(id, returnTo))
     }
     const countries = await getAddressFormCountries()
     return toolkit.view(view, {
-      ...kit.base(address.name, { backLink: addressBookPath() }),
+      ...kit.base(address.name, { backLink: returnAwayFrom(id, returnTo) }),
       copy,
       heading: address.name,
-      editHref: addressEditPath(id),
-      deleteHref: addressDeletePath(id),
+      editHref: withReturn(addressEditPath(id), returnTo),
+      deleteHref: withReturn(addressDeletePath(id), returnTo),
       summaryRows: buildRows(
         address,
         countryNameOf(countries, address.countryCode)
@@ -87,5 +93,5 @@ const get = async (request, toolkit) => {
 export const routes = kit.pageRoutes(
   addressRoutePath(),
   { get },
-  deadLinkRouteOptions(addressBookPath)
+  deadLinkRouteOptions(deadLinkDestination)
 )

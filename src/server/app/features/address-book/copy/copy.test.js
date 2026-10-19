@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
@@ -9,6 +11,29 @@ const SAMPLE_ARGUMENTS = [1, 2, 3]
 
 const textOf = (value) =>
   typeof value === 'function' ? value(...SAMPLE_ARGUMENTS) : value
+
+const MACHINE_DRAFT =
+  '// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.'
+
+const SAMPLE_NAME = 'Green Farm'
+
+const CHANGED_VIEW_AND_DELETE_KEYS = [
+  'form.fields.county',
+  'delete.title',
+  'delete.summaryAddress',
+  'delete.confirmation',
+  'delete.warning',
+  'delete.notApplicable',
+  'delete.confirm',
+  'delete.cancel',
+  'successBanner.deleted',
+  'successBanner.deletedUnnamed'
+]
+
+const valueAt = (bundle, path) => {
+  const value = path.split('.').reduce((node, key) => node[key], bundle)
+  return typeof value === 'function' ? value(SAMPLE_NAME) : value
+}
 
 const LOCALES = [
   ['en', copy],
@@ -99,6 +124,28 @@ describe('#copy', () => {
     expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
       'Name must be 255 characters or fewer'
     )
+  })
+
+  it.each(CHANGED_VIEW_AND_DELETE_KEYS)(
+    'Should carry Welsh for %s that differs from the English',
+    (path) => {
+      const welsh = valueAt(cy, path)
+
+      expect(typeof welsh).toBe('string')
+      expect(welsh.trim().length).toBeGreaterThan(0)
+      expect(welsh).not.toBe(valueAt(copy, path))
+    }
+  )
+
+  it('Should no longer carry the replaced Welsh', () => {
+    expect(cy.delete.title).not.toBe('Dileu cyfeiriad')
+    expect(cy.delete.confirm).not.toBe('Ie, dileu’r cyfeiriad hwn')
+  })
+
+  it('Should mark the Welsh as a machine draft on its first line', () => {
+    const source = readFileSync(new URL('copy.cy.js', import.meta.url), 'utf8')
+
+    expect(source.split('\n')[0]).toBe(MACHINE_DRAFT)
   })
 
   it('Should ask for the missing name, postcode, country or phone in its required message', () => {

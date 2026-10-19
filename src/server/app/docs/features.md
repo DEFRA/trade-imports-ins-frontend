@@ -27,6 +27,11 @@ root:
   `buildCountrySelectItems`, `resolveCountryCodeFromSearchTerm`.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `addressIdRouteOptions`, `deadLinkRouteOptions`.
+- [`return-to.js`](../features/address-book/return-to.js) — `readReturn`
+  honours a `return` query that is an INS path or, outside stub mode, a URL on
+  exactly the animals frontend origin; `withReturn` carries it on;
+  `returnAwayFrom` and `deadLinkDestination` send a dead link or a finished
+  delete there, or to the list when it is one of that address's own pages.
 - [`stored-address.js`](../features/address-book/stored-address.js) —
   `loadStoredAddress` 404s a tombstoned record; `findLiveAddress` resolves
   an unknown or deleted address to `undefined`; `boomFor` maps client
@@ -63,8 +68,8 @@ pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
 'session' }`; the edit page passes `addressIdRouteOptions`; the view and
-  delete pages pass `deadLinkRouteOptions(addressBookPath)`, so a dead link
-  returns to the list.
+  delete pages pass `deadLinkRouteOptions(deadLinkDestination)`, so a dead link
+  returns to an honoured `return`, or to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
 - **`requireOrganisationId(request)`** throws `Boom.forbidden` when the

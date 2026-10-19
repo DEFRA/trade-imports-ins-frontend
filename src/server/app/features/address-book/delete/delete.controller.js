@@ -1,16 +1,19 @@
 import { deleteAddress } from '../../../services/address-book/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
-import {
-  addressBookPath,
-  addressDeleteRoutePath,
-  addressPath
-} from '../../../shared/paths.js'
+import { addressDeleteRoutePath, addressPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { HTTP_STATUS_NOT_FOUND } from '../../../lib/http-status.js'
 import { countryNameOf, getAddressFormCountries } from '../address-countries.js'
 import { deadLinkRouteOptions } from '../address-id-params.js'
 import { boomFor, findLiveAddress } from '../stored-address.js'
+import {
+  deadLinkDestination,
+  landsOnAddressBook,
+  readReturn,
+  returnAwayFrom,
+  withReturn
+} from '../return-to.js'
 import { setSuccessBanner } from '../success-banner.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
@@ -58,22 +61,24 @@ export const deletedBannerText = (name) => {
 const get = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)
   const { id } = request.params
+  const returnTo = readReturn(request)
 
   try {
     const address = await findLiveAddress(orgId, id)
     if (!address) {
-      return toolkit.redirect(addressBookPath())
+      return toolkit.redirect(returnAwayFrom(id, returnTo))
     }
     const countries = await getAddressFormCountries()
     const lines = addressSummaryLines(
       address,
       countryNameOf(countries, address.countryCode)
     )
+    const viewHref = withReturn(addressPath(id), returnTo)
     return toolkit.view(view, {
-      ...kit.base(copy.delete.title, { backLink: addressPath(id) }),
+      ...kit.base(copy.delete.title, { backLink: viewHref }),
       copy,
       addressLines: lines.length ? lines : [copy.delete.notApplicable],
-      cancelHref: addressPath(id)
+      cancelHref: viewHref
     })
   } catch (err) {
     throw boomFor(err, () =>
@@ -85,18 +90,21 @@ const get = async (request, toolkit) => {
 const post = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)
   const { id } = request.params
+  const destination = returnAwayFrom(id, readReturn(request))
 
   try {
     const address = await findLiveAddress(orgId, id)
     if (!address) {
-      return toolkit.redirect(addressBookPath())
+      return toolkit.redirect(destination)
     }
     await deleteAddress(orgId, id)
-    setSuccessBanner(request, deletedBannerText(address.name))
-    return toolkit.redirect(addressBookPath())
+    if (landsOnAddressBook(destination)) {
+      setSuccessBanner(request, deletedBannerText(address.name))
+    }
+    return toolkit.redirect(destination)
   } catch (err) {
     if (err.status === HTTP_STATUS_NOT_FOUND) {
-      return toolkit.redirect(addressBookPath())
+      return toolkit.redirect(destination)
     }
     throw boomFor(err, () =>
       logger.error({ err, orgId, id }, 'Failed to delete address')
@@ -107,5 +115,5 @@ const post = async (request, toolkit) => {
 export const routes = kit.pageRoutes(
   addressDeleteRoutePath(),
   { get, post },
-  deadLinkRouteOptions(addressBookPath)
+  deadLinkRouteOptions(deadLinkDestination)
 )

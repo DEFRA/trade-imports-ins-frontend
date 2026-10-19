@@ -5,6 +5,14 @@ import { fillValidAddress, validAddress } from './address-form.js'
 import { SEED_ADDRESS_ID, SEED_ADDRESS_NAME } from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
+const ADDRESS_BOOK = '/address-book'
+
+const IGNORED_RETURNS = [
+  ['another origin', 'https://evil.example/'],
+  ['protocol-relative', '//evil.example/'],
+  ['not a path', 'address-book']
+]
+
 async function openSeedAddress(page, organisationId) {
   await signIn(page, { organisationId })
   await page.goto(`/address-book/${SEED_ADDRESS_ID}`)
@@ -15,7 +23,7 @@ test.describe('view address', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-view-open' })
-    await page.goto('/address-book')
+    await page.goto(ADDRESS_BOOK)
 
     await page.getByRole('link', { name: `View ${SEED_ADDRESS_NAME}` }).click()
 
@@ -127,6 +135,18 @@ test.describe('view address', () => {
       await expectAddressBookList(page)
     })
 
+    test('a dead link carrying an honoured return lands on it', async ({
+      page
+    }) => {
+      await signIn(page, { organisationId: 'stub-org-view-dead-return' })
+      await page.goto('/address-book/ffffffffffffffffffffffff?return=%2F')
+
+      await expect(page).toHaveURL(/\/$/)
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'Dashboard' })
+      ).toBeVisible()
+    })
+
     test('a malformed address id returns to the address book', async ({
       page
     }) => {
@@ -187,5 +207,59 @@ test.describe('view address', () => {
     await openSeedAddress(page, 'stub-org-view-axe')
 
     await expectNoSeriousOrCriticalViolations(page, 'Address details')
+  })
+})
+
+test.describe('view address return', () => {
+  test('Back follows an INS return, and Edit and Delete carry it on', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: 'stub-org-view-return' })
+    await page.goto(`/address-book/${SEED_ADDRESS_ID}?return=%2F`)
+
+    await expect(page.getByRole('button', { name: 'Edit' })).toHaveAttribute(
+      'href',
+      `/address-book/${SEED_ADDRESS_ID}/edit?return=%2F`
+    )
+    await expect(page.getByRole('button', { name: 'Delete' })).toHaveAttribute(
+      'href',
+      `/address-book/${SEED_ADDRESS_ID}/delete?return=%2F`
+    )
+
+    await page.getByRole('link', { name: 'Back', exact: true }).click()
+
+    await expect(page).toHaveURL(/\/$/)
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Dashboard' })
+    ).toBeVisible()
+  })
+
+  for (const [name, value] of IGNORED_RETURNS) {
+    test(`ignores a return that is ${name}`, async ({ page }) => {
+      await signIn(page, { organisationId: `stub-org-view-ignore-${name}` })
+      await page.goto(
+        `/address-book/${SEED_ADDRESS_ID}?return=${encodeURIComponent(value)}`
+      )
+
+      await expect(
+        page.getByRole('link', { name: 'Back', exact: true })
+      ).toHaveAttribute('href', ADDRESS_BOOK)
+      expect(
+        await page.getByRole('button', { name: 'Edit' }).getAttribute('href')
+      ).not.toContain('?')
+    })
+  }
+
+  test('in stub mode a return on the animals frontend is ignored', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: 'stub-org-view-return-animals' })
+    await page.goto(
+      `/address-book/${SEED_ADDRESS_ID}?return=${encodeURIComponent('http://localhost:3000/live-animals/notifications')}`
+    )
+
+    await expect(
+      page.getByRole('link', { name: 'Back', exact: true })
+    ).toHaveAttribute('href', ADDRESS_BOOK)
   })
 })
