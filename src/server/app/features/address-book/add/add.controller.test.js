@@ -1,3 +1,4 @@
+import { load } from 'cheerio'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { createServer } from '../../../../server.js'
@@ -333,7 +334,7 @@ describe(
       expect(result).toContain('Cancel and return to address page')
       expect(result).toContain('name="cancel"')
       expect(result).not.toContain('Cancel and return to address book')
-      expect(result).not.toMatch(/value="GB" selected/)
+      expect(load(result)('#countryCode option[selected]')).toHaveLength(0)
     })
 
     test('GET through a handshake opens the form without a Back link to the address book', async () => {
@@ -438,8 +439,8 @@ describe(
     test('GET lays out the fields at Design Release 2.1 widths', async () => {
       const { result } = await getAdd(server, 'add-get-widths')
 
-      const classOf = (id) =>
-        new RegExp(`<input class="([^"]*)" id="${id}"`).exec(result)?.[1]
+      const $ = load(result)
+      const classOf = (id) => $(`#${id}`).attr('class')
 
       for (const id of ['name', 'addressLine1', 'addressLine2', 'email']) {
         expect(classOf(id)).toBe('govuk-input')
@@ -455,8 +456,9 @@ describe(
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(BLANK_COUNTRY_OPTION)
-      expect(result).not.toMatch(/<option value="[^"]+" selected/)
-      expect(result).not.toMatch(/value="GB" selected/)
+      const $ = load(result)
+      expect($('#countryCode option').length).toBeGreaterThan(1)
+      expect($('#countryCode option[selected]')).toHaveLength(0)
     })
 
     test('GET lists the countries alphabetically with United Kingdom in its place', async () => {
