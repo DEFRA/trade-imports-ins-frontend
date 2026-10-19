@@ -11,7 +11,7 @@ export const REQUIRED_MESSAGES = {
 export const expectSummaryLinks = (result) => {
   for (const [field, message] of Object.entries(REQUIRED_MESSAGES)) {
     expect(result).toMatch(
-      new RegExp(`href="#${field}"[^>]*>\\s*${message}\\s*<`)
+      new RegExp(String.raw`href="#${field}"[^>]*>\s*${message}\s*<`)
     )
   }
 }
