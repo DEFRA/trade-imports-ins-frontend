@@ -21,12 +21,15 @@ describe('#addressIdParams', () => {
 
 describe('#deadLinkRouteOptions', () => {
   test('deadLinkRouteOptions redirects a failed id to the fallback path', () => {
-    const options = deadLinkRouteOptions(() => '/address-book')
+    const fallbackPathOf = vi.fn(() => '/address-book')
+    const options = deadLinkRouteOptions(fallbackPathOf)
     const takeover = vi.fn(() => 'taken-over')
     const toolkit = { redirect: vi.fn(() => ({ takeover })) }
+    const request = { query: {} }
 
-    const result = options.validate.failAction({}, toolkit)
+    const result = options.validate.failAction(request, toolkit)
 
+    expect(fallbackPathOf).toHaveBeenCalledWith(request)
     expect(toolkit.redirect).toHaveBeenCalledWith('/address-book')
     expect(result).toBe('taken-over')
     expect(options.validate.params).toBe(addressIdParams)
