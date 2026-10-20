@@ -11,15 +11,7 @@ export const loadStoredAddress = async (orgId, id) => {
   return address
 }
 
-/**
- * Reads an address, treating anything that is not a live address in this book as absent.
- * An unknown id, another organisation's id (the address book answers 404) and a tombstone
- * all mean the same to the caller.
- *
- * @param {string} orgId - The signed-in user's organisation id
- * @param {string} id - The address id
- * @returns {Promise<object | undefined>} The live address, or undefined when there is none
- */
+/** Reads an address, treating anything that is not a live address in this book as absent. */
 export const findLiveAddress = async (orgId, id) => {
   try {
     const address = await getAddress(orgId, id)
