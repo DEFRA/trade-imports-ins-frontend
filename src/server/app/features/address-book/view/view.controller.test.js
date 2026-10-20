@@ -317,6 +317,23 @@ describe('#addressBookViewController', () => {
     expect(headers.location).toBe('/')
   })
 
+  test.each([
+    ['%2F%E2%82%AC', '/%E2%82%AC'],
+    ['%2Fa%00b', '/a%00b']
+  ])(
+    'GET for a malformed id with a return of %s redirects to it percent-encoded',
+    async (encoded, location) => {
+      const { headers, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/address-book/not-a-valid-id?return=${encoded}`,
+        auth: sessionAuth('view-return-encoded')
+      })
+
+      expect(statusCode).toBe(statusCodes.redirectFound)
+      expect(headers.location).toBe(location)
+    }
+  )
+
   test('GET returns 500 when the address book cannot be reached', async () => {
     addressBookApi()
       .get(ADDRESS_PATH)

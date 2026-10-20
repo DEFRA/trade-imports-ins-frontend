@@ -15,10 +15,16 @@ const sameOriginUrl = (value) => {
   }
 }
 
-const isInsPath = (value) =>
-  value.startsWith('/') &&
-  !value.startsWith('//') &&
-  sameOriginUrl(value)?.origin === PARSE_BASE
+// Normalised so the path is percent-encoded and safe in a Location header.
+const insPath = (value) => {
+  if (!value.startsWith('/') || value.startsWith('//')) {
+    return null
+  }
+  const url = sameOriginUrl(value)
+  return url?.origin === PARSE_BASE
+    ? `${url.pathname}${url.search}${url.hash}`
+    : null
+}
 
 const animalsOrigin = () =>
   new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin
@@ -47,7 +53,7 @@ export const readReturn = (request) => {
   if (typeof value !== 'string' || !value || UNSAFE_CHARACTERS.test(value)) {
     return null
   }
-  return isInsPath(value) ? value : animalsUrl(value)
+  return insPath(value) ?? animalsUrl(value)
 }
 
 /**

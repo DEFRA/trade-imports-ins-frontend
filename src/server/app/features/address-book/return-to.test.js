@@ -38,6 +38,18 @@ describe('#readReturn', () => {
   )
 
   test.each([
+    ['/€', '/%E2%82%AC'],
+    ['/\0', '/'],
+    ['/a\0b', '/a%00b'],
+    ['/café?q=é', '/caf%C3%A9?q=%C3%A9']
+  ])(
+    'Should percent-encode the page of this service %s so it is safe to redirect to',
+    (value, expected) => {
+      expect(readReturn(returning(value))).toBe(expected)
+    }
+  )
+
+  test.each([
     ['a missing value', undefined],
     ['an empty value', ''],
     ['an array', ['/', '/x']],
