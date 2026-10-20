@@ -244,9 +244,12 @@ test.describe('view address return', () => {
       await expect(
         page.getByRole('link', { name: 'Back', exact: true })
       ).toHaveAttribute('href', ADDRESS_BOOK)
-      expect(
-        await page.getByRole('button', { name: 'Edit' }).getAttribute('href')
-      ).not.toContain('?')
+      await expect(
+        page.getByRole('button', { name: 'Edit', exact: true })
+      ).toHaveAttribute('href', `/address-book/${SEED_ADDRESS_ID}/edit`)
+      await expect(
+        page.getByRole('button', { name: 'Delete', exact: true })
+      ).toHaveAttribute('href', `/address-book/${SEED_ADDRESS_ID}/delete`)
     })
   }
 
