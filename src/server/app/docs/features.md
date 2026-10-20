@@ -96,9 +96,10 @@ The shape every ins controller takes, citing
 - `export const routes = kit.pageRoutes(...)`.
 
 The edit page loads through `loadStoredAddress`. The view and delete pages
-load through `findLiveAddress` and redirect to the list when it finds
-nothing. All throw `boomFor(err, () => logger.error(...))` for anything
-else.
+load through `findLiveAddress` and, when it finds nothing, redirect via
+`returnAwayFrom` (an honoured return, else the list); the delete POST treats
+a 404 from `deleteAddress` the same way. Anything else throws
+`boomFor(err, () => logger.error(...))`.
 
 ## Copy and templates
 

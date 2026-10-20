@@ -75,9 +75,9 @@ Follow the shape at [features.md](features.md#controllers):
 Use explicit Hapi route objects only when the page needs more than a
 GET/POST pair. The edit page passes `addressIdRouteOptions` and loads through
 `loadStoredAddress` and `boomFor`. A page whose dead link should go back to the list passes
-`deadLinkRouteOptions(addressBookPath)` (or `deadLinkDestination` from
-`return-to.js` to honour a `return`, as the view and delete pages do) and loads through
-`findLiveAddress`, as the view and delete pages do.
+`deadLinkRouteOptions(addressBookPath)`, or `deadLinkRouteOptions(deadLinkDestination)`
+from `return-to.js` to honour a `return`, and loads through `findLiveAddress`,
+as the view and delete pages do.
 
 ## 4. Add copy and the Nunjucks view
 
