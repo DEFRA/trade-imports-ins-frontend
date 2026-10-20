@@ -4,27 +4,30 @@ import { addressBookPath, addressPath } from '../../shared/paths.js'
 
 export const RETURN_QUERY_KEY = 'return'
 
-const PARSE_BASE = 'https://placeholder'
 const UNSAFE_CHARACTERS = /[\\\r\n]/
-
-const sameOriginUrl = (value) => {
-  try {
-    return new URL(value, PARSE_BASE)
-  } catch {
-    return null
-  }
-}
 
 // Normalised so the path is percent-encoded and safe in a Location header.
 const insPath = (value) => {
   if (!value.startsWith('/') || value.startsWith('//')) {
     return null
   }
-  const url = sameOriginUrl(value)
-  return url?.origin === PARSE_BASE
-    ? `${url.pathname}${url.search}${url.hash}`
-    : null
+  // URL only parses absolute URLs, so the path is resolved against a stand-in origin that
+  // can never be a real host; if the result keeps that origin, the value was a path here.
+  const base = 'https://relative-path.invalid'
+  try {
+    const url = new URL(value, base)
+    return url.origin === base
+      ? `${url.pathname}${url.search}${url.hash}`
+      : null
+  } catch {
+    return null
+  }
 }
+
+// An honoured return is an INS path or an absolute animals frontend URL, so only a path has
+// one of this service's pathnames.
+const pathOf = (destination) =>
+  destination.startsWith('/') ? destination.split(/[?#]/)[0] : null
 
 const animalsOrigin = () =>
   new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin
@@ -76,12 +79,9 @@ export const withReturn = (path, returnTo) =>
  * @returns {boolean} True for the address's own pages
  */
 export const isOwnPageOf = (id, returnTo) => {
-  const url = sameOriginUrl(returnTo)
-  if (url?.origin !== PARSE_BASE) {
-    return false
-  }
+  const path = pathOf(returnTo)
   const own = addressPath(id)
-  return url.pathname === own || url.pathname.startsWith(`${own}/`)
+  return path === own || path?.startsWith(`${own}/`) === true
 }
 
 /**
@@ -109,7 +109,5 @@ export const deadLinkDestination = (request) =>
  * @param {string} destination - A path or URL
  * @returns {boolean} True for the list on this service
  */
-export const landsOnAddressBook = (destination) => {
-  const url = sameOriginUrl(destination)
-  return url?.origin === PARSE_BASE && url.pathname === addressBookPath()
-}
+export const landsOnAddressBook = (destination) =>
+  pathOf(destination) === addressBookPath()
