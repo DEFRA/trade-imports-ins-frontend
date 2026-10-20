@@ -13,9 +13,9 @@ import { boomFor, findLiveAddress } from '../stored-address.js'
 import {
   deadLinkDestination,
   landsOnAddressBook,
-  readReturn,
-  returnAwayFrom,
-  withReturn
+  honouredReturnOrNull,
+  honouredReturnOrAddressBook,
+  pathWithReturn
 } from '../return-to.js'
 import { setSuccessBanner } from '../success-banner.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -42,19 +42,19 @@ export const deletedBannerText = (name) =>
 const get = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)
   const { id } = request.params
-  const returnTo = readReturn(request)
+  const honouredReturn = honouredReturnOrNull(request)
 
   try {
     const address = await findLiveAddress(orgId, id)
     if (!address) {
-      return toolkit.redirect(returnAwayFrom(id, returnTo))
+      return toolkit.redirect(honouredReturnOrAddressBook(id, honouredReturn))
     }
     const countries = await getAddressFormCountries()
     const lines = addressSummaryLines(
       address,
       countryLabelOf(countries, address.countryCode)
     )
-    const viewHref = withReturn(addressPath(id), returnTo)
+    const viewHref = pathWithReturn(addressPath(id), honouredReturn)
     return toolkit.view(view, {
       ...kit.base(copy.delete.title, { backLink: viewHref }),
       copy,
@@ -71,7 +71,10 @@ const get = async (request, toolkit) => {
 const post = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)
   const { id } = request.params
-  const destination = returnAwayFrom(id, readReturn(request))
+  const destination = honouredReturnOrAddressBook(
+    id,
+    honouredReturnOrNull(request)
+  )
 
   try {
     const address = await findLiveAddress(orgId, id)

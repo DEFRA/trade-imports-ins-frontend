@@ -27,10 +27,10 @@ root:
   `buildCountrySelectItems`, `resolveCountryCodeFromSearchTerm`.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `addressIdRouteOptions`, `deadLinkRouteOptions`.
-- [`return-to.js`](../features/address-book/return-to.js) — `readReturn`
-  honours a `return` query that is an INS path or, outside stub mode, a URL on
-  exactly the animals frontend origin; `withReturn` carries it on;
-  `returnAwayFrom` and `deadLinkDestination` send a dead link or a finished
+- [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOrNull`
+  gives the `return` query when it is an INS path or, outside stub mode, a URL on
+  exactly the animals frontend origin, else null; `pathWithReturn` carries it on;
+  `honouredReturnOrAddressBook` and `deadLinkDestination` send a dead link or a finished
   delete there, or to the list when it is one of that address's own pages.
 - [`stored-address.js`](../features/address-book/stored-address.js) —
   `loadStoredAddress` 404s a tombstoned record; `findLiveAddress` resolves
@@ -97,7 +97,7 @@ The shape every ins controller takes, citing
 
 The edit page loads through `loadStoredAddress`. The view and delete pages
 load through `findLiveAddress` and, when it finds nothing, redirect via
-`returnAwayFrom` (an honoured return, else the list); the delete POST treats
+`honouredReturnOrAddressBook` (an honoured return, else the list); the delete POST treats
 a 404 from `deleteAddress` the same way. Anything else throws
 `boomFor(err, () => logger.error(...))`.
 

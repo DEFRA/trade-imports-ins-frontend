@@ -15,9 +15,9 @@ import { FIELD_RULES } from '../fields.js'
 import { boomFor, findLiveAddress } from '../stored-address.js'
 import {
   deadLinkDestination,
-  readReturn,
-  returnAwayFrom,
-  withReturn
+  honouredReturnOrNull,
+  honouredReturnOrAddressBook,
+  pathWithReturn
 } from '../return-to.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
@@ -68,20 +68,22 @@ export const buildRows = (address, countryLabel) =>
 const get = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)
   const { id } = request.params
-  const returnTo = readReturn(request)
+  const honouredReturn = honouredReturnOrNull(request)
 
   try {
     const address = await findLiveAddress(orgId, id)
     if (!address) {
-      return toolkit.redirect(returnAwayFrom(id, returnTo))
+      return toolkit.redirect(honouredReturnOrAddressBook(id, honouredReturn))
     }
     const countries = await getAddressFormCountries()
     return toolkit.view(view, {
-      ...kit.base(address.name, { backLink: returnAwayFrom(id, returnTo) }),
+      ...kit.base(address.name, {
+        backLink: honouredReturnOrAddressBook(id, honouredReturn)
+      }),
       copy,
       heading: address.name,
-      editHref: withReturn(addressEditPath(id), returnTo),
-      deleteHref: withReturn(addressDeletePath(id), returnTo),
+      editHref: pathWithReturn(addressEditPath(id), honouredReturn),
+      deleteHref: pathWithReturn(addressDeletePath(id), honouredReturn),
       summaryRows: buildRows(
         address,
         countryLabelOf(countries, address.countryCode)

@@ -4,9 +4,9 @@ import { config } from '../../../../config/config.js'
 import {
   deadLinkDestination,
   landsOnAddressBook,
-  readReturn,
-  returnAwayFrom,
-  withReturn
+  honouredReturnOrNull,
+  honouredReturnOrAddressBook,
+  pathWithReturn
 } from './return-to.js'
 
 const ID = '665f1c2ab3e4d51a2c9d0e77'
@@ -26,7 +26,7 @@ afterAll(() => {
   config.set('stubMode', originalStubMode)
 })
 
-describe('#readReturn', () => {
+describe('#honouredReturnOrNull', () => {
   beforeEach(() => {
     config.set('stubMode', false)
   })
@@ -34,7 +34,7 @@ describe('#readReturn', () => {
   test.each(['/', '/address-book?page=2'])(
     'Should honour the page of this service %s',
     (value) => {
-      expect(readReturn(returning(value))).toBe(value)
+      expect(honouredReturnOrNull(returning(value))).toBe(value)
     }
   )
 
@@ -46,7 +46,7 @@ describe('#readReturn', () => {
   ])(
     'Should percent-encode the page of this service %s so it is safe to redirect to',
     (value, expected) => {
-      expect(readReturn(returning(value))).toBe(expected)
+      expect(honouredReturnOrNull(returning(value))).toBe(expected)
     }
   )
 
@@ -64,50 +64,50 @@ describe('#readReturn', () => {
     ['a line break', '/address-book\r\n/x'],
     ['a tab making it protocol-relative', '/\t/evil.example']
   ])('Should ignore %s', (_name, value) => {
-    expect(readReturn(returning(value))).toBeNull()
+    expect(honouredReturnOrNull(returning(value))).toBeNull()
   })
 
   test('Should ignore a request with no query', () => {
-    expect(readReturn({})).toBeNull()
+    expect(honouredReturnOrNull({})).toBeNull()
   })
 
   test.each([LIVE_ANIMALS_URL, GERMINAL_URL])(
     'Should honour the animals frontend URL %s outside stub mode',
     (value) => {
-      expect(readReturn(returning(value))).toBe(new URL(value).href)
+      expect(honouredReturnOrNull(returning(value))).toBe(new URL(value).href)
     }
   )
 
   test('Should ignore an animals frontend URL in stub mode but still honour a path', () => {
     config.set('stubMode', true)
 
-    expect(readReturn(returning(LIVE_ANIMALS_URL))).toBeNull()
-    expect(readReturn(returning('/'))).toBe('/')
+    expect(honouredReturnOrNull(returning(LIVE_ANIMALS_URL))).toBeNull()
+    expect(honouredReturnOrNull(returning('/'))).toBe('/')
   })
 })
 
-describe('#withReturn', () => {
+describe('#pathWithReturn', () => {
   const path = `${LIST}/x`
 
   test.each([null, LIST])('Should give the bare path for %s', (returnTo) => {
-    expect(withReturn(path, returnTo)).toBe(path)
+    expect(pathWithReturn(path, returnTo)).toBe(path)
   })
 
   test('Should append the return', () => {
-    expect(withReturn(path, '/')).toBe(`${path}?return=%2F`)
+    expect(pathWithReturn(path, '/')).toBe(`${path}?return=%2F`)
   })
 
   test('Should encode an animals frontend URL', () => {
-    expect(withReturn(path, LIVE_ANIMALS_URL)).toBe(
+    expect(pathWithReturn(path, LIVE_ANIMALS_URL)).toBe(
       `${path}?return=${encodeURIComponent(LIVE_ANIMALS_URL)}`
     )
   })
 })
 
-describe('#returnAwayFrom', () => {
+describe('#honouredReturnOrAddressBook', () => {
   test('Should give a return that is not one of the address’s own pages', () => {
-    expect(returnAwayFrom(ID, '/')).toBe('/')
-    expect(returnAwayFrom(ID, `${LIST}/${OTHER_ID}`)).toBe(
+    expect(honouredReturnOrAddressBook(ID, '/')).toBe('/')
+    expect(honouredReturnOrAddressBook(ID, `${LIST}/${OTHER_ID}`)).toBe(
       `${LIST}/${OTHER_ID}`
     )
   })
@@ -118,11 +118,13 @@ describe('#returnAwayFrom', () => {
     ['its edit page', `${LIST}/${ID}/edit`],
     ['its delete page with a query', `${LIST}/${ID}/delete?x=1`]
   ])('Should give the list for %s', (_name, returnTo) => {
-    expect(returnAwayFrom(ID, returnTo)).toBe(LIST)
+    expect(honouredReturnOrAddressBook(ID, returnTo)).toBe(LIST)
   })
 
   test('Should give an animals frontend URL unchanged', () => {
-    expect(returnAwayFrom(ID, LIVE_ANIMALS_URL)).toBe(LIVE_ANIMALS_URL)
+    expect(honouredReturnOrAddressBook(ID, LIVE_ANIMALS_URL)).toBe(
+      LIVE_ANIMALS_URL
+    )
   })
 })
 

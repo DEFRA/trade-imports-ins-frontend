@@ -8,16 +8,16 @@ export const RETURN_QUERY_KEY = 'return'
 const UNSAFE_REDIRECT_CHARACTERS = /[\\\r\n]/
 
 // Normalised so the path is percent-encoded and safe in a Location header.
-const insPath = (value) => {
-  if (!value.startsWith('/') || value.startsWith('//')) {
+const normalisedInsPathOrNull = (pathOrUrl) => {
+  if (!pathOrUrl.startsWith('/') || pathOrUrl.startsWith('//')) {
     return null
   }
-  // URL only parses absolute URLs, so the path is resolved against a stand-in origin that
-  // can never be a real host; if the result keeps that origin, the value was a path here.
-  const base = 'https://relative-path.invalid'
+  const standInOrigin = 'https://relative-path.invalid'
   try {
-    const url = new URL(value, base)
-    return url.origin === base
+    // If standInOrigin is retained in the resulting URL, then pathOrUrl was a relative INS
+    // path, which is normalised and returned.
+    const url = new URL(pathOrUrl, standInOrigin)
+    return url.origin === standInOrigin
       ? `${url.pathname}${url.search}${url.hash}`
       : null
   } catch {
@@ -25,34 +25,28 @@ const insPath = (value) => {
   }
 }
 
-// An honoured return is an INS path or an absolute animals frontend URL, so only a path has
-// one of this service's pathnames.
-const pathOf = (destination) =>
-  destination.startsWith('/') ? destination.split(/[?#]/)[0] : null
+// An honoured return or a path this service built, so not validated here: an INS path
+// gives its pathname, an animals frontend URL gives null.
+const pathnameOrNull = (pathOrUrl) =>
+  pathOrUrl.startsWith('/') ? pathOrUrl.split(/[?#]/)[0] : null
 
 const animalsOrigin = () =>
   new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin
 
-const animalsUrl = (value) => {
+const animalsUrlOrNull = (pathOrUrl) => {
   if (isStubMode()) {
     return null
   }
   try {
-    const url = new URL(value)
+    const url = new URL(pathOrUrl)
     return url.origin === animalsOrigin() ? url.href : null
   } catch {
     return null
   }
 }
 
-/**
- * Reads the `return` query: a page of this service, or outside stub mode a URL on
- * exactly the animals frontend origin. Anything else is ignored.
- *
- * @param {object} request - Hapi request
- * @returns {string | null} The honoured return, or null
- */
-export const readReturn = (request) => {
+/** A page of this service, or outside stub mode a URL on exactly the animals frontend origin. */
+export const honouredReturnOrNull = (request) => {
   const value = request.query?.[RETURN_QUERY_KEY]
   if (
     typeof value !== 'string' ||
@@ -61,58 +55,34 @@ export const readReturn = (request) => {
   ) {
     return null
   }
-  return insPath(value) ?? animalsUrl(value)
+  return normalisedInsPathOrNull(value) ?? animalsUrlOrNull(value)
 }
 
-/**
- * Carries an honoured return on to the next link. The list itself is not carried.
- *
- * @param {string} path - The link's path
- * @param {string | null} returnTo - The honoured return
- * @returns {string} The path, with the return when there is one to carry
- */
-export const withReturn = (path, returnTo) =>
-  !returnTo || returnTo === addressBookPath()
+/** The address book list is never carried: it is where a missing return already goes. */
+export const pathWithReturn = (path, honouredReturn) =>
+  !honouredReturn || honouredReturn === addressBookPath()
     ? path
-    : `${path}?${new URLSearchParams({ [RETURN_QUERY_KEY]: returnTo })}`
+    : `${path}?${new URLSearchParams({ [RETURN_QUERY_KEY]: honouredReturn })}`
 
-/**
- * Whether the return is one of the address's own pages of this service.
- *
- * @param {string} id - The address id
- * @param {string} returnTo - The honoured return
- * @returns {boolean} True for the address's own pages
- */
-export const isOwnPageOf = (id, returnTo) => {
-  const path = pathOf(returnTo)
-  const own = addressPath(id)
-  return path === own || path?.startsWith(`${own}/`) === true
+/** Its own pages are its view page and any page under it, such as edit and delete. */
+export const isOwnPageOf = (addressId, pathOrUrl) => {
+  const pathname = pathnameOrNull(pathOrUrl)
+  const own = addressPath(addressId)
+  return pathname === own || pathname?.startsWith(`${own}/`) === true
 }
 
-/**
- * Where to go once an address's own pages are no use: the return, or the list.
- *
- * @param {string} id - The address id
- * @param {string | null} returnTo - The honoured return
- * @returns {string} The return when it is not one of the address's own pages, else the list
- */
-export const returnAwayFrom = (id, returnTo) =>
-  returnTo && !isOwnPageOf(id, returnTo) ? returnTo : addressBookPath()
+/** A return to one of this address's own pages is passed over for the address book. */
+export const honouredReturnOrAddressBook = (addressId, honouredReturn) =>
+  honouredReturn && !isOwnPageOf(addressId, honouredReturn)
+    ? honouredReturn
+    : addressBookPath()
 
-/**
- * Destination for a dead view or delete link.
- *
- * @param {object} request - Hapi request
- * @returns {string} The honoured return, or the list
- */
 export const deadLinkDestination = (request) =>
-  returnAwayFrom(request.params?.id ?? '', readReturn(request))
+  honouredReturnOrAddressBook(
+    request.params?.id ?? '',
+    honouredReturnOrNull(request)
+  )
 
-/**
- * Whether a destination is the address book list (so the deleted banner belongs there).
- *
- * @param {string} destination - A path or URL
- * @returns {boolean} True for the list on this service
- */
+/** The deleted banner shows only when the delete lands on the list. */
 export const landsOnAddressBook = (destination) =>
-  pathOf(destination) === addressBookPath()
+  pathnameOrNull(destination) === addressBookPath()
