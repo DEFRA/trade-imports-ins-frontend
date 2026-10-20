@@ -7,7 +7,7 @@ import { signIn } from '../../../../../../fit/sign-in.js'
 const CONFIRM_PAGE_TITLE = 'Delete this address?'
 const CONFIRM_BUTTON = 'Yes, delete'
 const CANCEL_LINK = 'No, cancel'
-const DELETED_BANNER = 'Stub farm 1 address deleted'
+const DELETED_BANNER = 'Stub Farm 1 address deleted'
 
 async function openDeleteConfirmation(page, organisationId) {
   await signIn(page, { organisationId })

@@ -22,8 +22,6 @@ const logger = createLogger()
 const view = 'address-book/delete/delete'
 const copy = copyFor({ en, cy })
 
-const trimmed = (value) => value?.trim?.() ?? ''
-
 export const addressSummaryLines = (address, countryName) =>
   [
     address.name,
@@ -33,19 +31,12 @@ export const addressSummaryLines = (address, countryName) =>
     address.county,
     address.postcode,
     countryName
-  ]
-    .map(trimmed)
-    .filter(Boolean)
+  ].filter(Boolean)
 
-const sentenceCase = (text) =>
-  text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
-
-export const deletedBannerText = (name) => {
-  const text = trimmed(name)
-  return text
-    ? copy.successBanner.deleted(sentenceCase(text))
+export const deletedBannerText = (name) =>
+  name
+    ? copy.successBanner.deleted(name)
     : copy.successBanner.deletedUnnamed
-}
 
 const get = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)

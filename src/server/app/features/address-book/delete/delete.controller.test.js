@@ -114,9 +114,9 @@ describe('#addressSummaryLines', () => {
     ])
   })
 
-  test('leaves out blank and whitespace-only values', () => {
+  test('leaves out empty and missing values', () => {
     const lines = addressSummaryLines(
-      { ...mockAddress, addressLine2: '', county: '   ', postcode: null },
+      { ...mockAddress, addressLine2: '', county: null, postcode: null },
       UK_NAME
     )
 
@@ -129,14 +129,14 @@ describe('#addressSummaryLines', () => {
 })
 
 describe('#deletedBannerText', () => {
-  test('capitalises the first letter and lower-cases the rest', () => {
-    expect(deletedBannerText('Green Valley Farm')).toBe(
-      'Green valley farm address deleted'
+  test('names the address as it is stored', () => {
+    expect(deletedBannerText('ABC Green Valley Farm')).toBe(
+      'ABC Green Valley Farm address deleted'
     )
   })
 
   test('words a blank name without a name', () => {
-    expect(deletedBannerText('  ')).toBe('Address deleted')
+    expect(deletedBannerText('')).toBe('Address deleted')
     expect(deletedBannerText(undefined)).toBe('Address deleted')
   })
 })
@@ -322,7 +322,7 @@ describe('#addressBookDeleteController', () => {
 
     const list = await nextListPage(server, 'delete-post-confirm', headers)
     expect(load(list.result)(BANNER).text()).toContain(
-      'Highland livestock ltd address deleted'
+      'Highland Livestock Ltd address deleted'
     )
   })
 })
