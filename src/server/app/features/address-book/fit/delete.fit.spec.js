@@ -106,7 +106,9 @@ test.describe('delete address', () => {
 
       await page.getByRole('link', { name: CANCEL_LINK }).click()
 
-      await expect(page).toHaveURL(/\?return=%2F$/)
+      await expect(page).toHaveURL(
+        new RegExp(`/address-book/${SEED_ADDRESS_ID}\\?return=%2F$`)
+      )
       await expect(
         page.getByRole('heading', { level: 1, name: SEED_ADDRESS_NAME })
       ).toBeVisible()
@@ -156,7 +158,9 @@ test.describe('delete address', () => {
     })
 
     test('ignores a return on another origin', async ({ page }) => {
-      await signIn(page, { organisationId: 'stub-org-delete-return-ignored' })
+      await signIn(page, {
+        organisationId: `stub-org-delete-return-ignored-${crypto.randomUUID()}`
+      })
       await page.goto(
         withReturnOf(
           `/address-book/${SEED_ADDRESS_ID}/delete`,
@@ -164,9 +168,20 @@ test.describe('delete address', () => {
         )
       )
 
+      const viewHref = `/address-book/${SEED_ADDRESS_ID}`
       await expect(
         page.getByRole('link', { name: 'Back', exact: true })
-      ).toHaveAttribute('href', `/address-book/${SEED_ADDRESS_ID}`)
+      ).toHaveAttribute('href', viewHref)
+      await expect(
+        page.getByRole('link', { name: CANCEL_LINK })
+      ).toHaveAttribute('href', viewHref)
+
+      await page
+        .getByRole('button', { name: CONFIRM_BUTTON, exact: true })
+        .click()
+
+      await expect(page).toHaveURL(/\/address-book$/)
+      await expect(page.getByText(DELETED_BANNER)).toBeVisible()
     })
   })
 
@@ -197,6 +212,10 @@ test.describe('delete address', () => {
       )
 
       await expect(page).toHaveURL(/\/$/)
+      await expect(
+        page.getByRole('heading', { level: 1, name: 'Dashboard' })
+      ).toBeVisible()
+      await expect(page.getByText('Page not found')).toHaveCount(0)
     })
 
     test('a malformed address id returns to the address book', async ({
