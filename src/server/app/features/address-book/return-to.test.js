@@ -33,8 +33,8 @@ describe('#honouredReturnOrNull', () => {
 
   test.each(['/', '/address-book?page=2'])(
     'Should honour the page of this service %s',
-    (value) => {
-      expect(honouredReturnOrNull(returning(value))).toBe(value)
+    (pathOrUrl) => {
+      expect(honouredReturnOrNull(returning(pathOrUrl))).toBe(pathOrUrl)
     }
   )
 
@@ -45,8 +45,8 @@ describe('#honouredReturnOrNull', () => {
     ['/café?q=é', '/caf%C3%A9?q=%C3%A9']
   ])(
     'Should percent-encode the page of this service %s so it is safe to redirect to',
-    (value, expected) => {
-      expect(honouredReturnOrNull(returning(value))).toBe(expected)
+    (pathOrUrl, expected) => {
+      expect(honouredReturnOrNull(returning(pathOrUrl))).toBe(expected)
     }
   )
 
@@ -73,8 +73,10 @@ describe('#honouredReturnOrNull', () => {
 
   test.each([LIVE_ANIMALS_URL, GERMINAL_URL])(
     'Should honour the animals frontend URL %s outside stub mode',
-    (value) => {
-      expect(honouredReturnOrNull(returning(value))).toBe(new URL(value).href)
+    (pathOrUrl) => {
+      expect(honouredReturnOrNull(returning(pathOrUrl))).toBe(
+        new URL(pathOrUrl).href
+      )
     }
   )
 
@@ -129,14 +131,17 @@ describe('#honouredReturnOrAddressBook', () => {
 })
 
 describe('#landsOnAddressBook', () => {
-  test.each([LIST, `${LIST}?search=x`])('Should be true for %s', (value) => {
-    expect(landsOnAddressBook(value)).toBe(true)
-  })
+  test.each([LIST, `${LIST}?search=x`])(
+    'Should be true for %s',
+    (pathOrUrl) => {
+      expect(landsOnAddressBook(pathOrUrl)).toBe(true)
+    }
+  )
 
   test.each(['/', `${LIST}/${ID}`, LIVE_ANIMALS_URL])(
     'Should be false for %s',
-    (value) => {
-      expect(landsOnAddressBook(value)).toBe(false)
+    (pathOrUrl) => {
+      expect(landsOnAddressBook(pathOrUrl)).toBe(false)
     }
   )
 })
