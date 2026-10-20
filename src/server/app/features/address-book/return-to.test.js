@@ -14,6 +14,7 @@ const OTHER_ID = '111111111111111111111111'
 const LIST = '/address-book'
 const ANIMALS = new URL(config.get('tradeImportsAnimalsFrontend.baseUrl'))
   .origin
+const PLANTS = new URL(config.get('tradeImportsPlantsFrontend.baseUrl')).origin
 const LIVE_ANIMALS_URL = `${ANIMALS}/live-animals/notifications/abc`
 const GERMINAL_URL = `${ANIMALS}/germinal-products/notifications`
 
@@ -56,9 +57,9 @@ describe('#readReturn', () => {
     ['a protocol-relative URL', '//evil.example/x'],
     ['a value not starting with /', 'address-book'],
     ['another origin', 'https://evil.example/live-animals'],
-    ['the plants frontend origin', 'http://localhost:3003/high-risk-plants'],
+    ['the plants frontend origin', `${PLANTS}/high-risk-plants`],
     ['userinfo that spoofs the animals origin', `${ANIMALS}@evil.example/`],
-    ['a longer host', 'http://localhost:3000.evil.example/'],
+    ['a longer host', `${ANIMALS}.evil.example/`],
     ['a backslash', '/\\evil.example'],
     ['a line break', '/address-book\r\n/x'],
     ['a tab making it protocol-relative', '/\t/evil.example']
