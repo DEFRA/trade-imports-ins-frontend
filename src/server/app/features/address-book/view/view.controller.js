@@ -8,6 +8,7 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { countryNameOf, getAddressFormCountries } from '../address-countries.js'
 import { deadLinkRouteOptions } from '../address-id-params.js'
+import { FIELD_RULES } from '../fields.js'
 import { boomFor, findLiveAddress } from '../stored-address.js'
 import {
   deadLinkDestination,
@@ -22,7 +23,7 @@ const logger = createLogger()
 const view = 'address-book/view/view'
 const copy = copyFor({ en, cy })
 
-const OPTIONAL_ROWS = new Set(['addressLine2', 'county'])
+const isOptional = (field) => FIELD_RULES[field]?.required === false
 
 const hasText = (value) => Boolean(value?.trim?.())
 
@@ -58,7 +59,7 @@ export const buildRows = (address, countryName) =>
     { field: 'email', label: copy.form.fields.email, text: address.email },
     { field: 'phone', label: copy.form.fields.phone, text: address.phone }
   ]
-    .filter(({ field, text }) => !OPTIONAL_ROWS.has(field) || hasText(text))
+    .filter(({ field, text }) => !isOptional(field) || hasText(text))
     .map(({ label, text }) => ({ key: { text: label }, value: { text } }))
 
 const get = async (request, toolkit) => {
