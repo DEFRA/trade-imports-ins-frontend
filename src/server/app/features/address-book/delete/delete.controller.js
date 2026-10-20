@@ -4,7 +4,10 @@ import { copyFor } from '../../../shared/copy.js'
 import { addressDeleteRoutePath, addressPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { HTTP_STATUS_NOT_FOUND } from '../../../lib/http-status.js'
-import { countryNameOf, getAddressFormCountries } from '../address-countries.js'
+import {
+  countryLabelOf,
+  getAddressFormCountries
+} from '../address-countries.js'
 import { deadLinkRouteOptions } from '../address-id-params.js'
 import { boomFor, findLiveAddress } from '../stored-address.js'
 import {
@@ -22,7 +25,7 @@ const logger = createLogger()
 const view = 'address-book/delete/delete'
 const copy = copyFor({ en, cy })
 
-export const addressSummaryLines = (address, countryName) =>
+export const addressSummaryLines = (address, countryLabel) =>
   [
     address.name,
     address.addressLine1,
@@ -30,7 +33,7 @@ export const addressSummaryLines = (address, countryName) =>
     address.townOrCity,
     address.county,
     address.postcode,
-    countryName
+    countryLabel
   ].filter(Boolean)
 
 export const deletedBannerText = (name) =>
@@ -49,7 +52,7 @@ const get = async (request, toolkit) => {
     const countries = await getAddressFormCountries()
     const lines = addressSummaryLines(
       address,
-      countryNameOf(countries, address.countryCode)
+      countryLabelOf(countries, address.countryCode)
     )
     const viewHref = withReturn(addressPath(id), returnTo)
     return toolkit.view(view, {

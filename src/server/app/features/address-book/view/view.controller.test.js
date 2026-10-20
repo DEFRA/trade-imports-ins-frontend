@@ -93,12 +93,6 @@ describe('#buildRows', () => {
       '+44 1463 234567'
     ])
   })
-
-  test('falls back to the country code when the name cannot be resolved', () => {
-    const rows = buildRows(mockAddress, undefined)
-
-    expect(rows.find((row) => row.key.text === 'Country').value.text).toBe('GB')
-  })
 })
 
 const startServerFor = (assign) => {

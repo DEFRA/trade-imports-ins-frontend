@@ -6,7 +6,10 @@ import {
   addressRoutePath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { countryNameOf, getAddressFormCountries } from '../address-countries.js'
+import {
+  countryLabelOf,
+  getAddressFormCountries
+} from '../address-countries.js'
 import { deadLinkRouteOptions } from '../address-id-params.js'
 import { FIELD_RULES } from '../fields.js'
 import { boomFor, findLiveAddress } from '../stored-address.js'
@@ -27,7 +30,7 @@ const isOptional = (field) => FIELD_RULES[field]?.required === false
 
 const hasText = (value) => Boolean(value?.trim?.())
 
-export const buildRows = (address, countryName) =>
+export const buildRows = (address, countryLabel) =>
   [
     { field: 'name', label: copy.form.fields.name, text: address.name },
     {
@@ -54,7 +57,7 @@ export const buildRows = (address, countryName) =>
     {
       field: 'countryCode',
       label: copy.form.fields.countryCode,
-      text: countryName ?? address.countryCode
+      text: countryLabel
     },
     { field: 'email', label: copy.form.fields.email, text: address.email },
     { field: 'phone', label: copy.form.fields.phone, text: address.phone }
@@ -81,7 +84,7 @@ const get = async (request, toolkit) => {
       deleteHref: withReturn(addressDeletePath(id), returnTo),
       summaryRows: buildRows(
         address,
-        countryNameOf(countries, address.countryCode)
+        countryLabelOf(countries, address.countryCode)
       )
     })
   } catch (err) {

@@ -6,7 +6,7 @@ import { refuseOutboundHttp } from '../../../common/test-helpers/real-mode.js'
 import {
   buildCountryItems,
   buildCountrySelectItems,
-  countryNameOf,
+  countryLabelOf,
   resolveCountryCodeFromSearchTerm,
   GB_COUNTRY
 } from './address-countries.js'
@@ -119,17 +119,17 @@ describe('#resolveCountryCodeFromSearchTerm', () => {
   })
 })
 
-describe('#countryNameOf', () => {
+describe('#countryLabelOf', () => {
   const countries = [
     { code: 'GB', name: UK_NAME },
     { code: 'FR', name: 'France' }
   ]
 
   test('resolves a country code to its name', () => {
-    expect(countryNameOf(countries, 'FR')).toBe('France')
+    expect(countryLabelOf(countries, 'FR')).toBe('France')
   })
 
   test('falls back to the code when it is not listed', () => {
-    expect(countryNameOf(countries, 'ZZ')).toBe('ZZ')
+    expect(countryLabelOf(countries, 'ZZ')).toBe('ZZ')
   })
 })

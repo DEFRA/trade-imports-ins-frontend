@@ -31,8 +31,8 @@ export function buildCountrySelectItems(countries, placeholder) {
   return [{ value: '', text: placeholder }, ...buildCountryItems(countries)]
 }
 
-/** Resolves a country code to its name in the given list, falling back to the code. */
-export function countryNameOf(countries, countryCode) {
+/** What to show for a country code: its name in the given list, or the code itself when the list does not hold it. */
+export function countryLabelOf(countries, countryCode) {
   return (
     countries.find((country) => country.code === countryCode)?.name ??
     countryCode
