@@ -123,17 +123,6 @@ describe('#addressSummaryLines', () => {
     expect(lines).toEqual([BUSINESS_NAME, LINE_1, 'Inverness', UK_NAME])
   })
 
-  test('leaves out a line repeating an earlier one ignoring case', () => {
-    const lines = addressSummaryLines(
-      { ...mockAddress, county: 'INVERNESS' },
-      UK_NAME
-    )
-
-    expect(lines.filter((line) => line.toLowerCase() === 'inverness')).toEqual([
-      'Inverness'
-    ])
-  })
-
   test('returns no lines for an address with no name, lines or country', () => {
     expect(addressSummaryLines({}, undefined)).toEqual([])
   })
@@ -334,22 +323,6 @@ describe('#addressBookDeleteController', () => {
     const list = await nextListPage(server, 'delete-post-confirm', headers)
     expect(load(list.result)(BANNER).text()).toContain(
       'Highland livestock ltd address deleted'
-    )
-  })
-
-  test('GET shows a line repeating an earlier one in a different case once in the Address row', async () => {
-    addressBookApi()
-      .get(ADDRESS_PATH)
-      .reply(200, { ...mockAddress, county: 'INVERNESS' })
-
-    const { result, statusCode } = await getDelete(
-      server,
-      'delete-get-repeated-line'
-    )
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(load(result)(SUMMARY_VALUE).html().trim()).toBe(
-      `${BUSINESS_NAME}<br>${LINE_1}<br>Unit 2<br>Inverness<br>IV2 3JH<br>${UK_NAME}`
     )
   })
 })

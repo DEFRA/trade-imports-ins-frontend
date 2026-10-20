@@ -24,29 +24,18 @@ const copy = copyFor({ en, cy })
 
 const trimmed = (value) => value?.trim?.() ?? ''
 
-const isRepeatOf = (kept) => (value) =>
-  kept.some((line) => line.toLowerCase() === value.toLowerCase())
-
-const withoutRepeats = (values) =>
-  values.reduce(
-    (kept, value) => (isRepeatOf(kept)(value) ? kept : [...kept, value]),
-    []
-  )
-
 export const addressSummaryLines = (address, countryName) =>
-  withoutRepeats(
-    [
-      address.name,
-      address.addressLine1,
-      address.addressLine2,
-      address.townOrCity,
-      address.county,
-      address.postcode,
-      countryName
-    ]
-      .map(trimmed)
-      .filter(Boolean)
-  )
+  [
+    address.name,
+    address.addressLine1,
+    address.addressLine2,
+    address.townOrCity,
+    address.county,
+    address.postcode,
+    countryName
+  ]
+    .map(trimmed)
+    .filter(Boolean)
 
 const sentenceCase = (text) =>
   text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
