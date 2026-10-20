@@ -4,7 +4,8 @@ import { addressBookPath, addressPath } from '../../shared/paths.js'
 
 export const RETURN_QUERY_KEY = 'return'
 
-const UNSAFE_CHARACTERS = /[\\\r\n]/
+// Characters browsers or the URL parser rewrite into an off-site redirect, or that split a Location header.
+const UNSAFE_REDIRECT_CHARACTERS = /[\\\r\n]/
 
 // Normalised so the path is percent-encoded and safe in a Location header.
 const insPath = (value) => {
@@ -53,7 +54,11 @@ const animalsUrl = (value) => {
  */
 export const readReturn = (request) => {
   const value = request.query?.[RETURN_QUERY_KEY]
-  if (typeof value !== 'string' || !value || UNSAFE_CHARACTERS.test(value)) {
+  if (
+    typeof value !== 'string' ||
+    !value ||
+    UNSAFE_REDIRECT_CHARACTERS.test(value)
+  ) {
     return null
   }
   return insPath(value) ?? animalsUrl(value)
