@@ -71,6 +71,29 @@ const postDelete = (server, session, query) =>
     payload: {}
   })
 
+const cookieOf = (headers) =>
+  [headers['set-cookie']]
+    .flat()
+    .filter(Boolean)
+    .map((cookie) => cookie.split(';')[0])
+    .join('; ')
+
+// Opens the list in the same yar session the POST used, where a set banner shows.
+const nextListPage = (server, session, postHeaders) => {
+  addressBookApi()
+    .get(`/organisation/${ORG_ID}/addresses`)
+    .query(true)
+    .reply(200, { items: [], page: 1, pageSize: 25, totalItems: 0, totalPages: 0 })
+  return server.inject({
+    method: 'GET',
+    url: ADDRESS_BOOK_PATH,
+    auth: sessionAuth(session),
+    headers: { cookie: cookieOf(postHeaders) }
+  })
+}
+
+const BANNER = '.govuk-notification-banner'
+
 describe('#addressSummaryLines', () => {
   test('lists every address line in order with the country name, and no email or phone', () => {
     expect(addressSummaryLines(mockAddress, UK_NAME)).toEqual([
@@ -293,6 +316,27 @@ describe('#addressBookDeleteController', () => {
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
     expect(scope.isDone()).toBe(true)
+
+    const list = await nextListPage(server, 'delete-post-confirm', headers)
+    expect(load(list.result)(BANNER).text()).toContain(
+      'Highland livestock ltd address deleted'
+    )
+  })
+
+  test('GET shows a line repeating an earlier one in a different case once in the Address row', async () => {
+    addressBookApi()
+      .get(ADDRESS_PATH)
+      .reply(200, { ...mockAddress, county: 'INVERNESS' })
+
+    const { result, statusCode } = await getDelete(
+      server,
+      'delete-get-repeated-line'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(load(result)('.govuk-summary-list__value').html().trim()).toBe(
+      `${BUSINESS_NAME}<br>${LINE_1}<br>Unit 2<br>Inverness<br>IV2 3JH<br>${UK_NAME}`
+    )
   })
 
   describe('with a return', () => {
@@ -325,6 +369,9 @@ describe('#addressBookDeleteController', () => {
       expect(statusCode).toBe(statusCodes.redirectFound)
       expect(headers.location).toBe('/')
       expect(scope.isDone()).toBe(true)
+
+      const list = await nextListPage(server, 'delete-post-return', headers)
+      expect(load(list.result)(BANNER)).toHaveLength(0)
     })
 
     test("POST with a return to the deleted address's own page lands on the list", async () => {
