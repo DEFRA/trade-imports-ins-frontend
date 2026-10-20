@@ -84,6 +84,12 @@ test.describe('delete address', () => {
     await expect(page.getByText('You have no addresses yet.')).toBeVisible()
   })
 
+  test('has no serious or critical axe violations', async ({ page }) => {
+    await openDeleteConfirmation(page, 'stub-org-delete-axe')
+
+    await expectNoSeriousOrCriticalViolations(page, CONFIRM_PAGE_TITLE)
+  })
+
   test.describe('return', () => {
     const withReturnOf = (path, returnTo) =>
       `${path}?return=${encodeURIComponent(returnTo)}`
@@ -184,77 +190,69 @@ test.describe('delete address', () => {
       await expect(page.getByText(DELETED_BANNER)).toBeVisible()
     })
   })
+})
 
-  test.describe('dead links', () => {
-    async function expectAddressBookList(page) {
-      await expect(page).toHaveURL(/\/address-book$/)
-      await expect(
-        page.getByRole('heading', { level: 1, name: 'Address book' })
-      ).toBeVisible()
-      await expect(page.getByText('Page not found')).toHaveCount(0)
-    }
+test.describe('delete address dead links', () => {
+  async function expectAddressBookList(page) {
+    await expect(page).toHaveURL(/\/address-book$/)
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Address book' })
+    ).toBeVisible()
+    await expect(page.getByText('Page not found')).toHaveCount(0)
+  }
 
-    test('an unknown address id returns to the address book', async ({
-      page
-    }) => {
-      await signIn(page, { organisationId: 'stub-org-delete-unknown' })
-      await page.goto('/address-book/ffffffffffffffffffffffff/delete')
+  test('an unknown address id returns to the address book', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: 'stub-org-delete-unknown' })
+    await page.goto('/address-book/ffffffffffffffffffffffff/delete')
 
-      await expectAddressBookList(page)
-    })
-
-    test('a dead delete link carrying an honoured return lands on it', async ({
-      page
-    }) => {
-      await signIn(page, { organisationId: 'stub-org-delete-dead-return' })
-      await page.goto(
-        '/address-book/ffffffffffffffffffffffff/delete?return=%2F'
-      )
-
-      await expect(page).toHaveURL(/\/$/)
-      await expect(
-        page.getByRole('heading', { level: 1, name: 'Dashboard' })
-      ).toBeVisible()
-      await expect(page.getByText('Page not found')).toHaveCount(0)
-    })
-
-    test('a malformed address id returns to the address book', async ({
-      page
-    }) => {
-      await signIn(page, { organisationId: 'stub-org-delete-malformed' })
-      await page.goto('/address-book/not-a-valid-id/delete')
-
-      await expectAddressBookList(page)
-    })
-
-    test('a stale delete changes nothing and shows no banner', async ({
-      page
-    }) => {
-      await openDeleteConfirmation(
-        page,
-        `stub-org-delete-stale-${crypto.randomUUID()}`
-      )
-
-      const other = await page.context().newPage()
-      await other.goto(`/address-book/${SEED_ADDRESS_ID}/delete`)
-      await other
-        .getByRole('button', { name: CONFIRM_BUTTON, exact: true })
-        .click()
-      await expect(other.getByText(DELETED_BANNER)).toBeVisible()
-      await other.close()
-
-      await page
-        .getByRole('button', { name: CONFIRM_BUTTON, exact: true })
-        .click()
-
-      await expectAddressBookList(page)
-      await expect(page.getByText('address deleted')).toHaveCount(0)
-    })
+    await expectAddressBookList(page)
   })
 
-  test('has no serious or critical axe violations', async ({ page }) => {
-    await openDeleteConfirmation(page, 'stub-org-delete-axe')
+  test('a dead delete link carrying an honoured return lands on it', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: 'stub-org-delete-dead-return' })
+    await page.goto('/address-book/ffffffffffffffffffffffff/delete?return=%2F')
 
-    await expectNoSeriousOrCriticalViolations(page, 'Delete address')
+    await expect(page).toHaveURL(/\/$/)
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Dashboard' })
+    ).toBeVisible()
+    await expect(page.getByText('Page not found')).toHaveCount(0)
+  })
+
+  test('a malformed address id returns to the address book', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: 'stub-org-delete-malformed' })
+    await page.goto('/address-book/not-a-valid-id/delete')
+
+    await expectAddressBookList(page)
+  })
+
+  test('a stale delete changes nothing and shows no banner', async ({
+    page
+  }) => {
+    await openDeleteConfirmation(
+      page,
+      `stub-org-delete-stale-${crypto.randomUUID()}`
+    )
+
+    const other = await page.context().newPage()
+    await other.goto(`/address-book/${SEED_ADDRESS_ID}/delete`)
+    await other
+      .getByRole('button', { name: CONFIRM_BUTTON, exact: true })
+      .click()
+    await expect(other.getByText(DELETED_BANNER)).toBeVisible()
+    await other.close()
+
+    await page
+      .getByRole('button', { name: CONFIRM_BUTTON, exact: true })
+      .click()
+
+    await expectAddressBookList(page)
+    await expect(page.getByText('address deleted')).toHaveCount(0)
   })
 })

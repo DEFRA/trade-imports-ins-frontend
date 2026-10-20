@@ -101,18 +101,19 @@ describe('#buildRows', () => {
   })
 })
 
-describe('#addressBookViewController', () => {
-  let server
+const startServerFor = (assign) => {
+  let started
 
   runInRealMode()
 
   beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
+    started = await createServer()
+    await started.initialize()
+    assign(started)
   })
 
   afterAll(async () => {
-    await server.stop({ timeout: 0 })
+    await started.stop({ timeout: 0 })
   })
 
   beforeEach(() => {
@@ -120,6 +121,14 @@ describe('#addressBookViewController', () => {
       { code: 'GB', name: UK_NAME },
       { code: 'FR', name: 'France' }
     ])
+  })
+}
+
+describe('#addressBookViewController', () => {
+  let server
+
+  startServerFor((started) => {
+    server = started
   })
 
   test('GET renders read-only address details with Edit and Delete actions', async () => {
@@ -227,6 +236,14 @@ describe('#addressBookViewController', () => {
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
+  })
+})
+
+describe('#addressBookViewController with a return', () => {
+  let server
+
+  startServerFor((started) => {
+    server = started
   })
 
   test('GET with an INS return links Back to it and carries it on Edit and Delete', async () => {

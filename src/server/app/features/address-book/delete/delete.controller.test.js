@@ -83,7 +83,13 @@ const nextListPage = (server, session, postHeaders) => {
   addressBookApi()
     .get(`/organisation/${ORG_ID}/addresses`)
     .query(true)
-    .reply(200, { items: [], page: 1, pageSize: 25, totalItems: 0, totalPages: 0 })
+    .reply(200, {
+      items: [],
+      page: 1,
+      pageSize: 25,
+      totalItems: 0,
+      totalPages: 0
+    })
   return server.inject({
     method: 'GET',
     url: ADDRESS_BOOK_PATH,
@@ -93,6 +99,7 @@ const nextListPage = (server, session, postHeaders) => {
 }
 
 const BANNER = '.govuk-notification-banner'
+const SUMMARY_VALUE = '.govuk-summary-list__value'
 
 describe('#addressSummaryLines', () => {
   test('lists every address line in order with the country name, and no email or phone', () => {
@@ -145,18 +152,19 @@ describe('#deletedBannerText', () => {
   })
 })
 
-describe('#addressBookDeleteController', () => {
-  let server
+const startServerFor = (assign) => {
+  let started
 
   runInRealMode()
 
   beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
+    started = await createServer()
+    await started.initialize()
+    assign(started)
   })
 
   afterAll(async () => {
-    await server.stop({ timeout: 0 })
+    await started.stop({ timeout: 0 })
   })
 
   beforeEach(() => {
@@ -164,6 +172,14 @@ describe('#addressBookDeleteController', () => {
       { code: 'GB', name: UK_NAME },
       { code: 'FR', name: 'France' }
     ])
+  })
+}
+
+describe('#addressBookDeleteController', () => {
+  let server
+
+  startServerFor((started) => {
+    server = started
   })
 
   test('GET renders the Design Release 2.1 confirmation', async () => {
@@ -179,7 +195,7 @@ describe('#addressBookDeleteController', () => {
     )
     expect($('.govuk-summary-list__key')).toHaveLength(1)
     expect($('.govuk-summary-list__key').text().trim()).toBe('Address')
-    expect($('.govuk-summary-list__value').html().trim()).toBe(
+    expect($(SUMMARY_VALUE).html().trim()).toBe(
       `${BUSINESS_NAME}<br>${LINE_1}<br>Unit 2<br>Inverness<br>Highland<br>IV2 3JH<br>${UK_NAME}`
     )
     expect(result).not.toContain(EMAIL)
@@ -203,9 +219,7 @@ describe('#addressBookDeleteController', () => {
     const { result, statusCode } = await getDelete(server, 'delete-get-blank')
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(load(result)('.govuk-summary-list__value').text().trim()).toBe(
-      'Not applicable'
-    )
+    expect(load(result)(SUMMARY_VALUE).text().trim()).toBe('Not applicable')
   })
 
   test('GET redirects to the address book when the address is not found', async () => {
@@ -334,87 +348,93 @@ describe('#addressBookDeleteController', () => {
     )
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(load(result)('.govuk-summary-list__value').html().trim()).toBe(
+    expect(load(result)(SUMMARY_VALUE).html().trim()).toBe(
       `${BUSINESS_NAME}<br>${LINE_1}<br>Unit 2<br>Inverness<br>IV2 3JH<br>${UK_NAME}`
     )
   })
+})
 
-  describe('with a return', () => {
-    test('GET with a return points Back and No, cancel at the view page carrying it', async () => {
-      addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+describe('#addressBookDeleteController with a return', () => {
+  let server
 
-      const { result, statusCode } = await getDelete(
-        server,
-        'delete-get-return',
-        RETURN_HOME
-      )
+  startServerFor((started) => {
+    server = started
+  })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      const $ = load(result)
-      const viewHref = `/address-book/${addressId}?return=%2F`
-      expect($('a.govuk-back-link').attr('href')).toBe(viewHref)
-      expect($('.govuk-button-group a.govuk-link').attr('href')).toBe(viewHref)
-    })
+  test('GET with a return points Back and No, cancel at the view page carrying it', async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    test('POST with an INS return lands on it', async () => {
-      addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
-      const scope = addressBookApi().delete(ADDRESS_PATH).reply(204)
+    const { result, statusCode } = await getDelete(
+      server,
+      'delete-get-return',
+      RETURN_HOME
+    )
 
-      const { headers, statusCode } = await postDelete(
-        server,
-        'delete-post-return',
-        RETURN_HOME
-      )
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    const viewHref = `/address-book/${addressId}?return=%2F`
+    expect($('a.govuk-back-link').attr('href')).toBe(viewHref)
+    expect($('.govuk-button-group a.govuk-link').attr('href')).toBe(viewHref)
+  })
 
-      expect(statusCode).toBe(statusCodes.redirectFound)
-      expect(headers.location).toBe('/')
-      expect(scope.isDone()).toBe(true)
+  test('POST with an INS return lands on it', async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    const scope = addressBookApi().delete(ADDRESS_PATH).reply(204)
 
-      const list = await nextListPage(server, 'delete-post-return', headers)
-      expect(load(list.result)(BANNER)).toHaveLength(0)
-    })
+    const { headers, statusCode } = await postDelete(
+      server,
+      'delete-post-return',
+      RETURN_HOME
+    )
 
-    test("POST with a return to the deleted address's own page lands on the list", async () => {
-      addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
-      addressBookApi().delete(ADDRESS_PATH).reply(204)
-      const ownPage = `/address-book/${addressId}`
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe('/')
+    expect(scope.isDone()).toBe(true)
 
-      const { headers, statusCode } = await postDelete(
-        server,
-        'delete-post-return-own-page',
-        `?return=${encodeURIComponent(ownPage)}`
-      )
+    const list = await nextListPage(server, 'delete-post-return', headers)
+    expect(load(list.result)(BANNER)).toHaveLength(0)
+  })
 
-      expect(statusCode).toBe(statusCodes.redirectFound)
-      expect(headers.location).toBe(ADDRESS_BOOK_PATH)
-    })
+  test("POST with a return to the deleted address's own page lands on the list", async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    addressBookApi().delete(ADDRESS_PATH).reply(204)
+    const ownPage = `/address-book/${addressId}`
 
-    test('POST with an animals frontend return lands on it', async () => {
-      const animalsUrl = `${new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin}/live-animals/notifications/abc`
-      addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
-      addressBookApi().delete(ADDRESS_PATH).reply(204)
+    const { headers, statusCode } = await postDelete(
+      server,
+      'delete-post-return-own-page',
+      `?return=${encodeURIComponent(ownPage)}`
+    )
 
-      const { headers, statusCode } = await postDelete(
-        server,
-        'delete-post-return-animals',
-        `?return=${encodeURIComponent(animalsUrl)}`
-      )
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
+  })
 
-      expect(statusCode).toBe(statusCodes.redirectFound)
-      expect(headers.location).toBe(animalsUrl)
-    })
+  test('POST with an animals frontend return lands on it', async () => {
+    const animalsUrl = `${new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin}/live-animals/notifications/abc`
+    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    addressBookApi().delete(ADDRESS_PATH).reply(204)
 
-    test('POST for an unknown id with an honoured return lands on it without deleting', async () => {
-      addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
+    const { headers, statusCode } = await postDelete(
+      server,
+      'delete-post-return-animals',
+      `?return=${encodeURIComponent(animalsUrl)}`
+    )
 
-      const { headers, statusCode } = await postDelete(
-        server,
-        'delete-post-return-unknown',
-        RETURN_HOME
-      )
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe(animalsUrl)
+  })
 
-      expect(statusCode).toBe(statusCodes.redirectFound)
-      expect(headers.location).toBe('/')
-    })
+  test('POST for an unknown id with an honoured return lands on it without deleting', async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
+
+    const { headers, statusCode } = await postDelete(
+      server,
+      'delete-post-return-unknown',
+      RETURN_HOME
+    )
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe('/')
   })
 })
