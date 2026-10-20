@@ -34,9 +34,7 @@ export const addressSummaryLines = (address, countryName) =>
   ].filter(Boolean)
 
 export const deletedBannerText = (name) =>
-  name
-    ? copy.successBanner.deleted(name)
-    : copy.successBanner.deletedUnnamed
+  name ? copy.successBanner.deleted(name) : copy.successBanner.deletedUnnamed
 
 const get = async (request, toolkit) => {
   const orgId = kit.requireOrganisationId(request)
