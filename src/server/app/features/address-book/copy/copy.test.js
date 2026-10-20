@@ -88,7 +88,7 @@ describe('#copy', () => {
     expect(copy.successBanner.deletedUnnamed).toBe('Address deleted')
   })
 
-  it('Should word the delete confirmation as Design Release 2.1 does', () => {
+  it('Should word the delete confirmation with its summary label, warning, fallback and Yes, delete and No, cancel', () => {
     expect(copy.delete.summaryAddress).toBe('Address')
     expect(copy.delete.confirmation).toBe(
       'Confirm that you want to delete this address.'
@@ -115,7 +115,7 @@ describe('#copy', () => {
     expect(welsh).not.toBe(copy.successBanner.deleted(SAMPLE_NAME))
   })
 
-  it('Should carry the Design Release 2.1 Welsh for the delete page', () => {
+  it('Should carry the Welsh for the delete page heading and confirm button', () => {
     expect(cy.delete.title).toBe('Dileu’r cyfeiriad hwn?')
     expect(cy.delete.confirm).toBe('Ie, dileu')
   })

@@ -182,7 +182,7 @@ describe('#addressBookDeleteController', () => {
     server = started
   })
 
-  test('GET renders the Design Release 2.1 confirmation', async () => {
+  test('GET renders the confirmation with one Address summary row, the warning, Yes, delete and a No, cancel link', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
     const { result, statusCode } = await getDelete(server, 'delete-get')
