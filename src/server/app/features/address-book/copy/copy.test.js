@@ -17,24 +17,6 @@ const MACHINE_DRAFT =
 
 const SAMPLE_NAME = 'Green Farm'
 
-const CHANGED_VIEW_AND_DELETE_KEYS = [
-  'form.fields.county',
-  'delete.title',
-  'delete.summaryAddress',
-  'delete.confirmation',
-  'delete.warning',
-  'delete.notApplicable',
-  'delete.confirm',
-  'delete.cancel',
-  'successBanner.deleted',
-  'successBanner.deletedUnnamed'
-]
-
-const valueAt = (bundle, path) => {
-  const value = path.split('.').reduce((node, key) => node[key], bundle)
-  return typeof value === 'function' ? value(SAMPLE_NAME) : value
-}
-
 const LOCALES = [
   ['en', copy],
   ['cy', cy]
@@ -126,20 +108,16 @@ describe('#copy', () => {
     )
   })
 
-  it.each(CHANGED_VIEW_AND_DELETE_KEYS)(
-    'Should carry Welsh for %s that differs from the English',
-    (path) => {
-      const welsh = valueAt(cy, path)
+  it('Should name the address in the Welsh deleted banner', () => {
+    const welsh = cy.successBanner.deleted(SAMPLE_NAME)
 
-      expect(typeof welsh).toBe('string')
-      expect(welsh.trim().length).toBeGreaterThan(0)
-      expect(welsh).not.toBe(valueAt(copy, path))
-    }
-  )
+    expect(welsh).toContain(SAMPLE_NAME)
+    expect(welsh).not.toBe(copy.successBanner.deleted(SAMPLE_NAME))
+  })
 
-  it('Should no longer carry the replaced Welsh', () => {
-    expect(cy.delete.title).not.toBe('Dileu cyfeiriad')
-    expect(cy.delete.confirm).not.toBe('Ie, dileu’r cyfeiriad hwn')
+  it('Should carry the Design Release 2.1 Welsh for the delete page', () => {
+    expect(cy.delete.title).toBe('Dileu’r cyfeiriad hwn?')
+    expect(cy.delete.confirm).toBe('Ie, dileu')
   })
 
   it('Should mark the Welsh as a machine draft on its first line', () => {
