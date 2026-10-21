@@ -7,8 +7,7 @@ import {
 } from '../../../services/address-book/index.js'
 import {
   HTTP_STATUS_BAD_REQUEST,
-  HTTP_STATUS_INTERNAL_SERVER_ERROR,
-  HTTP_STATUS_NOT_FOUND
+  HTTP_STATUS_INTERNAL_SERVER_ERROR
 } from '../../../lib/http-status.js'
 import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
@@ -25,7 +24,7 @@ import {
 } from '../address-countries.js'
 import { addressIdRouteOptions } from '../address-id-params.js'
 import { addressRules, formValuesOf } from '../fields.js'
-import { boomFor, loadStoredAddress } from '../stored-address.js'
+import { boomFor, isNotFound, loadStoredAddress } from '../stored-address.js'
 import { setSuccessBanner } from '../success-banner.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
@@ -111,7 +110,7 @@ const post = async (request, toolkit) => {
     if (err.isBoom) {
       throw err
     }
-    if (err.status === HTTP_STATUS_NOT_FOUND) {
+    if (isNotFound(err)) {
       throw Boom.notFound()
     }
     if (isValidationFailure(err)) {

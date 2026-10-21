@@ -125,7 +125,7 @@ describe('#mapAddressRows', () => {
             countryCode: 'GB'
           }
         ],
-        { GB: 'United Kingdom' }
+        [{ code: 'GB', name: 'United Kingdom' }]
       )
     ).toEqual([
       {

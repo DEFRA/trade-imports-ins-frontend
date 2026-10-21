@@ -73,6 +73,10 @@ const get = async (request, toolkit) => {
   try {
     const address = await findLiveAddress(organisationId, addressId)
     if (!address) {
+      logger.info(
+        { organisationId, addressId },
+        'Address not live, redirecting away from its view page'
+      )
       return toolkit.redirect(
         honouredReturnOrAddressBook(addressId, honouredReturn)
       )

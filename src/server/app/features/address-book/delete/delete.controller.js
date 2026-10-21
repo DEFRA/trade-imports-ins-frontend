@@ -3,13 +3,12 @@ import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import { addressDeleteRoutePath, addressPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { HTTP_STATUS_NOT_FOUND } from '../../../lib/http-status.js'
 import {
   countryLabelOf,
   getAddressFormCountries
 } from '../address-countries.js'
 import { deadLinkRouteOptions } from '../address-id-params.js'
-import { boomFor, findLiveAddress } from '../stored-address.js'
+import { boomFor, findLiveAddress, isNotFound } from '../stored-address.js'
 import {
   deadLinkDestination,
   landsOnAddressBook,
@@ -47,6 +46,10 @@ const get = async (request, toolkit) => {
   try {
     const address = await findLiveAddress(organisationId, addressId)
     if (!address) {
+      logger.info(
+        { organisationId, addressId },
+        'Address not live, redirecting away from its delete page'
+      )
       return toolkit.redirect(
         honouredReturnOrAddressBook(addressId, honouredReturn)
       )
@@ -84,6 +87,10 @@ const post = async (request, toolkit) => {
   try {
     const address = await findLiveAddress(organisationId, addressId)
     if (!address) {
+      logger.info(
+        { organisationId, addressId },
+        'Address not live, nothing to delete'
+      )
       return toolkit.redirect(destination)
     }
     await deleteAddress(organisationId, addressId)
@@ -92,7 +99,11 @@ const post = async (request, toolkit) => {
     }
     return toolkit.redirect(destination)
   } catch (err) {
-    if (err.status === HTTP_STATUS_NOT_FOUND) {
+    if (isNotFound(err)) {
+      logger.info(
+        { organisationId, addressId },
+        'Address already gone when deleted'
+      )
       return toolkit.redirect(destination)
     }
     throw boomFor(err, () =>

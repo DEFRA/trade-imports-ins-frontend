@@ -47,9 +47,6 @@ const tableRowsOf = (addresses) =>
     { html: viewLink(address) }
   ])
 
-const countryNamesOf = (countries) =>
-  Object.fromEntries(countries.map((country) => [country.code, country.name]))
-
 const paginationOf = (response) => ({
   page: response.page,
   pageSize: response.pageSize,
@@ -82,10 +79,7 @@ const get = async (request, toolkit) => {
     const search = { q: hasSearch ? searchTerm : undefined, countryCode }
     const response = await listAddresses(organisationId, { page, ...search })
     const pagination = paginationOf(response)
-    const addresses = mapAddressRows(
-      response.items ?? [],
-      countryNamesOf(countries)
-    )
+    const addresses = mapAddressRows(response.items ?? [], countries)
 
     return buildView(toolkit, {
       tableRows: tableRowsOf(addresses),

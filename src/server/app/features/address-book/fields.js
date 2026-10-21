@@ -16,7 +16,7 @@ export const FIELD_RULES = {
   townOrCity: { maxLength: 100, required: true },
   county: { maxLength: 100, required: false },
   postcode: { maxLength: 12, required: true },
-  countryCode: { required: true },
+  countryCode: { required: true, oneOfCountryCodes: true },
   phone: { maxLength: 20, required: true },
   email: { maxLength: 254, required: true, email: true }
 }
@@ -42,19 +42,23 @@ const requiredTextRule = (field) =>
 const optionalTextRule = (field) =>
   maxText(field, maxLengthOf(field), maxLengthMessageFor(field))
 
+const emailRule = (field) =>
+  requiredEmail(field, maxLengthOf(field), {
+    required: errors[field].required,
+    maxLength: maxLengthMessageFor(field),
+    format: errors[field].format
+  })
+
+const ruleFor = (field, countryCodes) => {
+  const { required, email, oneOfCountryCodes } = FIELD_RULES[field]
+  if (oneOfCountryCodes) {
+    return requiredOneOf(field, countryCodes, errors[field].required)
+  }
+  if (email) {
+    return emailRule(field)
+  }
+  return required ? requiredTextRule(field) : optionalTextRule(field)
+}
+
 export const addressRules = (countryCodes) =>
-  compose(
-    requiredTextRule('name'),
-    requiredTextRule('addressLine1'),
-    optionalTextRule('addressLine2'),
-    requiredTextRule('townOrCity'),
-    optionalTextRule('county'),
-    requiredTextRule('postcode'),
-    requiredOneOf('countryCode', countryCodes, errors.countryCode.required),
-    requiredTextRule('phone'),
-    requiredEmail('email', maxLengthOf('email'), {
-      required: errors.email.required,
-      maxLength: maxLengthMessageFor('email'),
-      format: errors.email.format
-    })
-  )
+  compose(...FIELDS.map((field) => ruleFor(field, countryCodes)))

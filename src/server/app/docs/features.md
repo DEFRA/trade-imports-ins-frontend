@@ -33,9 +33,9 @@ root:
   `honouredReturnOrAddressBook` and `deadLinkDestination` send a dead link or a finished
   delete there, or to the list when it is one of that address's own pages.
 - [`stored-address.js`](../features/address-book/stored-address.js) —
-  `loadStoredAddress` 404s a tombstoned record; `findLiveAddress` resolves
-  an unknown or deleted address to `undefined`; `boomFor` maps client
-  errors to Boom.
+  `findLiveAddress` resolves an unknown or deleted address to `undefined`;
+  `loadStoredAddress` 404s what `findLiveAddress` does not find;
+  `isNotFound` tells a client 404; `boomFor` maps client errors to Boom.
 - [`success-banner.js`](../features/address-book/success-banner.js) —
   yar-backed, read-once.
 
@@ -97,7 +97,8 @@ The shape every ins controller takes, citing
 
 The edit page loads through `loadStoredAddress`. The view and delete pages
 load through `findLiveAddress` and, when it finds nothing, redirect via
-`honouredReturnOrAddressBook` (an honoured return, else the list); the delete POST treats
+`honouredReturnOrAddressBook` (an honoured return, else the list), logging the
+redirect at info with `{ organisationId, addressId }`; the delete POST treats
 a 404 from `deleteAddress` the same way. Anything else throws
 `boomFor(err, () => logger.error(...))`.
 

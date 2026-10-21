@@ -113,7 +113,10 @@ describe('#FIELD_RULES parity with Java Bean Validation', () => {
     expect(FIELD_RULES.townOrCity).toEqual({ maxLength: 100, required: true })
     expect(FIELD_RULES.county).toEqual({ maxLength: 100, required: false })
     expect(FIELD_RULES.postcode).toEqual({ maxLength: 12, required: true })
-    expect(FIELD_RULES.countryCode).toEqual({ required: true })
+    expect(FIELD_RULES.countryCode).toEqual({
+      required: true,
+      oneOfCountryCodes: true
+    })
     expect(FIELD_RULES.phone).toEqual({ maxLength: 20, required: true })
     expect(FIELD_RULES.email).toEqual({
       maxLength: 254,

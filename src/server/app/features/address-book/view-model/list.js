@@ -1,4 +1,5 @@
 import { addressBookPath } from '../../../shared/paths.js'
+import { countryLabelOf } from '../address-countries.js'
 
 export const buildAddressBookQueryString = ({ page, q, countryCode } = {}) => {
   const params = new URLSearchParams()
@@ -61,11 +62,11 @@ export const buildAddressLine = (address) =>
     .filter(Boolean)
     .join(', ')
 
-export const mapAddressRows = (items, countryNames = {}) =>
+export const mapAddressRows = (items, countries = []) =>
   items.map((address) => ({
     id: address.id,
     name: address.name,
     addressLine: buildAddressLine(address),
     countryCode: address.countryCode,
-    countryName: countryNames[address.countryCode] ?? address.countryCode
+    countryName: countryLabelOf(countries, address.countryCode)
   }))
