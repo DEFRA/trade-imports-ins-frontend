@@ -7,7 +7,7 @@ import {
   buildCountryItems,
   buildCountrySelectItems,
   countryLabelOf,
-  resolveCountryCodeFromSearchTerm,
+  countryCodeMatchingOrNull,
   GB_COUNTRY
 } from './address-countries.js'
 
@@ -98,24 +98,22 @@ describe('#buildCountryItems', () => {
   })
 })
 
-describe('#resolveCountryCodeFromSearchTerm', () => {
+describe('#countryCodeMatchingOrNull', () => {
   const countries = [
     { code: 'GB', name: UK_NAME },
     { code: 'FR', name: 'France' }
   ]
 
   test('returns alpha-2 code for a case-insensitive country name match', () => {
-    expect(resolveCountryCodeFromSearchTerm('France', countries)).toBe('FR')
-    expect(resolveCountryCodeFromSearchTerm('france', countries)).toBe('FR')
-    expect(resolveCountryCodeFromSearchTerm(UK_NAME, countries)).toBe('GB')
+    expect(countryCodeMatchingOrNull('France', countries)).toBe('FR')
+    expect(countryCodeMatchingOrNull('france', countries)).toBe('FR')
+    expect(countryCodeMatchingOrNull(UK_NAME, countries)).toBe('GB')
   })
 
-  test('returns undefined when the term does not match a country name', () => {
-    expect(resolveCountryCodeFromSearchTerm('Paris', countries)).toBeUndefined()
-    expect(resolveCountryCodeFromSearchTerm('', countries)).toBeUndefined()
-    expect(
-      resolveCountryCodeFromSearchTerm(undefined, countries)
-    ).toBeUndefined()
+  test('returns null when the term does not match a country name', () => {
+    expect(countryCodeMatchingOrNull('Paris', countries)).toBeNull()
+    expect(countryCodeMatchingOrNull('', countries)).toBeNull()
+    expect(countryCodeMatchingOrNull(undefined, countries)).toBeNull()
   })
 })
 

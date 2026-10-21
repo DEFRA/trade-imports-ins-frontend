@@ -6,7 +6,7 @@ const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }
 
 const byName = (left, right) => left.name.localeCompare(right.name, 'en')
 
-export async function getAddressFormCountries() {
+export const getAddressFormCountries = async () => {
   const countries = await getCountries()
 
   if (!countries?.length) {
@@ -22,35 +22,31 @@ export async function getAddressFormCountries() {
   return [GB_COUNTRY, ...withoutGb].toSorted(byName)
 }
 
-export function buildCountryItems(countries) {
-  return countries.map((country) => ({
+export const buildCountryItems = (countries) =>
+  countries.map((country) => ({
     value: country.code,
     text: country.name
   }))
-}
 
-export function buildCountrySelectItems(countries, placeholder) {
-  return [{ value: '', text: placeholder }, ...buildCountryItems(countries)]
-}
+export const buildCountrySelectItems = (countries, placeholder) => [
+  { value: '', text: placeholder },
+  ...buildCountryItems(countries)
+]
 
-export function countryLabelOf(countries, countryCode) {
-  return (
-    countries.find((country) => country.code === countryCode)?.name ??
-    countryCode
-  )
-}
+export const countryLabelOf = (countries, countryCode) =>
+  countries.find((country) => country.code === countryCode)?.name ?? countryCode
 
-export function resolveCountryCodeFromSearchTerm(searchTerm, countries) {
+export const countryCodeMatchingOrNull = (searchTerm, countries) => {
   const term = searchTerm?.trim()
   if (!term) {
-    return undefined
+    return null
   }
 
   const normalized = term.toLowerCase()
   const match = countries.find(
     (country) => country.name.toLowerCase() === normalized
   )
-  return match?.code
+  return match?.code ?? null
 }
 
 export { GB_COUNTRY }

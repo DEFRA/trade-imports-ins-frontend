@@ -16,7 +16,7 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
   getAddressFormCountries,
-  resolveCountryCodeFromSearchTerm
+  countryCodeMatchingOrNull
 } from '../address-countries.js'
 import { takeSuccessBanner } from '../success-banner.js'
 import { addressBookPageHref, mapAddressRows } from '../view-model/list.js'
@@ -66,7 +66,7 @@ const get = async (request, toolkit) => {
     const countries = await getAddressFormCountries()
     const countryCode =
       request.query.countryCode?.trim() ||
-      resolveCountryCodeFromSearchTerm(searchTerm, countries)
+      countryCodeMatchingOrNull(searchTerm, countries)
     const search = { q: hasSearch ? searchTerm : undefined, countryCode }
     const response = await listAddresses(organisationId, { page, ...search })
     const pagination = paginationOf(response)
