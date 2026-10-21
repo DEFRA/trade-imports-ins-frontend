@@ -1,8 +1,9 @@
-import nock from 'nock'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-import { config } from '../../../../config/config.js'
-import { refuseOutboundHttp } from '../../../common/test-helpers/real-mode.js'
+import {
+  refuseOutboundHttp,
+  serveCountries
+} from '../../../common/test-helpers/real-mode.js'
 import {
   buildCountryItems,
   buildCountrySelectItems,
@@ -11,14 +12,14 @@ import {
   GB_COUNTRY
 } from './address-countries.js'
 
-const REFERENCE_DATA_URL = config.get('tradeImportsReferenceDataApi.baseUrl')
 const originalMode = process.env.STUB_MODE
 const UK_NAME = 'United Kingdom'
+const GB_AND_FRANCE = [
+  { code: 'GB', name: UK_NAME },
+  { code: 'FR', name: 'France' }
+]
 
-const serveCountryList = (countries) =>
-  nock(REFERENCE_DATA_URL).get('/countries').reply(200, countries)
-
-const importAddressCountries = async () => {
+const importAddressCountriesInRealMode = async () => {
   process.env.STUB_MODE = 'false'
   vi.resetModules()
   return import('./address-countries.js')
@@ -36,13 +37,13 @@ describe('#getAddressFormCountries', () => {
   })
 
   test('Should list countries alphabetically with United Kingdom in its place, once', async () => {
-    serveCountryList([
+    serveCountries([
       { code: 'US', name: 'United States' },
       { code: 'FR', name: 'France' },
       { code: 'GB', name: 'United Kingdom duplicate' },
       { code: 'AE', name: 'United Arab Emirates' }
     ])
-    const { getAddressFormCountries } = await importAddressCountries()
+    const { getAddressFormCountries } = await importAddressCountriesInRealMode()
 
     const countries = await getAddressFormCountries()
 
@@ -55,8 +56,8 @@ describe('#getAddressFormCountries', () => {
   })
 
   test('Should reject with a serverUnavailable Boom when the list is empty', async () => {
-    serveCountryList([])
-    const { getAddressFormCountries } = await importAddressCountries()
+    serveCountries([])
+    const { getAddressFormCountries } = await importAddressCountriesInRealMode()
 
     await expect(getAddressFormCountries()).rejects.toMatchObject({
       isBoom: true,
@@ -67,16 +68,8 @@ describe('#getAddressFormCountries', () => {
 })
 
 describe('#buildCountrySelectItems', () => {
-  test('prepends the placeholder option for govukSelect', () => {
-    expect(
-      buildCountrySelectItems(
-        [
-          { code: 'GB', name: UK_NAME },
-          { code: 'FR', name: 'France' }
-        ],
-        'Select a country'
-      )
-    ).toEqual([
+  test('Should put the placeholder option before the country options', () => {
+    expect(buildCountrySelectItems(GB_AND_FRANCE, 'Select a country')).toEqual([
       { value: '', text: 'Select a country' },
       { value: 'GB', text: UK_NAME },
       { value: 'FR', text: 'France' }
@@ -85,13 +78,8 @@ describe('#buildCountrySelectItems', () => {
 })
 
 describe('#buildCountryItems', () => {
-  test('binds option value to country code not name', () => {
-    expect(
-      buildCountryItems([
-        { code: 'GB', name: UK_NAME },
-        { code: 'FR', name: 'France' }
-      ])
-    ).toEqual([
+  test('Should use the country code as the option value and the name as its text', () => {
+    expect(buildCountryItems(GB_AND_FRANCE)).toEqual([
       { value: 'GB', text: UK_NAME },
       { value: 'FR', text: 'France' }
     ])
@@ -99,35 +87,25 @@ describe('#buildCountryItems', () => {
 })
 
 describe('#countryCodeMatchingOrNull', () => {
-  const countries = [
-    { code: 'GB', name: UK_NAME },
-    { code: 'FR', name: 'France' }
-  ]
-
-  test('returns alpha-2 code for a case-insensitive country name match', () => {
-    expect(countryCodeMatchingOrNull('France', countries)).toBe('FR')
-    expect(countryCodeMatchingOrNull('france', countries)).toBe('FR')
-    expect(countryCodeMatchingOrNull(UK_NAME, countries)).toBe('GB')
+  test('Should return the alpha-2 code for a case-insensitive country name match', () => {
+    expect(countryCodeMatchingOrNull('France', GB_AND_FRANCE)).toBe('FR')
+    expect(countryCodeMatchingOrNull('france', GB_AND_FRANCE)).toBe('FR')
+    expect(countryCodeMatchingOrNull(UK_NAME, GB_AND_FRANCE)).toBe('GB')
   })
 
-  test('returns null when the term does not match a country name', () => {
-    expect(countryCodeMatchingOrNull('Paris', countries)).toBeNull()
-    expect(countryCodeMatchingOrNull('', countries)).toBeNull()
-    expect(countryCodeMatchingOrNull(undefined, countries)).toBeNull()
+  test('Should return null when the term does not match a country name', () => {
+    expect(countryCodeMatchingOrNull('Paris', GB_AND_FRANCE)).toBeNull()
+    expect(countryCodeMatchingOrNull('', GB_AND_FRANCE)).toBeNull()
+    expect(countryCodeMatchingOrNull(undefined, GB_AND_FRANCE)).toBeNull()
   })
 })
 
 describe('#countryLabelOf', () => {
-  const countries = [
-    { code: 'GB', name: UK_NAME },
-    { code: 'FR', name: 'France' }
-  ]
-
-  test('resolves a country code to its name', () => {
-    expect(countryLabelOf(countries, 'FR')).toBe('France')
+  test('Should return the country name for a listed code', () => {
+    expect(countryLabelOf(GB_AND_FRANCE, 'FR')).toBe('France')
   })
 
-  test('falls back to the code when it is not listed', () => {
-    expect(countryLabelOf(countries, 'ZZ')).toBe('ZZ')
+  test('Should return the code itself when it is not listed', () => {
+    expect(countryLabelOf(GB_AND_FRANCE, 'ZZ')).toBe('ZZ')
   })
 })
