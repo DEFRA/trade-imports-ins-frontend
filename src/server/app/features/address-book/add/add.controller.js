@@ -40,49 +40,50 @@ const buildView = (
     countryItems,
     errors = {},
     recoverableError = false,
-    handshake = null
+    handshakeContext = null
   }
 ) =>
   toolkit
     .view(view, {
       ...kit.base(copy.add.title, {
         recoverableError,
-        backLink: handshake ? undefined : addressBookPath()
+        backLink: handshakeContext ? undefined : addressBookPath()
       }),
       copy,
       formValues,
       countryItems,
       errors,
       errorSummary: kit.errorSummary(errors),
-      handshakeContext: handshake,
-      cancelHref: handshake ? null : addressBookPath()
+      handshakeContext,
+      cancelHref: handshakeContext ? null : addressBookPath()
     })
     .header('Cache-Control', 'no-store')
 
 const loadCountryItems = async () =>
   countryItemsOf(await getAddressFormCountries())
 
-const redirectAfterAdd = (toolkit, handshake, created) =>
-  handshake
-    ? toolkit.redirect(buildReturnUrl(handshake, { addressId: created.id }))
+const redirectAfterAdd = (toolkit, handshakeContext, createdAddress) =>
+  handshakeContext
+    ? toolkit.redirect(
+        buildReturnUrl(handshakeContext, { addressId: createdAddress.id })
+      )
     : toolkit.redirect(addressBookPath())
 
-const redirectAfterCancel = (toolkit, handshake) =>
-  handshake
-    ? toolkit.redirect(buildReturnUrl(handshake))
+const redirectAfterCancel = (toolkit, handshakeContext) =>
+  handshakeContext
+    ? toolkit.redirect(buildReturnUrl(handshakeContext))
     : toolkit.redirect(addressBookPath())
 
 const get = async (request, toolkit) => {
-  const handshake = syncHandshakeContext(request)
+  const handshakeContext = syncHandshakeContext(request)
 
   const formValues = formValuesOf()
 
   try {
-    const countries = await getAddressFormCountries()
     return buildView(toolkit, {
       formValues,
-      countryItems: countryItemsOf(countries),
-      handshake
+      countryItems: await loadCountryItems(),
+      handshakeContext
     })
   } catch (err) {
     if (err.isBoom) {
@@ -93,7 +94,7 @@ const get = async (request, toolkit) => {
       formValues,
       countryItems: [],
       recoverableError: true,
-      handshake
+      handshakeContext
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }
@@ -101,11 +102,11 @@ const get = async (request, toolkit) => {
 const submitAddress = async (
   request,
   toolkit,
-  { handshake, organisationId, formValues }
+  { handshakeContext, organisationId, formValues }
 ) => {
   try {
     const countries = await getAddressFormCountries()
-    const { errors, value } = validate(
+    const { errors, value: validatedAddress } = validate(
       addressRules(countries.map((country) => country.code)),
       formValues
     )
@@ -114,24 +115,28 @@ const submitAddress = async (
         formValues,
         countryItems: countryItemsOf(countries),
         errors,
-        handshake
+        handshakeContext
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    const created = await createAddress(organisationId, value)
-    if (!handshake) {
-      setSuccessBanner(request, copy.successBanner.added(created.name))
+    const createdAddress = await createAddress(organisationId, validatedAddress)
+    if (!handshakeContext) {
+      setSuccessBanner(request, copy.successBanner.added(createdAddress.name))
     }
-    return redirectAfterAdd(toolkit, handshake, created)
+    return redirectAfterAdd(toolkit, handshakeContext, createdAddress)
   } catch (err) {
     if (err.isBoom) {
       throw err
     }
     if (isValidationFailure(err)) {
+      logger.warn(
+        { err, organisationId },
+        'Address book refused the new address'
+      )
       return buildView(toolkit, {
         formValues,
         countryItems: await loadCountryItems(),
         errors: mapApiErrorsToFormErrors(err.body),
-        handshake
+        handshakeContext
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     logger.error({ err, organisationId }, 'Failed to create address')
@@ -139,21 +144,21 @@ const submitAddress = async (
       formValues,
       countryItems: await loadCountryItems(),
       recoverableError: true,
-      handshake
+      handshakeContext
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }
 
 const post = async (request, toolkit) => {
-  const handshake = resolveHandshakeContext(request)
+  const handshakeContext = resolveHandshakeContext(request)
   const payload = request.payload ?? {}
   if (payload.cancel) {
-    return redirectAfterCancel(toolkit, handshake)
+    return redirectAfterCancel(toolkit, handshakeContext)
   }
   const organisationId = kit.requireOrganisationId(request)
 
   return submitAddress(request, toolkit, {
-    handshake,
+    handshakeContext,
     organisationId,
     formValues: formValuesOf(payload)
   })
