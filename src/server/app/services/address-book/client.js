@@ -19,7 +19,6 @@ const addressesUrl = (organisationId, addressId) => {
   return addressId ? `${base}/${encodeURIComponent(addressId)}` : base
 }
 
-// The organisation header is the authorisation — the address book trusts it with no further authentication (see its IdentityHeaderFilter). It must come only from the authenticated session, and must match the organisationId in the path (cv-010).
 const headers = (organisationId) => ({
   'Content-Type': 'application/json',
   [ORGANISATION_ID_HEADER]: organisationId,

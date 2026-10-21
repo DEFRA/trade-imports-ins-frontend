@@ -45,7 +45,6 @@ const animalsUrlOrNull = (pathOrUrl) => {
   }
 }
 
-/** A page of this service, or outside stub mode a URL on exactly the animals frontend origin. */
 export const honouredReturnOrNull = (request) => {
   const value = request.query?.[RETURN_QUERY_KEY]
   if (
@@ -58,20 +57,17 @@ export const honouredReturnOrNull = (request) => {
   return normalisedInsPathOrNull(value) ?? animalsUrlOrNull(value)
 }
 
-/** The address book list is never carried: it is where a missing return already goes. */
 export const pathWithReturn = (path, honouredReturn) =>
   !honouredReturn || honouredReturn === addressBookPath()
     ? path
     : `${path}?${new URLSearchParams({ [RETURN_QUERY_KEY]: honouredReturn })}`
 
-/** Its own pages are its view page and any page under it, such as edit and delete. */
 const isOwnPageOf = (addressId, pathOrUrl) => {
   const pathname = pathnameOrNull(pathOrUrl)
   const own = addressPath(addressId)
   return pathname === own || pathname?.startsWith(`${own}/`) === true
 }
 
-/** A return to one of this address's own pages is passed over for the address book. */
 export const honouredReturnOrAddressBook = (addressId, honouredReturn) =>
   honouredReturn && !isOwnPageOf(addressId, honouredReturn)
     ? honouredReturn
@@ -83,6 +79,5 @@ export const deadLinkDestination = (request) =>
     honouredReturnOrNull(request)
   )
 
-/** The deleted banner shows only when the delete lands on the list. */
 export const landsOnAddressBook = (destination) =>
   pathnameOrNull(destination) === addressBookPath()

@@ -6,7 +6,6 @@ import { countryLabelOf, getAddressFormCountries } from './address-countries.js'
 
 export const isNotFound = (err) => err.status === HTTP_STATUS_NOT_FOUND
 
-/** Reads an address, treating anything that is not a live address in this book as absent. */
 export const findLiveAddress = async (organisationId, addressId) => {
   try {
     const address = await getAddress(organisationId, addressId)

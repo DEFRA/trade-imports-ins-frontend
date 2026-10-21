@@ -33,7 +33,6 @@ export function buildCountrySelectItems(countries, placeholder) {
   return [{ value: '', text: placeholder }, ...buildCountryItems(countries)]
 }
 
-/** What to show for a country code: its name in the given list, or the code itself when the list does not hold it. */
 export function countryLabelOf(countries, countryCode) {
   return (
     countries.find((country) => country.code === countryCode)?.name ??
@@ -41,14 +40,6 @@ export function countryLabelOf(countries, countryCode) {
   )
 }
 
-/**
- * Resolves a search term to an ISO alpha-2 country code when it matches an MDM country name
- * (cv-048 FE-resolve). Comparison is case-insensitive on the full trimmed term.
- *
- * @param {string|undefined} searchTerm the user's search term
- * @param {{ code: string, name: string }[]} countries the MDM country list
- * @returns {string|undefined} the alpha-2 code when matched, otherwise undefined
- */
 export function resolveCountryCodeFromSearchTerm(searchTerm, countries) {
   const term = searchTerm?.trim()
   if (!term) {
