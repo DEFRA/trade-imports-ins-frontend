@@ -1,16 +1,12 @@
 import { load } from 'cheerio'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { createServer } from '../../../../server.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
 import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
-import {
-  addressBookApi,
-  runInRealMode,
-  serveCountries
-} from '../../../../common/test-helpers/real-mode.js'
+import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { config } from '../../../../../config/config.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
@@ -19,8 +15,9 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 
 const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
-const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
-const ADD_ADDRESS_URL = '/address-book/add'
+const ADDRESS_BOOK_PATH = '/address-book'
+const ADD_ADDRESS_URL = `${ADDRESS_BOOK_PATH}/add`
+const COUNTRY_OPTIONS = '#countryCode option'
 const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
@@ -42,10 +39,6 @@ const validPayload = {
 }
 
 const ANIMALS_BASE_URL = 'http://localhost:3000'
-const BLANK_COUNTRY_OPTION = '<option value="">Select one</option>'
-const SAVE_AND_CONTINUE = 'Save and continue'
-const HANDSHAKE_QUERY =
-  '?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value'
 const handshakeFields = {
   'journey-type': 'gbn-ag',
   'notification-id': 'GBN-AG-26-4F7K2P',
@@ -62,85 +55,69 @@ const postAdd = (server, session, payload) =>
     payload
   })
 
-const getAdd = (server, session) =>
+const getAdd = (server, session, query = {}) =>
   server.inject({
     method: 'GET',
-    url: ADD_ADDRESS_URL,
+    url: `${ADD_ADDRESS_URL}?${new URLSearchParams(query)}`,
     auth: sessionAuth(session)
   })
 
-const useAddServer = () => {
-  const running = {}
+const textsOf = ($, selector) =>
+  $(selector)
+    .map((_, element) => $(element).text().trim())
+    .get()
 
-  runInRealMode()
-
-  beforeAll(async () => {
-    running.server = await createServer()
-    await running.server.initialize()
-  })
-
-  afterAll(async () => {
-    await running.server.stop({ timeout: 0 })
-  })
-
-  beforeEach(() => {
-    config.set('csrf.enabled', false)
-    config.set('tradeImportsAnimalsFrontend.baseUrl', ANIMALS_BASE_URL)
-    serveCountries(mockCountries)
-  })
-
-  return running
-}
+beforeEach(() => {
+  config.set('csrf.enabled', false)
+  config.set('tradeImportsAnimalsFrontend.baseUrl', ANIMALS_BASE_URL)
+})
 
 describe('#addressBookAddController', { concurrent: false }, () => {
-  let server
-  const running = useAddServer()
-
-  beforeAll(() => {
-    server = running.server
-  })
+  const server = startRealModeServerServingCountries(mockCountries)
 
   test('GET sets Cache-Control: no-store', async () => {
-    const { headers, statusCode } = await getAdd(server, 'add-get-cache')
+    const { headers, statusCode } = await getAdd(server(), 'add-get-cache')
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(headers['cache-control']).toBe('no-store')
   })
 
-  test('GET renders the add address details form', async () => {
-    const { result, statusCode } = await getAdd(server, 'add-get')
+  test('GET renders the add address details form with Back and cancel linking to the address book', async () => {
+    const saveAndContinue = 'Save and continue'
+    const cancelToAddressBook = 'Cancel and return to address book'
+
+    const { result, statusCode } = await getAdd(server(), 'add-get')
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toContain('Add address details')
-    expect(result).not.toContain('govuk-caption-l')
-    expect(result).toMatch(
-      /<a href="\/address-book" class="govuk-back-link">\s*Back\s*<\/a>/
-    )
-    expect(result).not.toContain('app-journey-strip')
-    expect(result).toContain('<h2 class="govuk-heading-m">Address</h2>')
-    expect(result).toContain('<h2 class="govuk-heading-m">Contact details</h2>')
-    expect(result).toMatch(/for="name">\s*Name or organisation\s*</)
-    expect(result).toContain('County (optional)')
-    expect(result).toContain('Postcode or Zip code')
-    expect(result).toContain('Phone number')
-    expect(result).toContain(
+    const $ = load(result)
+    expect(textsOf($, 'h1')).toEqual(['Add address details'])
+    expect($('.govuk-back-link').attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect(textsOf($, '.govuk-back-link')).toEqual(['Back'])
+    expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
+    expect(textsOf($, 'form label')).toEqual([
+      'Name or organisation',
+      'Address line 1',
+      'Address line 2 (optional)',
+      'Town or city',
+      'County (optional)',
+      'Postcode or Zip code',
+      'Country',
+      'Email address',
+      'Phone number'
+    ])
+    expect(textsOf($, '#phone-hint')).toEqual([
       'For international numbers include the country code'
+    ])
+    expect(textsOf($, 'form button')).toEqual([saveAndContinue])
+    expect($('form a.govuk-link').attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect(textsOf($, 'form a.govuk-link')).toEqual([cancelToAddressBook])
+    expect(result.indexOf(saveAndContinue)).toBeLessThan(
+      result.indexOf(cancelToAddressBook)
     )
-    expect(result).toContain(SAVE_AND_CONTINUE)
-    expect(result).toMatch(
-      /<a class="govuk-link" href="\/address-book">\s*Cancel and return to address book\s*<\/a>/
-    )
-    expect(result.indexOf(SAVE_AND_CONTINUE)).toBeGreaterThan(-1)
-    expect(result.indexOf(SAVE_AND_CONTINUE)).toBeLessThan(
-      result.indexOf('Cancel and return to address book')
-    )
-    expect(result).not.toContain('name="cancel"')
-    expect(result).not.toContain('operator')
-    expect(result).not.toContain('Save changes')
   })
 
   test('GET renders country select options from reference data', async () => {
-    const { result, statusCode } = await getAdd(server, 'add-get-countries')
+    const { result, statusCode } = await getAdd(server(), 'add-get-countries')
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('value="GB"')
@@ -159,12 +136,11 @@ describe('#addressBookAddController', { concurrent: false }, () => {
         }
       })
 
-    const { result, statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-api-400'),
-      payload: validPayload
-    })
+    const { result, statusCode, headers } = await postAdd(
+      server(),
+      'add-post-api-400',
+      validPayload
+    )
 
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain(EMAIL_FORMAT_ERROR)
@@ -172,28 +148,27 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(headers['cache-control']).toBe('no-store')
   })
 
-  test('POST creates address and redirects with success banner', async () => {
+  test('POST sends the address to the address book for the organisation and redirects to the address book', async () => {
     let posted
     const scope = addressBookApi()
       .post(ADDRESSES_PATH, (body) => {
         posted = body
         return true
       })
-      .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
+      .matchHeader('Trade-Imports-Organisation-Id', ORGANISATION_ID)
       .reply(201, {
         id: '665f1c2ab3e4d51a2c9d0e77',
         name: BUSINESS_NAME
       })
 
-    const { statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-success'),
-      payload: validPayload
-    })
+    const { statusCode, headers } = await postAdd(
+      server(),
+      'add-post-success',
+      validPayload
+    )
 
     expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toBe('/address-book')
+    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
     expect(scope.isDone()).toBe(true)
     expect(posted).toMatchObject(validPayload)
     expect(headers['cache-control']).not.toBe('no-store')
@@ -204,12 +179,11 @@ describe('#addressBookAddController', { concurrent: false }, () => {
       .post(ADDRESSES_PATH)
       .reply(503, { title: 'Service Unavailable' })
 
-    const { result, statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-500'),
-      payload: validPayload
-    })
+    const { result, statusCode, headers } = await postAdd(
+      server(),
+      'add-post-500',
+      validPayload
+    )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(result).toContain('govuk-notification-banner')
@@ -232,15 +206,10 @@ describe('#addressBookAddController', { concurrent: false }, () => {
         name: BUSINESS_NAME
       })
 
-    const { statusCode } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-trimmed'),
-      payload: {
-        ...validPayload,
-        name: '  Highland Livestock Ltd  ',
-        crumb: 'not-for-the-api'
-      }
+    const { statusCode } = await postAdd(server(), 'add-post-trimmed', {
+      ...validPayload,
+      name: '  Highland Livestock Ltd  ',
+      crumb: 'not-for-the-api'
     })
 
     expect(statusCode).toBe(statusCodes.redirectFound)
@@ -254,7 +223,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 
   test('POST with invalid data re-renders form with errors', async () => {
     const { result, statusCode, headers } = await postAdd(
-      server,
+      server(),
       'add-post-invalid',
       {
         name: '',
@@ -282,7 +251,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 
   test('POST with a country the reference data does not list shows the select-a-country error', async () => {
     const { result, statusCode } = await postAdd(
-      server,
+      server(),
       'add-post-unlisted-country',
       {
         ...validPayload,
@@ -295,15 +264,12 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('Cancel returns to list without creating an address', async () => {
-    const { statusCode, headers } = await server.inject({
-      method: 'POST',
-      url: ADD_ADDRESS_URL,
-      auth: sessionAuth('add-post-cancel'),
-      payload: { cancel: 'true' }
+    const { statusCode, headers } = await postAdd(server(), 'add-post-cancel', {
+      cancel: 'true'
     })
 
     expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toBe('/address-book')
+    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
     expect(headers['cache-control']).not.toBe('no-store')
   })
 })
@@ -312,19 +278,14 @@ describe(
   '#addressBookAddController — journey handshake',
   { concurrent: false },
   () => {
-    let server
-    const running = useAddServer()
-
-    beforeAll(() => {
-      server = running.server
-    })
+    const server = startRealModeServerServingCountries(mockCountries)
 
     test('GET arriving through a journey handshake carries the journey forward in hidden fields and the cancel label', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: `/address-book/add${HANDSHAKE_QUERY}`,
-        auth: sessionAuth('add-get-handshake')
-      })
+      const { result, statusCode } = await getAdd(
+        server(),
+        'add-get-handshake',
+        handshakeFields
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Add address details')
@@ -340,32 +301,34 @@ describe(
     })
 
     test('GET through a handshake opens the form without a Back link to the address book', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: `/address-book/add${HANDSHAKE_QUERY}`,
-        auth: sessionAuth('add-get-handshake-no-back')
-      })
+      const { result, statusCode } = await getAdd(
+        server(),
+        'add-get-handshake-no-back',
+        handshakeFields
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toContain('govuk-back-link')
     })
 
     test('GET refuses an unrecognised journey type', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/address-book/add?journey-type=not-a-journey&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value',
-        auth: sessionAuth('add-get-unknown-journey')
+      const { statusCode } = await getAdd(server(), 'add-get-unknown-journey', {
+        ...handshakeFields,
+        'journey-type': 'not-a-journey'
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
     test('GET rejects an incomplete handshake query', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-4F7K2P',
-        auth: sessionAuth('add-get-incomplete-handshake')
-      })
+      const { statusCode } = await getAdd(
+        server(),
+        'add-get-incomplete-handshake',
+        {
+          'journey-type': handshakeFields['journey-type'],
+          'notification-id': handshakeFields['notification-id']
+        }
+      )
 
       expect(statusCode).toBe(statusCodes.badRequest)
     })
@@ -376,12 +339,11 @@ describe(
         name: BUSINESS_NAME
       })
 
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: ADD_ADDRESS_URL,
-        auth: sessionAuth('add-post-handshake'),
-        payload: { ...handshakeFields, ...validPayload }
-      })
+      const { statusCode, headers } = await postAdd(
+        server(),
+        'add-post-handshake',
+        { ...handshakeFields, ...validPayload }
+      )
 
       expect(statusCode).toBe(statusCodes.redirectFound)
       expect(headers.location).toBe(
@@ -400,12 +362,11 @@ describe(
           }
         })
 
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url: ADD_ADDRESS_URL,
-        auth: sessionAuth('add-post-handshake-api-400'),
-        payload: { ...handshakeFields, ...validPayload }
-      })
+      const { result, statusCode } = await postAdd(
+        server(),
+        'add-post-handshake-api-400',
+        { ...handshakeFields, ...validPayload }
+      )
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain(EMAIL_FORMAT_ERROR)
@@ -414,12 +375,11 @@ describe(
     })
 
     test('Cancel from a handshake returns to the journey without creating an address', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: ADD_ADDRESS_URL,
-        auth: sessionAuth('add-post-handshake-cancel'),
-        payload: { cancel: 'true', ...handshakeFields }
-      })
+      const { statusCode, headers } = await postAdd(
+        server(),
+        'add-post-handshake-cancel',
+        { cancel: 'true', ...handshakeFields }
+      )
 
       expect(statusCode).toBe(statusCodes.redirectFound)
       expect(headers.location).toBe(RETURN_URL)
@@ -431,15 +391,10 @@ describe(
   '#addressBookAddController — field layout',
   { concurrent: false },
   () => {
-    let server
-    const running = useAddServer()
-
-    beforeAll(() => {
-      server = running.server
-    })
+    const server = startRealModeServerServingCountries(mockCountries)
 
     test('GET renders name, address lines and email full width, town and postcode at one half, and phone at two thirds', async () => {
-      const { result } = await getAdd(server, 'add-get-widths')
+      const { result } = await getAdd(server(), 'add-get-widths')
 
       const $ = load(result)
       const classOf = (id) => $(`#${id}`).attr('class')
@@ -454,25 +409,29 @@ describe(
     })
 
     test('GET opens the Country select on its blank first option, Select one, with nothing selected', async () => {
-      const { result, statusCode } = await getAdd(server, 'add-get-select-one')
+      const { result, statusCode } = await getAdd(
+        server(),
+        'add-get-select-one'
+      )
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(BLANK_COUNTRY_OPTION)
       const $ = load(result)
-      expect($('#countryCode option').length).toBeGreaterThan(1)
+      const firstOption = $(COUNTRY_OPTIONS).first()
+      expect(firstOption.attr('value')).toBe('')
+      expect(firstOption.text().trim()).toBe('Select one')
+      expect($(COUNTRY_OPTIONS).length).toBeGreaterThan(1)
       expect($('#countryCode option[selected]')).toHaveLength(0)
     })
 
-    test('GET lists the countries alphabetically with United Kingdom in its place', async () => {
-      const { result } = await getAdd(server, 'add-get-order')
+    test('GET lists the countries by name, not by code, with United Kingdom in its place', async () => {
+      const { result } = await getAdd(server(), 'add-get-order')
 
       const $ = load(result)
-      const codes = $('#countryCode option')
+      const codes = $(COUNTRY_OPTIONS)
         .map((_, option) => $(option).attr('value'))
         .get()
         .filter(Boolean)
 
-      // CH/DE sort the other way by code, so this fails a sort by code
       expect(codes).toEqual(['FR', 'DE', 'CH', 'GB'])
     })
   }

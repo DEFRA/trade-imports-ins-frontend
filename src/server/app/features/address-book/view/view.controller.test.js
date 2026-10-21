@@ -1,16 +1,12 @@
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
-import { createServer } from '../../../../server.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
-import {
-  addressBookApi,
-  runInRealMode,
-  serveCountries
-} from '../../../../common/test-helpers/real-mode.js'
+import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { buildRows } from './view.controller.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
@@ -95,35 +91,13 @@ describe('#buildRows', () => {
   })
 })
 
-const startServerFor = (assign) => {
-  let started
-
-  runInRealMode()
-
-  beforeAll(async () => {
-    started = await createServer()
-    await started.initialize()
-    assign(started)
-  })
-
-  afterAll(async () => {
-    await started.stop({ timeout: 0 })
-  })
-
-  beforeEach(() => {
-    serveCountries([
-      { code: 'GB', name: UK_NAME },
-      { code: 'FR', name: 'France' }
-    ])
-  })
-}
+const countries = [
+  { code: 'GB', name: UK_NAME },
+  { code: 'FR', name: 'France' }
+]
 
 describe('#addressBookViewController', () => {
-  let server
-
-  startServerFor((started) => {
-    server = started
-  })
+  const server = startRealModeServerServingCountries(countries)
 
   test('GET renders read-only address details with Edit and Delete actions', async () => {
     const scope = addressBookApi()
@@ -131,7 +105,7 @@ describe('#addressBookViewController', () => {
       .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(200, mockAddress)
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: `/address-book/${addressId}`,
       auth: sessionAuth('view-get')
@@ -180,7 +154,7 @@ describe('#addressBookViewController', () => {
   test('GET redirects to the address book when the address is not found', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
-    const { headers, statusCode } = await server.inject({
+    const { headers, statusCode } = await server().inject({
       method: 'GET',
       url: `/address-book/${addressId}`,
       auth: sessionAuth('view-not-found')
@@ -196,7 +170,7 @@ describe('#addressBookViewController', () => {
       .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(404, { message: 'Not found' })
 
-    const { headers, statusCode } = await server.inject({
+    const { headers, statusCode } = await server().inject({
       method: 'GET',
       url: `/address-book/${addressId}`,
       auth: sessionAuth('view-other-org')
@@ -207,7 +181,7 @@ describe('#addressBookViewController', () => {
   })
 
   test('GET redirects to the address book for a malformed address id without reaching the address book', async () => {
-    const { headers, statusCode } = await server.inject({
+    const { headers, statusCode } = await server().inject({
       method: 'GET',
       url: '/address-book/not-a-valid-id',
       auth: sessionAuth('view-bad-id')
@@ -222,7 +196,7 @@ describe('#addressBookViewController', () => {
       .get(ADDRESS_PATH)
       .reply(200, { ...mockAddress, deleted: true })
 
-    const { headers, statusCode } = await server.inject({
+    const { headers, statusCode } = await server().inject({
       method: 'GET',
       url: `/address-book/${addressId}`,
       auth: sessionAuth('view-get-tombstone')
@@ -234,16 +208,12 @@ describe('#addressBookViewController', () => {
 })
 
 describe('#addressBookViewController with a return', () => {
-  let server
-
-  startServerFor((started) => {
-    server = started
-  })
+  const server = startRealModeServerServingCountries(countries)
 
   test('GET with an INS return links Back to it and carries it on Edit and Delete', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: `/address-book/${addressId}?return=%2F`,
       auth: sessionAuth('view-return-ins')
@@ -265,7 +235,7 @@ describe('#addressBookViewController with a return', () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
     const ownPage = `/address-book/${addressId}`
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: `${ownPage}?return=${encodeURIComponent(ownPage)}`,
       auth: sessionAuth('view-return-own-page')
@@ -279,7 +249,7 @@ describe('#addressBookViewController with a return', () => {
     const animalsUrl = `${new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin}/live-animals/notifications/abc`
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: `/address-book/${addressId}?return=${encodeURIComponent(animalsUrl)}`,
       auth: sessionAuth('view-return-animals')
@@ -292,7 +262,7 @@ describe('#addressBookViewController with a return', () => {
   test('GET ignores a return on another origin', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: `/address-book/${addressId}?return=https%3A%2F%2Fevil.example%2F`,
       auth: sessionAuth('view-return-other-origin')
@@ -307,7 +277,7 @@ describe('#addressBookViewController with a return', () => {
   test('GET for a not-found address with an honoured return redirects to it', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
-    const { headers, statusCode } = await server.inject({
+    const { headers, statusCode } = await server().inject({
       method: 'GET',
       url: `/address-book/${addressId}?return=%2F`,
       auth: sessionAuth('view-return-not-found')
@@ -318,7 +288,7 @@ describe('#addressBookViewController with a return', () => {
   })
 
   test('GET for a malformed id with an honoured return redirects to it', async () => {
-    const { headers, statusCode } = await server.inject({
+    const { headers, statusCode } = await server().inject({
       method: 'GET',
       url: '/address-book/not-a-valid-id?return=%2F',
       auth: sessionAuth('view-return-bad-id')
@@ -334,7 +304,7 @@ describe('#addressBookViewController with a return', () => {
   ])(
     'GET for a malformed id with a return of %s redirects to it percent-encoded',
     async (encoded, location) => {
-      const { headers, statusCode } = await server.inject({
+      const { headers, statusCode } = await server().inject({
         method: 'GET',
         url: `/address-book/not-a-valid-id?return=${encoded}`,
         auth: sessionAuth('view-return-encoded')
@@ -350,7 +320,7 @@ describe('#addressBookViewController with a return', () => {
       .get(ADDRESS_PATH)
       .reply(503, { title: 'Service Unavailable' })
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: `/address-book/${addressId}`,
       auth: sessionAuth('view-get-500')

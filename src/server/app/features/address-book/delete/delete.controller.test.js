@@ -1,16 +1,12 @@
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
-import { createServer } from '../../../../server.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
-import {
-  addressBookApi,
-  runInRealMode,
-  serveCountries
-} from '../../../../common/test-helpers/real-mode.js'
+import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { addressSummaryLines, deletedBannerText } from './delete.controller.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
@@ -141,40 +137,18 @@ describe('#deletedBannerText', () => {
   })
 })
 
-const startServerFor = (assign) => {
-  let started
-
-  runInRealMode()
-
-  beforeAll(async () => {
-    started = await createServer()
-    await started.initialize()
-    assign(started)
-  })
-
-  afterAll(async () => {
-    await started.stop({ timeout: 0 })
-  })
-
-  beforeEach(() => {
-    serveCountries([
-      { code: 'GB', name: UK_NAME },
-      { code: 'FR', name: 'France' }
-    ])
-  })
-}
+const countries = [
+  { code: 'GB', name: UK_NAME },
+  { code: 'FR', name: 'France' }
+]
 
 describe('#addressBookDeleteController', () => {
-  let server
-
-  startServerFor((started) => {
-    server = started
-  })
+  const server = startRealModeServerServingCountries(countries)
 
   test('GET renders the confirmation with one Address summary row, the warning, Yes, delete and a No, cancel link', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    const { result, statusCode } = await getDelete(server, 'delete-get')
+    const { result, statusCode } = await getDelete(server(), 'delete-get')
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
@@ -205,7 +179,7 @@ describe('#addressBookDeleteController', () => {
   test('GET shows Not applicable when the address has no name, lines or country', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, blankAddress)
 
-    const { result, statusCode } = await getDelete(server, 'delete-get-blank')
+    const { result, statusCode } = await getDelete(server(), 'delete-get-blank')
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(load(result)(SUMMARY_VALUE).text().trim()).toBe('Not applicable')
@@ -214,7 +188,7 @@ describe('#addressBookDeleteController', () => {
   test('GET redirects to the address book when the address is not found', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
-    const { headers, statusCode } = await getDelete(server, 'delete-get-404')
+    const { headers, statusCode } = await getDelete(server(), 'delete-get-404')
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
@@ -226,7 +200,7 @@ describe('#addressBookDeleteController', () => {
       .reply(200, { ...mockAddress, deleted: true })
 
     const { headers, statusCode } = await getDelete(
-      server,
+      server(),
       'delete-get-tombstone'
     )
 
@@ -235,7 +209,7 @@ describe('#addressBookDeleteController', () => {
   })
 
   test('GET redirects to the address book for a malformed address id', async () => {
-    const { headers, statusCode } = await server.inject({
+    const { headers, statusCode } = await server().inject({
       method: 'GET',
       url: '/address-book/not-a-valid-id/delete',
       auth: sessionAuth('delete-get-bad-id')
@@ -250,7 +224,7 @@ describe('#addressBookDeleteController', () => {
       .get(ADDRESS_PATH)
       .reply(503, { title: 'Service Unavailable' })
 
-    const { result, statusCode } = await getDelete(server, 'delete-get-500')
+    const { result, statusCode } = await getDelete(server(), 'delete-get-500')
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(result).toContain('Something went wrong')
@@ -262,7 +236,7 @@ describe('#addressBookDeleteController', () => {
       .reply(200, { ...mockAddress, deleted: true })
 
     const { headers, statusCode } = await postDelete(
-      server,
+      server(),
       'delete-post-tombstone'
     )
 
@@ -274,7 +248,7 @@ describe('#addressBookDeleteController', () => {
     addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
     const { headers, statusCode } = await postDelete(
-      server,
+      server(),
       'delete-post-unknown'
     )
 
@@ -286,7 +260,10 @@ describe('#addressBookDeleteController', () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
     addressBookApi().delete(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
-    const { headers, statusCode } = await postDelete(server, 'delete-post-404')
+    const { headers, statusCode } = await postDelete(
+      server(),
+      'delete-post-404'
+    )
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
@@ -298,7 +275,7 @@ describe('#addressBookDeleteController', () => {
       .delete(ADDRESS_PATH)
       .reply(503, { title: 'Service Unavailable' })
 
-    const { result, statusCode } = await postDelete(server, 'delete-post-500')
+    const { result, statusCode } = await postDelete(server(), 'delete-post-500')
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(result).toContain('Something went wrong')
@@ -312,7 +289,7 @@ describe('#addressBookDeleteController', () => {
       .reply(204)
 
     const { statusCode, headers } = await postDelete(
-      server,
+      server(),
       'delete-post-confirm'
     )
 
@@ -320,7 +297,7 @@ describe('#addressBookDeleteController', () => {
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
     expect(scope.isDone()).toBe(true)
 
-    const list = await nextListPage(server, 'delete-post-confirm', headers)
+    const list = await nextListPage(server(), 'delete-post-confirm', headers)
     expect(load(list.result)(BANNER).text()).toContain(
       'Highland Livestock Ltd address deleted'
     )
@@ -328,17 +305,13 @@ describe('#addressBookDeleteController', () => {
 })
 
 describe('#addressBookDeleteController with a return', () => {
-  let server
-
-  startServerFor((started) => {
-    server = started
-  })
+  const server = startRealModeServerServingCountries(countries)
 
   test('GET with a return points Back and No, cancel at the view page carrying it', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
     const { result, statusCode } = await getDelete(
-      server,
+      server(),
       'delete-get-return',
       RETURN_HOME
     )
@@ -355,7 +328,7 @@ describe('#addressBookDeleteController with a return', () => {
     const scope = addressBookApi().delete(ADDRESS_PATH).reply(204)
 
     const { headers, statusCode } = await postDelete(
-      server,
+      server(),
       'delete-post-return',
       RETURN_HOME
     )
@@ -364,7 +337,7 @@ describe('#addressBookDeleteController with a return', () => {
     expect(headers.location).toBe('/')
     expect(scope.isDone()).toBe(true)
 
-    const list = await nextListPage(server, 'delete-post-return', headers)
+    const list = await nextListPage(server(), 'delete-post-return', headers)
     expect(load(list.result)(BANNER)).toHaveLength(0)
   })
 
@@ -374,7 +347,7 @@ describe('#addressBookDeleteController with a return', () => {
     const ownPage = `/address-book/${addressId}`
 
     const { headers, statusCode } = await postDelete(
-      server,
+      server(),
       'delete-post-return-own-page',
       `?return=${encodeURIComponent(ownPage)}`
     )
@@ -389,7 +362,7 @@ describe('#addressBookDeleteController with a return', () => {
     addressBookApi().delete(ADDRESS_PATH).reply(204)
 
     const { headers, statusCode } = await postDelete(
-      server,
+      server(),
       'delete-post-return-animals',
       `?return=${encodeURIComponent(animalsUrl)}`
     )
@@ -402,7 +375,7 @@ describe('#addressBookDeleteController with a return', () => {
     addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
     const { headers, statusCode } = await postDelete(
-      server,
+      server(),
       'delete-post-return-unknown',
       RETURN_HOME
     )
