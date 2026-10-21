@@ -5,19 +5,20 @@ import * as stub from './stub.js'
 
 const addressBook = () => (isStubMode() ? stub : client)
 
-export const listAddresses = (orgId, search) =>
-  addressBook().listAddresses(orgId, search)
+export const listAddresses = (organisationId, search) =>
+  addressBook().listAddresses(organisationId, search)
 
-export const createAddress = (orgId, body) =>
-  addressBook().createAddress(orgId, body)
+export const createAddress = (organisationId, body) =>
+  addressBook().createAddress(organisationId, body)
 
-export const getAddress = (orgId, id) => addressBook().getAddress(orgId, id)
+export const getAddress = (organisationId, addressId) =>
+  addressBook().getAddress(organisationId, addressId)
 
-export const updateAddress = (orgId, id, body) =>
-  addressBook().updateAddress(orgId, id, body)
+export const updateAddress = (organisationId, addressId, body) =>
+  addressBook().updateAddress(organisationId, addressId, body)
 
-export const deleteAddress = (orgId, id) =>
-  addressBook().deleteAddress(orgId, id)
+export const deleteAddress = (organisationId, addressId) =>
+  addressBook().deleteAddress(organisationId, addressId)
 
 export const mapApiErrorsToFormErrors = (problemBody) =>
   Object.fromEntries(

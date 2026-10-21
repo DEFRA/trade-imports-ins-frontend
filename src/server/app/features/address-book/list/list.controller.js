@@ -57,8 +57,8 @@ const paginationOf = (response) => ({
   totalPages: response.totalPages
 })
 
-const buildView = (h, { recoverableError = false, ...model }) =>
-  h.view(view, {
+const buildView = (toolkit, { recoverableError = false, ...model }) =>
+  toolkit.view(view, {
     ...kit.base(copy.list.title, { recoverableError }),
     contentColumnClass: kit.surfaceClass('display'),
     copy,
@@ -67,31 +67,31 @@ const buildView = (h, { recoverableError = false, ...model }) =>
     ...model
   })
 
-const get = async (request, h) => {
-  const orgId = kit.requireOrganisationId(request)
+const get = async (request, toolkit) => {
+  const organisationId = kit.requireOrganisationId(request)
   const page = parsePage(request.query.page)
-  const q = request.query.q?.trim() ?? ''
-  const hasSearch = Boolean(q)
+  const searchTerm = request.query.q?.trim() ?? ''
+  const hasSearch = Boolean(searchTerm)
   const successBanner = takeSuccessBanner(request)
 
   try {
     const countries = await getAddressFormCountries()
     const countryCode =
       request.query.countryCode?.trim() ||
-      resolveCountryCodeFromSearchTerm(q, countries)
-    const search = { q: hasSearch ? q : undefined, countryCode }
-    const response = await listAddresses(orgId, { page, ...search })
+      resolveCountryCodeFromSearchTerm(searchTerm, countries)
+    const search = { q: hasSearch ? searchTerm : undefined, countryCode }
+    const response = await listAddresses(organisationId, { page, ...search })
     const pagination = paginationOf(response)
     const addresses = mapAddressRows(
       response.items ?? [],
       countryNamesOf(countries)
     )
 
-    return buildView(h, {
+    return buildView(toolkit, {
       tableRows: tableRowsOf(addresses),
       resultsLabel: buildResultsLabel(pagination, copy.list.results),
       pagination: buildPaginationLinks(pagination, search),
-      q,
+      searchTerm,
       hasSearch,
       isEmpty: response.totalItems === 0 && !hasSearch,
       noSearchResults: response.totalItems === 0 && hasSearch,
@@ -101,12 +101,12 @@ const get = async (request, h) => {
     if (err.isBoom) {
       throw err
     }
-    logger.error({ err, orgId }, 'Failed to load address book')
-    return buildView(h, {
+    logger.error({ err, organisationId }, 'Failed to load address book')
+    return buildView(toolkit, {
       tableRows: [],
       resultsLabel: null,
       pagination: null,
-      q,
+      searchTerm,
       hasSearch,
       isEmpty: false,
       noSearchResults: false,

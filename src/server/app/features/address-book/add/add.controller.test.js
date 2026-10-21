@@ -17,8 +17,8 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
-const ADDRESSES_PATH = `/organisation/${ORG_ID}/addresses`
+const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
+const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
 const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 const ADD_ADDRESS_URL = '/address-book/add'
 const BUSINESS_NAME = 'Highland Livestock Ltd'
@@ -179,7 +179,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
         posted = body
         return true
       })
-      .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+      .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(201, {
         id: '665f1c2ab3e4d51a2c9d0e77',
         name: BUSINESS_NAME

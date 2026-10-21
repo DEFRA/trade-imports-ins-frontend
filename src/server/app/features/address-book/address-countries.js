@@ -15,7 +15,9 @@ export async function getAddressFormCountries() {
     })
   }
 
-  const withoutGb = countries.filter((country) => country.code !== 'GB')
+  const withoutGb = countries.filter(
+    (country) => country.code !== GB_COUNTRY.code
+  )
 
   return [GB_COUNTRY, ...withoutGb].toSorted(byName)
 }
@@ -43,12 +45,12 @@ export function countryLabelOf(countries, countryCode) {
  * Resolves a search term to an ISO alpha-2 country code when it matches an MDM country name
  * (cv-048 FE-resolve). Comparison is case-insensitive on the full trimmed term.
  *
- * @param {string|undefined} q the user's search term
+ * @param {string|undefined} searchTerm the user's search term
  * @param {{ code: string, name: string }[]} countries the MDM country list
  * @returns {string|undefined} the alpha-2 code when matched, otherwise undefined
  */
-export function resolveCountryCodeFromSearchTerm(q, countries) {
-  const term = q?.trim()
+export function resolveCountryCodeFromSearchTerm(searchTerm, countries) {
+  const term = searchTerm?.trim()
   if (!term) {
     return undefined
   }

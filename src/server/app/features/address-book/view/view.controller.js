@@ -66,24 +66,26 @@ export const buildRows = (address, countryLabel) =>
     .map(({ label, text }) => ({ key: { text: label }, value: { text } }))
 
 const get = async (request, toolkit) => {
-  const orgId = kit.requireOrganisationId(request)
-  const { id } = request.params
+  const organisationId = kit.requireOrganisationId(request)
+  const { id: addressId } = request.params
   const honouredReturn = honouredReturnOrNull(request)
 
   try {
-    const address = await findLiveAddress(orgId, id)
+    const address = await findLiveAddress(organisationId, addressId)
     if (!address) {
-      return toolkit.redirect(honouredReturnOrAddressBook(id, honouredReturn))
+      return toolkit.redirect(
+        honouredReturnOrAddressBook(addressId, honouredReturn)
+      )
     }
     const countries = await getAddressFormCountries()
     return toolkit.view(view, {
       ...kit.base(address.name, {
-        backLink: honouredReturnOrAddressBook(id, honouredReturn)
+        backLink: honouredReturnOrAddressBook(addressId, honouredReturn)
       }),
       copy,
       heading: address.name,
-      editHref: pathWithReturn(addressEditPath(id), honouredReturn),
-      deleteHref: pathWithReturn(addressDeletePath(id), honouredReturn),
+      editHref: pathWithReturn(addressEditPath(addressId), honouredReturn),
+      deleteHref: pathWithReturn(addressDeletePath(addressId), honouredReturn),
       summaryRows: buildRows(
         address,
         countryLabelOf(countries, address.countryCode)
@@ -91,7 +93,7 @@ const get = async (request, toolkit) => {
     })
   } catch (err) {
     throw boomFor(err, () =>
-      logger.error({ err, orgId, id }, 'Failed to load address')
+      logger.error({ err, organisationId, addressId }, 'Failed to load address')
     )
   }
 }

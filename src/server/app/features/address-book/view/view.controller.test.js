@@ -17,9 +17,9 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
+const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
-const ADDRESS_PATH = `/organisation/${ORG_ID}/addresses/${addressId}`
+const ADDRESS_PATH = `/organisation/${ORGANISATION_ID}/addresses/${addressId}`
 const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL = 'exports@example.com'
@@ -128,7 +128,7 @@ describe('#addressBookViewController', () => {
   test('GET renders read-only address details with Edit and Delete actions', async () => {
     const scope = addressBookApi()
       .get(ADDRESS_PATH)
-      .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+      .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(200, mockAddress)
 
     const { result, statusCode } = await server.inject({
@@ -193,7 +193,7 @@ describe('#addressBookViewController', () => {
   test("GET redirects to the address book for another organisation's address", async () => {
     addressBookApi()
       .get(ADDRESS_PATH)
-      .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+      .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(404, { message: 'Not found' })
 
     const { headers, statusCode } = await server.inject({

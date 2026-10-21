@@ -9,20 +9,20 @@ const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 const addressBookUrl = config.get('tradeImportsAddressBookApi.baseUrl')
 const tracingHeader = config.get('tracing.header')
 
-const addressesUrl = (orgId, addressId) => {
-  if (!orgId) {
+const addressesUrl = (organisationId, addressId) => {
+  if (!organisationId) {
     throw new Error(
       'Cannot reach the address book without an organisation: the signed-in session carries none'
     )
   }
-  const base = `${addressBookUrl}/organisation/${encodeURIComponent(orgId)}/addresses`
+  const base = `${addressBookUrl}/organisation/${encodeURIComponent(organisationId)}/addresses`
   return addressId ? `${base}/${encodeURIComponent(addressId)}` : base
 }
 
-// The organisation header is the authorisation — the address book trusts it with no further authentication (see its IdentityHeaderFilter). It must come only from the authenticated session, and must match the orgId in the path (cv-010).
-const headers = (orgId) => ({
+// The organisation header is the authorisation — the address book trusts it with no further authentication (see its IdentityHeaderFilter). It must come only from the authenticated session, and must match the organisationId in the path (cv-010).
+const headers = (organisationId) => ({
   'Content-Type': 'application/json',
-  [ORGANISATION_ID_HEADER]: orgId,
+  [ORGANISATION_ID_HEADER]: organisationId,
   [tracingHeader]: getTraceId() ?? ''
 })
 
@@ -43,10 +43,10 @@ const throwOnValidationFailure = async (response) => {
 }
 
 export const listAddresses = async (
-  orgId,
+  organisationId,
   { page = 1, q, countryCode } = {}
 ) => {
-  const url = new URL(addressesUrl(orgId))
+  const url = new URL(addressesUrl(organisationId))
   url.searchParams.set('page', String(page))
   if (q) {
     url.searchParams.set('q', q)
@@ -57,17 +57,17 @@ export const listAddresses = async (
 
   const response = await fetch(url.toString(), {
     method: 'GET',
-    headers: headers(orgId)
+    headers: headers(organisationId)
   })
 
   await throwOnError(response)
   return response.json()
 }
 
-export const createAddress = async (orgId, body) => {
-  const response = await fetch(addressesUrl(orgId), {
+export const createAddress = async (organisationId, body) => {
+  const response = await fetch(addressesUrl(organisationId), {
     method: 'POST',
-    headers: headers(orgId),
+    headers: headers(organisationId),
     body: JSON.stringify(body)
   })
 
@@ -75,20 +75,20 @@ export const createAddress = async (orgId, body) => {
   return response.json()
 }
 
-export const getAddress = async (orgId, id) => {
-  const response = await fetch(addressesUrl(orgId, id), {
+export const getAddress = async (organisationId, addressId) => {
+  const response = await fetch(addressesUrl(organisationId, addressId), {
     method: 'GET',
-    headers: headers(orgId)
+    headers: headers(organisationId)
   })
 
   await throwOnError(response)
   return response.json()
 }
 
-export const updateAddress = async (orgId, id, body) => {
-  const response = await fetch(addressesUrl(orgId, id), {
+export const updateAddress = async (organisationId, addressId, body) => {
+  const response = await fetch(addressesUrl(organisationId, addressId), {
     method: 'PUT',
-    headers: headers(orgId),
+    headers: headers(organisationId),
     body: JSON.stringify(body)
   })
 
@@ -96,10 +96,10 @@ export const updateAddress = async (orgId, id, body) => {
   return response.json()
 }
 
-export const deleteAddress = async (orgId, id) => {
-  const response = await fetch(addressesUrl(orgId, id), {
+export const deleteAddress = async (organisationId, addressId) => {
+  const response = await fetch(addressesUrl(organisationId, addressId), {
     method: 'DELETE',
-    headers: headers(orgId)
+    headers: headers(organisationId)
   })
 
   await throwOnError(response)

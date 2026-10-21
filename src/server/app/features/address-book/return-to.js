@@ -2,7 +2,7 @@ import { config } from '../../../../config/config.js'
 import { isStubMode } from '../../../common/services/mode.js'
 import { addressBookPath, addressPath } from '../../shared/paths.js'
 
-export const RETURN_QUERY_KEY = 'return'
+const RETURN_QUERY_KEY = 'return'
 
 // Characters browsers or the URL parser rewrite into an off-site redirect, or that split a Location header.
 const UNSAFE_REDIRECT_CHARACTERS = /[\\\r\n]/
@@ -65,7 +65,7 @@ export const pathWithReturn = (path, honouredReturn) =>
     : `${path}?${new URLSearchParams({ [RETURN_QUERY_KEY]: honouredReturn })}`
 
 /** Its own pages are its view page and any page under it, such as edit and delete. */
-export const isOwnPageOf = (addressId, pathOrUrl) => {
+const isOwnPageOf = (addressId, pathOrUrl) => {
   const pathname = pathnameOrNull(pathOrUrl)
   const own = addressPath(addressId)
   return pathname === own || pathname?.startsWith(`${own}/`) === true

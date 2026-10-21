@@ -16,9 +16,9 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
+const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
-const ADDRESS_PATH = `/organisation/${ORG_ID}/addresses/${addressId}`
+const ADDRESS_PATH = `/organisation/${ORGANISATION_ID}/addresses/${addressId}`
 const UPDATED_NAME = 'Updated Farm Ltd'
 
 const mockCountries = [

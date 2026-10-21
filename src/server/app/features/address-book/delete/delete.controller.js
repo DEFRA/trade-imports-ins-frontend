@@ -40,21 +40,23 @@ export const deletedBannerText = (name) =>
   name ? copy.successBanner.deleted(name) : copy.successBanner.deletedUnnamed
 
 const get = async (request, toolkit) => {
-  const orgId = kit.requireOrganisationId(request)
-  const { id } = request.params
+  const organisationId = kit.requireOrganisationId(request)
+  const { id: addressId } = request.params
   const honouredReturn = honouredReturnOrNull(request)
 
   try {
-    const address = await findLiveAddress(orgId, id)
+    const address = await findLiveAddress(organisationId, addressId)
     if (!address) {
-      return toolkit.redirect(honouredReturnOrAddressBook(id, honouredReturn))
+      return toolkit.redirect(
+        honouredReturnOrAddressBook(addressId, honouredReturn)
+      )
     }
     const countries = await getAddressFormCountries()
     const lines = addressSummaryLines(
       address,
       countryLabelOf(countries, address.countryCode)
     )
-    const viewHref = pathWithReturn(addressPath(id), honouredReturn)
+    const viewHref = pathWithReturn(addressPath(addressId), honouredReturn)
     return toolkit.view(view, {
       ...kit.base(copy.delete.title, { backLink: viewHref }),
       copy,
@@ -63,25 +65,28 @@ const get = async (request, toolkit) => {
     })
   } catch (err) {
     throw boomFor(err, () =>
-      logger.error({ err, orgId, id }, 'Failed to load address for delete')
+      logger.error(
+        { err, organisationId, addressId },
+        'Failed to load address for delete'
+      )
     )
   }
 }
 
 const post = async (request, toolkit) => {
-  const orgId = kit.requireOrganisationId(request)
-  const { id } = request.params
+  const organisationId = kit.requireOrganisationId(request)
+  const { id: addressId } = request.params
   const destination = honouredReturnOrAddressBook(
-    id,
+    addressId,
     honouredReturnOrNull(request)
   )
 
   try {
-    const address = await findLiveAddress(orgId, id)
+    const address = await findLiveAddress(organisationId, addressId)
     if (!address) {
       return toolkit.redirect(destination)
     }
-    await deleteAddress(orgId, id)
+    await deleteAddress(organisationId, addressId)
     if (landsOnAddressBook(destination)) {
       setSuccessBanner(request, deletedBannerText(address.name))
     }
@@ -91,7 +96,10 @@ const post = async (request, toolkit) => {
       return toolkit.redirect(destination)
     }
     throw boomFor(err, () =>
-      logger.error({ err, orgId, id }, 'Failed to delete address')
+      logger.error(
+        { err, organisationId, addressId },
+        'Failed to delete address'
+      )
     )
   }
 }

@@ -30,7 +30,7 @@
       id: "q",
       name: "q",
       type: "search",
-      value: q,
+      value: searchTerm,
       classes: "govuk-!-width-two-thirds"
     }) }}
     {{ govukButton({
@@ -49,7 +49,7 @@
   {% if isEmpty %}
     <p class="govuk-body">{{ copy.list.empty }}</p>
   {% elif noSearchResults %}
-    <p class="govuk-body">{{ copy.list.noMatchPrefix }} "{{ q }}".</p>
+    <p class="govuk-body">{{ copy.list.noMatchPrefix }} "{{ searchTerm }}".</p>
     <p class="govuk-body">
       <a class="govuk-link" href="{{ listHref }}">{{ copy.list.search.clear }}</a>
     </p>

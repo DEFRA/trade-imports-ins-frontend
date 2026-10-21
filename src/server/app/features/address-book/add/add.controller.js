@@ -34,7 +34,7 @@ const countryItemsOf = (countries) =>
   buildCountrySelectItems(countries, copy.add.countryPlaceholder)
 
 const buildView = (
-  h,
+  toolkit,
   {
     formValues,
     countryItems,
@@ -43,7 +43,7 @@ const buildView = (
     handshake = null
   }
 ) =>
-  h
+  toolkit
     .view(view, {
       ...kit.base(copy.add.title, {
         recoverableError,
@@ -62,24 +62,24 @@ const buildView = (
 const loadCountryItems = async () =>
   countryItemsOf(await getAddressFormCountries())
 
-const redirectAfterAdd = (h, handshake, created) =>
+const redirectAfterAdd = (toolkit, handshake, created) =>
   handshake
-    ? h.redirect(buildReturnUrl(handshake, { addressId: created.id }))
-    : h.redirect(addressBookPath())
+    ? toolkit.redirect(buildReturnUrl(handshake, { addressId: created.id }))
+    : toolkit.redirect(addressBookPath())
 
-const redirectAfterCancel = (h, handshake) =>
+const redirectAfterCancel = (toolkit, handshake) =>
   handshake
-    ? h.redirect(buildReturnUrl(handshake))
-    : h.redirect(addressBookPath())
+    ? toolkit.redirect(buildReturnUrl(handshake))
+    : toolkit.redirect(addressBookPath())
 
-const get = async (request, h) => {
+const get = async (request, toolkit) => {
   const handshake = syncHandshakeContext(request)
 
   const formValues = formValuesOf()
 
   try {
     const countries = await getAddressFormCountries()
-    return buildView(h, {
+    return buildView(toolkit, {
       formValues,
       countryItems: countryItemsOf(countries),
       handshake
@@ -89,7 +89,7 @@ const get = async (request, h) => {
       throw err
     }
     logger.error({ err }, 'Failed to load address form countries')
-    return buildView(h, {
+    return buildView(toolkit, {
       formValues,
       countryItems: [],
       recoverableError: true,
@@ -98,7 +98,11 @@ const get = async (request, h) => {
   }
 }
 
-const submitAddress = async (request, h, { handshake, orgId, formValues }) => {
+const submitAddress = async (
+  request,
+  toolkit,
+  { handshake, organisationId, formValues }
+) => {
   try {
     const countries = await getAddressFormCountries()
     const { errors, value } = validate(
@@ -106,32 +110,32 @@ const submitAddress = async (request, h, { handshake, orgId, formValues }) => {
       formValues
     )
     if (errors) {
-      return buildView(h, {
+      return buildView(toolkit, {
         formValues,
         countryItems: countryItemsOf(countries),
         errors,
         handshake
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    const created = await createAddress(orgId, value)
+    const created = await createAddress(organisationId, value)
     if (!handshake) {
       setSuccessBanner(request, copy.successBanner.added(created.name))
     }
-    return redirectAfterAdd(h, handshake, created)
+    return redirectAfterAdd(toolkit, handshake, created)
   } catch (err) {
     if (err.isBoom) {
       throw err
     }
     if (isValidationFailure(err)) {
-      return buildView(h, {
+      return buildView(toolkit, {
         formValues,
         countryItems: await loadCountryItems(),
         errors: mapApiErrorsToFormErrors(err.body),
         handshake
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    logger.error({ err, orgId }, 'Failed to create address')
-    return buildView(h, {
+    logger.error({ err, organisationId }, 'Failed to create address')
+    return buildView(toolkit, {
       formValues,
       countryItems: await loadCountryItems(),
       recoverableError: true,
@@ -140,17 +144,17 @@ const submitAddress = async (request, h, { handshake, orgId, formValues }) => {
   }
 }
 
-const post = async (request, h) => {
+const post = async (request, toolkit) => {
   const handshake = resolveHandshakeContext(request)
   const payload = request.payload ?? {}
   if (payload.cancel) {
-    return redirectAfterCancel(h, handshake)
+    return redirectAfterCancel(toolkit, handshake)
   }
-  const orgId = kit.requireOrganisationId(request)
+  const organisationId = kit.requireOrganisationId(request)
 
-  return submitAddress(request, h, {
+  return submitAddress(request, toolkit, {
     handshake,
-    orgId,
+    organisationId,
     formValues: formValuesOf(payload)
   })
 }

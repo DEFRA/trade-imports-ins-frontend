@@ -14,8 +14,8 @@ vi.mock('@defra/hapi-tracing', () => ({
   getTraceId: getTraceIdMock
 }))
 
-const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
-const ADDRESSES_PATH = `/organisation/${ORG_ID}/addresses`
+const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
+const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
 const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 const ADDRESS_PATH = `${ADDRESSES_PATH}/${ADDRESS_ID}`
 const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
@@ -61,14 +61,16 @@ describe('against the real address book', () => {
       const scope = addressBookApi()
         .get(ADDRESSES_PATH)
         .query({ page: '1' })
-        .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+        .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .matchHeader(TRACING_HEADER, TRACE_ID)
         .reply(
           200,
           pageOf([{ id: 'abc', name: 'Farm', addressLine1: '1 Road' }])
         )
 
-      const result = await addressBook.listAddresses(ORG_ID, { page: 1 })
+      const result = await addressBook.listAddresses(ORGANISATION_ID, {
+        page: 1
+      })
 
       expect(result.pageSize).toBe(25)
       expect(result.totalItems).toBe(1)
@@ -82,7 +84,7 @@ describe('against the real address book', () => {
         .query({ page: '1', q: 'France', countryCode: 'FR' })
         .reply(200, pageOf([]))
 
-      await addressBook.listAddresses(ORG_ID, {
+      await addressBook.listAddresses(ORGANISATION_ID, {
         page: 1,
         q: 'France',
         countryCode: 'FR'
@@ -96,10 +98,10 @@ describe('against the real address book', () => {
     test('Should POST the address with the organisation header and return the created record', async () => {
       const scope = addressBookApi()
         .post(ADDRESSES_PATH, highland)
-        .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+        .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .reply(201, { id: ADDRESS_ID, ...highland })
 
-      const result = await addressBook.createAddress(ORG_ID, highland)
+      const result = await addressBook.createAddress(ORGANISATION_ID, highland)
 
       expect(result.id).toBe(ADDRESS_ID)
       expect(scope.isDone()).toBe(true)
@@ -109,7 +111,10 @@ describe('against the real address book', () => {
       addressBookApi().post(ADDRESSES_PATH).reply(400, validationProblem)
 
       await expect(
-        addressBook.createAddress(ORG_ID, { ...highland, email: 'bad' })
+        addressBook.createAddress(ORGANISATION_ID, {
+          ...highland,
+          email: 'bad'
+        })
       ).rejects.toMatchObject({
         status: 400,
         body: { errors: validationProblem.errors }
@@ -121,11 +126,11 @@ describe('against the real address book', () => {
     test('Should GET by id with the organisation and trace headers', async () => {
       const scope = addressBookApi()
         .get(ADDRESS_PATH)
-        .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+        .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .matchHeader(TRACING_HEADER, TRACE_ID)
         .reply(200, { id: ADDRESS_ID, ...highland, deleted: false })
 
-      const result = await addressBook.getAddress(ORG_ID, ADDRESS_ID)
+      const result = await addressBook.getAddress(ORGANISATION_ID, ADDRESS_ID)
 
       expect(result.name).toBe('Highland Livestock Ltd')
       expect(result.deleted).toBe(false)
@@ -151,11 +156,11 @@ describe('against the real address book', () => {
     test('Should PUT the address with the organisation header and return the updated record', async () => {
       const scope = addressBookApi()
         .put(ADDRESS_PATH, highland)
-        .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+        .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .reply(200, { id: ADDRESS_ID, ...highland })
 
       const result = await addressBook.updateAddress(
-        ORG_ID,
+        ORGANISATION_ID,
         ADDRESS_ID,
         highland
       )
@@ -168,7 +173,7 @@ describe('against the real address book', () => {
       addressBookApi().put(ADDRESS_PATH).reply(400, validationProblem)
 
       await expect(
-        addressBook.updateAddress(ORG_ID, ADDRESS_ID, {
+        addressBook.updateAddress(ORGANISATION_ID, ADDRESS_ID, {
           ...highland,
           email: 'bad'
         })
@@ -183,10 +188,10 @@ describe('against the real address book', () => {
     test('Should DELETE by id with the organisation header', async () => {
       const scope = addressBookApi()
         .delete(ADDRESS_PATH)
-        .matchHeader(ORGANISATION_ID_HEADER, ORG_ID)
+        .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .reply(204)
 
-      await addressBook.deleteAddress(ORG_ID, ADDRESS_ID)
+      await addressBook.deleteAddress(ORGANISATION_ID, ADDRESS_ID)
 
       expect(scope.isDone()).toBe(true)
     })
@@ -198,7 +203,9 @@ describe('against the real address book', () => {
         message: 'No static resource organisation/5900001/addresses.'
       })
 
-      await expect(addressBook.listAddresses(ORG_ID)).rejects.toMatchObject({
+      await expect(
+        addressBook.listAddresses(ORGANISATION_ID)
+      ).rejects.toMatchObject({
         message: 'No static resource organisation/5900001/addresses.',
         status: 404
       })

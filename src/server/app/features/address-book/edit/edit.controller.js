@@ -38,12 +38,12 @@ const countryItemsOf = (countries) =>
   buildCountrySelectItems(countries, copy.form.countryPlaceholder)
 
 const buildView = (
-  h,
-  { id, formValues, countryItems, errors = {}, recoverableError = false }
+  toolkit,
+  { addressId, formValues, countryItems, errors = {}, recoverableError = false }
 ) =>
-  h.view(view, {
+  toolkit.view(view, {
     ...kit.base(copy.edit.title, {
-      backLink: addressPath(id),
+      backLink: addressPath(addressId),
       recoverableError
     }),
     copy,
@@ -56,34 +56,37 @@ const buildView = (
 const loadCountryItems = async () =>
   countryItemsOf(await getAddressFormCountries())
 
-const rejected = async (h, model) =>
-  buildView(h, { ...model, countryItems: await loadCountryItems() })
+const rejected = async (toolkit, model) =>
+  buildView(toolkit, { ...model, countryItems: await loadCountryItems() })
 
-const get = async (request, h) => {
-  const orgId = kit.requireOrganisationId(request)
-  const { id } = request.params
+const get = async (request, toolkit) => {
+  const organisationId = kit.requireOrganisationId(request)
+  const { id: addressId } = request.params
 
   try {
-    const address = await loadStoredAddress(orgId, id)
+    const address = await loadStoredAddress(organisationId, addressId)
     const countries = await getAddressFormCountries()
-    return buildView(h, {
-      id,
+    return buildView(toolkit, {
+      addressId,
       formValues: formValuesOf(address),
       countryItems: countryItemsOf(countries)
     })
   } catch (err) {
     throw boomFor(err, () =>
-      logger.error({ err, orgId, id }, 'Failed to load address for edit')
+      logger.error(
+        { err, organisationId, addressId },
+        'Failed to load address for edit'
+      )
     )
   }
 }
 
-const post = async (request, h) => {
-  const orgId = kit.requireOrganisationId(request)
-  const { id } = request.params
+const post = async (request, toolkit) => {
+  const organisationId = kit.requireOrganisationId(request)
+  const { id: addressId } = request.params
   const payload = request.payload ?? {}
   if (payload.cancel) {
-    return h.redirect(addressBookPath())
+    return toolkit.redirect(addressBookPath())
   }
   const formValues = formValuesOf(payload)
 
@@ -94,16 +97,16 @@ const post = async (request, h) => {
       formValues
     )
     if (errors) {
-      return buildView(h, {
-        id,
+      return buildView(toolkit, {
+        addressId,
         formValues,
         countryItems: countryItemsOf(countries),
         errors
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    const updated = await updateAddress(orgId, id, value)
+    const updated = await updateAddress(organisationId, addressId, value)
     setSuccessBanner(request, copy.successBanner.updated(updated.name))
-    return h.redirect(addressBookPath())
+    return toolkit.redirect(addressBookPath())
   } catch (err) {
     if (err.isBoom) {
       throw err
@@ -113,17 +116,17 @@ const post = async (request, h) => {
     }
     if (isValidationFailure(err)) {
       return (
-        await rejected(h, {
-          id,
+        await rejected(toolkit, {
+          addressId,
           formValues,
           errors: mapApiErrorsToFormErrors(err.body)
         })
       ).code(HTTP_STATUS_BAD_REQUEST)
     }
-    logger.error({ err, orgId, id }, 'Failed to update address')
+    logger.error({ err, organisationId, addressId }, 'Failed to update address')
     return (
-      await rejected(h, {
-        id,
+      await rejected(toolkit, {
+        addressId,
         formValues,
         recoverableError: true
       })
