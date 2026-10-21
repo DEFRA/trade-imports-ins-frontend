@@ -60,11 +60,11 @@ const paginationOf = (response) => ({
 })
 
 const buildView = (
-  h,
+  toolkit,
   { sort, referenceNumber, hasSearch },
   { recoverableError = false, ...model }
 ) =>
-  h.view(view, {
+  toolkit.view(view, {
     ...kit.base(copy.title, { recoverableError }),
     contentColumnClass: kit.surfaceClass('display'),
     copy,
@@ -77,7 +77,7 @@ const buildView = (
     ...model
   })
 
-const get = async (request, h) => {
+const get = async (request, toolkit) => {
   const page = parsePage(request.query.page)
   const sort = parseSort(request.query.sort)
   const referenceNumber = request.query.referenceNumber?.trim() ?? ''
@@ -97,7 +97,7 @@ const get = async (request, h) => {
       countryNamesOf(countries ?? [])
     )
 
-    return buildView(h, query, {
+    return buildView(toolkit, query, {
       tableRows: tableRowsOf(notifications),
       resultsLabel: buildResultsLabel(pagination, copy.results),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
@@ -111,7 +111,7 @@ const get = async (request, h) => {
       throw err
     }
     logger.error({ err }, 'Failed to load dashboard')
-    return buildView(h, query, {
+    return buildView(toolkit, query, {
       tableRows: [],
       resultsLabel: null,
       pagination: null,
