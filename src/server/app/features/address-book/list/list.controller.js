@@ -3,6 +3,12 @@ import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
+  buildPaginationLinks,
+  buildResultsLabel,
+  escapeHtml,
+  parsePage
+} from '../../../shared/list-page.js'
+import {
   addressAddPath,
   addressBookPath,
   addressPath
@@ -13,28 +19,13 @@ import {
   resolveCountryCodeFromSearchTerm
 } from '../address-countries.js'
 import { takeSuccessBanner } from '../success-banner.js'
-import {
-  buildPaginationLinks,
-  buildResultsLabel,
-  mapAddressRows
-} from '../view-model/list.js'
+import { addressBookPageHref, mapAddressRows } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
 const logger = createLogger()
 const view = 'address-book/list/list'
 const copy = copyFor({ en, cy })
-
-const parsePage = (queryPage) => {
-  const page = Number.parseInt(queryPage, 10)
-  return Number.isNaN(page) || page < 1 ? 1 : page
-}
-
-const escapeHtml = (value) =>
-  String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('"', '&quot;')
 
 const viewLink = (address) =>
   `<a class="govuk-link" href="${addressPath(address.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
@@ -84,7 +75,9 @@ const get = async (request, toolkit) => {
     return buildView(toolkit, {
       tableRows: tableRowsOf(addresses),
       resultsLabel: buildResultsLabel(pagination, copy.list.results),
-      pagination: buildPaginationLinks(pagination, search),
+      pagination: buildPaginationLinks(pagination, (targetPage) =>
+        addressBookPageHref(targetPage, search)
+      ),
       searchTerm,
       hasSearch,
       isEmpty: response.totalItems === 0 && !hasSearch,

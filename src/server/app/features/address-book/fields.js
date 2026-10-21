@@ -23,6 +23,19 @@ export const FIELD_RULES = {
 
 export const FIELDS = Object.keys(FIELD_RULES)
 
+export const ADDRESS_FIELDS = [
+  'name',
+  'addressLine1',
+  'addressLine2',
+  'townOrCity',
+  'county',
+  'postcode',
+  'countryCode'
+]
+
+export const addressFieldText = (address, countryLabel, field) =>
+  field === 'countryCode' ? countryLabel : address[field]
+
 export const formValuesOf = (source = {}) =>
   Object.fromEntries(FIELDS.map((field) => [field, source[field] ?? '']))
 

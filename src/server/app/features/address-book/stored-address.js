@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 
 import { getAddress } from '../../services/address-book/index.js'
 import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
+import { countryLabelOf, getAddressFormCountries } from './address-countries.js'
 
 export const isNotFound = (err) => err.status === HTTP_STATUS_NOT_FOUND
 
@@ -15,6 +16,21 @@ export const findLiveAddress = async (organisationId, addressId) => {
       return undefined
     }
     throw err
+  }
+}
+
+export const findLiveAddressWithCountryLabel = async (
+  organisationId,
+  addressId
+) => {
+  const address = await findLiveAddress(organisationId, addressId)
+  if (!address) {
+    return undefined
+  }
+  const countries = await getAddressFormCountries()
+  return {
+    address,
+    countryLabel: countryLabelOf(countries, address.countryCode)
   }
 }
 

@@ -16,8 +16,6 @@ vi.mock('../../../../../config/config.js', () => ({
   }
 }))
 
-import { copy } from '../copy/copy.en.js'
-
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 
 afterEach(() => {
@@ -27,9 +25,8 @@ afterEach(() => {
 const {
   buildDashboardQueryString,
   buildNotificationLink,
-  buildPaginationLinks,
-  buildResultsLabel,
   buildStartNewNotificationLink,
+  dashboardPageHref,
   formatDisplayDate,
   mapNotificationRows
 } = await import('./list.js')
@@ -56,66 +53,12 @@ describe('#buildDashboardQueryString', () => {
   })
 })
 
-describe('#buildResultsLabel', () => {
-  test('returns null when there are no results', () => {
-    expect(
-      buildResultsLabel(
-        { page: 1, size: 25, totalElements: 0, totalPages: 0 },
-        copy.results
-      )
-    ).toBeNull()
-  })
+describe('#dashboardPageHref', () => {
+  test('links to a page of the dashboard carrying sort and referenceNumber', () => {
+    const query = { sort: 'lastUpdated,asc', referenceNumber: null }
 
-  test('describes the current page range', () => {
-    expect(
-      buildResultsLabel(
-        { page: 2, size: 25, totalElements: 40, totalPages: 2 },
-        copy.results
-      )
-    ).toBe('Showing 26-40 of 40')
-  })
-})
-
-describe('#buildPaginationLinks', () => {
-  test('returns null for a single page', () => {
-    expect(
-      buildPaginationLinks({
-        page: 1,
-        size: 25,
-        totalElements: 3,
-        totalPages: 1
-      })
-    ).toBeNull()
-  })
-
-  test('builds previous/next and numbered items, carrying sort and referenceNumber', () => {
-    const model = buildPaginationLinks(
-      { page: 2, size: 25, totalElements: 60, totalPages: 3 },
-      { sort: 'lastUpdated,asc', referenceNumber: null }
-    )
-
-    expect(model.previous.href).toBe('/?sort=lastUpdated%2Casc')
-    expect(model.next.href).toBe('/?sort=lastUpdated%2Casc&page=3')
-    expect(model.items).toHaveLength(3)
-    expect(model.items[1].current).toBe(true)
-  })
-
-  test('omits previous on the first page and next on the last page', () => {
-    const first = buildPaginationLinks({
-      page: 1,
-      size: 25,
-      totalElements: 60,
-      totalPages: 3
-    })
-    const last = buildPaginationLinks({
-      page: 3,
-      size: 25,
-      totalElements: 60,
-      totalPages: 3
-    })
-
-    expect(first.previous).toBeUndefined()
-    expect(last.next).toBeUndefined()
+    expect(dashboardPageHref(3, query)).toBe('/?sort=lastUpdated%2Casc&page=3')
+    expect(dashboardPageHref(1, query)).toBe('/?sort=lastUpdated%2Casc')
   })
 })
 

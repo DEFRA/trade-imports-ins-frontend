@@ -21,7 +21,9 @@ below.
 root:
 
 - [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
-  `FIELDS`, `formValuesOf` and `addressRules(countryCodes)`.
+  `FIELDS`, `formValuesOf` and `addressRules(countryCodes)`, plus
+  `ADDRESS_FIELDS` (the address lines in display order) and
+  `addressFieldText`, shared by the view rows and the delete summary.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems`, `resolveCountryCodeFromSearchTerm`.
@@ -34,6 +36,7 @@ root:
   delete there, or to the list when it is one of that address's own pages.
 - [`stored-address.js`](../features/address-book/stored-address.js) —
   `findLiveAddress` resolves an unknown or deleted address to `undefined`;
+  `findLiveAddressWithCountryLabel` adds the country's label to a live one;
   `loadStoredAddress` 404s what `findLiveAddress` does not find;
   `isNotFound` tells a client 404; `boomFor` maps client errors to Boom.
 - [`success-banner.js`](../features/address-book/success-banner.js) —
@@ -95,8 +98,8 @@ The shape every ins controller takes, citing
   `mapApiErrorsToFormErrors(err.body)`.
 - `export const routes = kit.pageRoutes(...)`.
 
-The edit page loads through `loadStoredAddress`. The view and delete pages
-load through `findLiveAddress` and, when it finds nothing, redirect via
+The edit page loads through `loadStoredAddress`. The view and delete GETs
+load through `findLiveAddressWithCountryLabel` and, when it finds nothing, redirect via
 `honouredReturnOrAddressBook` (an honoured return, else the list), logging the
 redirect at info with `{ organisationId, addressId }`; the delete POST treats
 a 404 from `deleteAddress` the same way. Anything else throws

@@ -6,13 +6,9 @@ import {
   addressRoutePath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import {
-  countryLabelOf,
-  getAddressFormCountries
-} from '../address-countries.js'
 import { deadLinkRouteOptions } from '../address-id-params.js'
-import { FIELD_RULES } from '../fields.js'
-import { boomFor, findLiveAddress } from '../stored-address.js'
+import { ADDRESS_FIELDS, FIELD_RULES, addressFieldText } from '../fields.js'
+import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
 import {
   deadLinkDestination,
   honouredReturnOrNull,
@@ -30,40 +26,18 @@ const isOptional = (field) => FIELD_RULES[field]?.required === false
 
 const hasText = (value) => Boolean(value?.trim?.())
 
+const ROW_FIELDS = [...ADDRESS_FIELDS, 'email', 'phone']
+
 export const buildRows = (address, countryLabel) =>
-  [
-    { field: 'name', label: copy.form.fields.name, text: address.name },
-    {
-      field: 'addressLine1',
-      label: copy.form.fields.addressLine1,
-      text: address.addressLine1
-    },
-    {
-      field: 'addressLine2',
-      label: copy.form.fields.addressLine2,
-      text: address.addressLine2
-    },
-    {
-      field: 'townOrCity',
-      label: copy.form.fields.townOrCity,
-      text: address.townOrCity
-    },
-    { field: 'county', label: copy.form.fields.county, text: address.county },
-    {
-      field: 'postcode',
-      label: copy.form.fields.postcode,
-      text: address.postcode
-    },
-    {
-      field: 'countryCode',
-      label: copy.form.fields.countryCode,
-      text: countryLabel
-    },
-    { field: 'email', label: copy.form.fields.email, text: address.email },
-    { field: 'phone', label: copy.form.fields.phone, text: address.phone }
-  ]
+  ROW_FIELDS.map((field) => ({
+    field,
+    text: addressFieldText(address, countryLabel, field)
+  }))
     .filter(({ field, text }) => !isOptional(field) || hasText(text))
-    .map(({ label, text }) => ({ key: { text: label }, value: { text } }))
+    .map(({ field, text }) => ({
+      key: { text: copy.form.fields[field] },
+      value: { text }
+    }))
 
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
@@ -71,8 +45,11 @@ const get = async (request, toolkit) => {
   const honouredReturn = honouredReturnOrNull(request)
 
   try {
-    const address = await findLiveAddress(organisationId, addressId)
-    if (!address) {
+    const found = await findLiveAddressWithCountryLabel(
+      organisationId,
+      addressId
+    )
+    if (!found) {
       logger.info(
         { organisationId, addressId },
         'Address not live, redirecting away from its view page'
@@ -81,7 +58,7 @@ const get = async (request, toolkit) => {
         honouredReturnOrAddressBook(addressId, honouredReturn)
       )
     }
-    const countries = await getAddressFormCountries()
+    const { address, countryLabel } = found
     return toolkit.view(view, {
       ...kit.base(address.name, {
         backLink: honouredReturnOrAddressBook(addressId, honouredReturn)
@@ -90,10 +67,7 @@ const get = async (request, toolkit) => {
       heading: address.name,
       editHref: pathWithReturn(addressEditPath(addressId), honouredReturn),
       deleteHref: pathWithReturn(addressDeletePath(addressId), honouredReturn),
-      summaryRows: buildRows(
-        address,
-        countryLabelOf(countries, address.countryCode)
-      )
+      summaryRows: buildRows(address, countryLabel)
     })
   } catch (err) {
     throw boomFor(err, () =>

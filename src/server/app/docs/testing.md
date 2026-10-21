@@ -19,6 +19,7 @@ Convention checks:
 - [`copy-parity.test.js`](../copy-parity.test.js)
 - [`shared/paths.test.js`](../shared/paths.test.js)
 - [`shared/kit.test.js`](../shared/kit.test.js)
+- [`shared/list-page.test.js`](../shared/list-page.test.js)
 - [`shared/layout.test.js`](../shared/layout.test.js) — service
   navigation, phase banner, back link, banner, title prefix, surfaces,
   assets, footer.

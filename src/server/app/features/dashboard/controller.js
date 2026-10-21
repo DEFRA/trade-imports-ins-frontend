@@ -3,13 +3,18 @@ import { listNotifications } from '../../services/ins-backend/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../lib/http-status.js'
 import * as kit from '../../shared/kit.js'
 import { copyFor } from '../../shared/copy.js'
+import {
+  buildPaginationLinks,
+  buildResultsLabel,
+  escapeHtml,
+  parsePage
+} from '../../shared/list-page.js'
 import { dashboardPath } from '../../shared/paths.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
 import {
   SORT_OPTIONS,
-  buildPaginationLinks,
-  buildResultsLabel,
   buildStartNewNotificationLink,
+  dashboardPageHref,
   mapNotificationRows
 } from './view-model/list.js'
 import { copy as en } from './copy/copy.en.js'
@@ -21,19 +26,8 @@ const copy = copyFor({ en, cy })
 const DEFAULT_SORT = SORT_OPTIONS[0].value
 const SORT_VALUES = new Set(SORT_OPTIONS.map((option) => option.value))
 
-const parsePage = (queryPage) => {
-  const page = Number.parseInt(queryPage, 10)
-  return Number.isNaN(page) || page < 1 ? 1 : page
-}
-
 const parseSort = (querySort) =>
   SORT_VALUES.has(querySort) ? querySort : DEFAULT_SORT
-
-const escapeHtml = (value) =>
-  String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('"', '&quot;')
 
 const countryNamesOf = (countries) =>
   Object.fromEntries(countries.map((country) => [country.code, country.name]))
@@ -60,8 +54,8 @@ const tableRowsOf = (notifications) =>
 
 const paginationOf = (response) => ({
   page: response.page,
-  size: response.size,
-  totalElements: response.totalElements,
+  pageSize: response.size,
+  totalItems: response.totalElements,
   totalPages: response.totalPages
 })
 
@@ -106,7 +100,9 @@ const get = async (request, h) => {
     return buildView(h, query, {
       tableRows: tableRowsOf(notifications),
       resultsLabel: buildResultsLabel(pagination, copy.results),
-      pagination: buildPaginationLinks(pagination, { sort, referenceNumber }),
+      pagination: buildPaginationLinks(pagination, (targetPage) =>
+        dashboardPageHref(targetPage, { sort, referenceNumber })
+      ),
       isEmpty: response.totalElements === 0 && !hasSearch,
       noSearchResults: response.totalElements === 0 && hasSearch
     })

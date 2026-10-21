@@ -42,48 +42,8 @@ export function buildDashboardQueryString({
   return query ? `?${query}` : ''
 }
 
-const normalizePageNumber = (page, totalPages) =>
-  totalPages < 1 ? 1 : Math.min(Math.max(page, 1), totalPages)
-
-const pageRange = ({ page, size, totalElements, totalPages }) => {
-  const currentPage = normalizePageNumber(page, totalPages || 1)
-  return {
-    from: (currentPage - 1) * size + 1,
-    to: Math.min(currentPage * size, totalElements),
-    count: totalElements
-  }
-}
-
-export function buildResultsLabel(pagination, formatLabel) {
-  if (pagination.totalElements < 1) {
-    return null
-  }
-  const { from, to, count } = pageRange(pagination)
-  return formatLabel(from, to, count)
-}
-
-export function buildPaginationLinks(
-  pagination,
-  { sort, referenceNumber } = {}
-) {
-  const { totalPages } = pagination
-  if (totalPages <= 1) {
-    return null
-  }
-  const page = normalizePageNumber(pagination.page, totalPages)
-  const pageHref = (targetPage) =>
-    `${dashboardPath()}${buildDashboardQueryString({ sort, referenceNumber, page: targetPage })}`
-
-  return {
-    results: pageRange(pagination),
-    previous: page > 1 ? { href: pageHref(page - 1) } : undefined,
-    next: page < totalPages ? { href: pageHref(page + 1) } : undefined,
-    items: Array.from({ length: totalPages }, (_, index) => ({
-      number: String(index + 1),
-      href: pageHref(index + 1),
-      current: index + 1 === page
-    }))
-  }
+export function dashboardPageHref(page, { sort, referenceNumber } = {}) {
+  return `${dashboardPath()}${buildDashboardQueryString({ sort, referenceNumber, page })}`
 }
 
 export function buildNotificationLink(status, referenceNumber) {
