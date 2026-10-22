@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import { listAddresses } from '../../../services/address-book/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
@@ -85,7 +87,7 @@ const get = async (request, toolkit) => {
       successMessage
     })
   } catch (err) {
-    if (err.isBoom) {
+    if (Boom.isBoom(err)) {
       throw err
     }
     logger.error({ err, organisationId }, 'Failed to load address book')

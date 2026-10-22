@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../config/config.js'
+import { ORGANISATION_ID_HEADER } from '../../../common/test-helpers/address-book-requests.js'
 import {
   addressBookApi,
   refuseOutboundHttp,
@@ -18,7 +19,6 @@ const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
 const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 const ADDRESS_PATH = `${ADDRESSES_PATH}/${ADDRESS_ID}`
-const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 const TRACING_HEADER = config.get('tracing.header')
 const TRACE_ID = 'trace-123'
 

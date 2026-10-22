@@ -1,3 +1,4 @@
 export const SEED_ADDRESS_NAME = 'Stub Farm 1'
 export const SEED_ADDRESS_ID = '000000000000000000000001'
 export const UNKNOWN_ADDRESS_ID = 'ffffffffffffffffffffffff'
+export const MALFORMED_ADDRESS_ID = 'not-a-valid-id'

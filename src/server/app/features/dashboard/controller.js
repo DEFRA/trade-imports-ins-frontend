@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import { getCountries } from '../../services/countries/index.js'
 import { listNotifications } from '../../services/ins-backend/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../lib/http-status.js'
@@ -107,7 +109,7 @@ const get = async (request, toolkit) => {
       noSearchResults: response.totalElements === 0 && hasSearch
     })
   } catch (err) {
-    if (err.isBoom) {
+    if (Boom.isBoom(err)) {
       throw err
     }
     logger.error({ err }, 'Failed to load dashboard')

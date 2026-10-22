@@ -27,7 +27,7 @@ export const copy = {
   successBanner: {
     title: 'Llwyddiant',
     added: (name) => `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
-    updated: (name) => `${name} wedi’i ddiweddaru yn eich llyfr cyfeiriadau`,
+    updated: (name) => `Cyfeiriad ${name} wedi’i ddiweddaru`,
     deleted: (name) => `Cyfeiriad ${name} wedi’i ddileu`,
     deletedUnnamed: 'Cyfeiriad wedi’i ddileu'
   },
@@ -57,7 +57,7 @@ export const copy = {
     countryPlaceholder: 'Dewiswch un'
   },
   edit: {
-    title: 'Golygu manylion cyfeiriad',
+    title: 'Golygu manylion cyfeiriad a manylion cyswllt',
     save: 'Cadw’r newidiadau',
     cancel: 'Canslo'
   },

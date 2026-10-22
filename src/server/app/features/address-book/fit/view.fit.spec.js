@@ -7,6 +7,7 @@ import { expectDashboard } from './dashboard.js'
 import {
   SEED_ADDRESS_ID,
   SEED_ADDRESS_NAME,
+  MALFORMED_ADDRESS_ID,
   UNKNOWN_ADDRESS_ID
 } from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
@@ -141,7 +142,7 @@ test.describe('view address', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-view-malformed' })
-      await page.goto(`${ADDRESS_BOOK_PATH}/not-a-valid-id`)
+      await page.goto(`${ADDRESS_BOOK_PATH}/${MALFORMED_ADDRESS_ID}`)
 
       await expectAddressBookList(page)
     })

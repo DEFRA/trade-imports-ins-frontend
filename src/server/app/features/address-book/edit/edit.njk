@@ -1,7 +1,6 @@
 {% extends "shared/layout.njk" %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
-{% from "govuk/components/input/macro.njk" import govukInput %}
-{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "address-book/address-fields.njk" import addressFields %}
 
 {% block journeyContent %}
   {% include "shared/error-summary.njk" %}
@@ -11,93 +10,12 @@
   <form method="post" novalidate>
     <input type="hidden" name="crumb" value="{{ crumb }}" />
 
-    <h2 class="govuk-heading-m">{{ copy.form.addressHeading }}</h2>
-
-    {{ govukInput({
-      label: { text: copy.form.fields.name },
-      id: "name",
-      name: "name",
-      value: formValues.name,
-      classes: "govuk-!-width-two-thirds",
-      errorMessage: errors.name and { text: errors.name }
-    }) }}
-
-    {{ govukInput({
-      label: { text: copy.form.fields.addressLine1 },
-      id: "addressLine1",
-      name: "addressLine1",
-      value: formValues.addressLine1,
-      classes: "govuk-!-width-two-thirds",
-      errorMessage: errors.addressLine1 and { text: errors.addressLine1 }
-    }) }}
-
-    {{ govukInput({
-      label: { text: copy.form.fields.addressLine2 },
-      id: "addressLine2",
-      name: "addressLine2",
-      value: formValues.addressLine2,
-      classes: "govuk-!-width-two-thirds",
-      errorMessage: errors.addressLine2 and { text: errors.addressLine2 }
-    }) }}
-
-    {{ govukInput({
-      label: { text: copy.form.fields.townOrCity },
-      id: "townOrCity",
-      name: "townOrCity",
-      value: formValues.townOrCity,
-      classes: "govuk-!-width-two-thirds",
-      errorMessage: errors.townOrCity and { text: errors.townOrCity }
-    }) }}
-
-    {{ govukInput({
-      label: { text: copy.form.fields.county },
-      id: "county",
-      name: "county",
-      value: formValues.county,
-      classes: "govuk-!-width-two-thirds",
-      errorMessage: errors.county and { text: errors.county }
-    }) }}
-
-    {{ govukInput({
-      label: { text: copy.form.fields.postcode },
-      id: "postcode",
-      name: "postcode",
-      value: formValues.postcode,
-      classes: "govuk-input--width-10",
-      errorMessage: errors.postcode and { text: errors.postcode }
-    }) }}
-
-    {{ govukSelect({
-      id: "countryCode",
-      name: "countryCode",
-      label: { text: copy.form.fields.countryCode },
-      items: countryItems,
-      value: formValues.countryCode,
-      errorMessage: errors.countryCode and { text: errors.countryCode }
-    }) }}
-
-    <h2 class="govuk-heading-m">{{ copy.form.contactHeading }}</h2>
-
-    {{ govukInput({
-      label: { text: copy.form.fields.phone },
-      id: "phone",
-      name: "phone",
-      value: formValues.phone,
-      classes: "govuk-!-width-two-thirds",
-      hint: {
-        text: copy.form.phoneHint
-      },
-      errorMessage: errors.phone and { text: errors.phone }
-    }) }}
-
-    {{ govukInput({
-      label: { text: copy.form.fields.email },
-      id: "email",
-      name: "email",
-      value: formValues.email,
-      classes: "govuk-!-width-two-thirds",
-      autocomplete: "email",
-      errorMessage: errors.email and { text: errors.email }
+    {{ addressFields({
+      copy: copy,
+      formValues: formValues,
+      countryItems: countryItems,
+      errors: errors,
+      nameLabel: copy.form.fields.name
     }) }}
 
     <div class="govuk-button-group">

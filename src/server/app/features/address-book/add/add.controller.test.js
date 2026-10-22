@@ -2,8 +2,13 @@ import { load } from 'cheerio'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
+import {
+  INVALID_ADDRESS_PAYLOAD,
+  ORGANISATION_ID_HEADER
+} from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
+import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
@@ -155,7 +160,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
         posted = body
         return true
       })
-      .matchHeader('Trade-Imports-Organisation-Id', ORGANISATION_ID)
+      .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(201, {
         id: '665f1c2ab3e4d51a2c9d0e77',
         name: BUSINESS_NAME
@@ -225,15 +230,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     const { result, statusCode, headers } = await postAdd(
       server(),
       'add-post-invalid',
-      {
-        name: '',
-        addressLine1: '',
-        townOrCity: '',
-        postcode: '',
-        countryCode: '',
-        phone: '',
-        email: 'bad'
-      }
+      INVALID_ADDRESS_PAYLOAD
     )
 
     expect(statusCode).toBe(statusCodes.badRequest)
@@ -393,19 +390,10 @@ describe(
   () => {
     const server = startRealModeServerServingCountries(mockCountries)
 
-    test('GET renders name, address lines and email full width, town and postcode at one half, and phone at two thirds', async () => {
+    test('GET renders name, address lines and email full width, town, county, postcode and country at one half, and phone at two thirds', async () => {
       const { result } = await getAdd(server(), 'add-get-widths')
 
-      const $ = load(result)
-      const classOf = (id) => $(`#${id}`).attr('class')
-
-      for (const id of ['name', 'addressLine1', 'addressLine2', 'email']) {
-        expect(classOf(id)).toBe('govuk-input')
-      }
-      for (const id of ['townOrCity', 'postcode']) {
-        expect(classOf(id)).toContain('govuk-!-width-one-half')
-      }
-      expect(classOf('phone')).toContain('govuk-!-width-two-thirds')
+      expectAddressFormWidths(result)
     })
 
     test('GET opens the Country select on its blank first option, Select one, with nothing selected', async () => {

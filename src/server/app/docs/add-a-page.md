@@ -73,11 +73,10 @@ Follow the shape at [features.md](features.md#controllers):
 7. `export const routes = kit.pageRoutes(<path>(), { get, post })`.
 
 Use explicit Hapi route objects only when the page needs more than a
-GET/POST pair. The edit page passes `addressIdRouteOptions` and loads through
-`loadLiveAddress` and `boomFor`. A page whose dead link should go back to the list passes
+GET/POST pair. A page whose dead link should go back to the list passes
 `redirectingAddressIdRouteOptions(addressBookPath)`, or `redirectingAddressIdRouteOptions(deadLinkDestination)`
 from `return-to.js` to honour a `return`, and loads through `findLiveAddress` (or `findLiveAddressWithCountryLabel`),
-as the view and delete pages do.
+as the view, edit and delete pages do.
 
 ## 4. Add copy and the Nunjucks view
 

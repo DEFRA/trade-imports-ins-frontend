@@ -1,14 +1,14 @@
 import { describe, expect, test, vi } from 'vitest'
 
-import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
+import { INVALID_ADDRESS_PAYLOAD } from '../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../common/test-helpers/session-auth.js'
 import {
   addressBookApi,
-  referenceDataApi,
-  runInRealMode
+  referenceDataApi
 } from '../../common/test-helpers/real-mode.js'
+import { startRealModeServer } from '../../common/test-helpers/test-server.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
@@ -19,24 +19,23 @@ const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 const ERROR_PAGE_TITLE =
   'Something went wrong - Import notification service - GOV.UK'
 
+const STORED_ADDRESS = {
+  id: ADDRESS_ID,
+  name: 'Highland Livestock Ltd',
+  addressLine1: "14 Drover's Way",
+  townOrCity: 'Inverness',
+  postcode: 'IV2 3JH',
+  countryCode: 'GB',
+  deleted: false
+}
+
 const refuseCountries = () =>
   referenceDataApi()
     .get('/countries')
     .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
 
 describe('#referenceDataOutage', () => {
-  let server
-
-  runInRealMode()
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
+  const server = startRealModeServer()
 
   const expectServiceUnavailablePage = ({ result, statusCode }) => {
     expect(statusCode).toBe(statusCodes.serviceUnavailable)
@@ -49,7 +48,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await server.inject({
+      await server().inject({
         method: 'GET',
         url: '/',
         auth: sessionAuth('outage-dashboard')
@@ -61,7 +60,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await server.inject({
+      await server().inject({
         method: 'GET',
         url: '/address-book',
         auth: sessionAuth('outage-list')
@@ -73,7 +72,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await server.inject({
+      await server().inject({
         method: 'GET',
         url: '/address-book/add',
         auth: sessionAuth('outage-add')
@@ -84,22 +83,30 @@ describe('#referenceDataOutage', () => {
   test('Should serve a stored address as a 503 error page', async () => {
     addressBookApi()
       .get(`/organisation/${ORG_ID}/addresses/${ADDRESS_ID}`)
-      .reply(statusCodes.ok, {
-        id: ADDRESS_ID,
-        name: 'Highland Livestock Ltd',
-        addressLine1: "14 Drover's Way",
-        townOrCity: 'Inverness',
-        postcode: 'IV2 3JH',
-        countryCode: 'GB',
-        deleted: false
-      })
+      .reply(statusCodes.ok, STORED_ADDRESS)
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await server.inject({
+      await server().inject({
         method: 'GET',
         url: `/address-book/${ADDRESS_ID}`,
         auth: sessionAuth('outage-view')
+      })
+    )
+  })
+
+  test('Should serve saving an edited address as a 503 error page', async () => {
+    addressBookApi()
+      .get(`/organisation/${ORG_ID}/addresses/${ADDRESS_ID}`)
+      .reply(statusCodes.ok, STORED_ADDRESS)
+    refuseCountries()
+
+    expectServiceUnavailablePage(
+      await server().inject({
+        method: 'POST',
+        url: `/address-book/${ADDRESS_ID}/edit`,
+        auth: sessionAuth('outage-edit-save'),
+        payload: INVALID_ADDRESS_PAYLOAD
       })
     )
   })

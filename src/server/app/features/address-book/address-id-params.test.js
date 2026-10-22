@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
+import { MALFORMED_ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
 import {
   addressIdParams,
   redirectingAddressIdRouteOptions
@@ -15,7 +16,7 @@ describe('#addressIdParams', () => {
   })
 
   test('rejects malformed ids', () => {
-    const { error } = addressIdParams.validate({ id: 'not-a-valid-id' })
+    const { error } = addressIdParams.validate({ id: MALFORMED_ADDRESS_ID })
 
     expect(error).toBeDefined()
     expect(error.details[0].message).toBe('Enter a valid address id')
@@ -32,7 +33,7 @@ describe('#redirectingAddressIdRouteOptions', () => {
       redirect: (path) => ({ takeover: () => ({ redirectedTo: path }) })
     }
     const request = {
-      params: { id: 'not-a-valid-id' },
+      params: { id: MALFORMED_ADDRESS_ID },
       query: { returnTo: fallbackPath }
     }
 

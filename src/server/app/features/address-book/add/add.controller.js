@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import {
   createAddress,
   isValidationFailure,
@@ -86,7 +88,7 @@ const get = async (request, toolkit) => {
       handshakeContext
     })
   } catch (err) {
-    if (err.isBoom) {
+    if (Boom.isBoom(err)) {
       throw err
     }
     logger.error({ err }, 'Failed to load address form countries')
@@ -124,7 +126,7 @@ const submitAddress = async (
     }
     return redirectAfterAdd(toolkit, handshakeContext, createdAddress)
   } catch (err) {
-    if (err.isBoom) {
+    if (Boom.isBoom(err)) {
       throw err
     }
     if (isValidationFailure(err)) {

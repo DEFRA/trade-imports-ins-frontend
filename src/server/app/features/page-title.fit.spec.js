@@ -60,6 +60,16 @@ test.describe('page title', () => {
     )
   })
 
+  test('titles the edit page Edit address and contact details', async ({
+    page
+  }) => {
+    await page.goto(`/address-book/${SEED_ADDRESS_ID}/edit`)
+
+    await expect(page).toHaveTitle(
+      'Edit address and contact details - Import notification service - GOV.UK'
+    )
+  })
+
   test('puts the error prefix in front of the whole title when the page shows errors', async ({
     page
   }) => {

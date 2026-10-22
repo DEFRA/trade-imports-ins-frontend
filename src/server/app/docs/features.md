@@ -30,14 +30,19 @@ root:
   validation, so the form refuses what the API would refuse.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
-  `buildCountrySelectItems`, `countryCodeMatching`.
+  `buildCountrySelectItems` (the add form's select, always opening on a blank
+  option), `buildEditCountrySelectItems` (the edit form's select, with a
+  blank option only when the country it shows is not one the list offers) and
+  `countryCodeMatching`.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
-  `addressIdParams`, `addressIdRouteOptions`, `redirectingAddressIdRouteOptions`.
+  `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
   gives the `return` query when it is an INS path or, outside stub mode, a URL on
   exactly the animals frontend origin, else null; `pathWithReturn` carries it on;
   `returnDestinationOf` and `deadLinkDestination` send a dead link or a finished
   delete there, or to the list when it is one of that address's own pages.
+  `editLeaveDestinationOf` gives where the edit page's Back link and Cancel go:
+  the honoured return, else the address's details page.
   A `return` holding a backslash, a carriage return or a line feed is refused:
   browsers and the URL parser rewrite a backslash into an off-site redirect, and
   a line break splits the `Location` header. An INS path is resolved against a
@@ -48,10 +53,9 @@ root:
 - [`stored-address.js`](../features/address-book/stored-address.js) —
   `findLiveAddress` resolves an unknown or deleted address to `undefined`;
   `findLiveAddressWithCountryLabel` adds the country's label to a live one;
-  `loadLiveAddress` 404s what `findLiveAddress` does not find;
-  `isNotFound` tells a client 404; `knownBoomOf` passes a Boom
-  through and turns a client 404 into `Boom.notFound()`, else `undefined`;
-  `boomFor` does the same and makes anything else a logged `Boom.internal()`.
+  `isNotFound` tells a client 404; `boomFor` passes a Boom through, turns a
+  client 404 into `Boom.notFound()` and makes anything else a logged
+  `Boom.internal()`.
 - [`success-message.js`](../features/address-book/success-message.js) —
   yar-backed, read-once.
 
@@ -83,8 +87,8 @@ pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
   `contentColumnClass: kit.surfaceClass('display')`.
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
-'session' }`; the edit page passes `addressIdRouteOptions`; the view and
-  delete pages pass `redirectingAddressIdRouteOptions(deadLinkDestination)`, so a dead link
+'session' }`; the view, edit and delete pages pass
+  `redirectingAddressIdRouteOptions(deadLinkDestination)`, so a dead link
   returns to an honoured `return`, or to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
@@ -111,12 +115,18 @@ The shape every ins controller takes, citing
   `mapApiErrorsToFormErrors(err.body)`.
 - `export const routes = kit.pageRoutes(...)`.
 
-The edit page loads through `loadLiveAddress`. The view and delete GETs
-load through `findLiveAddressWithCountryLabel` and, when it finds nothing, redirect via
-`returnDestinationOf` (an honoured return, else the list), logging the
-redirect at info with `{ organisationId, addressId }`; the delete POST treats
-a 404 from `deleteAddress` the same way. Anything else throws
-`boomFor(err, () => logger.error(...))`.
+The view and delete GETs load through `findLiveAddressWithCountryLabel`, and
+the edit GET through `findLiveAddress`. When either finds nothing, the GET
+redirects via `returnDestinationOf` (an honoured return, else the list),
+logging the redirect at info with `{ organisationId, addressId }`; the delete
+POST treats a 404 from `deleteAddress` the same way. Anything else in a GET
+or the delete POST throws `boomFor(err, () => logger.error(...))`.
+
+The edit POST reads `findLiveAddress` before it validates, and redirects a
+not-live address the same way, sending nothing. It does the same for a 404
+from `updateAddress`. It rethrows a Boom untouched, so reference data with no
+countries still serves the 503 page, and re-renders every other failure,
+including a failed live read, as the POST shape above describes.
 
 ## Copy and templates
 
@@ -144,6 +154,11 @@ Templates: extend `shared/layout.njk`, import macros at the top, fill the
 `journeyContent` block, `{% include "shared/error-summary.njk" %}` above
 the `<h1>`, a hidden `crumb` input in every form, fields rendered with
 govuk macros, `errorMessage: errors.field and { text: errors.field }`.
+The add and edit forms render their Address and Contact details fields
+through the one `addressFields` macro in
+[`address-fields.njk`](../features/address-book/address-fields.njk), passed
+its copy, form values, country items, errors and name label in a single
+params object.
 Input `name`, `id` and the error-map key stay identical so the summary
 link focuses the control. Stay inside the govuk-frontend toolbox.
 

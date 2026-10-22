@@ -11,6 +11,8 @@ const textOf = (value) => {
   return typeof value === 'function' ? value(...sampleArguments) : value
 }
 
+const ADDRESS_NAME = 'Green Farm'
+
 const LOCALES = [
   ['en', copy],
   ['cy', cy]
@@ -67,15 +69,13 @@ describe('#copy', () => {
   )
 
   it('Should name the address in each success banner', () => {
-    const addressName = 'Green Farm'
-
-    expect(copy.successBanner.added(addressName)).toBe(
+    expect(copy.successBanner.added(ADDRESS_NAME)).toBe(
       'Green Farm added to your address book'
     )
-    expect(copy.successBanner.updated(addressName)).toBe(
-      'Green Farm updated in your address book'
+    expect(copy.successBanner.updated(ADDRESS_NAME)).toBe(
+      'Green Farm address updated'
     )
-    expect(copy.successBanner.deleted(addressName)).toBe(
+    expect(copy.successBanner.deleted(ADDRESS_NAME)).toBe(
       'Green Farm address deleted'
     )
     expect(copy.successBanner.deletedUnnamed).toBe('Address deleted')
@@ -102,11 +102,18 @@ describe('#copy', () => {
   })
 
   it('Should name the address in the Welsh deleted banner', () => {
-    const addressName = 'Green Farm'
-    const welsh = cy.successBanner.deleted(addressName)
+    const welsh = cy.successBanner.deleted(ADDRESS_NAME)
 
-    expect(welsh).toContain(addressName)
-    expect(welsh).not.toBe(copy.successBanner.deleted(addressName))
+    expect(welsh).toContain(ADDRESS_NAME)
+    expect(welsh).not.toBe(copy.successBanner.deleted(ADDRESS_NAME))
+  })
+
+  it('Should carry a Welsh edit page title and updated banner that name the address and differ from the English', () => {
+    const welshBanner = cy.successBanner.updated(ADDRESS_NAME)
+
+    expect(cy.edit.title).not.toBe(copy.edit.title)
+    expect(welshBanner).toContain(ADDRESS_NAME)
+    expect(welshBanner).not.toBe(copy.successBanner.updated(ADDRESS_NAME))
   })
 
   it('Should carry the Welsh for the delete page heading and confirm button', () => {

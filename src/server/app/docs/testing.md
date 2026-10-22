@@ -31,10 +31,23 @@ for the pattern, and the helpers in
 [`common/test-helpers/`](../../common/test-helpers/): `real-mode.js`
 (`runInRealMode()`, `refuseOutboundHttp()`, `addressBookApi()`,
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
+`address-book-requests.js` (`getPage()`, `postPage()`,
+`getPageAsOtherOrganisation()`, `serveAddressBookServerError(path)`,
+`serveAddressNotFoundForOtherOrganisation(addressId)`,
+`expectRedirectTo()`, `expectServerErrorPage()`, `MALFORMED_ADDRESS_ID`,
+`INVALID_ADDRESS_PAYLOAD`, `ORGANISATION_ID_HEADER`,
+`OTHER_ORGANISATION_ID`),
+`expect-address-form-widths.js` (`expectAddressFormWidths(result)`, the
+add and edit forms' field widths),
+`expect-address-summary-links.js` (`expectSummaryLinks(result)`),
+`open-empty-address-book-with-cookies.js`
+(`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
+opens the address book list with the cookies a POST set so a test can
+read the banner),
 `session-auth.js` (`sessionAuth(sessionId, overrides)`),
 `mock-oidc-config.js` (`mockOidcConfig`), `mock-auth-config.js`
 (`mockAuthConfig(importOriginal)`), `test-server.js`
-(`startTestServer()`, `stopTestServer(server)`,
+(`startTestServer()`, `stopTestServer(server)`, `startRealModeServer()`,
 `startRealModeServerServingCountries(countries)`, which returns a getter
 for the started server).
 

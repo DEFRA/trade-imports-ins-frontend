@@ -4,8 +4,16 @@ import { describe, expect, test, vi } from 'vitest'
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
-import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import {
+  expectServerErrorPage,
+  getPage,
+  MALFORMED_ADDRESS_ID,
+  ORGANISATION_ID_HEADER,
+  postPage,
+  serveAddressBookServerError
+} from '../../../../common/test-helpers/address-book-requests.js'
+import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import {
   addressSummaryLines,
@@ -46,45 +54,10 @@ const RETURN_HOME = '?return=%2F'
 const deleteUrl = (query = '') => `/address-book/${addressId}/delete${query}`
 
 const getDelete = (server, sessionId, query) =>
-  server.inject({
-    method: 'GET',
-    url: deleteUrl(query),
-    auth: sessionAuth(sessionId)
-  })
+  getPage(server, deleteUrl(query), sessionId)
 
 const postDelete = (server, sessionId, query) =>
-  server.inject({
-    method: 'POST',
-    url: deleteUrl(query),
-    auth: sessionAuth(sessionId),
-    payload: {}
-  })
-
-const cookieOf = (headers) =>
-  [headers['set-cookie']]
-    .flat()
-    .filter(Boolean)
-    .map((cookie) => cookie.split(';')[0])
-    .join('; ')
-
-const openEmptyListWithCookiesFrom = (server, sessionId, postHeaders) => {
-  addressBookApi()
-    .get(`/organisation/${ORGANISATION_ID}/addresses`)
-    .query(true)
-    .reply(200, {
-      items: [],
-      page: 1,
-      pageSize: 25,
-      totalItems: 0,
-      totalPages: 0
-    })
-  return server.inject({
-    method: 'GET',
-    url: ADDRESS_BOOK_PATH,
-    auth: sessionAuth(sessionId),
-    headers: { cookie: cookieOf(postHeaders) }
-  })
-}
+  postPage(server, deleteUrl(query), sessionId, {})
 
 const BANNER = '.govuk-notification-banner'
 const SUMMARY_VALUE = '.govuk-summary-list__value'
@@ -210,25 +183,20 @@ describe('GET /address-book/{addressId}/delete', () => {
   })
 
   test('Should redirect to the address book for a malformed address id', async () => {
-    const { headers, statusCode } = await server().inject({
-      method: 'GET',
-      url: '/address-book/not-a-valid-id/delete',
-      auth: sessionAuth('delete-get-bad-id')
-    })
+    const { headers, statusCode } = await getPage(
+      server(),
+      `/address-book/${MALFORMED_ADDRESS_ID}/delete`,
+      'delete-get-bad-id'
+    )
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
   })
 
   test('Should return 500 when the address book cannot be reached', async () => {
-    addressBookApi()
-      .get(ADDRESS_PATH)
-      .reply(503, { title: 'Service Unavailable' })
+    serveAddressBookServerError(ADDRESS_PATH)
 
-    const { result, statusCode } = await getDelete(server(), 'delete-get-500')
-
-    expect(statusCode).toBe(statusCodes.internalServerError)
-    expect(result).toContain('Something went wrong')
+    expectServerErrorPage(await getDelete(server(), 'delete-get-500'))
   })
 
   describe('with a return', () => {
@@ -300,14 +268,10 @@ describe('POST /address-book/{addressId}/delete', () => {
       .delete(ADDRESS_PATH)
       .reply(503, { title: 'Service Unavailable' })
 
-    const { result, statusCode } = await postDelete(server(), 'delete-post-500')
-
-    expect(statusCode).toBe(statusCodes.internalServerError)
-    expect(result).toContain('Something went wrong')
+    expectServerErrorPage(await postDelete(server(), 'delete-post-500'))
   })
 
   test('Should soft-delete the address for the organisation and redirect to the address book', async () => {
-    const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
     const scope = addressBookApi()
       .delete(ADDRESS_PATH)
@@ -330,7 +294,7 @@ describe('POST /address-book/{addressId}/delete', () => {
 
     const { headers } = await postDelete(server(), 'delete-post-banner')
 
-    const listResponse = await openEmptyListWithCookiesFrom(
+    const listResponse = await openEmptyAddressBookWithCookiesFrom(
       server(),
       'delete-post-banner',
       headers
@@ -366,7 +330,7 @@ describe('POST /address-book/{addressId}/delete', () => {
         RETURN_HOME
       )
 
-      const listResponse = await openEmptyListWithCookiesFrom(
+      const listResponse = await openEmptyAddressBookWithCookiesFrom(
         server(),
         'delete-post-return-banner',
         headers

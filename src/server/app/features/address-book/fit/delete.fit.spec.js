@@ -6,6 +6,7 @@ import { expectDashboard } from './dashboard.js'
 import {
   SEED_ADDRESS_ID,
   SEED_ADDRESS_NAME,
+  MALFORMED_ADDRESS_ID,
   UNKNOWN_ADDRESS_ID
 } from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
@@ -203,7 +204,7 @@ test.describe('delete address dead links', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-delete-malformed' })
-    await page.goto('/address-book/not-a-valid-id/delete')
+    await page.goto(`/address-book/${MALFORMED_ADDRESS_ID}/delete`)
 
     await expectAddressBookList(page)
   })

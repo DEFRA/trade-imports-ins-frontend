@@ -25,7 +25,7 @@ export const copy = {
   successBanner: {
     title: 'Success',
     added: (name) => `${name} added to your address book`,
-    updated: (name) => `${name} updated in your address book`,
+    updated: (name) => `${name} address updated`,
     deleted: (name) => `${name} address deleted`,
     deletedUnnamed: 'Address deleted'
   },
@@ -55,7 +55,7 @@ export const copy = {
     countryPlaceholder: 'Select one'
   },
   edit: {
-    title: 'Edit address details',
+    title: 'Edit address and contact details',
     save: 'Save changes',
     cancel: 'Cancel'
   },

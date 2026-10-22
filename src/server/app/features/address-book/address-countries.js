@@ -33,6 +33,19 @@ export const buildCountrySelectItems = (countries, placeholder) => [
   ...buildCountryItems(countries)
 ]
 
+export const buildEditCountrySelectItems = (
+  countries,
+  shownCountryCode,
+  placeholder
+) => {
+  const isOffered = countries.some(
+    (country) => country.code === shownCountryCode
+  )
+  return isOffered
+    ? buildCountryItems(countries)
+    : buildCountrySelectItems(countries, placeholder)
+}
+
 export const countryLabelOf = (countries, countryCode) =>
   countries.find((country) => country.code === countryCode)?.name ?? countryCode
 
