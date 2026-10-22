@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import {
   addressIdParams,
@@ -23,18 +23,27 @@ describe('#addressIdParams', () => {
 })
 
 describe('#addressIdOrRedirectRouteOptions', () => {
-  test('redirects a failed id to the fallback path', () => {
-    const fallbackPathOf = vi.fn(() => '/address-book')
-    const options = addressIdOrRedirectRouteOptions(fallbackPathOf)
-    const takeover = vi.fn(() => 'taken-over')
-    const toolkit = { redirect: vi.fn(() => ({ takeover })) }
-    const request = { params: { id: 'not-a-valid-id' }, query: {} }
+  test('Should redirect a request that fails id validation to the path fallbackPathOf gives', () => {
+    const fallbackPath = '/address-book'
+    const options = addressIdOrRedirectRouteOptions(
+      (request) => request.query.returnTo
+    )
+    const toolkit = {
+      redirect: (path) => ({ takeover: () => ({ redirectedTo: path }) })
+    }
+    const request = {
+      params: { id: 'not-a-valid-id' },
+      query: { returnTo: fallbackPath }
+    }
 
-    const result = options.validate.failAction(request, toolkit)
+    const failActionResponse = options.validate.failAction(request, toolkit)
 
-    expect(fallbackPathOf).toHaveBeenCalledWith(request)
-    expect(toolkit.redirect).toHaveBeenCalledWith('/address-book')
-    expect(result).toBe('taken-over')
+    expect(failActionResponse).toEqual({ redirectedTo: fallbackPath })
+  })
+
+  test('Should validate params with addressIdParams behind session auth', () => {
+    const options = addressIdOrRedirectRouteOptions(() => '/address-book')
+
     expect(options.validate.params).toBe(addressIdParams)
     expect(options.auth).toBe('session')
   })
