@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test'
 
 import { expectAddressBookList } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
-import { fillValidAddress, validAddress } from './address-form.js'
+import { addValidAddressAndGetViewLink, validAddress } from './address-form.js'
+import { expectDashboard } from './dashboard.js'
 import {
   SEED_ADDRESS_ID,
   SEED_ADDRESS_NAME,
@@ -10,7 +11,8 @@ import {
 } from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
-const ADDRESS_BOOK = '/address-book'
+const ADDRESS_BOOK_PATH = '/address-book'
+const SEED_ADDRESS_PATH = `${ADDRESS_BOOK_PATH}/${SEED_ADDRESS_ID}`
 
 const IGNORED_RETURNS = [
   ['another origin', 'https://evil.example/'],
@@ -20,7 +22,7 @@ const IGNORED_RETURNS = [
 
 async function openSeedAddress(page, organisationId) {
   await signIn(page, { organisationId })
-  await page.goto(`/address-book/${SEED_ADDRESS_ID}`)
+  await page.goto(SEED_ADDRESS_PATH)
 }
 
 test.describe('view address', () => {
@@ -28,13 +30,11 @@ test.describe('view address', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-view-open' })
-    await page.goto(ADDRESS_BOOK)
+    await page.goto(ADDRESS_BOOK_PATH)
 
     await page.getByRole('link', { name: `View ${SEED_ADDRESS_NAME}` }).click()
 
-    await expect(page).toHaveURL(
-      new RegExp(`/address-book/${SEED_ADDRESS_ID}$`)
-    )
+    await expect(page).toHaveURL(new RegExp(`${SEED_ADDRESS_PATH}$`))
     await expect(
       page.getByRole('heading', { level: 1, name: SEED_ADDRESS_NAME })
     ).toBeVisible()
@@ -69,10 +69,8 @@ test.describe('view address', () => {
     await signIn(page, {
       organisationId: `stub-org-view-optional-${crypto.randomUUID()}`
     })
-    await page.goto('/address-book/add')
-    await fillValidAddress(page)
-    await page.getByRole('button', { name: 'Save and continue' }).click()
-    await page.getByRole('link', { name: `View ${validAddress.name}` }).click()
+    const viewLink = await addValidAddressAndGetViewLink(page)
+    await viewLink.click()
 
     await expect(page.getByRole('term')).toHaveText([
       'Name or organisation name',
@@ -103,23 +101,21 @@ test.describe('view address', () => {
   }) => {
     await openSeedAddress(page, 'stub-org-view-actions')
 
-    // govukButton with an href renders an anchor with role="button", so these
-    // are buttons in the accessibility tree rather than links.
-    const edit = page.getByRole('button', { name: 'Edit' })
-    const remove = page.getByRole('button', { name: 'Delete' })
+    const editButton = page.getByRole('button', { name: 'Edit' })
+    const deleteButton = page.getByRole('button', { name: 'Delete' })
 
-    await expect(edit).toBeVisible()
-    await expect(edit).toHaveAttribute(
+    await expect(editButton).toBeVisible()
+    await expect(editButton).toHaveAttribute(
       'href',
-      `/address-book/${SEED_ADDRESS_ID}/edit`
+      `${SEED_ADDRESS_PATH}/edit`
     )
-    await expect(edit).toHaveClass(/govuk-button--secondary/)
-    await expect(remove).toBeVisible()
-    await expect(remove).toHaveAttribute(
+    await expect(editButton).toHaveClass(/govuk-button--secondary/)
+    await expect(deleteButton).toBeVisible()
+    await expect(deleteButton).toHaveAttribute(
       'href',
-      `/address-book/${SEED_ADDRESS_ID}/delete`
+      `${SEED_ADDRESS_PATH}/delete`
     )
-    await expect(remove).toHaveClass(/govuk-button--warning/)
+    await expect(deleteButton).toHaveClass(/govuk-button--warning/)
   })
 
   test.describe('dead links', () => {
@@ -127,7 +123,7 @@ test.describe('view address', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-view-unknown' })
-      await page.goto(`/address-book/${UNKNOWN_ADDRESS_ID}`)
+      await page.goto(`${ADDRESS_BOOK_PATH}/${UNKNOWN_ADDRESS_ID}`)
 
       await expectAddressBookList(page)
     })
@@ -136,19 +132,16 @@ test.describe('view address', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-view-dead-return' })
-      await page.goto(`/address-book/${UNKNOWN_ADDRESS_ID}?return=%2F`)
+      await page.goto(`${ADDRESS_BOOK_PATH}/${UNKNOWN_ADDRESS_ID}?return=%2F`)
 
-      await expect(page).toHaveURL(/\/$/)
-      await expect(
-        page.getByRole('heading', { level: 1, name: 'Dashboard' })
-      ).toBeVisible()
+      await expectDashboard(page)
     })
 
     test('a malformed address id returns to the address book', async ({
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-view-malformed' })
-      await page.goto('/address-book/not-a-valid-id')
+      await page.goto(`${ADDRESS_BOOK_PATH}/not-a-valid-id`)
 
       await expectAddressBookList(page)
     })
@@ -159,12 +152,8 @@ test.describe('view address', () => {
       await signIn(page, {
         organisationId: `stub-org-view-owner-${crypto.randomUUID()}`
       })
-      await page.goto('/address-book/add')
-      await fillValidAddress(page)
-      await page.getByRole('button', { name: 'Save and continue' }).click()
-      const href = await page
-        .getByRole('link', { name: `View ${validAddress.name}` })
-        .getAttribute('href')
+      const viewLink = await addValidAddressAndGetViewLink(page)
+      const href = await viewLink.getAttribute('href')
 
       await signIn(page, {
         organisationId: `stub-org-view-other-${crypto.randomUUID()}`
@@ -179,11 +168,11 @@ test.describe('view address', () => {
       await signIn(page, {
         organisationId: `stub-org-view-deleted-${crypto.randomUUID()}`
       })
-      await page.goto(`/address-book/${SEED_ADDRESS_ID}/delete`)
+      await page.goto(`${SEED_ADDRESS_PATH}/delete`)
       await page
         .getByRole('button', { name: 'Yes, delete', exact: true })
         .click()
-      await page.goto(`/address-book/${SEED_ADDRESS_ID}`)
+      await page.goto(SEED_ADDRESS_PATH)
 
       await expectAddressBookList(page)
     })
@@ -194,10 +183,7 @@ test.describe('view address', () => {
 
     await page.getByRole('link', { name: 'Back', exact: true }).click()
 
-    await expect(page).toHaveURL(/\/address-book$/)
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'Address book' })
-    ).toBeVisible()
+    await expectAddressBookList(page)
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
@@ -212,41 +198,38 @@ test.describe('view address return', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-view-return' })
-    await page.goto(`/address-book/${SEED_ADDRESS_ID}?return=%2F`)
+    await page.goto(`${SEED_ADDRESS_PATH}?return=%2F`)
 
     await expect(page.getByRole('button', { name: 'Edit' })).toHaveAttribute(
       'href',
-      `/address-book/${SEED_ADDRESS_ID}/edit?return=%2F`
+      `${SEED_ADDRESS_PATH}/edit?return=%2F`
     )
     await expect(page.getByRole('button', { name: 'Delete' })).toHaveAttribute(
       'href',
-      `/address-book/${SEED_ADDRESS_ID}/delete?return=%2F`
+      `${SEED_ADDRESS_PATH}/delete?return=%2F`
     )
 
     await page.getByRole('link', { name: 'Back', exact: true }).click()
 
-    await expect(page).toHaveURL(/\/$/)
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'Dashboard' })
-    ).toBeVisible()
+    await expectDashboard(page)
   })
 
-  for (const [name, value] of IGNORED_RETURNS) {
-    test(`ignores a return that is ${name}`, async ({ page }) => {
-      await signIn(page, { organisationId: `stub-org-view-ignore-${name}` })
+  for (const [kind, ignoredReturn] of IGNORED_RETURNS) {
+    test(`ignores a return that is ${kind}`, async ({ page }) => {
+      await signIn(page, { organisationId: `stub-org-view-ignore-${kind}` })
       await page.goto(
-        `/address-book/${SEED_ADDRESS_ID}?return=${encodeURIComponent(value)}`
+        `${SEED_ADDRESS_PATH}?return=${encodeURIComponent(ignoredReturn)}`
       )
 
       await expect(
         page.getByRole('link', { name: 'Back', exact: true })
-      ).toHaveAttribute('href', ADDRESS_BOOK)
+      ).toHaveAttribute('href', ADDRESS_BOOK_PATH)
       await expect(
         page.getByRole('button', { name: 'Edit', exact: true })
-      ).toHaveAttribute('href', `/address-book/${SEED_ADDRESS_ID}/edit`)
+      ).toHaveAttribute('href', `${SEED_ADDRESS_PATH}/edit`)
       await expect(
         page.getByRole('button', { name: 'Delete', exact: true })
-      ).toHaveAttribute('href', `/address-book/${SEED_ADDRESS_ID}/delete`)
+      ).toHaveAttribute('href', `${SEED_ADDRESS_PATH}/delete`)
     })
   }
 
@@ -255,11 +238,11 @@ test.describe('view address return', () => {
   }) => {
     await signIn(page, { organisationId: 'stub-org-view-return-animals' })
     await page.goto(
-      `/address-book/${SEED_ADDRESS_ID}?return=${encodeURIComponent('http://localhost:3000/live-animals/notifications')}`
+      `${SEED_ADDRESS_PATH}?return=${encodeURIComponent('http://localhost:3000/live-animals/notifications')}`
     )
 
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', ADDRESS_BOOK)
+    ).toHaveAttribute('href', ADDRESS_BOOK_PATH)
   })
 })

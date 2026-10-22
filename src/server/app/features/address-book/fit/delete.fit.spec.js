@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import { expectAddressBookList } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { expectDashboard } from './dashboard.js'
 import {
   SEED_ADDRESS_ID,
   SEED_ADDRESS_NAME,
@@ -135,10 +136,7 @@ test.describe('delete address', () => {
 
       await confirmButtonOf(page).click()
 
-      await expect(page).toHaveURL(/\/$/)
-      await expect(
-        page.getByRole('heading', { level: 1, name: 'Dashboard' })
-      ).toBeVisible()
+      await expectDashboard(page)
 
       await page.goto('/address-book')
       await expect(page.getByText(DELETED_BANNER)).toHaveCount(0)
@@ -197,10 +195,7 @@ test.describe('delete address dead links', () => {
     await signIn(page, { organisationId: 'stub-org-delete-dead-return' })
     await page.goto(`/address-book/${UNKNOWN_ADDRESS_ID}/delete?return=%2F`)
 
-    await expect(page).toHaveURL(/\/$/)
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'Dashboard' })
-    ).toBeVisible()
+    await expectDashboard(page)
     await expect(page.getByText('Page not found')).toHaveCount(0)
   })
 
