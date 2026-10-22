@@ -1,6 +1,8 @@
 import {
   compose,
+  maxEmail,
   maxText,
+  oneOf,
   requiredEmail,
   requiredMaxText,
   requiredOneOf
@@ -16,17 +18,14 @@ export const FIELD_RULES = {
   townOrCity: { maxLength: 100, required: true },
   county: { maxLength: 100, required: false },
   postcode: { maxLength: 12, required: true },
-  countryCode: { oneOfCountryCodes: true },
+  countryCode: { required: true, oneOfCountryCodes: true },
   phone: { maxLength: 20, required: true },
-  email: { maxLength: 254, email: true }
+  email: { maxLength: 254, required: true, email: true }
 }
 
 export const FIELDS = Object.keys(FIELD_RULES)
 
-export const isRequiredField = (field) => {
-  const { required, email, oneOfCountryCodes } = FIELD_RULES[field]
-  return Boolean(required || email || oneOfCountryCodes)
-}
+export const isRequiredField = (field) => FIELD_RULES[field].required === true
 
 export const ADDRESS_FIELDS = [
   'name',
@@ -60,20 +59,33 @@ const requiredTextRule = (field) =>
 const optionalTextRule = (field) =>
   maxText(field, maxLengthOf(field), maxLengthMessageFor(field))
 
-const emailRule = (field) =>
-  requiredEmail(field, maxLengthOf(field), {
-    required: errors[field].required,
-    maxLength: maxLengthMessageFor(field),
-    format: errors[field].format
-  })
+const emailMessagesFor = (field) => ({
+  required: errors[field].required,
+  maxLength: maxLengthMessageFor(field),
+  format: errors[field].format
+})
+
+const emailRule = (field, required) =>
+  (required ? requiredEmail : maxEmail)(
+    field,
+    maxLengthOf(field),
+    emailMessagesFor(field)
+  )
+
+const countryRule = (field, required, countryCodes) =>
+  (required ? requiredOneOf : oneOf)(
+    field,
+    countryCodes,
+    errors[field].required
+  )
 
 const ruleFor = (field, countryCodes) => {
   const { required, email, oneOfCountryCodes } = FIELD_RULES[field]
   if (oneOfCountryCodes) {
-    return requiredOneOf(field, countryCodes, errors[field].required)
+    return countryRule(field, required, countryCodes)
   }
   if (email) {
-    return emailRule(field)
+    return emailRule(field, required)
   }
   return required ? requiredTextRule(field) : optionalTextRule(field)
 }

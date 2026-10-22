@@ -24,8 +24,8 @@ root:
   `FIELDS`, `isRequiredField`, `formValuesOf` and
   `addressRules(countryCodes)`, plus `ADDRESS_FIELDS` (the address lines in
   display order) and `addressFieldTextOrNull`, shared by the view rows and the
-  delete summary. A country or email field is always required; `required`
-  sets it for a text field.
+  delete summary. Each field's `required` sets both whether a blank value is
+  refused and whether the view always shows its row.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems`, `countryCodeMatchingOrNull`.
@@ -143,7 +143,8 @@ link focuses the control. Stay inside the govuk-frontend toolbox.
 [`lib/validate/index.js`](../lib/validate/index.js) exports
 `validate(schema, payload)` → `{ value, errors }` (`errors` is `null` on
 success, else `{ field: firstMessage }`), `compose` and the named
-factories — `requiredMaxText`, `maxText`, `requiredOneOf`, `requiredEmail`,
+factories — `requiredMaxText`, `maxText`, `requiredOneOf`, `oneOf`,
+`requiredEmail`, `maxEmail`,
 dates, times and more. Messages come from the feature's copy
 (`errors.<field>.required`, `.maxLength`, `.format`) with
 `validatorDefaults` as a fallback.
