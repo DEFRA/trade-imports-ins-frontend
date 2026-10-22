@@ -26,7 +26,7 @@ import {
   boomFor,
   isNotFound,
   knownBoomOrUndefined,
-  loadStoredAddress
+  liveAddressOrNotFound
 } from '../stored-address.js'
 import { setSuccessMessage } from '../success-message.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -66,7 +66,7 @@ const get = async (request, toolkit) => {
   const { id: addressId } = request.params
 
   try {
-    const address = await loadStoredAddress(organisationId, addressId)
+    const address = await liveAddressOrNotFound(organisationId, addressId)
     const countries = await getAddressFormCountries()
     return buildView(toolkit, {
       addressId,

@@ -48,7 +48,7 @@ root:
 - [`stored-address.js`](../features/address-book/stored-address.js) —
   `findLiveAddress` resolves an unknown or deleted address to `undefined`;
   `findLiveAddressWithCountryLabel` adds the country's label to a live one;
-  `loadStoredAddress` 404s what `findLiveAddress` does not find;
+  `liveAddressOrNotFound` 404s what `findLiveAddress` does not find;
   `isNotFound` tells a client 404; `knownBoomOrUndefined` passes a Boom
   through and turns a client 404 into `Boom.notFound()`, else `undefined`;
   `boomFor` does the same and makes anything else a logged `Boom.internal()`.
@@ -111,7 +111,7 @@ The shape every ins controller takes, citing
   `mapApiErrorsToFormErrors(err.body)`.
 - `export const routes = kit.pageRoutes(...)`.
 
-The edit page loads through `loadStoredAddress`. The view and delete GETs
+The edit page loads through `liveAddressOrNotFound`. The view and delete GETs
 load through `findLiveAddressWithCountryLabel` and, when it finds nothing, redirect via
 `honouredReturnOrAddressBook` (an honoured return, else the list), logging the
 redirect at info with `{ organisationId, addressId }`; the delete POST treats

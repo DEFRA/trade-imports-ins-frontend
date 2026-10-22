@@ -33,7 +33,7 @@ export const findLiveAddressWithCountryLabel = async (
   }
 }
 
-export const loadStoredAddress = async (organisationId, addressId) => {
+export const liveAddressOrNotFound = async (organisationId, addressId) => {
   const address = await findLiveAddress(organisationId, addressId)
   if (!address) {
     throw Boom.notFound()

@@ -74,7 +74,7 @@ Follow the shape at [features.md](features.md#controllers):
 
 Use explicit Hapi route objects only when the page needs more than a
 GET/POST pair. The edit page passes `addressIdRouteOptions` and loads through
-`loadStoredAddress` and `boomFor`. A page whose dead link should go back to the list passes
+`liveAddressOrNotFound` and `boomFor`. A page whose dead link should go back to the list passes
 `addressIdOrRedirectRouteOptions(addressBookPath)`, or `addressIdOrRedirectRouteOptions(deadLinkDestination)`
 from `return-to.js` to honour a `return`, and loads through `findLiveAddress` (or `findLiveAddressWithCountryLabel`),
 as the view and delete pages do.
