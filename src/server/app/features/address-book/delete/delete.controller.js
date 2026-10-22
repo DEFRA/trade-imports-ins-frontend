@@ -40,11 +40,11 @@ const get = async (request, toolkit) => {
   const honouredReturn = honouredReturnOrNull(request)
 
   try {
-    const found = await findLiveAddressWithCountryLabel(
+    const liveAddressWithCountryLabel = await findLiveAddressWithCountryLabel(
       organisationId,
       addressId
     )
-    if (!found) {
+    if (!liveAddressWithCountryLabel) {
       logger.info(
         { organisationId, addressId },
         'Address not live, redirecting away from its delete page'
@@ -53,13 +53,19 @@ const get = async (request, toolkit) => {
         honouredReturnOrAddressBook(addressId, honouredReturn)
       )
     }
-    const lines = addressSummaryLines(found.address, found.countryLabel)
-    const viewHref = pathWithReturn(addressPath(addressId), honouredReturn)
+    const lines = addressSummaryLines(
+      liveAddressWithCountryLabel.address,
+      liveAddressWithCountryLabel.countryLabel
+    )
+    const addressPageHref = pathWithReturn(
+      addressPath(addressId),
+      honouredReturn
+    )
     return toolkit.view(view, {
-      ...kit.base(copy.delete.title, { backLink: viewHref }),
+      ...kit.base(copy.delete.title, { backLink: addressPageHref }),
       copy,
       addressLines: lines.length ? lines : [copy.delete.notApplicable],
-      cancelHref: viewHref
+      cancelHref: addressPageHref
     })
   } catch (err) {
     throw boomFor(err, () =>

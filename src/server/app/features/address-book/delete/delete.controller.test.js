@@ -318,9 +318,11 @@ describe('#addressBookDeleteController with a return', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    const viewHref = `/address-book/${addressId}?return=%2F`
-    expect($('a.govuk-back-link').attr('href')).toBe(viewHref)
-    expect($('.govuk-button-group a.govuk-link').attr('href')).toBe(viewHref)
+    const addressPageHref = `/address-book/${addressId}?return=%2F`
+    expect($('a.govuk-back-link').attr('href')).toBe(addressPageHref)
+    expect($('.govuk-button-group a.govuk-link').attr('href')).toBe(
+      addressPageHref
+    )
   })
 
   test('POST with an INS return lands on it', async () => {

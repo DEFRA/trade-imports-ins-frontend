@@ -45,11 +45,11 @@ const get = async (request, toolkit) => {
   const honouredReturn = honouredReturnOrNull(request)
 
   try {
-    const found = await findLiveAddressWithCountryLabel(
+    const liveAddressWithCountryLabel = await findLiveAddressWithCountryLabel(
       organisationId,
       addressId
     )
-    if (!found) {
+    if (!liveAddressWithCountryLabel) {
       logger.info(
         { organisationId, addressId },
         'Address not live, redirecting away from its view page'
@@ -58,7 +58,7 @@ const get = async (request, toolkit) => {
         honouredReturnOrAddressBook(addressId, honouredReturn)
       )
     }
-    const { address, countryLabel } = found
+    const { address, countryLabel } = liveAddressWithCountryLabel
     return toolkit.view(view, {
       ...kit.base(address.name, {
         backLink: honouredReturnOrAddressBook(addressId, honouredReturn)

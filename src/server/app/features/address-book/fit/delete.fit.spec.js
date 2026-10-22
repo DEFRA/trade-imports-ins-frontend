@@ -102,13 +102,13 @@ test.describe('delete address', () => {
         withReturnOf(`/address-book/${SEED_ADDRESS_ID}/delete`, '/')
       )
 
-      const viewHref = `/address-book/${SEED_ADDRESS_ID}?return=%2F`
+      const addressPageHref = `/address-book/${SEED_ADDRESS_ID}?return=%2F`
       await expect(
         page.getByRole('link', { name: 'Back', exact: true })
-      ).toHaveAttribute('href', viewHref)
+      ).toHaveAttribute('href', addressPageHref)
       await expect(
         page.getByRole('link', { name: CANCEL_LINK })
-      ).toHaveAttribute('href', viewHref)
+      ).toHaveAttribute('href', addressPageHref)
 
       await page.getByRole('link', { name: CANCEL_LINK }).click()
 
@@ -174,13 +174,13 @@ test.describe('delete address', () => {
         )
       )
 
-      const viewHref = `/address-book/${SEED_ADDRESS_ID}`
+      const addressPageHref = `/address-book/${SEED_ADDRESS_ID}`
       await expect(
         page.getByRole('link', { name: 'Back', exact: true })
-      ).toHaveAttribute('href', viewHref)
+      ).toHaveAttribute('href', addressPageHref)
       await expect(
         page.getByRole('link', { name: CANCEL_LINK })
-      ).toHaveAttribute('href', viewHref)
+      ).toHaveAttribute('href', addressPageHref)
 
       await page
         .getByRole('button', { name: CONFIRM_BUTTON, exact: true })
