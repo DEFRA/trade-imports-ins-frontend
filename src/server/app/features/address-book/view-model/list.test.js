@@ -50,7 +50,7 @@ describe('#addressBookPageHref', () => {
 })
 
 describe('#mapAddressRows', () => {
-  test('maps list rows with country names', () => {
+  test('maps list rows with country labels', () => {
     expect(
       mapAddressRows(
         [
@@ -71,7 +71,7 @@ describe('#mapAddressRows', () => {
         name: 'Farm',
         addressLine: '1 Road, Town, AB1 2CD',
         countryCode: 'GB',
-        countryName: 'United Kingdom'
+        countryLabel: 'United Kingdom'
       }
     ])
   })

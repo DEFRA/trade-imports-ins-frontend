@@ -34,15 +34,15 @@ const tableRowsOf = (addresses) =>
   addresses.map((address) => [
     { text: address.name },
     { text: address.addressLine },
-    { text: address.countryName },
+    { text: address.countryLabel },
     { html: viewLink(address) }
   ])
 
-const paginationOf = (response) => ({
-  page: response.page,
-  pageSize: response.pageSize,
-  totalItems: response.totalItems,
-  totalPages: response.totalPages
+const paginationOf = (addressPage) => ({
+  page: addressPage.page,
+  pageSize: addressPage.pageSize,
+  totalItems: addressPage.totalItems,
+  totalPages: addressPage.totalPages
 })
 
 const buildView = (toolkit, { recoverableError = false, ...model }) =>
@@ -68,9 +68,9 @@ const get = async (request, toolkit) => {
       request.query.countryCode?.trim() ||
       countryCodeMatchingOrNull(searchTerm, countries)
     const search = { q: hasSearch ? searchTerm : undefined, countryCode }
-    const response = await listAddresses(organisationId, { page, ...search })
-    const pagination = paginationOf(response)
-    const addresses = mapAddressRows(response.items ?? [], countries)
+    const addressPage = await listAddresses(organisationId, { page, ...search })
+    const pagination = paginationOf(addressPage)
+    const addresses = mapAddressRows(addressPage.items ?? [], countries)
 
     return buildView(toolkit, {
       tableRows: tableRowsOf(addresses),
@@ -80,8 +80,8 @@ const get = async (request, toolkit) => {
       ),
       searchTerm,
       hasSearch,
-      isEmpty: response.totalItems === 0 && !hasSearch,
-      noSearchResults: response.totalItems === 0 && hasSearch,
+      isEmpty: addressPage.totalItems === 0 && !hasSearch,
+      noSearchResults: addressPage.totalItems === 0 && hasSearch,
       successBanner
     })
   } catch (err) {

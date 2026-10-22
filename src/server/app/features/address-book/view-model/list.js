@@ -30,5 +30,5 @@ export const mapAddressRows = (items, countries = []) =>
     name: address.name,
     addressLine: buildAddressLine(address),
     countryCode: address.countryCode,
-    countryName: countryLabelOf(countries, address.countryCode)
+    countryLabel: countryLabelOf(countries, address.countryCode)
   }))
