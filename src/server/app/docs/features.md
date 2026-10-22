@@ -38,6 +38,13 @@ root:
   exactly the animals frontend origin, else null; `pathWithReturn` carries it on;
   `honouredReturnOrAddressBook` and `deadLinkDestination` send a dead link or a finished
   delete there, or to the list when it is one of that address's own pages.
+  A `return` holding a backslash, a carriage return or a line feed is refused:
+  browsers and the URL parser rewrite a backslash into an off-site redirect, and
+  a line break splits the `Location` header. An INS path is resolved against a
+  stand-in origin and kept only when that origin survives, then given back
+  percent-encoded so it is safe in a `Location` header. A refused, non-empty
+  `return` is logged at info with the request path and the reason, never the
+  value itself.
 - [`stored-address.js`](../features/address-book/stored-address.js) —
   `findLiveAddress` resolves an unknown or deleted address to `undefined`;
   `findLiveAddressWithCountryLabel` adds the country's label to a live one;

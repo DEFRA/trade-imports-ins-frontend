@@ -1,23 +1,21 @@
 import { config } from '../../../../config/config.js'
 import { isStubMode } from '../../../common/services/mode.js'
+import { createLogger } from '../../../common/helpers/logging/logger.js'
 import { addressBookPath, addressPath } from '../../shared/paths.js'
+
+const logger = createLogger()
 
 const RETURN_QUERY_KEY = 'return'
 
-// Characters browsers or the URL parser rewrite into an off-site redirect, or that split a Location header.
-const UNSAFE_REDIRECT_CHARACTERS = /[\\\r\n]/
-
-// Normalised so the path is percent-encoded and safe in a Location header.
 const normalisedInsPathOrNull = (pathOrUrl) => {
   if (!pathOrUrl.startsWith('/') || pathOrUrl.startsWith('//')) {
     return null
   }
   const standInOrigin = 'https://relative-path.invalid'
   try {
-    // If standInOrigin is retained in the resulting URL, then pathOrUrl was a relative INS
-    // path, which is normalised and returned.
     const url = new URL(pathOrUrl, standInOrigin)
-    return url.origin === standInOrigin
+    const staysOnStandInOrigin = url.origin === standInOrigin
+    return staysOnStandInOrigin
       ? `${url.pathname}${url.search}${url.hash}`
       : null
   } catch {
@@ -25,8 +23,6 @@ const normalisedInsPathOrNull = (pathOrUrl) => {
   }
 }
 
-// An honoured return or a path this service built, so not validated here: an INS path
-// gives its pathname, an animals frontend URL gives null.
 const pathnameOrNull = (pathOrUrl) =>
   pathOrUrl.startsWith('/') ? pathOrUrl.split(/[?#]/)[0] : null
 
@@ -45,16 +41,34 @@ const animalsUrlOrNull = (pathOrUrl) => {
   }
 }
 
+const logRefusedReturn = (request, reason) => {
+  logger.info(
+    { path: request.path, reason },
+    'Return query refused, ignoring it'
+  )
+}
+
 export const honouredReturnOrNull = (request) => {
-  const value = request.query?.[RETURN_QUERY_KEY]
-  if (
-    typeof value !== 'string' ||
-    !value ||
-    UNSAFE_REDIRECT_CHARACTERS.test(value)
-  ) {
+  const requestedReturn = request.query?.[RETURN_QUERY_KEY]
+  if (!requestedReturn) {
     return null
   }
-  return normalisedInsPathOrNull(value) ?? animalsUrlOrNull(value)
+  if (typeof requestedReturn !== 'string') {
+    logRefusedReturn(request, 'not a single value')
+    return null
+  }
+  const unsafeRedirectCharacters = /[\\\r\n]/
+  if (unsafeRedirectCharacters.test(requestedReturn)) {
+    logRefusedReturn(request, 'unsafe characters')
+    return null
+  }
+  const honouredReturn =
+    normalisedInsPathOrNull(requestedReturn) ??
+    animalsUrlOrNull(requestedReturn)
+  if (!honouredReturn) {
+    logRefusedReturn(request, 'not an INS path or an animals frontend URL')
+  }
+  return honouredReturn
 }
 
 export const pathWithReturn = (path, honouredReturn) =>
@@ -64,8 +78,11 @@ export const pathWithReturn = (path, honouredReturn) =>
 
 const isOwnPageOf = (addressId, pathOrUrl) => {
   const pathname = pathnameOrNull(pathOrUrl)
-  const own = addressPath(addressId)
-  return pathname === own || pathname?.startsWith(`${own}/`) === true
+  const addressPagePath = addressPath(addressId)
+  return (
+    pathname === addressPagePath ||
+    pathname?.startsWith(`${addressPagePath}/`) === true
+  )
 }
 
 export const honouredReturnOrAddressBook = (addressId, honouredReturn) =>
