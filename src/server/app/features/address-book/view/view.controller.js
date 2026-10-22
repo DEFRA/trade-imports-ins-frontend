@@ -28,23 +28,28 @@ const copy = copyFor({ en, cy })
 
 const hasText = (value) => Boolean(value?.trim?.())
 
-const ROW_FIELDS = [...ADDRESS_FIELDS, 'email', 'phone']
-
-export const buildRows = (address, countryLabel) =>
-  ROW_FIELDS.map((field) => ({
-    field,
-    text: addressFieldTextOrNull(address, countryLabel, field)
-  }))
+export const buildRows = (address, countryLabel) => {
+  const rowFields = [...ADDRESS_FIELDS, 'email', 'phone']
+  return rowFields
+    .map((field) => ({
+      field,
+      text: addressFieldTextOrNull(address, countryLabel, field)
+    }))
     .filter(({ field, text }) => isRequiredField(field) || hasText(text))
     .map(({ field, text }) => ({
       key: { text: copy.form.fields[field] },
       value: { text }
     }))
+}
 
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const { id: addressId } = request.params
   const honouredReturn = honouredReturnOrNull(request)
+  const returnDestination = honouredReturnOrAddressBook(
+    addressId,
+    honouredReturn
+  )
 
   try {
     const liveAddressWithCountryLabel = await findLiveAddressWithCountryLabel(
@@ -56,15 +61,11 @@ const get = async (request, toolkit) => {
         { organisationId, addressId },
         'Address not live, redirecting away from its view page'
       )
-      return toolkit.redirect(
-        honouredReturnOrAddressBook(addressId, honouredReturn)
-      )
+      return toolkit.redirect(returnDestination)
     }
     const { address, countryLabel } = liveAddressWithCountryLabel
     return toolkit.view(view, {
-      ...kit.base(address.name, {
-        backLink: honouredReturnOrAddressBook(addressId, honouredReturn)
-      }),
+      ...kit.base(address.name, { backLink: returnDestination }),
       copy,
       heading: address.name,
       editHref: pathWithReturn(addressEditPath(addressId), honouredReturn),
