@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test'
 
+import { expectAddressBookList } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { fillValidAddress, validAddress } from './address-form.js'
-import { SEED_ADDRESS_ID, SEED_ADDRESS_NAME } from './seed-address.js'
+import {
+  SEED_ADDRESS_ID,
+  SEED_ADDRESS_NAME,
+  UNKNOWN_ADDRESS_ID
+} from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 const ADDRESS_BOOK = '/address-book'
@@ -118,19 +123,11 @@ test.describe('view address', () => {
   })
 
   test.describe('dead links', () => {
-    async function expectAddressBookList(page) {
-      await expect(page).toHaveURL(/\/address-book$/)
-      await expect(
-        page.getByRole('heading', { level: 1, name: 'Address book' })
-      ).toBeVisible()
-      await expect(page.getByText('Page not found')).toHaveCount(0)
-    }
-
     test('an unknown address id returns to the address book', async ({
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-view-unknown' })
-      await page.goto('/address-book/ffffffffffffffffffffffff')
+      await page.goto(`/address-book/${UNKNOWN_ADDRESS_ID}`)
 
       await expectAddressBookList(page)
     })
@@ -139,7 +136,7 @@ test.describe('view address', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-view-dead-return' })
-      await page.goto('/address-book/ffffffffffffffffffffffff?return=%2F')
+      await page.goto(`/address-book/${UNKNOWN_ADDRESS_ID}?return=%2F`)
 
       await expect(page).toHaveURL(/\/$/)
       await expect(
