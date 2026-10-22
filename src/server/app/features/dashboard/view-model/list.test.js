@@ -17,6 +17,7 @@ vi.mock('../../../../../config/config.js', () => ({
 }))
 
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
+const LAST_UPDATED_OLDEST_FIRST = 'lastUpdated,asc'
 
 afterEach(() => {
   configState.animalsBaseUrl = configState.defaultAnimalsBaseUrl
@@ -40,7 +41,7 @@ describe('#buildDashboardQueryString', () => {
     expect(
       buildDashboardQueryString({
         referenceNumber: REFERENCE_NUMBER,
-        sort: 'lastUpdated,asc',
+        sort: LAST_UPDATED_OLDEST_FIRST,
         page: 3
       })
     ).toBe('?referenceNumber=GBN-AG-26-000001&sort=lastUpdated%2Casc&page=3')
@@ -54,11 +55,22 @@ describe('#buildDashboardQueryString', () => {
 })
 
 describe('#dashboardPageHref', () => {
-  test('links to a page of the dashboard carrying sort and referenceNumber', () => {
-    const query = { sort: 'lastUpdated,asc', referenceNumber: null }
+  test('Should link to the given page carrying referenceNumber and sort', () => {
+    expect(
+      dashboardPageHref(3, {
+        sort: LAST_UPDATED_OLDEST_FIRST,
+        referenceNumber: REFERENCE_NUMBER
+      })
+    ).toBe('/?referenceNumber=GBN-AG-26-000001&sort=lastUpdated%2Casc&page=3')
+  })
 
-    expect(dashboardPageHref(3, query)).toBe('/?sort=lastUpdated%2Casc&page=3')
-    expect(dashboardPageHref(1, query)).toBe('/?sort=lastUpdated%2Casc')
+  test('Should leave the page off the link to page 1', () => {
+    expect(
+      dashboardPageHref(1, {
+        sort: LAST_UPDATED_OLDEST_FIRST,
+        referenceNumber: null
+      })
+    ).toBe('/?sort=lastUpdated%2Casc')
   })
 })
 
