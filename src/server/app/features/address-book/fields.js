@@ -16,12 +16,17 @@ export const FIELD_RULES = {
   townOrCity: { maxLength: 100, required: true },
   county: { maxLength: 100, required: false },
   postcode: { maxLength: 12, required: true },
-  countryCode: { required: true, oneOfCountryCodes: true },
+  countryCode: { oneOfCountryCodes: true },
   phone: { maxLength: 20, required: true },
-  email: { maxLength: 254, required: true, email: true }
+  email: { maxLength: 254, email: true }
 }
 
 export const FIELDS = Object.keys(FIELD_RULES)
+
+export const isRequiredField = (field) => {
+  const { required, email, oneOfCountryCodes } = FIELD_RULES[field]
+  return Boolean(required || email || oneOfCountryCodes)
+}
 
 export const ADDRESS_FIELDS = [
   'name',
@@ -33,11 +38,11 @@ export const ADDRESS_FIELDS = [
   'countryCode'
 ]
 
-export const addressFieldText = (address, countryLabel, field) =>
-  field === 'countryCode' ? countryLabel : address[field]
+export const addressFieldTextOrNull = (address, countryLabel, field) =>
+  field === 'countryCode' ? countryLabel : (address[field] ?? null)
 
-export const formValuesOf = (source = {}) =>
-  Object.fromEntries(FIELDS.map((field) => [field, source[field] ?? '']))
+export const formValuesOf = (address = {}) =>
+  Object.fromEntries(FIELDS.map((field) => [field, address[field] ?? '']))
 
 const { errors } = copyFor({ en, cy })
 

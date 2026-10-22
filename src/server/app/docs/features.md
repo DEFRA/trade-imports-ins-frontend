@@ -21,9 +21,11 @@ below.
 root:
 
 - [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
-  `FIELDS`, `formValuesOf` and `addressRules(countryCodes)`, plus
-  `ADDRESS_FIELDS` (the address lines in display order) and
-  `addressFieldText`, shared by the view rows and the delete summary.
+  `FIELDS`, `isRequiredField`, `formValuesOf` and
+  `addressRules(countryCodes)`, plus `ADDRESS_FIELDS` (the address lines in
+  display order) and `addressFieldTextOrNull`, shared by the view rows and the
+  delete summary. A country or email field is always required; `required`
+  sets it for a text field.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems`, `countryCodeMatchingOrNull`.

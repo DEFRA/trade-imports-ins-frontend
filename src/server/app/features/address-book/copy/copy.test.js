@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
-import { FIELDS, FIELD_RULES } from '../fields.js'
+import { FIELDS, FIELD_RULES, isRequiredField } from '../fields.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
 
@@ -50,14 +50,13 @@ describe('#copy', () => {
     'Should carry a %s required message for every mandatory field and a maxLength message for every bounded one',
     (locale, bundle) => {
       for (const field of FIELDS) {
-        const rule = FIELD_RULES[field]
-        if (rule.required) {
+        if (isRequiredField(field)) {
           expect(
             typeof bundle.errors[field].required,
             `${locale}: errors.${field}.required`
           ).toBe('string')
         }
-        if (rule.maxLength) {
+        if (FIELD_RULES[field].maxLength) {
           expect(
             typeof bundle.errors[field].maxLength,
             `${locale}: errors.${field}.maxLength`

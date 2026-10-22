@@ -1,14 +1,20 @@
 import { describe, expect, test } from 'vitest'
 
 import { validate } from '../../lib/validate/index.js'
-import { FIELDS, FIELD_RULES, addressRules, formValuesOf } from './fields.js'
+import {
+  FIELDS,
+  FIELD_RULES,
+  addressRules,
+  formValuesOf,
+  isRequiredField
+} from './fields.js'
 import { copy } from './copy/copy.en.js'
 
 const MDM_CODES = ['GB', 'FR', 'DE']
 
 const rules = addressRules(MDM_CODES)
 
-const REQUIRED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].required)
+const REQUIRED_FIELDS = FIELDS.filter(isRequiredField)
 const BOUNDED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].maxLength)
 
 const BUSINESS_NAME = 'Highland Livestock Ltd'
@@ -113,16 +119,23 @@ describe('#FIELD_RULES parity with Java Bean Validation', () => {
     expect(FIELD_RULES.townOrCity).toEqual({ maxLength: 100, required: true })
     expect(FIELD_RULES.county).toEqual({ maxLength: 100, required: false })
     expect(FIELD_RULES.postcode).toEqual({ maxLength: 12, required: true })
-    expect(FIELD_RULES.countryCode).toEqual({
-      required: true,
-      oneOfCountryCodes: true
-    })
+    expect(FIELD_RULES.countryCode).toEqual({ oneOfCountryCodes: true })
     expect(FIELD_RULES.phone).toEqual({ maxLength: 20, required: true })
-    expect(FIELD_RULES.email).toEqual({
-      maxLength: 254,
-      required: true,
-      email: true
-    })
+    expect(FIELD_RULES.email).toEqual({ maxLength: 254, email: true })
+  })
+})
+
+describe('#isRequiredField', () => {
+  test('requires every field but the second address line and county', () => {
+    expect(FIELDS.filter(isRequiredField)).toEqual([
+      'name',
+      'addressLine1',
+      'townOrCity',
+      'postcode',
+      'countryCode',
+      'phone',
+      'email'
+    ])
   })
 })
 

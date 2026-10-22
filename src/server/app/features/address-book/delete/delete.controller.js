@@ -4,7 +4,7 @@ import { copyFor } from '../../../shared/copy.js'
 import { addressDeleteRoutePath, addressPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { addressIdOrRedirectRouteOptions } from '../address-id-params.js'
-import { ADDRESS_FIELDS, addressFieldText } from '../fields.js'
+import { ADDRESS_FIELDS, addressFieldTextOrNull } from '../fields.js'
 import {
   boomFor,
   findLiveAddress,
@@ -28,7 +28,7 @@ const copy = copyFor({ en, cy })
 
 export const addressSummaryLines = (address, countryLabel) =>
   ADDRESS_FIELDS.map((field) =>
-    addressFieldText(address, countryLabel, field)
+    addressFieldTextOrNull(address, countryLabel, field)
   ).filter(Boolean)
 
 export const deletedBannerText = (name) =>

@@ -7,7 +7,11 @@ import {
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { addressIdOrRedirectRouteOptions } from '../address-id-params.js'
-import { ADDRESS_FIELDS, FIELD_RULES, addressFieldText } from '../fields.js'
+import {
+  ADDRESS_FIELDS,
+  addressFieldTextOrNull,
+  isRequiredField
+} from '../fields.js'
 import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
 import {
   deadLinkDestination,
@@ -22,8 +26,6 @@ const logger = createLogger()
 const view = 'address-book/view/view'
 const copy = copyFor({ en, cy })
 
-const isOptional = (field) => FIELD_RULES[field]?.required === false
-
 const hasText = (value) => Boolean(value?.trim?.())
 
 const ROW_FIELDS = [...ADDRESS_FIELDS, 'email', 'phone']
@@ -31,9 +33,9 @@ const ROW_FIELDS = [...ADDRESS_FIELDS, 'email', 'phone']
 export const buildRows = (address, countryLabel) =>
   ROW_FIELDS.map((field) => ({
     field,
-    text: addressFieldText(address, countryLabel, field)
+    text: addressFieldTextOrNull(address, countryLabel, field)
   }))
-    .filter(({ field, text }) => !isOptional(field) || hasText(text))
+    .filter(({ field, text }) => isRequiredField(field) || hasText(text))
     .map(({ field, text }) => ({
       key: { text: copy.form.fields[field] },
       value: { text }
