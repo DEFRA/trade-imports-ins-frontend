@@ -61,8 +61,8 @@ export const listAddresses = async (organisationId, { page = 1 } = {}) => {
   }
 }
 
-export const createAddress = async (organisationId, body) => {
-  const created = { id: newObjectId(), ...body }
+export const createAddress = async (organisationId, address) => {
+  const created = { id: newObjectId(), ...address }
   addressesOf(organisationId).push(created)
   return created
 }
@@ -77,13 +77,13 @@ export const getAddress = async (organisationId, addressId) => {
   return found
 }
 
-export const updateAddress = async (organisationId, addressId, body) => {
+export const updateAddress = async (organisationId, addressId, address) => {
   const all = addressesOf(organisationId)
-  const index = all.findIndex((address) => address.id === addressId)
+  const index = all.findIndex((stored) => stored.id === addressId)
   if (index === -1) {
     throw notFound()
   }
-  all[index] = { ...all[index], ...body }
+  all[index] = { ...all[index], ...address }
   return all[index]
 }
 

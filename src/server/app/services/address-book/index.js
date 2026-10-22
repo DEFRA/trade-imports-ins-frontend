@@ -8,14 +8,14 @@ const addressBook = () => (isStubMode() ? stub : client)
 export const listAddresses = (organisationId, search) =>
   addressBook().listAddresses(organisationId, search)
 
-export const createAddress = (organisationId, body) =>
-  addressBook().createAddress(organisationId, body)
+export const createAddress = (organisationId, address) =>
+  addressBook().createAddress(organisationId, address)
 
 export const getAddress = (organisationId, addressId) =>
   addressBook().getAddress(organisationId, addressId)
 
-export const updateAddress = (organisationId, addressId, body) =>
-  addressBook().updateAddress(organisationId, addressId, body)
+export const updateAddress = (organisationId, addressId, address) =>
+  addressBook().updateAddress(organisationId, addressId, address)
 
 export const deleteAddress = (organisationId, addressId) =>
   addressBook().deleteAddress(organisationId, addressId)

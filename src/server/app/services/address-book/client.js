@@ -4,8 +4,6 @@ import { config } from '../../../../config/config.js'
 import { HTTP_STATUS_BAD_REQUEST } from '../../lib/http-status.js'
 import { parseProblemBody, throwOnError } from '../../lib/http-client.js'
 
-const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
-
 const addressBookUrl = config.get('tradeImportsAddressBookApi.baseUrl')
 const tracingHeader = config.get('tracing.header')
 
@@ -19,11 +17,14 @@ const addressesUrl = (organisationId, addressId) => {
   return addressId ? `${base}/${encodeURIComponent(addressId)}` : base
 }
 
-const headers = (organisationId) => ({
-  'Content-Type': 'application/json',
-  [ORGANISATION_ID_HEADER]: organisationId,
-  [tracingHeader]: getTraceId() ?? ''
-})
+const headers = (organisationId) => {
+  const organisationIdHeader = 'Trade-Imports-Organisation-Id'
+  return {
+    'Content-Type': 'application/json',
+    [organisationIdHeader]: organisationId,
+    [tracingHeader]: getTraceId() ?? ''
+  }
+}
 
 const validationFailure = async (response) => {
   const problem = await parseProblemBody(response)
@@ -34,7 +35,7 @@ const validationFailure = async (response) => {
   })
 }
 
-const throwOnValidationFailure = async (response) => {
+const throwOnErrorWithValidationDetail = async (response) => {
   if (response.status === HTTP_STATUS_BAD_REQUEST) {
     throw await validationFailure(response)
   }
@@ -63,14 +64,14 @@ export const listAddresses = async (
   return response.json()
 }
 
-export const createAddress = async (organisationId, body) => {
+export const createAddress = async (organisationId, address) => {
   const response = await fetch(addressesUrl(organisationId), {
     method: 'POST',
     headers: headers(organisationId),
-    body: JSON.stringify(body)
+    body: JSON.stringify(address)
   })
 
-  await throwOnValidationFailure(response)
+  await throwOnErrorWithValidationDetail(response)
   return response.json()
 }
 
@@ -84,14 +85,14 @@ export const getAddress = async (organisationId, addressId) => {
   return response.json()
 }
 
-export const updateAddress = async (organisationId, addressId, body) => {
+export const updateAddress = async (organisationId, addressId, address) => {
   const response = await fetch(addressesUrl(organisationId, addressId), {
     method: 'PUT',
     headers: headers(organisationId),
-    body: JSON.stringify(body)
+    body: JSON.stringify(address)
   })
 
-  await throwOnValidationFailure(response)
+  await throwOnErrorWithValidationDetail(response)
   return response.json()
 }
 
