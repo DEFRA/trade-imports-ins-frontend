@@ -28,8 +28,8 @@ export const buildAddressLine = (address) =>
     .filter(Boolean)
     .join(', ')
 
-export const mapAddressRows = (items, countries = []) =>
-  items.map((address) => ({
+export const mapAddressRows = (addresses, countries = []) =>
+  addresses.map((address) => ({
     id: address.id,
     name: address.name,
     addressLine: buildAddressLine(address),
