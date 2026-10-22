@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs'
-
 import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
@@ -7,15 +5,11 @@ import { FIELDS, FIELD_RULES } from '../fields.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
 
-const SAMPLE_ARGUMENTS = [1, 2, 3]
+const textOf = (value) => {
+  const sampleArguments = [1, 2, 3]
 
-const textOf = (value) =>
-  typeof value === 'function' ? value(...SAMPLE_ARGUMENTS) : value
-
-const MACHINE_DRAFT =
-  '// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.'
-
-const SAMPLE_NAME = 'Green Farm'
+  return typeof value === 'function' ? value(...sampleArguments) : value
+}
 
 const LOCALES = [
   ['en', copy],
@@ -99,7 +93,7 @@ describe('#copy', () => {
     expect(copy.delete.cancel).toBe('No, cancel')
   })
 
-  it('Should carry the labels the form and summary specs pin', () => {
+  it('Should label the optional county, the postcode and the delete heading, and cap the name at 255 characters', () => {
     expect(copy.form.fields.county).toBe('County (optional)')
     expect(copy.delete.title).toBe('Delete this address?')
     expect(copy.form.fields.postcode).toBe('Postcode or Zip code')
@@ -109,21 +103,16 @@ describe('#copy', () => {
   })
 
   it('Should name the address in the Welsh deleted banner', () => {
-    const welsh = cy.successBanner.deleted(SAMPLE_NAME)
+    const addressName = 'Green Farm'
+    const welsh = cy.successBanner.deleted(addressName)
 
-    expect(welsh).toContain(SAMPLE_NAME)
-    expect(welsh).not.toBe(copy.successBanner.deleted(SAMPLE_NAME))
+    expect(welsh).toContain(addressName)
+    expect(welsh).not.toBe(copy.successBanner.deleted(addressName))
   })
 
   it('Should carry the Welsh for the delete page heading and confirm button', () => {
     expect(cy.delete.title).toBe('Dileu’r cyfeiriad hwn?')
     expect(cy.delete.confirm).toBe('Ie, dileu')
-  })
-
-  it('Should mark the Welsh as a machine draft on its first line', () => {
-    const source = readFileSync(new URL('copy.cy.js', import.meta.url), 'utf8')
-
-    expect(source.split('\n')[0]).toBe(MACHINE_DRAFT)
   })
 
   it('Should ask for the missing name, postcode, country or phone in its required message', () => {

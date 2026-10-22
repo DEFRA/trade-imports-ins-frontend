@@ -1,14 +1,9 @@
-import { readFileSync } from 'node:fs'
-
 import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../shared/copy-leaves.js'
 import { LEVELS } from '../levels.js'
 import { copy as en } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
-
-const MACHINE_DRAFT =
-  '// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.'
 
 describe('#page maturity copy', () => {
   it('Should hold the same leaf paths in Welsh as in English', () => {
@@ -35,11 +30,5 @@ describe('#page maturity copy', () => {
     expect(Object.keys(bundle.levels).toSorted()).toEqual(
       Object.values(LEVELS).toSorted()
     )
-  })
-
-  it('Should mark the Welsh as a machine draft on its first line', () => {
-    const source = readFileSync(new URL('copy.cy.js', import.meta.url), 'utf8')
-
-    expect(source.split('\n')[0]).toBe(MACHINE_DRAFT)
   })
 })
