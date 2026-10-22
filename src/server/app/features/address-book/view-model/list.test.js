@@ -8,7 +8,7 @@ import {
 } from './list.js'
 
 describe('#buildAddressLine', () => {
-  test('composes addressLine1, townOrCity and postcode', () => {
+  test('Should join addressLine1, townOrCity and postcode with commas', () => {
     expect(
       buildAddressLine({
         addressLine1: "14 Drover's Way",
@@ -20,12 +20,12 @@ describe('#buildAddressLine', () => {
 })
 
 describe('#buildAddressBookQueryString', () => {
-  test('omits page size param', () => {
+  test('Should add the page param only after the first page', () => {
     expect(buildAddressBookQueryString({ page: 2 })).toBe('?page=2')
     expect(buildAddressBookQueryString({ page: 1 })).toBe('')
   })
 
-  test('preserves search terms', () => {
+  test('Should carry q and countryCode before the page param', () => {
     expect(
       buildAddressBookQueryString({
         searchTerm: 'green',
@@ -37,7 +37,7 @@ describe('#buildAddressBookQueryString', () => {
 })
 
 describe('#addressBookPageHref', () => {
-  test('links to a page of the address book carrying the search', () => {
+  test('Should link to the address book carrying q and countryCode, adding page only after the first page', () => {
     const search = { searchTerm: 'green', countryCode: 'GB' }
 
     expect(addressBookPageHref(1, search)).toBe(
@@ -48,13 +48,13 @@ describe('#addressBookPageHref', () => {
     )
   })
 
-  test('links to the first page with no query', () => {
+  test('Should link to /address-book with no query for the first page and no search', () => {
     expect(addressBookPageHref(1)).toBe('/address-book')
   })
 })
 
 describe('#mapAddressRows', () => {
-  test('maps list rows with country labels', () => {
+  test('Should map each address to a row with its address line and country label', () => {
     expect(
       mapAddressRows(
         [
