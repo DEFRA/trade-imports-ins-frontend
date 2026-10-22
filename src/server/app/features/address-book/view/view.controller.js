@@ -6,7 +6,7 @@ import {
   addressRoutePath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { deadLinkRouteOptions } from '../address-id-params.js'
+import { addressIdOrRedirectRouteOptions } from '../address-id-params.js'
 import { ADDRESS_FIELDS, FIELD_RULES, addressFieldText } from '../fields.js'
 import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
 import {
@@ -79,5 +79,5 @@ const get = async (request, toolkit) => {
 export const routes = kit.pageRoutes(
   addressRoutePath(),
   { get },
-  deadLinkRouteOptions(deadLinkDestination)
+  addressIdOrRedirectRouteOptions(deadLinkDestination)
 )

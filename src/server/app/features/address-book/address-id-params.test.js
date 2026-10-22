@@ -1,6 +1,9 @@
 import { describe, expect, test, vi } from 'vitest'
 
-import { addressIdParams, deadLinkRouteOptions } from './address-id-params.js'
+import {
+  addressIdParams,
+  addressIdOrRedirectRouteOptions
+} from './address-id-params.js'
 
 describe('#addressIdParams', () => {
   test('accepts a 24-character hex Mongo ObjectId', () => {
@@ -19,13 +22,13 @@ describe('#addressIdParams', () => {
   })
 })
 
-describe('#deadLinkRouteOptions', () => {
-  test('deadLinkRouteOptions redirects a failed id to the fallback path', () => {
+describe('#addressIdOrRedirectRouteOptions', () => {
+  test('redirects a failed id to the fallback path', () => {
     const fallbackPathOf = vi.fn(() => '/address-book')
-    const options = deadLinkRouteOptions(fallbackPathOf)
+    const options = addressIdOrRedirectRouteOptions(fallbackPathOf)
     const takeover = vi.fn(() => 'taken-over')
     const toolkit = { redirect: vi.fn(() => ({ takeover })) }
-    const request = { query: {} }
+    const request = { params: { id: 'not-a-valid-id' }, query: {} }
 
     const result = options.validate.failAction(request, toolkit)
 

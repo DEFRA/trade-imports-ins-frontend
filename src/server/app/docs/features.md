@@ -28,7 +28,7 @@ root:
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems`, `countryCodeMatchingOrNull`.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
-  `addressIdParams`, `addressIdRouteOptions`, `deadLinkRouteOptions`.
+  `addressIdParams`, `addressIdRouteOptions`, `addressIdOrRedirectRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOrNull`
   gives the `return` query when it is an INS path or, outside stub mode, a URL on
   exactly the animals frontend origin, else null; `pathWithReturn` carries it on;
@@ -71,7 +71,7 @@ pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
 'session' }`; the edit page passes `addressIdRouteOptions`; the view and
-  delete pages pass `deadLinkRouteOptions(deadLinkDestination)`, so a dead link
+  delete pages pass `addressIdOrRedirectRouteOptions(deadLinkDestination)`, so a dead link
   returns to an honoured `return`, or to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
