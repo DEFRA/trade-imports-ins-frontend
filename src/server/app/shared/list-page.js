@@ -9,14 +9,16 @@ export const escapeHtml = (value) =>
   String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
 
 const clampPage = (page, totalPages) =>
   Math.min(Math.max(page, FIRST_PAGE), Math.max(totalPages, FIRST_PAGE))
 
-export const buildResultsLabel = (
+export const resultsLabelOrNull = (
   { page, pageSize, totalItems, totalPages },
-  format
+  resultsLabelOf
 ) => {
   if (totalItems < 1) {
     return null
@@ -24,16 +26,18 @@ export const buildResultsLabel = (
   const currentPage = clampPage(page, totalPages)
   const from = (currentPage - 1) * pageSize + 1
   const to = Math.min(currentPage * pageSize, totalItems)
-  return format(from, to, totalItems)
+  return resultsLabelOf(from, to, totalItems)
 }
 
-export const buildPaginationLinks = ({ page, totalPages }, pageHrefOf) => {
+export const paginationLinksOrNull = ({ page, totalPages }, pageHrefOf) => {
   if (totalPages <= 1) {
     return null
   }
   const currentPage = clampPage(page, totalPages)
   return {
-    ...(currentPage > 1 && { previous: { href: pageHrefOf(currentPage - 1) } }),
+    ...(currentPage > FIRST_PAGE && {
+      previous: { href: pageHrefOf(currentPage - 1) }
+    }),
     ...(currentPage < totalPages && {
       next: { href: pageHrefOf(currentPage + 1) }
     }),

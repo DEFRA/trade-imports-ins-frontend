@@ -4,10 +4,10 @@ import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../lib/http-status.js'
 import * as kit from '../../shared/kit.js'
 import { copyFor } from '../../shared/copy.js'
 import {
-  buildPaginationLinks,
-  buildResultsLabel,
   escapeHtml,
-  parsePage
+  paginationLinksOrNull,
+  parsePage,
+  resultsLabelOrNull
 } from '../../shared/list-page.js'
 import { dashboardPath } from '../../shared/paths.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
@@ -99,8 +99,8 @@ const get = async (request, toolkit) => {
 
     return buildView(toolkit, listQuery, {
       tableRows: tableRowsOf(notificationRows),
-      resultsLabel: buildResultsLabel(pagination, copy.results),
-      pagination: buildPaginationLinks(pagination, (targetPage) =>
+      resultsLabel: resultsLabelOrNull(pagination, copy.results),
+      pagination: paginationLinksOrNull(pagination, (targetPage) =>
         dashboardPageHref(targetPage, { sort, referenceNumber })
       ),
       isEmpty: response.totalElements === 0 && !hasSearch,

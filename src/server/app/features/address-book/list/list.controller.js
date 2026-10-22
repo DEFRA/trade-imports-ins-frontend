@@ -3,10 +3,10 @@ import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
-  buildPaginationLinks,
-  buildResultsLabel,
   escapeHtml,
-  parsePage
+  paginationLinksOrNull,
+  parsePage,
+  resultsLabelOrNull
 } from '../../../shared/list-page.js'
 import {
   addressAddPath,
@@ -74,8 +74,8 @@ const get = async (request, toolkit) => {
 
     return buildView(toolkit, {
       tableRows: tableRowsOf(addresses),
-      resultsLabel: buildResultsLabel(pagination, copy.list.results),
-      pagination: buildPaginationLinks(pagination, (targetPage) =>
+      resultsLabel: resultsLabelOrNull(pagination, copy.list.results),
+      pagination: paginationLinksOrNull(pagination, (targetPage) =>
         addressBookPageHref(targetPage, search)
       ),
       searchTerm,

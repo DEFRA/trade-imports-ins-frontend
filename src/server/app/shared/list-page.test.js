@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest'
 
 import {
-  buildPaginationLinks,
-  buildResultsLabel,
   escapeHtml,
-  parsePage
+  paginationLinksOrNull,
+  parsePage,
+  resultsLabelOrNull
 } from './list-page.js'
 
 const twoPages = { page: 2, pageSize: 25, totalItems: 30, totalPages: 2 }
@@ -29,27 +29,27 @@ describe('#parsePage', () => {
 })
 
 describe('#escapeHtml', () => {
-  test('escapes ampersands, angle brackets and double quotes', () => {
-    expect(escapeHtml('Tom & "Jerry" <Farm>')).toBe(
-      'Tom &amp; &quot;Jerry&quot; &lt;Farm>'
+  test('escapes ampersands, angle brackets, double quotes and apostrophes', () => {
+    expect(escapeHtml(`Tom & "Jerry" <Farm> O'Brien`)).toBe(
+      'Tom &amp; &quot;Jerry&quot; &lt;Farm&gt; O&#39;Brien'
     )
   })
 })
 
-describe('#buildResultsLabel', () => {
+describe('#resultsLabelOrNull', () => {
   test('formats the current page range', () => {
     expect(
-      buildResultsLabel(
+      resultsLabelOrNull(
         { page: 1, pageSize: 8, totalItems: 24, totalPages: 3 },
         rangeLabel
       )
     ).toBe('Showing 1-8 of 24')
-    expect(buildResultsLabel(twoPages, rangeLabel)).toBe('Showing 26-30 of 30')
+    expect(resultsLabelOrNull(twoPages, rangeLabel)).toBe('Showing 26-30 of 30')
   })
 
   test('returns null when there are no results', () => {
     expect(
-      buildResultsLabel(
+      resultsLabelOrNull(
         { page: 1, pageSize: 25, totalItems: 0, totalPages: 0 },
         rangeLabel
       )
@@ -57,9 +57,9 @@ describe('#buildResultsLabel', () => {
   })
 })
 
-describe('#buildPaginationLinks', () => {
+describe('#paginationLinksOrNull', () => {
   test('returns numbered pages, marking the current one', () => {
-    const pagination = buildPaginationLinks(twoPages, pageHrefOf)
+    const pagination = paginationLinksOrNull(twoPages, pageHrefOf)
 
     expect(pagination.items).toEqual([
       { number: '1', href: FIRST_PAGE_HREF, current: false },
@@ -70,20 +70,20 @@ describe('#buildPaginationLinks', () => {
 
   test('returns null for a single page', () => {
     expect(
-      buildPaginationLinks({ page: 1, totalPages: 1 }, pageHrefOf)
+      paginationLinksOrNull({ page: 1, totalPages: 1 }, pageHrefOf)
     ).toBeNull()
   })
 
   test('omits previous on the first page and next on the last page', () => {
-    const first = buildPaginationLinks({ ...twoPages, page: 1 }, pageHrefOf)
+    const first = paginationLinksOrNull({ ...twoPages, page: 1 }, pageHrefOf)
 
     expect(first.previous).toBeUndefined()
     expect(first.next.href).toBe('/list?page=2')
-    expect(buildPaginationLinks(twoPages, pageHrefOf).next).toBeUndefined()
+    expect(paginationLinksOrNull(twoPages, pageHrefOf).next).toBeUndefined()
   })
 
   test('clamps a page past the end to the last page', () => {
-    const pagination = buildPaginationLinks(
+    const pagination = paginationLinksOrNull(
       { ...twoPages, page: 5 },
       pageHrefOf
     )
