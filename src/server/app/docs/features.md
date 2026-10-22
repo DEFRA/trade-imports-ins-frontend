@@ -38,7 +38,9 @@ root:
   `findLiveAddress` resolves an unknown or deleted address to `undefined`;
   `findLiveAddressWithCountryLabel` adds the country's label to a live one;
   `loadStoredAddress` 404s what `findLiveAddress` does not find;
-  `isNotFound` tells a client 404; `boomFor` maps client errors to Boom.
+  `isNotFound` tells a client 404; `knownBoomOrUndefined` passes a Boom
+  through and turns a client 404 into `Boom.notFound()`, else `undefined`;
+  `boomFor` does the same and makes anything else a logged `Boom.internal()`.
 - [`success-banner.js`](../features/address-book/success-banner.js) —
   yar-backed, read-once.
 

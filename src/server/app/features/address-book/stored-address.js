@@ -41,12 +41,20 @@ export const loadStoredAddress = async (organisationId, addressId) => {
   return address
 }
 
-export const boomFor = (err, logUnexpected) => {
+export const knownBoomOrUndefined = (err) => {
   if (err.isBoom) {
     return err
   }
   if (isNotFound(err)) {
     return Boom.notFound()
+  }
+  return undefined
+}
+
+export const boomFor = (err, logUnexpected) => {
+  const knownBoom = knownBoomOrUndefined(err)
+  if (knownBoom) {
+    return knownBoom
   }
   logUnexpected()
   return Boom.internal()

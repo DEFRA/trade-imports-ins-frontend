@@ -1,5 +1,3 @@
-import Boom from '@hapi/boom'
-
 import {
   isValidationFailure,
   mapApiErrorsToFormErrors,
@@ -24,7 +22,12 @@ import {
 } from '../address-countries.js'
 import { addressIdRouteOptions } from '../address-id-params.js'
 import { addressRules, formValuesOf } from '../fields.js'
-import { boomFor, isNotFound, loadStoredAddress } from '../stored-address.js'
+import {
+  boomFor,
+  isNotFound,
+  knownBoomOrUndefined,
+  loadStoredAddress
+} from '../stored-address.js'
 import { setSuccessBanner } from '../success-banner.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
@@ -55,7 +58,7 @@ const buildView = (
 const loadCountryItems = async () =>
   countryItemsOf(await getAddressFormCountries())
 
-const rejected = async (toolkit, model) =>
+const viewWithLoadedCountries = async (toolkit, model) =>
   buildView(toolkit, { ...model, countryItems: await loadCountryItems() })
 
 const get = async (request, toolkit) => {
@@ -91,7 +94,7 @@ const post = async (request, toolkit) => {
 
   try {
     const countries = await getAddressFormCountries()
-    const { errors, value } = validate(
+    const { errors, value: validatedAddress } = validate(
       addressRules(countries.map((country) => country.code)),
       formValues
     )
@@ -103,19 +106,28 @@ const post = async (request, toolkit) => {
         errors
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    const updated = await updateAddress(organisationId, addressId, value)
-    setSuccessBanner(request, copy.successBanner.updated(updated.name))
+    const updatedAddress = await updateAddress(
+      organisationId,
+      addressId,
+      validatedAddress
+    )
+    setSuccessBanner(request, copy.successBanner.updated(updatedAddress.name))
     return toolkit.redirect(addressBookPath())
   } catch (err) {
-    if (err.isBoom) {
-      throw err
-    }
     if (isNotFound(err)) {
-      throw Boom.notFound()
+      logger.info({ organisationId, addressId }, 'Address to update not found')
+    }
+    const knownBoom = knownBoomOrUndefined(err)
+    if (knownBoom) {
+      throw knownBoom
     }
     if (isValidationFailure(err)) {
+      logger.warn(
+        { err, organisationId, addressId },
+        'Address book refused the address update'
+      )
       return (
-        await rejected(toolkit, {
+        await viewWithLoadedCountries(toolkit, {
           addressId,
           formValues,
           errors: mapApiErrorsToFormErrors(err.body)
@@ -124,7 +136,7 @@ const post = async (request, toolkit) => {
     }
     logger.error({ err, organisationId, addressId }, 'Failed to update address')
     return (
-      await rejected(toolkit, {
+      await viewWithLoadedCountries(toolkit, {
         addressId,
         formValues,
         recoverableError: true
