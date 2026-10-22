@@ -1,11 +1,8 @@
 import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
 
-const PAGE_SIZE = 25
-const PAGINATED_SEED_COUNT = 30
-
 const OBJECT_ID_LENGTH = 24
 
-const store = new Map()
+const addressesByOrganisation = new Map()
 
 const newObjectId = () =>
   crypto.randomUUID().replaceAll('-', '').slice(0, OBJECT_ID_LENGTH)
@@ -29,7 +26,8 @@ const seedAddressesFor = (organisationId) => {
     return []
   }
   if (organisationId.endsWith('-paginated')) {
-    return Array.from({ length: PAGINATED_SEED_COUNT }, (_, index) =>
+    const paginatedSeedCount = 30
+    return Array.from({ length: paginatedSeedCount }, (_, index) =>
       buildSeedAddress(index + 1)
     )
   }
@@ -37,25 +35,29 @@ const seedAddressesFor = (organisationId) => {
 }
 
 const addressesOf = (organisationId) => {
-  if (!store.has(organisationId)) {
-    store.set(organisationId, seedAddressesFor(organisationId))
+  if (!addressesByOrganisation.has(organisationId)) {
+    addressesByOrganisation.set(
+      organisationId,
+      seedAddressesFor(organisationId)
+    )
   }
-  return store.get(organisationId)
+  return addressesByOrganisation.get(organisationId)
 }
 
 const notFound = () =>
   Object.assign(new Error('Not found'), { status: HTTP_STATUS_NOT_FOUND })
 
 export const listAddresses = async (organisationId, { page = 1 } = {}) => {
-  const all = addressesOf(organisationId)
-  const totalItems = all.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
-  const from = (page - 1) * PAGE_SIZE
+  const pageSize = 25
+  const addresses = addressesOf(organisationId)
+  const totalItems = addresses.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+  const from = (page - 1) * pageSize
 
   return {
-    items: all.slice(from, from + PAGE_SIZE),
+    items: addresses.slice(from, from + pageSize),
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     totalItems,
     totalPages
   }
@@ -68,29 +70,31 @@ export const createAddress = async (organisationId, address) => {
 }
 
 export const getAddress = async (organisationId, addressId) => {
-  const found = addressesOf(organisationId).find(
-    (address) => address.id === addressId
+  const address = addressesOf(organisationId).find(
+    (storedAddress) => storedAddress.id === addressId
   )
-  if (!found) {
+  if (!address) {
     throw notFound()
   }
-  return found
+  return address
 }
 
 export const updateAddress = async (organisationId, addressId, address) => {
-  const all = addressesOf(organisationId)
-  const index = all.findIndex((stored) => stored.id === addressId)
+  const addresses = addressesOf(organisationId)
+  const index = addresses.findIndex(
+    (storedAddress) => storedAddress.id === addressId
+  )
   if (index === -1) {
     throw notFound()
   }
-  all[index] = { ...all[index], ...address }
-  return all[index]
+  addresses[index] = { ...addresses[index], ...address }
+  return addresses[index]
 }
 
 export const deleteAddress = async (organisationId, addressId) => {
-  const all = addressesOf(organisationId)
-  const index = all.findIndex((address) => address.id === addressId)
+  const addresses = addressesOf(organisationId)
+  const index = addresses.findIndex((address) => address.id === addressId)
   if (index !== -1) {
-    all.splice(index, 1)
+    addresses.splice(index, 1)
   }
 }
