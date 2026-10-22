@@ -5,9 +5,9 @@ import * as kit from '../../shared/kit.js'
 import { copyFor } from '../../shared/copy.js'
 import {
   escapeHtml,
-  paginationLinksOrNull,
+  buildPaginationLinks,
   parsePage,
-  resultsLabelOrNull
+  buildResultsLabel
 } from '../../shared/list-page.js'
 import { dashboardPath } from '../../shared/paths.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
@@ -99,8 +99,8 @@ const get = async (request, toolkit) => {
 
     return buildView(toolkit, listQuery, {
       tableRows: tableRowsOf(notificationRows),
-      resultsLabel: resultsLabelOrNull(pagination, copy.results),
-      pagination: paginationLinksOrNull(pagination, (targetPage) =>
+      resultsLabel: buildResultsLabel(pagination, copy.results),
+      pagination: buildPaginationLinks(pagination, (targetPage) =>
         dashboardPageHref(targetPage, { sort, referenceNumber })
       ),
       isEmpty: response.totalElements === 0 && !hasSearch,

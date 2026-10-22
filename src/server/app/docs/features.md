@@ -23,20 +23,20 @@ root:
 - [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
   `FIELDS`, `isRequiredField`, `formValuesOf` and
   `addressRules(countryCodes)`, plus `ADDRESS_FIELDS` (the address lines in
-  display order) and `addressFieldTextOrNull`, shared by the view rows and the
+  display order) and `addressFieldText`, shared by the view rows and the
   delete summary. Each field's `required` sets both whether a blank value is
   refused and whether the view always shows its row. Each field's
   `maxLength` and `required` match the address book API's `AddressRequest`
   validation, so the form refuses what the API would refuse.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
-  `buildCountrySelectItems`, `countryCodeMatchingOrNull`.
+  `buildCountrySelectItems`, `countryCodeMatching`.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
-  `addressIdParams`, `addressIdRouteOptions`, `addressIdOrRedirectRouteOptions`.
-- [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOrNull`
+  `addressIdParams`, `addressIdRouteOptions`, `redirectingAddressIdRouteOptions`.
+- [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
   gives the `return` query when it is an INS path or, outside stub mode, a URL on
   exactly the animals frontend origin, else null; `pathWithReturn` carries it on;
-  `honouredReturnOrAddressBook` and `deadLinkDestination` send a dead link or a finished
+  `returnDestinationOf` and `deadLinkDestination` send a dead link or a finished
   delete there, or to the list when it is one of that address's own pages.
   A `return` holding a backslash, a carriage return or a line feed is refused:
   browsers and the URL parser rewrite a backslash into an off-site redirect, and
@@ -48,8 +48,8 @@ root:
 - [`stored-address.js`](../features/address-book/stored-address.js) —
   `findLiveAddress` resolves an unknown or deleted address to `undefined`;
   `findLiveAddressWithCountryLabel` adds the country's label to a live one;
-  `liveAddressOrNotFound` 404s what `findLiveAddress` does not find;
-  `isNotFound` tells a client 404; `knownBoomOrUndefined` passes a Boom
+  `loadLiveAddress` 404s what `findLiveAddress` does not find;
+  `isNotFound` tells a client 404; `knownBoomOf` passes a Boom
   through and turns a client 404 into `Boom.notFound()`, else `undefined`;
   `boomFor` does the same and makes anything else a logged `Boom.internal()`.
 - [`success-message.js`](../features/address-book/success-message.js) —
@@ -84,7 +84,7 @@ pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
 'session' }`; the edit page passes `addressIdRouteOptions`; the view and
-  delete pages pass `addressIdOrRedirectRouteOptions(deadLinkDestination)`, so a dead link
+  delete pages pass `redirectingAddressIdRouteOptions(deadLinkDestination)`, so a dead link
   returns to an honoured `return`, or to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
@@ -111,9 +111,9 @@ The shape every ins controller takes, citing
   `mapApiErrorsToFormErrors(err.body)`.
 - `export const routes = kit.pageRoutes(...)`.
 
-The edit page loads through `liveAddressOrNotFound`. The view and delete GETs
+The edit page loads through `loadLiveAddress`. The view and delete GETs
 load through `findLiveAddressWithCountryLabel` and, when it finds nothing, redirect via
-`honouredReturnOrAddressBook` (an honoured return, else the list), logging the
+`returnDestinationOf` (an honoured return, else the list), logging the
 redirect at info with `{ organisationId, addressId }`; the delete POST treats
 a 404 from `deleteAddress` the same way. Anything else throws
 `boomFor(err, () => logger.error(...))`.

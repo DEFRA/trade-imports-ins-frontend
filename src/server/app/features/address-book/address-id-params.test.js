@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import {
   addressIdParams,
-  addressIdOrRedirectRouteOptions
+  redirectingAddressIdRouteOptions
 } from './address-id-params.js'
 
 describe('#addressIdParams', () => {
@@ -22,10 +22,10 @@ describe('#addressIdParams', () => {
   })
 })
 
-describe('#addressIdOrRedirectRouteOptions', () => {
+describe('#redirectingAddressIdRouteOptions', () => {
   test('Should redirect a request that fails id validation to the path fallbackPathOf gives', () => {
     const fallbackPath = '/address-book'
-    const options = addressIdOrRedirectRouteOptions(
+    const options = redirectingAddressIdRouteOptions(
       (request) => request.query.returnTo
     )
     const toolkit = {
@@ -42,7 +42,7 @@ describe('#addressIdOrRedirectRouteOptions', () => {
   })
 
   test('Should validate params with addressIdParams behind session auth', () => {
-    const options = addressIdOrRedirectRouteOptions(() => '/address-book')
+    const options = redirectingAddressIdRouteOptions(() => '/address-book')
 
     expect(options.validate.params).toBe(addressIdParams)
     expect(options.auth).toBe('session')

@@ -2,9 +2,9 @@ import { describe, expect, test } from 'vitest'
 
 import {
   escapeHtml,
-  paginationLinksOrNull,
+  buildPaginationLinks,
   parsePage,
-  resultsLabelOrNull
+  buildResultsLabel
 } from './list-page.js'
 
 const lastOfTwoPages = { page: 2, pageSize: 25, totalItems: 30, totalPages: 2 }
@@ -40,7 +40,7 @@ describe('#escapeHtml', () => {
   })
 })
 
-describe('#resultsLabelOrNull', () => {
+describe('#buildResultsLabel', () => {
   test.each([
     {
       range: '1-8 of 24 on a full first page',
@@ -53,12 +53,12 @@ describe('#resultsLabelOrNull', () => {
       expectedLabel: 'Showing 26-30 of 30'
     }
   ])('Should label the range $range', ({ listPage, expectedLabel }) => {
-    expect(resultsLabelOrNull(listPage, rangeLabel)).toBe(expectedLabel)
+    expect(buildResultsLabel(listPage, rangeLabel)).toBe(expectedLabel)
   })
 
   test('Should return null when there are no results', () => {
     expect(
-      resultsLabelOrNull(
+      buildResultsLabel(
         { page: 1, pageSize: 25, totalItems: 0, totalPages: 0 },
         rangeLabel
       )
@@ -66,9 +66,9 @@ describe('#resultsLabelOrNull', () => {
   })
 })
 
-describe('#paginationLinksOrNull', () => {
+describe('#buildPaginationLinks', () => {
   test('Should return numbered pages, marking the current one', () => {
-    const pagination = paginationLinksOrNull(lastOfTwoPages, pageHrefOf)
+    const pagination = buildPaginationLinks(lastOfTwoPages, pageHrefOf)
 
     expect(pagination.items).toEqual([
       { number: '1', href: FIRST_PAGE_HREF, current: false },
@@ -78,12 +78,12 @@ describe('#paginationLinksOrNull', () => {
 
   test('Should return null for a single page', () => {
     expect(
-      paginationLinksOrNull({ page: 1, totalPages: 1 }, pageHrefOf)
+      buildPaginationLinks({ page: 1, totalPages: 1 }, pageHrefOf)
     ).toBeNull()
   })
 
   test('Should omit previous on the first page', () => {
-    const firstPagePagination = paginationLinksOrNull(
+    const firstPagePagination = buildPaginationLinks(
       firstOfTwoPages,
       pageHrefOf
     )
@@ -92,7 +92,7 @@ describe('#paginationLinksOrNull', () => {
   })
 
   test('Should link next to the second page on the first page', () => {
-    const firstPagePagination = paginationLinksOrNull(
+    const firstPagePagination = buildPaginationLinks(
       firstOfTwoPages,
       pageHrefOf
     )
@@ -101,19 +101,19 @@ describe('#paginationLinksOrNull', () => {
   })
 
   test('Should link previous to the first page on the last page', () => {
-    const lastPagePagination = paginationLinksOrNull(lastOfTwoPages, pageHrefOf)
+    const lastPagePagination = buildPaginationLinks(lastOfTwoPages, pageHrefOf)
 
     expect(lastPagePagination.previous.href).toBe(FIRST_PAGE_HREF)
   })
 
   test('Should omit next on the last page', () => {
-    const lastPagePagination = paginationLinksOrNull(lastOfTwoPages, pageHrefOf)
+    const lastPagePagination = buildPaginationLinks(lastOfTwoPages, pageHrefOf)
 
     expect(lastPagePagination.next).toBeUndefined()
   })
 
   test('Should clamp a page past the end to the last page', () => {
-    const pagination = paginationLinksOrNull(
+    const pagination = buildPaginationLinks(
       { ...lastOfTwoPages, page: 5 },
       pageHrefOf
     )

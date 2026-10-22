@@ -3,8 +3,8 @@ import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import { addressDeleteRoutePath, addressPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { addressIdOrRedirectRouteOptions } from '../address-id-params.js'
-import { ADDRESS_FIELDS, addressFieldTextOrNull } from '../fields.js'
+import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
+import { ADDRESS_FIELDS, addressFieldText } from '../fields.js'
 import {
   boomFor,
   findLiveAddress,
@@ -14,8 +14,8 @@ import {
 import {
   deadLinkDestination,
   landsOnAddressBook,
-  honouredReturnOrNull,
-  honouredReturnOrAddressBook,
+  honouredReturnOf,
+  returnDestinationOf,
   pathWithReturn
 } from '../return-to.js'
 import { setSuccessMessage } from '../success-message.js'
@@ -28,7 +28,7 @@ const copy = copyFor({ en, cy })
 
 export const addressSummaryLines = (address, countryLabel) =>
   ADDRESS_FIELDS.map((field) =>
-    addressFieldTextOrNull(address, countryLabel, field)
+    addressFieldText(address, countryLabel, field)
   ).filter(Boolean)
 
 export const deletedSuccessMessage = (name) =>
@@ -37,7 +37,7 @@ export const deletedSuccessMessage = (name) =>
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const { id: addressId } = request.params
-  const honouredReturn = honouredReturnOrNull(request)
+  const honouredReturn = honouredReturnOf(request)
 
   try {
     const liveAddressWithCountryLabel = await findLiveAddressWithCountryLabel(
@@ -49,9 +49,7 @@ const get = async (request, toolkit) => {
         { organisationId, addressId },
         'Address not live, redirecting away from its delete page'
       )
-      return toolkit.redirect(
-        honouredReturnOrAddressBook(addressId, honouredReturn)
-      )
+      return toolkit.redirect(returnDestinationOf(addressId, honouredReturn))
     }
     const lines = addressSummaryLines(
       liveAddressWithCountryLabel.address,
@@ -80,10 +78,7 @@ const get = async (request, toolkit) => {
 const post = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const { id: addressId } = request.params
-  const destination = honouredReturnOrAddressBook(
-    addressId,
-    honouredReturnOrNull(request)
-  )
+  const destination = returnDestinationOf(addressId, honouredReturnOf(request))
 
   try {
     const address = await findLiveAddress(organisationId, addressId)
@@ -119,5 +114,5 @@ const post = async (request, toolkit) => {
 export const routes = kit.pageRoutes(
   addressDeleteRoutePath(),
   { get, post },
-  addressIdOrRedirectRouteOptions(deadLinkDestination)
+  redirectingAddressIdRouteOptions(deadLinkDestination)
 )

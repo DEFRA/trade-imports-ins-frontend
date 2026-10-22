@@ -4,9 +4,9 @@ import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
   escapeHtml,
-  paginationLinksOrNull,
+  buildPaginationLinks,
   parsePage,
-  resultsLabelOrNull
+  buildResultsLabel
 } from '../../../shared/list-page.js'
 import {
   addressAddPath,
@@ -16,7 +16,7 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
   getAddressFormCountries,
-  countryCodeMatchingOrNull
+  countryCodeMatching
 } from '../address-countries.js'
 import { takeSuccessMessage } from '../success-message.js'
 import { addressBookPageHref, mapAddressRows } from '../view-model/list.js'
@@ -66,7 +66,7 @@ const get = async (request, toolkit) => {
     const countries = await getAddressFormCountries()
     const countryCode =
       request.query.countryCode?.trim() ||
-      countryCodeMatchingOrNull(searchTerm, countries)
+      countryCodeMatching(searchTerm, countries)
     const search = { searchTerm, countryCode }
     const addressPage = await listAddresses(organisationId, { page, ...search })
     const pagination = paginationOf(addressPage)
@@ -74,8 +74,8 @@ const get = async (request, toolkit) => {
 
     return buildView(toolkit, {
       tableRows: tableRowsOf(addresses),
-      resultsLabel: resultsLabelOrNull(pagination, copy.list.results),
-      pagination: paginationLinksOrNull(pagination, (targetPage) =>
+      resultsLabel: buildResultsLabel(pagination, copy.list.results),
+      pagination: buildPaginationLinks(pagination, (targetPage) =>
         addressBookPageHref(targetPage, search)
       ),
       searchTerm,

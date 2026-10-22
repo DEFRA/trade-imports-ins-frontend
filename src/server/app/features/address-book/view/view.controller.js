@@ -6,17 +6,13 @@ import {
   addressRoutePath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { addressIdOrRedirectRouteOptions } from '../address-id-params.js'
-import {
-  ADDRESS_FIELDS,
-  addressFieldTextOrNull,
-  isRequiredField
-} from '../fields.js'
+import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
+import { ADDRESS_FIELDS, addressFieldText, isRequiredField } from '../fields.js'
 import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
 import {
   deadLinkDestination,
-  honouredReturnOrNull,
-  honouredReturnOrAddressBook,
+  honouredReturnOf,
+  returnDestinationOf,
   pathWithReturn
 } from '../return-to.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -33,7 +29,7 @@ export const buildRows = (address, countryLabel) => {
   return rowFields
     .map((field) => ({
       field,
-      text: addressFieldTextOrNull(address, countryLabel, field)
+      text: addressFieldText(address, countryLabel, field)
     }))
     .filter(({ field, text }) => isRequiredField(field) || hasText(text))
     .map(({ field, text }) => ({
@@ -45,11 +41,8 @@ export const buildRows = (address, countryLabel) => {
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const { id: addressId } = request.params
-  const honouredReturn = honouredReturnOrNull(request)
-  const returnDestination = honouredReturnOrAddressBook(
-    addressId,
-    honouredReturn
-  )
+  const honouredReturn = honouredReturnOf(request)
+  const returnDestination = returnDestinationOf(addressId, honouredReturn)
 
   try {
     const liveAddressWithCountryLabel = await findLiveAddressWithCountryLabel(
@@ -82,5 +75,5 @@ const get = async (request, toolkit) => {
 export const routes = kit.pageRoutes(
   addressRoutePath(),
   { get },
-  addressIdOrRedirectRouteOptions(deadLinkDestination)
+  redirectingAddressIdRouteOptions(deadLinkDestination)
 )

@@ -20,7 +20,7 @@ const addressIdRouteOptionsFailingWith = (failAction) => ({
   validate: { params: addressIdParams, failAction }
 })
 
-export const addressIdOrRedirectRouteOptions = (fallbackPathOf) =>
+export const redirectingAddressIdRouteOptions = (fallbackPathOf) =>
   addressIdRouteOptionsFailingWith((request, toolkit, err) => {
     const fallbackPath = fallbackPathOf(request)
     logger.info(

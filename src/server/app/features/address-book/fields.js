@@ -37,7 +37,7 @@ export const ADDRESS_FIELDS = [
   'countryCode'
 ]
 
-export const addressFieldTextOrNull = (address, countryLabel, field) =>
+export const addressFieldText = (address, countryLabel, field) =>
   field === 'countryCode' ? countryLabel : (address[field] ?? null)
 
 export const formValuesOf = (address = {}) =>

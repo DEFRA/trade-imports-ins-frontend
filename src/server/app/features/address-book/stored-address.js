@@ -33,7 +33,7 @@ export const findLiveAddressWithCountryLabel = async (
   }
 }
 
-export const liveAddressOrNotFound = async (organisationId, addressId) => {
+export const loadLiveAddress = async (organisationId, addressId) => {
   const address = await findLiveAddress(organisationId, addressId)
   if (!address) {
     throw Boom.notFound()
@@ -41,7 +41,7 @@ export const liveAddressOrNotFound = async (organisationId, addressId) => {
   return address
 }
 
-export const knownBoomOrUndefined = (err) => {
+export const knownBoomOf = (err) => {
   if (err.isBoom) {
     return err
   }
@@ -52,7 +52,7 @@ export const knownBoomOrUndefined = (err) => {
 }
 
 export const boomFor = (err, logUnexpected) => {
-  const knownBoom = knownBoomOrUndefined(err)
+  const knownBoom = knownBoomOf(err)
   if (knownBoom) {
     return knownBoom
   }

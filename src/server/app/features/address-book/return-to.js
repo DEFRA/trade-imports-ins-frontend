@@ -7,7 +7,7 @@ const logger = createLogger()
 
 const RETURN_QUERY_KEY = 'return'
 
-const normalisedInsPathOrNull = (pathOrUrl) => {
+const normalisedInsPath = (pathOrUrl) => {
   if (!pathOrUrl.startsWith('/') || pathOrUrl.startsWith('//')) {
     return null
   }
@@ -23,13 +23,13 @@ const normalisedInsPathOrNull = (pathOrUrl) => {
   }
 }
 
-const pathnameOrNull = (pathOrUrl) =>
+const pathnameOf = (pathOrUrl) =>
   pathOrUrl.startsWith('/') ? pathOrUrl.split(/[?#]/)[0] : null
 
 const animalsOrigin = () =>
   new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin
 
-const animalsUrlOrNull = (pathOrUrl) => {
+const animalsUrl = (pathOrUrl) => {
   if (isStubMode()) {
     return null
   }
@@ -48,7 +48,7 @@ const logRefusedReturn = (request, reason) => {
   )
 }
 
-export const honouredReturnOrNull = (request) => {
+export const honouredReturnOf = (request) => {
   const requestedReturn = request.query?.[RETURN_QUERY_KEY]
   if (!requestedReturn) {
     return null
@@ -63,8 +63,7 @@ export const honouredReturnOrNull = (request) => {
     return null
   }
   const honouredReturn =
-    normalisedInsPathOrNull(requestedReturn) ??
-    animalsUrlOrNull(requestedReturn)
+    normalisedInsPath(requestedReturn) ?? animalsUrl(requestedReturn)
   if (!honouredReturn) {
     logRefusedReturn(request, 'not an INS path or an animals frontend URL')
   }
@@ -77,7 +76,7 @@ export const pathWithReturn = (path, honouredReturn) =>
     : `${path}?${new URLSearchParams({ [RETURN_QUERY_KEY]: honouredReturn })}`
 
 const isOwnPageOf = (addressId, pathOrUrl) => {
-  const pathname = pathnameOrNull(pathOrUrl)
+  const pathname = pathnameOf(pathOrUrl)
   const addressPagePath = addressPath(addressId)
   return (
     pathname === addressPagePath ||
@@ -85,16 +84,13 @@ const isOwnPageOf = (addressId, pathOrUrl) => {
   )
 }
 
-export const honouredReturnOrAddressBook = (addressId, honouredReturn) =>
+export const returnDestinationOf = (addressId, honouredReturn) =>
   honouredReturn && !isOwnPageOf(addressId, honouredReturn)
     ? honouredReturn
     : addressBookPath()
 
 export const deadLinkDestination = (request) =>
-  honouredReturnOrAddressBook(
-    request.params?.id ?? '',
-    honouredReturnOrNull(request)
-  )
+  returnDestinationOf(request.params?.id ?? '', honouredReturnOf(request))
 
 export const landsOnAddressBook = (destination) =>
-  pathnameOrNull(destination) === addressBookPath()
+  pathnameOf(destination) === addressBookPath()

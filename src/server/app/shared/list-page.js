@@ -16,7 +16,7 @@ export const escapeHtml = (value) =>
 const clampPage = (page, totalPages) =>
   Math.min(Math.max(page, FIRST_PAGE), Math.max(totalPages, FIRST_PAGE))
 
-export const resultsLabelOrNull = (
+export const buildResultsLabel = (
   { page, pageSize, totalItems, totalPages },
   resultsLabelOf
 ) => {
@@ -29,7 +29,7 @@ export const resultsLabelOrNull = (
   return resultsLabelOf(from, to, totalItems)
 }
 
-export const paginationLinksOrNull = ({ page, totalPages }, pageHrefOf) => {
+export const buildPaginationLinks = ({ page, totalPages }, pageHrefOf) => {
   if (totalPages <= 1) {
     return null
   }

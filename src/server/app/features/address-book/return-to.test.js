@@ -4,8 +4,8 @@ import { config } from '../../../../config/config.js'
 import {
   deadLinkDestination,
   landsOnAddressBook,
-  honouredReturnOrNull,
-  honouredReturnOrAddressBook,
+  honouredReturnOf,
+  returnDestinationOf,
   pathWithReturn
 } from './return-to.js'
 
@@ -33,11 +33,11 @@ afterEach(() => {
   config.set('stubMode', originalStubMode)
 })
 
-describe('#honouredReturnOrNull', () => {
+describe('#honouredReturnOf', () => {
   test.each(['/', '/address-book?page=2'])(
     'Should honour the page of this service %s',
     (path) => {
-      expect(honouredReturnOrNull(requestWithReturn(path))).toBe(path)
+      expect(honouredReturnOf(requestWithReturn(path))).toBe(path)
     }
   )
 
@@ -49,7 +49,7 @@ describe('#honouredReturnOrNull', () => {
   ])(
     'Should normalise the page of this service %s to %s',
     (path, encodedPath) => {
-      expect(honouredReturnOrNull(requestWithReturn(path))).toBe(encodedPath)
+      expect(honouredReturnOf(requestWithReturn(path))).toBe(encodedPath)
     }
   )
 
@@ -73,17 +73,17 @@ describe('#honouredReturnOrNull', () => {
     ['a line break', '/address-book\r\n/x'],
     ['a tab making it protocol-relative', '/\t/evil.example']
   ])('Should ignore %s', (_name, rejectedReturn) => {
-    expect(honouredReturnOrNull(requestWithReturn(rejectedReturn))).toBeNull()
+    expect(honouredReturnOf(requestWithReturn(rejectedReturn))).toBeNull()
   })
 
   test('Should ignore a request with no query', () => {
-    expect(honouredReturnOrNull({})).toBeNull()
+    expect(honouredReturnOf({})).toBeNull()
   })
 
   test.each([LIVE_ANIMALS_URL, GERMINAL_URL])(
     'Should honour the animals frontend URL %s outside stub mode',
     (animalsUrl) => {
-      expect(honouredReturnOrNull(requestWithReturn(animalsUrl))).toBe(
+      expect(honouredReturnOf(requestWithReturn(animalsUrl))).toBe(
         new URL(animalsUrl).href
       )
     }
@@ -92,8 +92,8 @@ describe('#honouredReturnOrNull', () => {
   test('Should ignore an animals frontend URL in stub mode but still honour a path', () => {
     config.set('stubMode', true)
 
-    expect(honouredReturnOrNull(requestWithReturn(LIVE_ANIMALS_URL))).toBeNull()
-    expect(honouredReturnOrNull(requestWithReturn('/'))).toBe('/')
+    expect(honouredReturnOf(requestWithReturn(LIVE_ANIMALS_URL))).toBeNull()
+    expect(honouredReturnOf(requestWithReturn('/'))).toBe('/')
   })
 })
 
@@ -118,11 +118,11 @@ describe('#pathWithReturn', () => {
   })
 })
 
-describe('#honouredReturnOrAddressBook', () => {
+describe('#returnDestinationOf', () => {
   test('Should give a return that is not one of the address’s own pages', () => {
-    expect(honouredReturnOrAddressBook(ADDRESS_ID, '/')).toBe('/')
+    expect(returnDestinationOf(ADDRESS_ID, '/')).toBe('/')
     expect(
-      honouredReturnOrAddressBook(
+      returnDestinationOf(
         ADDRESS_ID,
         `${ADDRESS_BOOK_PATH}/${OTHER_ADDRESS_ID}`
       )
@@ -138,13 +138,13 @@ describe('#honouredReturnOrAddressBook', () => {
       `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}/delete?x=1`
     ]
   ])('Should give the address book for %s', (_name, honouredReturn) => {
-    expect(honouredReturnOrAddressBook(ADDRESS_ID, honouredReturn)).toBe(
+    expect(returnDestinationOf(ADDRESS_ID, honouredReturn)).toBe(
       ADDRESS_BOOK_PATH
     )
   })
 
   test('Should give an animals frontend URL unchanged', () => {
-    expect(honouredReturnOrAddressBook(ADDRESS_ID, LIVE_ANIMALS_URL)).toBe(
+    expect(returnDestinationOf(ADDRESS_ID, LIVE_ANIMALS_URL)).toBe(
       LIVE_ANIMALS_URL
     )
   })

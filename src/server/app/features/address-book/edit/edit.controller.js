@@ -25,8 +25,8 @@ import { addressRules, formValuesOf } from '../fields.js'
 import {
   boomFor,
   isNotFound,
-  knownBoomOrUndefined,
-  liveAddressOrNotFound
+  knownBoomOf,
+  loadLiveAddress
 } from '../stored-address.js'
 import { setSuccessMessage } from '../success-message.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -66,7 +66,7 @@ const get = async (request, toolkit) => {
   const { id: addressId } = request.params
 
   try {
-    const address = await liveAddressOrNotFound(organisationId, addressId)
+    const address = await loadLiveAddress(organisationId, addressId)
     const countries = await getAddressFormCountries()
     return buildView(toolkit, {
       addressId,
@@ -117,7 +117,7 @@ const post = async (request, toolkit) => {
     if (isNotFound(err)) {
       logger.info({ organisationId, addressId }, 'Address to update not found')
     }
-    const knownBoom = knownBoomOrUndefined(err)
+    const knownBoom = knownBoomOf(err)
     if (knownBoom) {
       throw knownBoom
     }

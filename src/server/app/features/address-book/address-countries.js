@@ -36,7 +36,7 @@ export const buildCountrySelectItems = (countries, placeholder) => [
 export const countryLabelOf = (countries, countryCode) =>
   countries.find((country) => country.code === countryCode)?.name ?? countryCode
 
-export const countryCodeMatchingOrNull = (searchTerm, countries) => {
+export const countryCodeMatching = (searchTerm, countries) => {
   const term = searchTerm?.trim()
   if (!term) {
     return null
