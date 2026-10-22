@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
-import { FIELDS, FIELD_RULES } from '../fields.js'
+import { FIELDS, FIELD_RULES, isRequiredField } from '../fields.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
 
-const SAMPLE_ARGUMENTS = [1, 2, 3]
+const textOf = (value) => {
+  const sampleArguments = [1, 2, 3]
 
-const textOf = (value) =>
-  typeof value === 'function' ? value(...SAMPLE_ARGUMENTS) : value
+  return typeof value === 'function' ? value(...sampleArguments) : value
+}
 
 const LOCALES = [
   ['en', copy],
@@ -49,14 +50,13 @@ describe('#copy', () => {
     'Should carry a %s required message for every mandatory field and a maxLength message for every bounded one',
     (locale, bundle) => {
       for (const field of FIELDS) {
-        const rule = FIELD_RULES[field]
-        if (rule.required) {
+        if (isRequiredField(field)) {
           expect(
             typeof bundle.errors[field].required,
             `${locale}: errors.${field}.required`
           ).toBe('string')
         }
-        if (rule.maxLength) {
+        if (FIELD_RULES[field].maxLength) {
           expect(
             typeof bundle.errors[field].maxLength,
             `${locale}: errors.${field}.maxLength`
@@ -76,17 +76,42 @@ describe('#copy', () => {
       'Green Farm updated in your address book'
     )
     expect(copy.successBanner.deleted(addressName)).toBe(
-      'Green Farm deleted from your address book'
+      'Green Farm address deleted'
     )
+    expect(copy.successBanner.deletedUnnamed).toBe('Address deleted')
   })
 
-  it('Should carry the labels the form and summary specs pin, including the bare County row', () => {
+  it('Should word the delete confirmation with its summary label, warning, fallback and Yes, delete and No, cancel', () => {
+    expect(copy.delete.summaryAddress).toBe('Address')
+    expect(copy.delete.confirmation).toBe(
+      'Confirm that you want to delete this address.'
+    )
+    expect(copy.delete.warning).toBe('This action cannot be undone.')
+    expect(copy.delete.notApplicable).toBe('Not applicable')
+    expect(copy.delete.confirm).toBe('Yes, delete')
+    expect(copy.delete.cancel).toBe('No, cancel')
+  })
+
+  it('Should label the optional county, the postcode and the delete heading, and cap the name at 255 characters', () => {
     expect(copy.form.fields.county).toBe('County (optional)')
-    expect(copy.view.countyRowLabel).toBe('County')
+    expect(copy.delete.title).toBe('Delete this address?')
     expect(copy.form.fields.postcode).toBe('Postcode or Zip code')
     expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
       'Name must be 255 characters or fewer'
     )
+  })
+
+  it('Should name the address in the Welsh deleted banner', () => {
+    const addressName = 'Green Farm'
+    const welsh = cy.successBanner.deleted(addressName)
+
+    expect(welsh).toContain(addressName)
+    expect(welsh).not.toBe(copy.successBanner.deleted(addressName))
+  })
+
+  it('Should carry the Welsh for the delete page heading and confirm button', () => {
+    expect(cy.delete.title).toBe('Dileu’r cyfeiriad hwn?')
+    expect(cy.delete.confirm).toBe('Ie, dileu')
   })
 
   it('Should ask for the missing name, postcode, country or phone in its required message', () => {

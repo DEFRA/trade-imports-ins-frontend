@@ -3,13 +3,18 @@ import { listNotifications } from '../../services/ins-backend/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../lib/http-status.js'
 import * as kit from '../../shared/kit.js'
 import { copyFor } from '../../shared/copy.js'
+import {
+  escapeHtml,
+  buildPaginationLinks,
+  parsePage,
+  buildResultsLabel
+} from '../../shared/list-page.js'
 import { dashboardPath } from '../../shared/paths.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
 import {
   SORT_OPTIONS,
-  buildPaginationLinks,
-  buildResultsLabel,
   buildStartNewNotificationLink,
+  dashboardPageHref,
   mapNotificationRows
 } from './view-model/list.js'
 import { copy as en } from './copy/copy.en.js'
@@ -21,19 +26,8 @@ const copy = copyFor({ en, cy })
 const DEFAULT_SORT = SORT_OPTIONS[0].value
 const SORT_VALUES = new Set(SORT_OPTIONS.map((option) => option.value))
 
-const parsePage = (queryPage) => {
-  const page = Number.parseInt(queryPage, 10)
-  return Number.isNaN(page) || page < 1 ? 1 : page
-}
-
 const parseSort = (querySort) =>
   SORT_VALUES.has(querySort) ? querySort : DEFAULT_SORT
-
-const escapeHtml = (value) =>
-  String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('"', '&quot;')
 
 const countryNamesOf = (countries) =>
   Object.fromEntries(countries.map((country) => [country.code, country.name]))
@@ -45,32 +39,32 @@ const sortOptionsOf = (sort) =>
     selected: value === sort
   }))
 
-const viewLink = (notification) =>
-  `<a class="govuk-link" href="${notification.href}">${copy.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(notification.referenceNumber)}</span></a>`
+const viewLink = (notificationRow) =>
+  `<a class="govuk-link" href="${notificationRow.href}">${copy.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(notificationRow.referenceNumber)}</span></a>`
 
-const tableRowsOf = (notifications) =>
-  notifications.map((notification) => [
-    { text: notification.referenceNumber },
-    { text: notification.status },
-    { text: notification.originCountry },
-    { text: notification.commodity },
-    { text: notification.arrivalDate },
-    { html: viewLink(notification) }
+const tableRowsOf = (notificationRows) =>
+  notificationRows.map((notificationRow) => [
+    { text: notificationRow.referenceNumber },
+    { text: notificationRow.status },
+    { text: notificationRow.originCountry },
+    { text: notificationRow.commodity },
+    { text: notificationRow.arrivalDate },
+    { html: viewLink(notificationRow) }
   ])
 
 const paginationOf = (response) => ({
   page: response.page,
-  size: response.size,
-  totalElements: response.totalElements,
+  pageSize: response.size,
+  totalItems: response.totalElements,
   totalPages: response.totalPages
 })
 
 const buildView = (
-  h,
+  toolkit,
   { sort, referenceNumber, hasSearch },
   { recoverableError = false, ...model }
 ) =>
-  h.view(view, {
+  toolkit.view(view, {
     ...kit.base(copy.title, { recoverableError }),
     contentColumnClass: kit.surfaceClass('display'),
     copy,
@@ -83,12 +77,12 @@ const buildView = (
     ...model
   })
 
-const get = async (request, h) => {
+const get = async (request, toolkit) => {
   const page = parsePage(request.query.page)
   const sort = parseSort(request.query.sort)
   const referenceNumber = request.query.referenceNumber?.trim() ?? ''
   const hasSearch = Boolean(referenceNumber)
-  const query = { sort, referenceNumber, hasSearch }
+  const listQuery = { sort, referenceNumber, hasSearch }
 
   try {
     const countries = await getCountries()
@@ -98,15 +92,17 @@ const get = async (request, h) => {
       referenceNumber: hasSearch ? referenceNumber : undefined
     })
     const pagination = paginationOf(response)
-    const notifications = mapNotificationRows(
+    const notificationRows = mapNotificationRows(
       response.content ?? [],
       countryNamesOf(countries ?? [])
     )
 
-    return buildView(h, query, {
-      tableRows: tableRowsOf(notifications),
+    return buildView(toolkit, listQuery, {
+      tableRows: tableRowsOf(notificationRows),
       resultsLabel: buildResultsLabel(pagination, copy.results),
-      pagination: buildPaginationLinks(pagination, { sort, referenceNumber }),
+      pagination: buildPaginationLinks(pagination, (targetPage) =>
+        dashboardPageHref(targetPage, { sort, referenceNumber })
+      ),
       isEmpty: response.totalElements === 0 && !hasSearch,
       noSearchResults: response.totalElements === 0 && hasSearch
     })
@@ -115,7 +111,7 @@ const get = async (request, h) => {
       throw err
     }
     logger.error({ err }, 'Failed to load dashboard')
-    return buildView(h, query, {
+    return buildView(toolkit, listQuery, {
       tableRows: [],
       resultsLabel: null,
       pagination: null,

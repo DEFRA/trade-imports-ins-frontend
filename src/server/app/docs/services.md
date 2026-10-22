@@ -21,10 +21,11 @@ starting, and a test can switch modes with `config.set('stubMode', …)`.
 
 ### address-book
 
-[`index.js`](../services/address-book/index.js) exports `listAddresses(orgId,
-{ page, q, countryCode })`, `createAddress(orgId, body)`,
-`getAddress(orgId, id)`, `updateAddress(orgId, id, body)`,
-`deleteAddress(orgId, id)`, plus `mapApiErrorsToFormErrors(problemBody)`
+[`index.js`](../services/address-book/index.js) exports `listAddresses(organisationId,
+listQuery)`, where `listQuery` is `{ page, searchTerm, countryCode }`,
+`createAddress(organisationId, address)`, `getAddress(organisationId, addressId)`,
+`updateAddress(organisationId, addressId, address)`,
+`deleteAddress(organisationId, addressId)`, plus `mapApiErrorsToFormErrors(problemBody)`
 (the first message per field) and `isValidationFailure(err)` (a 400
 carrying `errors`).
 

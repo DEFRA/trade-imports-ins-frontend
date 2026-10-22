@@ -1,6 +1,8 @@
 import {
   compose,
+  maxEmail,
   maxText,
+  oneOf,
   requiredEmail,
   requiredMaxText,
   requiredOneOf
@@ -16,15 +18,30 @@ export const FIELD_RULES = {
   townOrCity: { maxLength: 100, required: true },
   county: { maxLength: 100, required: false },
   postcode: { maxLength: 12, required: true },
-  countryCode: { required: true },
+  countryCode: { required: true, oneOfCountryCodes: true },
   phone: { maxLength: 20, required: true },
   email: { maxLength: 254, required: true, email: true }
 }
 
 export const FIELDS = Object.keys(FIELD_RULES)
 
-export const formValuesOf = (source = {}) =>
-  Object.fromEntries(FIELDS.map((field) => [field, source[field] ?? '']))
+export const isRequiredField = (field) => FIELD_RULES[field].required === true
+
+export const ADDRESS_FIELDS = [
+  'name',
+  'addressLine1',
+  'addressLine2',
+  'townOrCity',
+  'county',
+  'postcode',
+  'countryCode'
+]
+
+export const addressFieldText = (address, countryLabel, field) =>
+  field === 'countryCode' ? countryLabel : (address[field] ?? null)
+
+export const formValuesOf = (address = {}) =>
+  Object.fromEntries(FIELDS.map((field) => [field, address[field] ?? '']))
 
 const { errors } = copyFor({ en, cy })
 
@@ -42,19 +59,36 @@ const requiredTextRule = (field) =>
 const optionalTextRule = (field) =>
   maxText(field, maxLengthOf(field), maxLengthMessageFor(field))
 
-export const addressRules = (countryCodes) =>
-  compose(
-    requiredTextRule('name'),
-    requiredTextRule('addressLine1'),
-    optionalTextRule('addressLine2'),
-    requiredTextRule('townOrCity'),
-    optionalTextRule('county'),
-    requiredTextRule('postcode'),
-    requiredOneOf('countryCode', countryCodes, errors.countryCode.required),
-    requiredTextRule('phone'),
-    requiredEmail('email', maxLengthOf('email'), {
-      required: errors.email.required,
-      maxLength: maxLengthMessageFor('email'),
-      format: errors.email.format
-    })
+const emailMessagesFor = (field) => ({
+  required: errors[field].required,
+  maxLength: maxLengthMessageFor(field),
+  format: errors[field].format
+})
+
+const emailRule = (field, required) =>
+  (required ? requiredEmail : maxEmail)(
+    field,
+    maxLengthOf(field),
+    emailMessagesFor(field)
   )
+
+const countryRule = (field, required, countryCodes) =>
+  (required ? requiredOneOf : oneOf)(
+    field,
+    countryCodes,
+    errors[field].required
+  )
+
+const ruleFor = (field, countryCodes) => {
+  const { required, email, oneOfCountryCodes } = FIELD_RULES[field]
+  if (oneOfCountryCodes) {
+    return countryRule(field, required, countryCodes)
+  }
+  if (email) {
+    return emailRule(field, required)
+  }
+  return required ? requiredTextRule(field) : optionalTextRule(field)
+}
+
+export const addressRules = (countryCodes) =>
+  compose(...FIELDS.map((field) => ruleFor(field, countryCodes)))

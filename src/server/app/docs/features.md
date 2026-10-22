@@ -21,16 +21,38 @@ below.
 root:
 
 - [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
-  `FIELDS`, `formValuesOf` and `addressRules(countryCodes)`.
+  `FIELDS`, `isRequiredField`, `formValuesOf` and
+  `addressRules(countryCodes)`, plus `ADDRESS_FIELDS` (the address lines in
+  display order) and `addressFieldText`, shared by the view rows and the
+  delete summary. Each field's `required` sets both whether a blank value is
+  refused and whether the view always shows its row. Each field's
+  `maxLength` and `required` match the address book API's `AddressRequest`
+  validation, so the form refuses what the API would refuse.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
-  `buildCountrySelectItems`, `resolveCountryCodeFromSearchTerm`.
+  `buildCountrySelectItems`, `countryCodeMatching`.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
-  `addressIdParams`, `addressIdRouteOptions`.
+  `addressIdParams`, `addressIdRouteOptions`, `redirectingAddressIdRouteOptions`.
+- [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
+  gives the `return` query when it is an INS path or, outside stub mode, a URL on
+  exactly the animals frontend origin, else null; `pathWithReturn` carries it on;
+  `returnDestinationOf` and `deadLinkDestination` send a dead link or a finished
+  delete there, or to the list when it is one of that address's own pages.
+  A `return` holding a backslash, a carriage return or a line feed is refused:
+  browsers and the URL parser rewrite a backslash into an off-site redirect, and
+  a line break splits the `Location` header. An INS path is resolved against a
+  stand-in origin and kept only when that origin survives, then given back
+  percent-encoded so it is safe in a `Location` header. A refused, non-empty
+  `return` is logged at info with the request path and the reason, never the
+  value itself.
 - [`stored-address.js`](../features/address-book/stored-address.js) —
-  `loadStoredAddress` 404s a tombstoned record; `boomFor` maps client
-  errors to Boom.
-- [`success-banner.js`](../features/address-book/success-banner.js) —
+  `findLiveAddress` resolves an unknown or deleted address to `undefined`;
+  `findLiveAddressWithCountryLabel` adds the country's label to a live one;
+  `loadLiveAddress` 404s what `findLiveAddress` does not find;
+  `isNotFound` tells a client 404; `knownBoomOf` passes a Boom
+  through and turns a client 404 into `Boom.notFound()`, else `undefined`;
+  `boomFor` does the same and makes anything else a logged `Boom.internal()`.
+- [`success-message.js`](../features/address-book/success-message.js) —
   yar-backed, read-once.
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
@@ -61,7 +83,9 @@ pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
   `contentColumnClass: kit.surfaceClass('display')`.
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
-'session' }`; the `{id}` pages pass `addressIdRouteOptions`.
+'session' }`; the edit page passes `addressIdRouteOptions`; the view and
+  delete pages pass `redirectingAddressIdRouteOptions(deadLinkDestination)`, so a dead link
+  returns to an honoured `return`, or to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
 - **`requireOrganisationId(request)`** throws `Boom.forbidden` when the
@@ -75,20 +99,24 @@ The shape every ins controller takes, citing
 [`add/add.controller.js`](../features/address-book/add/add.controller.js):
 
 - a module-level `logger`, `view` and `copy`.
-- a `buildView(h, model)` helper spreading `kit.base(...)` and adding
+- a `buildView(toolkit, model)` helper spreading `kit.base(...)` and adding
   `copy`, `errors`, `errorSummary: kit.errorSummary(errors)`.
 - bare `get`/`post` arrows.
 - `HTTP_STATUS_*` constants from [`lib/http-status.js`](../lib/http-status.js).
 - POST reads `request.payload`, honours `cancel`, validates, calls the
   service, sets the success banner and redirects. A service failure logs
-  once (`logger.error({ err, orgId }, '…')`) and re-renders with
+  once (`logger.error({ err, organisationId }, '…')`) and re-renders with
   `recoverableError: true` and status 500 — the layout renders the banner.
   A 400 from the address book re-renders with
   `mapApiErrorsToFormErrors(err.body)`.
 - `export const routes = kit.pageRoutes(...)`.
 
-The `{id}` pages load through `loadStoredAddress` and throw `boomFor(err,
-() => logger.error(...))`.
+The edit page loads through `loadLiveAddress`. The view and delete GETs
+load through `findLiveAddressWithCountryLabel` and, when it finds nothing, redirect via
+`returnDestinationOf` (an honoured return, else the list), logging the
+redirect at info with `{ organisationId, addressId }`; the delete POST treats
+a 404 from `deleteAddress` the same way. Anything else throws
+`boomFor(err, () => logger.error(...))`.
 
 ## Copy and templates
 
@@ -124,7 +152,8 @@ link focuses the control. Stay inside the govuk-frontend toolbox.
 [`lib/validate/index.js`](../lib/validate/index.js) exports
 `validate(schema, payload)` → `{ value, errors }` (`errors` is `null` on
 success, else `{ field: firstMessage }`), `compose` and the named
-factories — `requiredMaxText`, `maxText`, `requiredOneOf`, `requiredEmail`,
+factories — `requiredMaxText`, `maxText`, `requiredOneOf`, `oneOf`,
+`requiredEmail`, `maxEmail`,
 dates, times and more. Messages come from the feature's copy
 (`errors.<field>.required`, `.maxLength`, `.format`) with
 `validatorDefaults` as a fallback.

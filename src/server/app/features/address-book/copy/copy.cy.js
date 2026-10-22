@@ -28,7 +28,8 @@ export const copy = {
     title: 'Llwyddiant',
     added: (name) => `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
     updated: (name) => `${name} wedi’i ddiweddaru yn eich llyfr cyfeiriadau`,
-    deleted: (name) => `${name} wedi’i ddileu o’ch llyfr cyfeiriadau`
+    deleted: (name) => `Cyfeiriad ${name} wedi’i ddileu`,
+    deletedUnnamed: 'Cyfeiriad wedi’i ddileu'
   },
   form: {
     addressHeading: 'Cyfeiriad',
@@ -62,15 +63,16 @@ export const copy = {
   },
   view: {
     edit: 'Golygu',
-    delete: 'Dileu',
-    countyRowLabel: 'Sir'
+    delete: 'Dileu'
   },
   delete: {
-    title: 'Dileu cyfeiriad',
-    confirmPrefix: 'Ydych chi’n siŵr eich bod am ddileu',
-    confirmSuffix: 'o’ch llyfr cyfeiriadau?',
-    confirm: 'Ie, dileu’r cyfeiriad hwn',
-    cancel: 'Canslo'
+    title: 'Dileu’r cyfeiriad hwn?',
+    summaryAddress: 'Cyfeiriad',
+    confirmation: 'Cadarnhewch eich bod am ddileu’r cyfeiriad hwn.',
+    warning: 'Ni ellir dadwneud y weithred hon.',
+    notApplicable: 'Amherthnasol',
+    confirm: 'Ie, dileu',
+    cancel: 'Na, canslo'
   },
   errors: {
     name: {

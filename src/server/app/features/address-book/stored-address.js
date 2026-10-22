@@ -2,21 +2,59 @@ import Boom from '@hapi/boom'
 
 import { getAddress } from '../../services/address-book/index.js'
 import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
+import { countryLabelOf, getAddressFormCountries } from './address-countries.js'
 
-export const loadStoredAddress = async (orgId, id) => {
-  const address = await getAddress(orgId, id)
-  if (address.deleted) {
+export const isNotFound = (err) => err.status === HTTP_STATUS_NOT_FOUND
+
+export const findLiveAddress = async (organisationId, addressId) => {
+  try {
+    const address = await getAddress(organisationId, addressId)
+    return address.deleted ? undefined : address
+  } catch (err) {
+    if (isNotFound(err)) {
+      return undefined
+    }
+    throw err
+  }
+}
+
+export const findLiveAddressWithCountryLabel = async (
+  organisationId,
+  addressId
+) => {
+  const address = await findLiveAddress(organisationId, addressId)
+  if (!address) {
+    return undefined
+  }
+  const countries = await getAddressFormCountries()
+  return {
+    address,
+    countryLabel: countryLabelOf(countries, address.countryCode)
+  }
+}
+
+export const loadLiveAddress = async (organisationId, addressId) => {
+  const address = await findLiveAddress(organisationId, addressId)
+  if (!address) {
     throw Boom.notFound()
   }
   return address
 }
 
-export const boomFor = (err, logUnexpected) => {
+export const knownBoomOf = (err) => {
   if (err.isBoom) {
     return err
   }
-  if (err.status === HTTP_STATUS_NOT_FOUND) {
+  if (isNotFound(err)) {
     return Boom.notFound()
+  }
+  return undefined
+}
+
+export const boomFor = (err, logUnexpected) => {
+  const knownBoom = knownBoomOf(err)
+  if (knownBoom) {
+    return knownBoom
   }
   logUnexpected()
   return Boom.internal()

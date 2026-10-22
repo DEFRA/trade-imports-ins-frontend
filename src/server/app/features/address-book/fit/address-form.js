@@ -52,6 +52,13 @@ export async function fillValidAddress(page, overrides = {}) {
   }
 }
 
+export const addValidAddressAndGetViewLink = async (page) => {
+  await page.goto('/address-book/add')
+  await fillValidAddress(page)
+  await page.getByRole('button', { name: 'Save and continue' }).click()
+  return page.getByRole('link', { name: `View ${validAddress.name}` })
+}
+
 export const errorLink = (page, message) =>
   page.getByRole('alert').getByRole('link', { name: message, exact: true })
 

@@ -1,12 +1,20 @@
 {% extends "shared/layout.njk" %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block journeyContent %}
   <h1 class="govuk-heading-l">{{ copy.delete.title }}</h1>
 
-  <p class="govuk-body">
-    {{ copy.delete.confirmPrefix }} <strong>{{ addressName }}</strong> {{ copy.delete.confirmSuffix }}
-  </p>
+  {% set addressHtml %}{% for line in addressLines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}{% endset %}
+  {{ govukSummaryList({
+    rows: [{
+      key: { text: copy.delete.summaryAddress },
+      value: { html: addressHtml }
+    }]
+  }) }}
+
+  <p class="govuk-body">{{ copy.delete.confirmation }}</p>
+  <p class="govuk-body">{{ copy.delete.warning }}</p>
 
   <form method="post" novalidate>
     <input type="hidden" name="crumb" value="{{ crumb }}" />
@@ -15,12 +23,7 @@
         text: copy.delete.confirm,
         classes: "govuk-button--warning"
       }) }}
-      {{ govukButton({
-        text: copy.delete.cancel,
-        name: "cancel",
-        value: "true",
-        classes: "govuk-button--secondary"
-      }) }}
+      <a class="govuk-link" href="{{ cancelHref }}">{{ copy.delete.cancel }}</a>
     </div>
   </form>
 {% endblock %}

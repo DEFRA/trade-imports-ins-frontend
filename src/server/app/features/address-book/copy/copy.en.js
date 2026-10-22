@@ -26,7 +26,8 @@ export const copy = {
     title: 'Success',
     added: (name) => `${name} added to your address book`,
     updated: (name) => `${name} updated in your address book`,
-    deleted: (name) => `${name} deleted from your address book`
+    deleted: (name) => `${name} address deleted`,
+    deletedUnnamed: 'Address deleted'
   },
   form: {
     addressHeading: 'Address',
@@ -60,15 +61,16 @@ export const copy = {
   },
   view: {
     edit: 'Edit',
-    delete: 'Delete',
-    countyRowLabel: 'County'
+    delete: 'Delete'
   },
   delete: {
-    title: 'Delete address',
-    confirmPrefix: 'Are you sure you want to delete',
-    confirmSuffix: 'from your address book?',
-    confirm: 'Yes, delete this address',
-    cancel: 'Cancel'
+    title: 'Delete this address?',
+    summaryAddress: 'Address',
+    confirmation: 'Confirm that you want to delete this address.',
+    warning: 'This action cannot be undone.',
+    notApplicable: 'Not applicable',
+    confirm: 'Yes, delete',
+    cancel: 'No, cancel'
   },
   errors: {
     name: {

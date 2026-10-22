@@ -66,7 +66,7 @@ Four directories:
 - `services/` — one folder per upstream: `address-book/`, `countries/`,
   `ins-backend/`, `address-lookup/`, each `index.js` + `client.js` +
   `stub.js`.
-- `shared/` — `kit.js`, `paths.js`, `copy.js`, `copy-leaves.js`,
+- `shared/` — `kit.js`, `paths.js`, `list-page.js`, `copy.js`, `copy-leaves.js`,
   `copy.en.js`, `copy.cy.js`, `layout.njk`, `error.njk`,
   `error-summary.njk`.
 - `lib/` — `http-client.js`, `http-status.js`, `validate/`.

@@ -1,15 +1,20 @@
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
-  addressBookPath,
   addressDeletePath,
   addressEditPath,
   addressRoutePath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { getAddressFormCountries } from '../address-countries.js'
-import { addressIdRouteOptions } from '../address-id-params.js'
-import { boomFor, loadStoredAddress } from '../stored-address.js'
+import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
+import { ADDRESS_FIELDS, addressFieldText, isRequiredField } from '../fields.js'
+import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
+import {
+  deadLinkDestination,
+  honouredReturnOf,
+  returnDestinationOf,
+  pathWithReturn
+} from '../return-to.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
@@ -17,57 +22,52 @@ const logger = createLogger()
 const view = 'address-book/view/view'
 const copy = copyFor({ en, cy })
 
-export const buildRows = (address, countryName) => [
-  { key: { text: copy.form.fields.name }, value: { text: address.name } },
-  {
-    key: { text: copy.form.fields.addressLine1 },
-    value: { text: address.addressLine1 }
-  },
-  {
-    key: { text: copy.form.fields.addressLine2 },
-    value: { text: address.addressLine2 }
-  },
-  {
-    key: { text: copy.form.fields.townOrCity },
-    value: { text: address.townOrCity }
-  },
-  { key: { text: copy.view.countyRowLabel }, value: { text: address.county } },
-  {
-    key: { text: copy.form.fields.postcode },
-    value: { text: address.postcode }
-  },
-  {
-    key: { text: copy.form.fields.countryCode },
-    value: { text: countryName ?? address.countryCode }
-  },
-  { key: { text: copy.form.fields.email }, value: { text: address.email } },
-  { key: { text: copy.form.fields.phone }, value: { text: address.phone } }
-]
+const hasText = (value) => Boolean(value?.trim?.())
 
-const countryNameOf = (countries, countryCode) =>
-  countries.find((country) => country.code === countryCode)?.name ?? countryCode
+export const buildRows = (address, countryLabel) => {
+  const rowFields = [...ADDRESS_FIELDS, 'email', 'phone']
+  return rowFields
+    .map((field) => ({
+      field,
+      text: addressFieldText(address, countryLabel, field)
+    }))
+    .filter(({ field, text }) => isRequiredField(field) || hasText(text))
+    .map(({ field, text }) => ({
+      key: { text: copy.form.fields[field] },
+      value: { text }
+    }))
+}
 
-const get = async (request, h) => {
-  const orgId = kit.requireOrganisationId(request)
-  const { id } = request.params
+const get = async (request, toolkit) => {
+  const organisationId = kit.requireOrganisationId(request)
+  const { id: addressId } = request.params
+  const honouredReturn = honouredReturnOf(request)
+  const returnDestination = returnDestinationOf(addressId, honouredReturn)
 
   try {
-    const address = await loadStoredAddress(orgId, id)
-    const countries = await getAddressFormCountries()
-    return h.view(view, {
-      ...kit.base(address.name, { backLink: addressBookPath() }),
+    const liveAddressWithCountryLabel = await findLiveAddressWithCountryLabel(
+      organisationId,
+      addressId
+    )
+    if (!liveAddressWithCountryLabel) {
+      logger.info(
+        { organisationId, addressId },
+        'Address not live, redirecting away from its view page'
+      )
+      return toolkit.redirect(returnDestination)
+    }
+    const { address, countryLabel } = liveAddressWithCountryLabel
+    return toolkit.view(view, {
+      ...kit.base(address.name, { backLink: returnDestination }),
       copy,
       heading: address.name,
-      editHref: addressEditPath(id),
-      deleteHref: addressDeletePath(id),
-      summaryRows: buildRows(
-        address,
-        countryNameOf(countries, address.countryCode)
-      )
+      editHref: pathWithReturn(addressEditPath(addressId), honouredReturn),
+      deleteHref: pathWithReturn(addressDeletePath(addressId), honouredReturn),
+      summaryRows: buildRows(address, countryLabel)
     })
   } catch (err) {
     throw boomFor(err, () =>
-      logger.error({ err, orgId, id }, 'Failed to load address')
+      logger.error({ err, organisationId, addressId }, 'Failed to load address')
     )
   }
 }
@@ -75,5 +75,5 @@ const get = async (request, h) => {
 export const routes = kit.pageRoutes(
   addressRoutePath(),
   { get },
-  addressIdRouteOptions
+  redirectingAddressIdRouteOptions(deadLinkDestination)
 )

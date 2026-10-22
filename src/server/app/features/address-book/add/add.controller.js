@@ -17,7 +17,7 @@ import {
   getAddressFormCountries
 } from '../address-countries.js'
 import { addressRules, formValuesOf } from '../fields.js'
-import { setSuccessBanner } from '../success-banner.js'
+import { setSuccessMessage } from '../success-message.js'
 import {
   resolveHandshakeContext,
   syncHandshakeContext
@@ -34,123 +34,132 @@ const countryItemsOf = (countries) =>
   buildCountrySelectItems(countries, copy.add.countryPlaceholder)
 
 const buildView = (
-  h,
+  toolkit,
   {
     formValues,
     countryItems,
     errors = {},
     recoverableError = false,
-    handshake = null
+    handshakeContext = null
   }
 ) =>
-  h
+  toolkit
     .view(view, {
       ...kit.base(copy.add.title, {
         recoverableError,
-        backLink: handshake ? undefined : addressBookPath()
+        backLink: handshakeContext ? undefined : addressBookPath()
       }),
       copy,
       formValues,
       countryItems,
       errors,
       errorSummary: kit.errorSummary(errors),
-      handshakeContext: handshake,
-      cancelHref: handshake ? null : addressBookPath()
+      handshakeContext,
+      cancelHref: handshakeContext ? null : addressBookPath()
     })
     .header('Cache-Control', 'no-store')
 
 const loadCountryItems = async () =>
   countryItemsOf(await getAddressFormCountries())
 
-const redirectAfterAdd = (h, handshake, created) =>
-  handshake
-    ? h.redirect(buildReturnUrl(handshake, { addressId: created.id }))
-    : h.redirect(addressBookPath())
+const redirectAfterAdd = (toolkit, handshakeContext, createdAddress) =>
+  handshakeContext
+    ? toolkit.redirect(
+        buildReturnUrl(handshakeContext, { addressId: createdAddress.id })
+      )
+    : toolkit.redirect(addressBookPath())
 
-const redirectAfterCancel = (h, handshake) =>
-  handshake
-    ? h.redirect(buildReturnUrl(handshake))
-    : h.redirect(addressBookPath())
+const redirectAfterCancel = (toolkit, handshakeContext) =>
+  handshakeContext
+    ? toolkit.redirect(buildReturnUrl(handshakeContext))
+    : toolkit.redirect(addressBookPath())
 
-const get = async (request, h) => {
-  const handshake = syncHandshakeContext(request)
+const get = async (request, toolkit) => {
+  const handshakeContext = syncHandshakeContext(request)
 
   const formValues = formValuesOf()
 
   try {
-    const countries = await getAddressFormCountries()
-    return buildView(h, {
+    return buildView(toolkit, {
       formValues,
-      countryItems: countryItemsOf(countries),
-      handshake
+      countryItems: await loadCountryItems(),
+      handshakeContext
     })
   } catch (err) {
     if (err.isBoom) {
       throw err
     }
     logger.error({ err }, 'Failed to load address form countries')
-    return buildView(h, {
+    return buildView(toolkit, {
       formValues,
       countryItems: [],
       recoverableError: true,
-      handshake
+      handshakeContext
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }
 
-const submitAddress = async (request, h, { handshake, orgId, formValues }) => {
+const submitAddress = async (
+  request,
+  toolkit,
+  { handshakeContext, organisationId, formValues }
+) => {
   try {
     const countries = await getAddressFormCountries()
-    const { errors, value } = validate(
+    const { errors, value: validatedAddress } = validate(
       addressRules(countries.map((country) => country.code)),
       formValues
     )
     if (errors) {
-      return buildView(h, {
+      return buildView(toolkit, {
         formValues,
         countryItems: countryItemsOf(countries),
         errors,
-        handshake
+        handshakeContext
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    const created = await createAddress(orgId, value)
-    if (!handshake) {
-      setSuccessBanner(request, copy.successBanner.added(created.name))
+    const createdAddress = await createAddress(organisationId, validatedAddress)
+    if (!handshakeContext) {
+      setSuccessMessage(request, copy.successBanner.added(createdAddress.name))
     }
-    return redirectAfterAdd(h, handshake, created)
+    return redirectAfterAdd(toolkit, handshakeContext, createdAddress)
   } catch (err) {
     if (err.isBoom) {
       throw err
     }
     if (isValidationFailure(err)) {
-      return buildView(h, {
+      logger.warn(
+        { err, organisationId },
+        'Address book refused the new address'
+      )
+      return buildView(toolkit, {
         formValues,
         countryItems: await loadCountryItems(),
         errors: mapApiErrorsToFormErrors(err.body),
-        handshake
+        handshakeContext
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    logger.error({ err, orgId }, 'Failed to create address')
-    return buildView(h, {
+    logger.error({ err, organisationId }, 'Failed to create address')
+    return buildView(toolkit, {
       formValues,
       countryItems: await loadCountryItems(),
       recoverableError: true,
-      handshake
+      handshakeContext
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }
 
-const post = async (request, h) => {
-  const handshake = resolveHandshakeContext(request)
+const post = async (request, toolkit) => {
+  const handshakeContext = resolveHandshakeContext(request)
   const payload = request.payload ?? {}
   if (payload.cancel) {
-    return redirectAfterCancel(h, handshake)
+    return redirectAfterCancel(toolkit, handshakeContext)
   }
-  const orgId = kit.requireOrganisationId(request)
+  const organisationId = kit.requireOrganisationId(request)
 
-  return submitAddress(request, h, {
-    handshake,
-    orgId,
+  return submitAddress(request, toolkit, {
+    handshakeContext,
+    organisationId,
     formValues: formValuesOf(payload)
   })
 }

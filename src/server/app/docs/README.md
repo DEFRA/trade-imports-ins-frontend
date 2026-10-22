@@ -19,8 +19,11 @@ The application registers nine routes, exactly as
 
 Every one of them sits behind the `session` auth strategy, and every `{id}`
 is validated by [`address-id-params.js`](../features/address-book/address-id-params.js)
-as a 24-character hex Mongo ObjectId — a mismatch is a 404, not a validation
-error on the page.
+as a 24-character hex Mongo ObjectId — a mismatch is a 404 on edit, not a
+validation error on the page. On the view and delete pages any dead link
+(malformed, unknown, another organisation's or deleted) returns to the
+page named by an honoured `return` query, or to the address book when there
+is none or it points back at one of that address's own pages.
 
 The chassis adds routes of its own outside this list: `/health`, `/auth/*`
 and `/public/*`. In stub mode `/auth/*` is `/auth/sign-in`,

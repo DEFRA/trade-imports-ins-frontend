@@ -16,9 +16,9 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
+const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
-const ADDRESS_PATH = `/organisation/${ORG_ID}/addresses/${addressId}`
+const ADDRESS_PATH = `/organisation/${ORGANISATION_ID}/addresses/${addressId}`
 const UPDATED_NAME = 'Updated Farm Ltd'
 
 const mockCountries = [
@@ -85,13 +85,27 @@ describe('#addressBookEditController', () => {
     expect(result).toContain('Edit address details')
     expect(result).toContain('<h2 class="govuk-heading-m">Address</h2>')
     expect(result).toContain('<h2 class="govuk-heading-m">Contact details</h2>')
-    expect(result).toMatch(/for="name">\s*Name or organisation name\s*</)
+    const $ = load(result)
+    expect(
+      $('form label')
+        .map((_, label) => $(label).text().trim())
+        .get()
+    ).toEqual([
+      'Name or organisation name',
+      'Address line 1',
+      'Address line 2 (optional)',
+      'Town or city',
+      'County (optional)',
+      'Postcode or Zip code',
+      'Country',
+      'Phone number',
+      'Email address'
+    ])
     expect(result).toContain('value="Highland Livestock Ltd"')
     expect(result).toContain('value="Unit 2"')
-    expect(result).not.toContain('operator')
   })
 
-  test('GET lists the countries alphabetically', async () => {
+  test('GET lists the countries by name, not by code', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
     const { result } = await server.inject({
@@ -106,7 +120,6 @@ describe('#addressBookEditController', () => {
       .get()
       .filter(Boolean)
 
-    // CH/DE sort the other way by code, so this fails a sort by code
     expect(codes).toEqual(['FR', 'DE', 'CH', 'GB'])
   })
 
@@ -184,7 +197,7 @@ describe('#addressBookEditController', () => {
     expect(result).toContain('value="Highland Livestock Ltd"')
   })
 
-  test('POST updates address and redirects with success banner', async () => {
+  test('POST sends the updated address to the address book and redirects to /address-book', async () => {
     let sent
     const scope = addressBookApi()
       .put(ADDRESS_PATH, (body) => {

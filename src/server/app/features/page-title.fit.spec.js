@@ -4,6 +4,10 @@ import { signIn } from '../../../../fit/sign-in.js'
 import { copy as sharedCopy } from '../shared/copy.en.js'
 import { copy as addressBookCopy } from './address-book/copy/copy.en.js'
 import { copy as dashboardCopy } from './dashboard/copy/copy.en.js'
+import {
+  SEED_ADDRESS_ID,
+  SEED_ADDRESS_NAME
+} from './address-book/fit/seed-address.js'
 
 const { serviceName, govukSuffix, errorTitlePrefix } = sharedCopy.layout
 
@@ -37,6 +41,22 @@ test.describe('page title', () => {
     ).toBeVisible()
     await expect(page).toHaveTitle(
       `${addressBookCopy.list.title} - ${serviceName} - ${govukSuffix}`
+    )
+  })
+
+  test("titles an address's own page with its name", async ({ page }) => {
+    await page.goto(`/address-book/${SEED_ADDRESS_ID}`)
+
+    await expect(page).toHaveTitle(
+      `${SEED_ADDRESS_NAME} - ${serviceName} - ${govukSuffix}`
+    )
+  })
+
+  test('titles the delete page Delete this address?', async ({ page }) => {
+    await page.goto(`/address-book/${SEED_ADDRESS_ID}/delete`)
+
+    await expect(page).toHaveTitle(
+      'Delete this address? - Import notification service - GOV.UK'
     )
   })
 

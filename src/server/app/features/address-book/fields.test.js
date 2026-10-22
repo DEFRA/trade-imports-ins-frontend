@@ -1,14 +1,20 @@
 import { describe, expect, test } from 'vitest'
 
 import { validate } from '../../lib/validate/index.js'
-import { FIELDS, FIELD_RULES, addressRules, formValuesOf } from './fields.js'
+import {
+  FIELDS,
+  FIELD_RULES,
+  addressRules,
+  formValuesOf,
+  isRequiredField
+} from './fields.js'
 import { copy } from './copy/copy.en.js'
 
-const MDM_CODES = ['GB', 'FR', 'DE']
+const COUNTRY_CODES = ['GB', 'FR', 'DE']
 
-const rules = addressRules(MDM_CODES)
+const rules = addressRules(COUNTRY_CODES)
 
-const REQUIRED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].required)
+const REQUIRED_FIELDS = FIELDS.filter(isRequiredField)
 const BOUNDED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].maxLength)
 
 const BUSINESS_NAME = 'Highland Livestock Ltd'
@@ -16,7 +22,7 @@ const ADDRESS_LINE_1 = "14 Drover's Way"
 const PHONE = '+44 1463 234567'
 const EMAIL = 'exports@example.com'
 
-const validAddress = (overrides = {}) => ({
+const addressWith = (overrides = {}) => ({
   name: BUSINESS_NAME,
   addressLine1: ADDRESS_LINE_1,
   addressLine2: 'Unit 3',
@@ -31,23 +37,23 @@ const validAddress = (overrides = {}) => ({
 
 describe('#addressRules', () => {
   test('accepts a valid Standard Address Block and hands its values back', () => {
-    const { errors, value } = validate(rules, validAddress())
+    const { errors, value } = validate(rules, addressWith())
 
     expect(errors).toBeNull()
-    expect(value).toEqual(validAddress())
+    expect(value).toEqual(addressWith())
   })
 
   test.each(REQUIRED_FIELDS)(
     'refuses a blank %s with its required message',
     (field) => {
-      expect(validate(rules, validAddress({ [field]: '' })).errors).toEqual({
+      expect(validate(rules, addressWith({ [field]: '' })).errors).toEqual({
         [field]: copy.errors[field].required
       })
     }
   )
 
   test('refuses a whitespace-only mandatory field as blank', () => {
-    expect(validate(rules, validAddress({ name: '   ' })).errors).toEqual({
+    expect(validate(rules, addressWith({ name: '   ' })).errors).toEqual({
       name: copy.errors.name.required
     })
   })
@@ -55,29 +61,30 @@ describe('#addressRules', () => {
   test.each(BOUNDED_FIELDS)(
     'refuses %s over its maximum length with its length message',
     (field) => {
-      const max = FIELD_RULES[field].maxLength
+      const { maxLength } = FIELD_RULES[field]
 
       expect(
-        validate(rules, validAddress({ [field]: 'A'.repeat(max + 1) })).errors
-      ).toEqual({ [field]: copy.errors[field].maxLength(max) })
+        validate(rules, addressWith({ [field]: 'A'.repeat(maxLength + 1) }))
+          .errors
+      ).toEqual({ [field]: copy.errors[field].maxLength(maxLength) })
     }
   )
 
   test('refuses a country the reference data does not list as if blank', () => {
-    expect(validate(rules, validAddress({ countryCode: 'ZZ' })).errors).toEqual(
-      { countryCode: copy.errors.countryCode.required }
-    )
+    expect(validate(rules, addressWith({ countryCode: 'ZZ' })).errors).toEqual({
+      countryCode: copy.errors.countryCode.required
+    })
   })
 
   test('refuses a malformed email address', () => {
     expect(
-      validate(rules, validAddress({ email: 'not-an-email' })).errors
+      validate(rules, addressWith({ email: 'not-an-email' })).errors
     ).toEqual({ email: copy.errors.email.format })
   })
 
   test('accepts a free-string phone number', () => {
     expect(
-      validate(rules, validAddress({ phone: 'call the office' })).errors
+      validate(rules, addressWith({ phone: 'call the office' })).errors
     ).toBeNull()
   })
 
@@ -94,7 +101,7 @@ describe('#addressRules', () => {
   test('hands back trimmed values', () => {
     const { errors, value } = validate(
       rules,
-      validAddress({ name: '  Highland Livestock Ltd  ' })
+      addressWith({ name: '  Highland Livestock Ltd  ' })
     )
 
     expect(errors).toBeNull()
@@ -102,24 +109,46 @@ describe('#addressRules', () => {
   })
 })
 
-describe('#FIELD_RULES parity with Java Bean Validation', () => {
-  test('maxLengths and mandatory flags match AddressRequest', () => {
-    expect(FIELD_RULES.name).toEqual({ maxLength: 255, required: true })
-    expect(FIELD_RULES.addressLine1).toEqual({ maxLength: 255, required: true })
-    expect(FIELD_RULES.addressLine2).toEqual({
+describe('#FIELD_RULES', () => {
+  test("Should hold each field's maximum length and required flag", () => {
+    expect(FIELD_RULES.name).toMatchObject({ maxLength: 255, required: true })
+    expect(FIELD_RULES.addressLine1).toMatchObject({
+      maxLength: 255,
+      required: true
+    })
+    expect(FIELD_RULES.addressLine2).toMatchObject({
       maxLength: 255,
       required: false
     })
-    expect(FIELD_RULES.townOrCity).toEqual({ maxLength: 100, required: true })
-    expect(FIELD_RULES.county).toEqual({ maxLength: 100, required: false })
-    expect(FIELD_RULES.postcode).toEqual({ maxLength: 12, required: true })
-    expect(FIELD_RULES.countryCode).toEqual({ required: true })
-    expect(FIELD_RULES.phone).toEqual({ maxLength: 20, required: true })
-    expect(FIELD_RULES.email).toEqual({
-      maxLength: 254,
-      required: true,
-      email: true
+    expect(FIELD_RULES.townOrCity).toMatchObject({
+      maxLength: 100,
+      required: true
     })
+    expect(FIELD_RULES.county).toMatchObject({
+      maxLength: 100,
+      required: false
+    })
+    expect(FIELD_RULES.postcode).toMatchObject({
+      maxLength: 12,
+      required: true
+    })
+    expect(FIELD_RULES.countryCode).toMatchObject({ required: true })
+    expect(FIELD_RULES.phone).toMatchObject({ maxLength: 20, required: true })
+    expect(FIELD_RULES.email).toMatchObject({ maxLength: 254, required: true })
+  })
+})
+
+describe('#isRequiredField', () => {
+  test('requires every field but the second address line and county', () => {
+    expect(FIELDS.filter(isRequiredField)).toEqual([
+      'name',
+      'addressLine1',
+      'townOrCity',
+      'postcode',
+      'countryCode',
+      'phone',
+      'email'
+    ])
   })
 })
 

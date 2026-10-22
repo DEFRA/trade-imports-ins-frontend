@@ -19,6 +19,7 @@ Convention checks:
 - [`copy-parity.test.js`](../copy-parity.test.js)
 - [`shared/paths.test.js`](../shared/paths.test.js)
 - [`shared/kit.test.js`](../shared/kit.test.js)
+- [`shared/list-page.test.js`](../shared/list-page.test.js)
 - [`shared/layout.test.js`](../shared/layout.test.js) — service
   navigation, phase banner, back link, banner, title prefix, surfaces,
   assets, footer.
@@ -32,7 +33,10 @@ for the pattern, and the helpers in
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
 `session-auth.js` (`sessionAuth(sessionId, overrides)`),
 `mock-oidc-config.js` (`mockOidcConfig`), `mock-auth-config.js`
-(`mockAuthConfig(importOriginal)`), `test-server.js`.
+(`mockAuthConfig(importOriginal)`), `test-server.js`
+(`startTestServer()`, `stopTestServer(server)`,
+`startRealModeServerServingCountries(countries)`, which returns a getter
+for the started server).
 
 Mock at the network boundary: nock answers the HTTP calls the real
 clients make — never `vi.mock` a service barrel, and never mock

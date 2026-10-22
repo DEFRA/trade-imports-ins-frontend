@@ -6,7 +6,7 @@ const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }
 
 const byName = (left, right) => left.name.localeCompare(right.name, 'en')
 
-export async function getAddressFormCountries() {
+export const getAddressFormCountries = async () => {
   const countries = await getCountries()
 
   if (!countries?.length) {
@@ -15,41 +15,38 @@ export async function getAddressFormCountries() {
     })
   }
 
-  const withoutGb = countries.filter((country) => country.code !== 'GB')
+  const withoutGb = countries.filter(
+    (country) => country.code !== GB_COUNTRY.code
+  )
 
   return [GB_COUNTRY, ...withoutGb].toSorted(byName)
 }
 
-export function buildCountryItems(countries) {
-  return countries.map((country) => ({
+export const buildCountryItems = (countries) =>
+  countries.map((country) => ({
     value: country.code,
     text: country.name
   }))
-}
 
-export function buildCountrySelectItems(countries, placeholder) {
-  return [{ value: '', text: placeholder }, ...buildCountryItems(countries)]
-}
+export const buildCountrySelectItems = (countries, placeholder) => [
+  { value: '', text: placeholder },
+  ...buildCountryItems(countries)
+]
 
-/**
- * Resolves a search term to an ISO alpha-2 country code when it matches an MDM country name
- * (cv-048 FE-resolve). Comparison is case-insensitive on the full trimmed term.
- *
- * @param {string|undefined} q the user's search term
- * @param {{ code: string, name: string }[]} countries the MDM country list
- * @returns {string|undefined} the alpha-2 code when matched, otherwise undefined
- */
-export function resolveCountryCodeFromSearchTerm(q, countries) {
-  const term = q?.trim()
+export const countryLabelOf = (countries, countryCode) =>
+  countries.find((country) => country.code === countryCode)?.name ?? countryCode
+
+export const countryCodeMatching = (searchTerm, countries) => {
+  const term = searchTerm?.trim()
   if (!term) {
-    return undefined
+    return null
   }
 
   const normalized = term.toLowerCase()
   const match = countries.find(
     (country) => country.name.toLowerCase() === normalized
   )
-  return match?.code
+  return match?.code ?? null
 }
 
 export { GB_COUNTRY }

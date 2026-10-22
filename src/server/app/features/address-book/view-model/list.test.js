@@ -1,18 +1,14 @@
 import { describe, expect, test } from 'vitest'
 
 import {
+  addressBookPageHref,
   buildAddressBookQueryString,
   buildAddressLine,
-  buildPaginationLinks,
-  buildResultsLabel,
   mapAddressRows
 } from './list.js'
-import { copy } from '../copy/copy.en.js'
-
-const twoPages = { page: 2, pageSize: 25, totalItems: 30, totalPages: 2 }
 
 describe('#buildAddressLine', () => {
-  test('composes addressLine1, townOrCity and postcode', () => {
+  test('Should join addressLine1, townOrCity and postcode with commas', () => {
     expect(
       buildAddressLine({
         addressLine1: "14 Drover's Way",
@@ -23,96 +19,42 @@ describe('#buildAddressLine', () => {
   })
 })
 
-describe('#buildResultsLabel', () => {
-  test('formats the current page range', () => {
-    expect(
-      buildResultsLabel(
-        { page: 1, pageSize: 8, totalItems: 24, totalPages: 3 },
-        copy.list.results
-      )
-    ).toBe('Showing 1-8 of 24')
-    expect(buildResultsLabel(twoPages, copy.list.results)).toBe(
-      'Showing 26-30 of 30'
-    )
-  })
-
-  test('returns null when there are no results', () => {
-    expect(
-      buildResultsLabel(
-        { page: 1, pageSize: 25, totalItems: 0, totalPages: 0 },
-        copy.list.results
-      )
-    ).toBeNull()
-  })
-})
-
 describe('#buildAddressBookQueryString', () => {
-  test('omits page size param', () => {
+  test('Should add the page param only after the first page', () => {
     expect(buildAddressBookQueryString({ page: 2 })).toBe('?page=2')
     expect(buildAddressBookQueryString({ page: 1 })).toBe('')
   })
 
-  test('preserves search terms', () => {
+  test('Should carry q and countryCode before the page param', () => {
     expect(
-      buildAddressBookQueryString({ q: 'green', countryCode: 'GB', page: 2 })
+      buildAddressBookQueryString({
+        searchTerm: 'green',
+        countryCode: 'GB',
+        page: 2
+      })
     ).toBe('?q=green&countryCode=GB&page=2')
   })
 })
 
-describe('#buildPaginationLinks', () => {
-  test('returns numbered pages from API metadata', () => {
-    const pagination = buildPaginationLinks(twoPages)
+describe('#addressBookPageHref', () => {
+  test('Should link to the address book carrying q and countryCode, adding page only after the first page', () => {
+    const search = { searchTerm: 'green', countryCode: 'GB' }
 
-    expect(pagination.items).toHaveLength(2)
-    expect(pagination.items[1].current).toBe(true)
-    expect(pagination.previous.href).toBe('/address-book')
-    expect(pagination.next).toBeUndefined()
-  })
-
-  test('preserves active search terms', () => {
-    const pagination = buildPaginationLinks(twoPages, {
-      q: 'green',
-      countryCode: 'GB'
-    })
-
-    expect(pagination.previous.href).toBe(
+    expect(addressBookPageHref(1, search)).toBe(
       '/address-book?q=green&countryCode=GB'
     )
-    expect(pagination.items[1].href).toBe(
+    expect(addressBookPageHref(2, search)).toBe(
       '/address-book?q=green&countryCode=GB&page=2'
     )
   })
 
-  test('returns null for a single page', () => {
-    expect(
-      buildPaginationLinks({
-        page: 1,
-        pageSize: 25,
-        totalItems: 3,
-        totalPages: 1
-      })
-    ).toBeNull()
-  })
-
-  test('omits previous on the first page and next on the last page', () => {
-    const first = buildPaginationLinks({ ...twoPages, page: 1 })
-
-    expect(first.previous).toBeUndefined()
-    expect(first.next.href).toBe('/address-book?page=2')
-    expect(buildPaginationLinks(twoPages).next).toBeUndefined()
-  })
-
-  test('clamps a page past the end to the last page', () => {
-    const pagination = buildPaginationLinks({ ...twoPages, page: 5 })
-
-    expect(pagination.items[1].current).toBe(true)
-    expect(pagination.previous.href).toBe('/address-book')
-    expect(pagination.next).toBeUndefined()
+  test('Should link to /address-book with no query for the first page and no search', () => {
+    expect(addressBookPageHref(1)).toBe('/address-book')
   })
 })
 
 describe('#mapAddressRows', () => {
-  test('maps list rows with country names', () => {
+  test('Should map each address to a row with its address line and country label', () => {
     expect(
       mapAddressRows(
         [
@@ -125,7 +67,7 @@ describe('#mapAddressRows', () => {
             countryCode: 'GB'
           }
         ],
-        { GB: 'United Kingdom' }
+        [{ code: 'GB', name: 'United Kingdom' }]
       )
     ).toEqual([
       {
@@ -133,7 +75,7 @@ describe('#mapAddressRows', () => {
         name: 'Farm',
         addressLine: '1 Road, Town, AB1 2CD',
         countryCode: 'GB',
-        countryName: 'United Kingdom'
+        countryLabel: 'United Kingdom'
       }
     ])
   })
