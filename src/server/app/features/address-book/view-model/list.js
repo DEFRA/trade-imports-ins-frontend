@@ -1,10 +1,14 @@
 import { addressBookPath } from '../../../shared/paths.js'
 import { countryLabelOf } from '../address-countries.js'
 
-export const buildAddressBookQueryString = ({ page, q, countryCode } = {}) => {
+export const buildAddressBookQueryString = ({
+  page,
+  searchTerm,
+  countryCode
+} = {}) => {
   const params = new URLSearchParams()
-  if (q) {
-    params.set('q', q)
+  if (searchTerm) {
+    params.set('q', searchTerm)
   }
   if (countryCode) {
     params.set('countryCode', countryCode)
@@ -16,8 +20,8 @@ export const buildAddressBookQueryString = ({ page, q, countryCode } = {}) => {
   return query ? `?${query}` : ''
 }
 
-export const addressBookPageHref = (page, { q, countryCode } = {}) =>
-  `${addressBookPath()}${buildAddressBookQueryString({ q, countryCode, page })}`
+export const addressBookPageHref = (page, { searchTerm, countryCode } = {}) =>
+  `${addressBookPath()}${buildAddressBookQueryString({ searchTerm, countryCode, page })}`
 
 export const buildAddressLine = (address) =>
   [address.addressLine1, address.townOrCity, address.postcode]

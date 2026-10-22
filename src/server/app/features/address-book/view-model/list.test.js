@@ -27,14 +27,18 @@ describe('#buildAddressBookQueryString', () => {
 
   test('preserves search terms', () => {
     expect(
-      buildAddressBookQueryString({ q: 'green', countryCode: 'GB', page: 2 })
+      buildAddressBookQueryString({
+        searchTerm: 'green',
+        countryCode: 'GB',
+        page: 2
+      })
     ).toBe('?q=green&countryCode=GB&page=2')
   })
 })
 
 describe('#addressBookPageHref', () => {
   test('links to a page of the address book carrying the search', () => {
-    const search = { q: 'green', countryCode: 'GB' }
+    const search = { searchTerm: 'green', countryCode: 'GB' }
 
     expect(addressBookPageHref(1, search)).toBe(
       '/address-book?q=green&countryCode=GB'

@@ -78,7 +78,7 @@ describe('against the real address book', () => {
       expect(scope.isDone()).toBe(true)
     })
 
-    test('Should forward q and countryCode as query parameters', async () => {
+    test('Should forward the search term and country code as the q and countryCode query parameters', async () => {
       const scope = addressBookApi()
         .get(ADDRESSES_PATH)
         .query({ page: '1', q: 'France', countryCode: 'FR' })
@@ -86,7 +86,7 @@ describe('against the real address book', () => {
 
       await addressBook.listAddresses(ORGANISATION_ID, {
         page: 1,
-        q: 'France',
+        searchTerm: 'France',
         countryCode: 'FR'
       })
 

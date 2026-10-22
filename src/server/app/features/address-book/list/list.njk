@@ -6,11 +6,11 @@
 {% from "govuk/components/input/macro.njk" import govukInput %}
 
 {% block journeyContent %}
-  {% if successBanner %}
+  {% if successMessage %}
     {{ govukNotificationBanner({
       type: "success",
       titleText: copy.successBanner.title,
-      text: successBanner,
+      text: successMessage,
       attributes: {
         id: "address-book-success-banner"
       }

@@ -28,7 +28,7 @@ import {
   knownBoomOrUndefined,
   loadStoredAddress
 } from '../stored-address.js'
-import { setSuccessBanner } from '../success-banner.js'
+import { setSuccessMessage } from '../success-message.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
@@ -111,7 +111,7 @@ const post = async (request, toolkit) => {
       addressId,
       validatedAddress
     )
-    setSuccessBanner(request, copy.successBanner.updated(updatedAddress.name))
+    setSuccessMessage(request, copy.successBanner.updated(updatedAddress.name))
     return toolkit.redirect(addressBookPath())
   } catch (err) {
     if (isNotFound(err)) {

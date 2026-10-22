@@ -17,7 +17,7 @@ import {
   getAddressFormCountries
 } from '../address-countries.js'
 import { addressRules, formValuesOf } from '../fields.js'
-import { setSuccessBanner } from '../success-banner.js'
+import { setSuccessMessage } from '../success-message.js'
 import {
   resolveHandshakeContext,
   syncHandshakeContext
@@ -120,7 +120,7 @@ const submitAddress = async (
     }
     const createdAddress = await createAddress(organisationId, validatedAddress)
     if (!handshakeContext) {
-      setSuccessBanner(request, copy.successBanner.added(createdAddress.name))
+      setSuccessMessage(request, copy.successBanner.added(createdAddress.name))
     }
     return redirectAfterAdd(toolkit, handshakeContext, createdAddress)
   } catch (err) {

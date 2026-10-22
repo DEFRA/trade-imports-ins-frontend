@@ -7,7 +7,10 @@ import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config
 import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
-import { addressSummaryLines, deletedBannerText } from './delete.controller.js'
+import {
+  addressSummaryLines,
+  deletedSuccessMessage
+} from './delete.controller.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
@@ -113,16 +116,16 @@ describe('#addressSummaryLines', () => {
   })
 })
 
-describe('#deletedBannerText', () => {
+describe('#deletedSuccessMessage', () => {
   test('Should name the address as it is stored', () => {
-    expect(deletedBannerText('ABC Green Valley Farm')).toBe(
+    expect(deletedSuccessMessage('ABC Green Valley Farm')).toBe(
       'ABC Green Valley Farm address deleted'
     )
   })
 
   test('Should word a blank name without a name', () => {
-    expect(deletedBannerText('')).toBe('Address deleted')
-    expect(deletedBannerText(undefined)).toBe('Address deleted')
+    expect(deletedSuccessMessage('')).toBe('Address deleted')
+    expect(deletedSuccessMessage(undefined)).toBe('Address deleted')
   })
 })
 

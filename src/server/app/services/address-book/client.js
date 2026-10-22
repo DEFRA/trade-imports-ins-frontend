@@ -43,12 +43,12 @@ const throwOnValidationFailure = async (response) => {
 
 export const listAddresses = async (
   organisationId,
-  { page = 1, q, countryCode } = {}
+  { page = 1, searchTerm, countryCode } = {}
 ) => {
   const url = new URL(addressesUrl(organisationId))
   url.searchParams.set('page', String(page))
-  if (q) {
-    url.searchParams.set('q', q)
+  if (searchTerm) {
+    url.searchParams.set('q', searchTerm)
   }
   if (countryCode) {
     url.searchParams.set('countryCode', countryCode)

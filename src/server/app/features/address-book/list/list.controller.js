@@ -18,7 +18,7 @@ import {
   getAddressFormCountries,
   countryCodeMatchingOrNull
 } from '../address-countries.js'
-import { takeSuccessBanner } from '../success-banner.js'
+import { takeSuccessMessage } from '../success-message.js'
 import { addressBookPageHref, mapAddressRows } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
@@ -60,14 +60,14 @@ const get = async (request, toolkit) => {
   const page = parsePage(request.query.page)
   const searchTerm = request.query.q?.trim() ?? ''
   const hasSearch = Boolean(searchTerm)
-  const successBanner = takeSuccessBanner(request)
+  const successMessage = takeSuccessMessage(request)
 
   try {
     const countries = await getAddressFormCountries()
     const countryCode =
       request.query.countryCode?.trim() ||
       countryCodeMatchingOrNull(searchTerm, countries)
-    const search = { q: hasSearch ? searchTerm : undefined, countryCode }
+    const search = { searchTerm, countryCode }
     const addressPage = await listAddresses(organisationId, { page, ...search })
     const pagination = paginationOf(addressPage)
     const addresses = mapAddressRows(addressPage.items ?? [], countries)
@@ -82,7 +82,7 @@ const get = async (request, toolkit) => {
       hasSearch,
       isEmpty: addressPage.totalItems === 0 && !hasSearch,
       noSearchResults: addressPage.totalItems === 0 && hasSearch,
-      successBanner
+      successMessage
     })
   } catch (err) {
     if (err.isBoom) {
@@ -97,7 +97,7 @@ const get = async (request, toolkit) => {
       hasSearch,
       isEmpty: false,
       noSearchResults: false,
-      successBanner,
+      successMessage,
       recoverableError: true
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }

@@ -18,7 +18,7 @@ import {
   honouredReturnOrAddressBook,
   pathWithReturn
 } from '../return-to.js'
-import { setSuccessBanner } from '../success-banner.js'
+import { setSuccessMessage } from '../success-message.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
@@ -31,7 +31,7 @@ export const addressSummaryLines = (address, countryLabel) =>
     addressFieldTextOrNull(address, countryLabel, field)
   ).filter(Boolean)
 
-export const deletedBannerText = (name) =>
+export const deletedSuccessMessage = (name) =>
   name ? copy.successBanner.deleted(name) : copy.successBanner.deletedUnnamed
 
 const get = async (request, toolkit) => {
@@ -96,7 +96,7 @@ const post = async (request, toolkit) => {
     }
     await deleteAddress(organisationId, addressId)
     if (landsOnAddressBook(destination)) {
-      setSuccessBanner(request, deletedBannerText(address.name))
+      setSuccessMessage(request, deletedSuccessMessage(address.name))
     }
     return toolkit.redirect(destination)
   } catch (err) {

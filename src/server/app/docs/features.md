@@ -45,7 +45,7 @@ root:
   `isNotFound` tells a client 404; `knownBoomOrUndefined` passes a Boom
   through and turns a client 404 into `Boom.notFound()`, else `undefined`;
   `boomFor` does the same and makes anything else a logged `Boom.internal()`.
-- [`success-banner.js`](../features/address-book/success-banner.js) —
+- [`success-message.js`](../features/address-book/success-message.js) —
   yar-backed, read-once.
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
