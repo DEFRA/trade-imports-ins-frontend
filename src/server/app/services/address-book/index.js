@@ -5,8 +5,8 @@ import * as stub from './stub.js'
 
 const addressBook = () => (isStubMode() ? stub : client)
 
-export const listAddresses = (organisationId, search) =>
-  addressBook().listAddresses(organisationId, search)
+export const listAddresses = (organisationId, listQuery) =>
+  addressBook().listAddresses(organisationId, listQuery)
 
 export const createAddress = (organisationId, address) =>
   addressBook().createAddress(organisationId, address)
