@@ -39,17 +39,17 @@ const sortOptionsOf = (sort) =>
     selected: value === sort
   }))
 
-const viewLink = (notification) =>
-  `<a class="govuk-link" href="${notification.href}">${copy.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(notification.referenceNumber)}</span></a>`
+const viewLink = (notificationRow) =>
+  `<a class="govuk-link" href="${notificationRow.href}">${copy.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(notificationRow.referenceNumber)}</span></a>`
 
-const tableRowsOf = (notifications) =>
-  notifications.map((notification) => [
-    { text: notification.referenceNumber },
-    { text: notification.status },
-    { text: notification.originCountry },
-    { text: notification.commodity },
-    { text: notification.arrivalDate },
-    { html: viewLink(notification) }
+const tableRowsOf = (notificationRows) =>
+  notificationRows.map((notificationRow) => [
+    { text: notificationRow.referenceNumber },
+    { text: notificationRow.status },
+    { text: notificationRow.originCountry },
+    { text: notificationRow.commodity },
+    { text: notificationRow.arrivalDate },
+    { html: viewLink(notificationRow) }
   ])
 
 const paginationOf = (response) => ({
@@ -82,7 +82,7 @@ const get = async (request, toolkit) => {
   const sort = parseSort(request.query.sort)
   const referenceNumber = request.query.referenceNumber?.trim() ?? ''
   const hasSearch = Boolean(referenceNumber)
-  const query = { sort, referenceNumber, hasSearch }
+  const listQuery = { sort, referenceNumber, hasSearch }
 
   try {
     const countries = await getCountries()
@@ -92,13 +92,13 @@ const get = async (request, toolkit) => {
       referenceNumber: hasSearch ? referenceNumber : undefined
     })
     const pagination = paginationOf(response)
-    const notifications = mapNotificationRows(
+    const notificationRows = mapNotificationRows(
       response.content ?? [],
       countryNamesOf(countries ?? [])
     )
 
-    return buildView(toolkit, query, {
-      tableRows: tableRowsOf(notifications),
+    return buildView(toolkit, listQuery, {
+      tableRows: tableRowsOf(notificationRows),
       resultsLabel: buildResultsLabel(pagination, copy.results),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
         dashboardPageHref(targetPage, { sort, referenceNumber })
@@ -111,7 +111,7 @@ const get = async (request, toolkit) => {
       throw err
     }
     logger.error({ err }, 'Failed to load dashboard')
-    return buildView(toolkit, query, {
+    return buildView(toolkit, listQuery, {
       tableRows: [],
       resultsLabel: null,
       pagination: null,
