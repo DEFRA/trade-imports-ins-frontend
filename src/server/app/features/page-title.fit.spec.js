@@ -55,9 +55,8 @@ test.describe('page title', () => {
   test('titles the delete page Delete this address?', async ({ page }) => {
     await page.goto(`/address-book/${SEED_ADDRESS_ID}/delete`)
 
-    expect(addressBookCopy.delete.title).toBe('Delete this address?')
     await expect(page).toHaveTitle(
-      `${addressBookCopy.delete.title} - ${serviceName} - ${govukSuffix}`
+      'Delete this address? - Import notification service - GOV.UK'
     )
   })
 
