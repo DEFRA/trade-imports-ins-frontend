@@ -15,11 +15,14 @@ export const SORT_OPTIONS = [
 
 const DEFAULT_SORT = SORT_OPTIONS[0].value
 
-export function formatDisplayDate(value) {
-  if (!value) {
+export function formatDisplayDate(dateOrIsoString) {
+  if (!dateOrIsoString) {
     return ''
   }
-  const date = typeof value === 'string' ? parseISO(value) : value
+  const date =
+    typeof dateOrIsoString === 'string'
+      ? parseISO(dateOrIsoString)
+      : dateOrIsoString
   return isValid(date) ? format(date, LIST_DATE_FORMAT) : ''
 }
 
@@ -42,9 +45,8 @@ export function buildDashboardQueryString({
   return query ? `?${query}` : ''
 }
 
-export function dashboardPageHref(page, { sort, referenceNumber } = {}) {
-  return `${dashboardPath()}${buildDashboardQueryString({ sort, referenceNumber, page })}`
-}
+export const dashboardPageHref = (page, { sort, referenceNumber } = {}) =>
+  `${dashboardPath()}${buildDashboardQueryString({ sort, referenceNumber, page })}`
 
 export function buildNotificationLink(status, referenceNumber) {
   const setUrl = buildLiveAnimalsSetUrl()
