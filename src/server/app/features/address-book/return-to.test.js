@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import {
@@ -9,32 +9,35 @@ import {
   pathWithReturn
 } from './return-to.js'
 
-const ID = '665f1c2ab3e4d51a2c9d0e77'
-const OTHER_ID = '111111111111111111111111'
-const LIST = '/address-book'
-const ANIMALS = new URL(config.get('tradeImportsAnimalsFrontend.baseUrl'))
-  .origin
-const PLANTS = new URL(config.get('tradeImportsPlantsFrontend.baseUrl')).origin
-const LIVE_ANIMALS_URL = `${ANIMALS}/live-animals/notifications/abc`
-const GERMINAL_URL = `${ANIMALS}/germinal-products/notifications`
+const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
+const OTHER_ADDRESS_ID = '111111111111111111111111'
+const ADDRESS_BOOK_PATH = '/address-book'
+const ANIMALS_FRONTEND_ORIGIN = new URL(
+  config.get('tradeImportsAnimalsFrontend.baseUrl')
+).origin
+const PLANTS_FRONTEND_ORIGIN = new URL(
+  config.get('tradeImportsPlantsFrontend.baseUrl')
+).origin
+const LIVE_ANIMALS_URL = `${ANIMALS_FRONTEND_ORIGIN}/live-animals/notifications/abc`
+const GERMINAL_URL = `${ANIMALS_FRONTEND_ORIGIN}/germinal-products/notifications`
 
-const returning = (value) => ({ query: { return: value } })
+const requestWithReturn = (returnQuery) => ({ query: { return: returnQuery } })
 
 const originalStubMode = config.get('stubMode')
 
-afterAll(() => {
+beforeEach(() => {
+  config.set('stubMode', false)
+})
+
+afterEach(() => {
   config.set('stubMode', originalStubMode)
 })
 
 describe('#honouredReturnOrNull', () => {
-  beforeEach(() => {
-    config.set('stubMode', false)
-  })
-
   test.each(['/', '/address-book?page=2'])(
     'Should honour the page of this service %s',
-    (pathOrUrl) => {
-      expect(honouredReturnOrNull(returning(pathOrUrl))).toBe(pathOrUrl)
+    (path) => {
+      expect(honouredReturnOrNull(requestWithReturn(path))).toBe(path)
     }
   )
 
@@ -44,9 +47,9 @@ describe('#honouredReturnOrNull', () => {
     ['/a\0b', '/a%00b'],
     ['/café?q=é', '/caf%C3%A9?q=%C3%A9']
   ])(
-    'Should percent-encode the page of this service %s so it is safe to redirect to',
-    (pathOrUrl, expected) => {
-      expect(honouredReturnOrNull(returning(pathOrUrl))).toBe(expected)
+    'Should normalise the page of this service %s to %s',
+    (path, encodedPath) => {
+      expect(honouredReturnOrNull(requestWithReturn(path))).toBe(encodedPath)
     }
   )
 
@@ -57,14 +60,20 @@ describe('#honouredReturnOrNull', () => {
     ['a protocol-relative URL', '//evil.example/x'],
     ['a value not starting with /', 'address-book'],
     ['another origin', 'https://evil.example/live-animals'],
-    ['the plants frontend origin', `${PLANTS}/high-risk-plants`],
-    ['userinfo that spoofs the animals origin', `${ANIMALS}@evil.example/`],
-    ['a longer host', `${ANIMALS}.evil.example/`],
+    [
+      'the plants frontend origin',
+      `${PLANTS_FRONTEND_ORIGIN}/high-risk-plants`
+    ],
+    [
+      'userinfo that spoofs the animals origin',
+      `${ANIMALS_FRONTEND_ORIGIN}@evil.example/`
+    ],
+    ['a longer host', `${ANIMALS_FRONTEND_ORIGIN}.evil.example/`],
     ['a backslash', '/\\evil.example'],
     ['a line break', '/address-book\r\n/x'],
     ['a tab making it protocol-relative', '/\t/evil.example']
-  ])('Should ignore %s', (_name, value) => {
-    expect(honouredReturnOrNull(returning(value))).toBeNull()
+  ])('Should ignore %s', (_name, rejectedReturn) => {
+    expect(honouredReturnOrNull(requestWithReturn(rejectedReturn))).toBeNull()
   })
 
   test('Should ignore a request with no query', () => {
@@ -73,9 +82,9 @@ describe('#honouredReturnOrNull', () => {
 
   test.each([LIVE_ANIMALS_URL, GERMINAL_URL])(
     'Should honour the animals frontend URL %s outside stub mode',
-    (pathOrUrl) => {
-      expect(honouredReturnOrNull(returning(pathOrUrl))).toBe(
-        new URL(pathOrUrl).href
+    (animalsUrl) => {
+      expect(honouredReturnOrNull(requestWithReturn(animalsUrl))).toBe(
+        new URL(animalsUrl).href
       )
     }
   )
@@ -83,17 +92,20 @@ describe('#honouredReturnOrNull', () => {
   test('Should ignore an animals frontend URL in stub mode but still honour a path', () => {
     config.set('stubMode', true)
 
-    expect(honouredReturnOrNull(returning(LIVE_ANIMALS_URL))).toBeNull()
-    expect(honouredReturnOrNull(returning('/'))).toBe('/')
+    expect(honouredReturnOrNull(requestWithReturn(LIVE_ANIMALS_URL))).toBeNull()
+    expect(honouredReturnOrNull(requestWithReturn('/'))).toBe('/')
   })
 })
 
 describe('#pathWithReturn', () => {
-  const path = `${LIST}/x`
+  const path = `${ADDRESS_BOOK_PATH}/x`
 
-  test.each([null, LIST])('Should give the bare path for %s', (returnTo) => {
-    expect(pathWithReturn(path, returnTo)).toBe(path)
-  })
+  test.each([null, ADDRESS_BOOK_PATH])(
+    'Should give the bare path for %s',
+    (honouredReturn) => {
+      expect(pathWithReturn(path, honouredReturn)).toBe(path)
+    }
+  )
 
   test('Should append the return', () => {
     expect(pathWithReturn(path, '/')).toBe(`${path}?return=%2F`)
@@ -108,37 +120,45 @@ describe('#pathWithReturn', () => {
 
 describe('#honouredReturnOrAddressBook', () => {
   test('Should give a return that is not one of the address’s own pages', () => {
-    expect(honouredReturnOrAddressBook(ID, '/')).toBe('/')
-    expect(honouredReturnOrAddressBook(ID, `${LIST}/${OTHER_ID}`)).toBe(
-      `${LIST}/${OTHER_ID}`
-    )
+    expect(honouredReturnOrAddressBook(ADDRESS_ID, '/')).toBe('/')
+    expect(
+      honouredReturnOrAddressBook(
+        ADDRESS_ID,
+        `${ADDRESS_BOOK_PATH}/${OTHER_ADDRESS_ID}`
+      )
+    ).toBe(`${ADDRESS_BOOK_PATH}/${OTHER_ADDRESS_ID}`)
   })
 
   test.each([
     ['no return', null],
-    ['its view page', `${LIST}/${ID}`],
-    ['its edit page', `${LIST}/${ID}/edit`],
-    ['its delete page with a query', `${LIST}/${ID}/delete?x=1`]
-  ])('Should give the list for %s', (_name, returnTo) => {
-    expect(honouredReturnOrAddressBook(ID, returnTo)).toBe(LIST)
+    ['its view page', `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}`],
+    ['its edit page', `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}/edit`],
+    [
+      'its delete page with a query',
+      `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}/delete?x=1`
+    ]
+  ])('Should give the address book for %s', (_name, honouredReturn) => {
+    expect(honouredReturnOrAddressBook(ADDRESS_ID, honouredReturn)).toBe(
+      ADDRESS_BOOK_PATH
+    )
   })
 
   test('Should give an animals frontend URL unchanged', () => {
-    expect(honouredReturnOrAddressBook(ID, LIVE_ANIMALS_URL)).toBe(
+    expect(honouredReturnOrAddressBook(ADDRESS_ID, LIVE_ANIMALS_URL)).toBe(
       LIVE_ANIMALS_URL
     )
   })
 })
 
 describe('#landsOnAddressBook', () => {
-  test.each([LIST, `${LIST}?search=x`])(
+  test.each([ADDRESS_BOOK_PATH, `${ADDRESS_BOOK_PATH}?search=x`])(
     'Should be true for %s',
-    (pathOrUrl) => {
-      expect(landsOnAddressBook(pathOrUrl)).toBe(true)
+    (path) => {
+      expect(landsOnAddressBook(path)).toBe(true)
     }
   )
 
-  test.each(['/', `${LIST}/${ID}`, LIVE_ANIMALS_URL])(
+  test.each(['/', `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}`, LIVE_ANIMALS_URL])(
     'Should be false for %s',
     (pathOrUrl) => {
       expect(landsOnAddressBook(pathOrUrl)).toBe(false)
@@ -147,10 +167,6 @@ describe('#landsOnAddressBook', () => {
 })
 
 describe('#deadLinkDestination', () => {
-  beforeEach(() => {
-    config.set('stubMode', false)
-  })
-
   test('Should give an honoured return even for a malformed id', () => {
     expect(
       deadLinkDestination({
@@ -160,7 +176,9 @@ describe('#deadLinkDestination', () => {
     ).toBe('/')
   })
 
-  test('Should give the list when there is no return', () => {
-    expect(deadLinkDestination({ params: { id: ID }, query: {} })).toBe(LIST)
+  test('Should give the address book when there is no return', () => {
+    expect(deadLinkDestination({ params: { id: ADDRESS_ID }, query: {} })).toBe(
+      ADDRESS_BOOK_PATH
+    )
   })
 })
