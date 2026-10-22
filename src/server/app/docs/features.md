@@ -25,7 +25,9 @@ root:
   `addressRules(countryCodes)`, plus `ADDRESS_FIELDS` (the address lines in
   display order) and `addressFieldTextOrNull`, shared by the view rows and the
   delete summary. Each field's `required` sets both whether a blank value is
-  refused and whether the view always shows its row.
+  refused and whether the view always shows its row. Each field's
+  `maxLength` and `required` match the address book API's `AddressRequest`
+  validation, so the form refuses what the API would refuse.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems`, `countryCodeMatchingOrNull`.
