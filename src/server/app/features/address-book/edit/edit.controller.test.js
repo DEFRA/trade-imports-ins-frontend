@@ -85,13 +85,27 @@ describe('#addressBookEditController', () => {
     expect(result).toContain('Edit address details')
     expect(result).toContain('<h2 class="govuk-heading-m">Address</h2>')
     expect(result).toContain('<h2 class="govuk-heading-m">Contact details</h2>')
-    expect(result).toMatch(/for="name">\s*Name or organisation name\s*</)
+    const $ = load(result)
+    expect(
+      $('form label')
+        .map((_, label) => $(label).text().trim())
+        .get()
+    ).toEqual([
+      'Name or organisation name',
+      'Address line 1',
+      'Address line 2 (optional)',
+      'Town or city',
+      'County (optional)',
+      'Postcode or Zip code',
+      'Country',
+      'Phone number',
+      'Email address'
+    ])
     expect(result).toContain('value="Highland Livestock Ltd"')
     expect(result).toContain('value="Unit 2"')
-    expect(result).not.toContain('operator')
   })
 
-  test('GET lists the countries alphabetically', async () => {
+  test('GET lists the countries by name, not by code', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
     const { result } = await server.inject({
@@ -106,7 +120,6 @@ describe('#addressBookEditController', () => {
       .get()
       .filter(Boolean)
 
-    // CH/DE sort the other way by code, so this fails a sort by code
     expect(codes).toEqual(['FR', 'DE', 'CH', 'GB'])
   })
 
@@ -184,7 +197,7 @@ describe('#addressBookEditController', () => {
     expect(result).toContain('value="Highland Livestock Ltd"')
   })
 
-  test('POST updates address and redirects with success banner', async () => {
+  test('POST sends the updated address to the address book and redirects to /address-book', async () => {
     let sent
     const scope = addressBookApi()
       .put(ADDRESS_PATH, (body) => {
