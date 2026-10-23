@@ -68,7 +68,7 @@ export const copy = {
     title: 'Dileu’r cyfeiriad hwn?',
     summaryAddress: 'Cyfeiriad',
     confirmation: 'Cadarnhewch eich bod am ddileu’r cyfeiriad hwn.',
-    warning: 'Ni ellir dadwneud y weithred hon.',
+    warning: 'Mae dileadau’n barhaol ac ni allwch ddadwneud hyn.',
     notApplicable: 'Amherthnasol',
     confirm: 'Ie, dileu',
     cancel: 'Na, canslo'

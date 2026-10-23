@@ -66,7 +66,7 @@ export const copy = {
     title: 'Delete this address?',
     summaryAddress: 'Address',
     confirmation: 'Confirm that you want to delete this address.',
-    warning: 'This action cannot be undone.',
+    warning: 'Deletions are permanent and you cannot undo this.',
     notApplicable: 'Not applicable',
     confirm: 'Yes, delete',
     cancel: 'No, cancel'

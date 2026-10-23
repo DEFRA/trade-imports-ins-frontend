@@ -129,7 +129,9 @@ describe('GET /address-book/{addressId}/delete', () => {
     expect(result).not.toContain(EMAIL)
     expect(result).not.toContain(PHONE)
     expect(result).toContain('Confirm that you want to delete this address.')
-    expect(result).toContain('This action cannot be undone.')
+    expect(result).toContain(
+      'Deletions are permanent and you cannot undo this.'
+    )
     expect(result).not.toContain('Are you sure you want to delete')
 
     const confirmButton = $('form button')

@@ -85,7 +85,9 @@ describe('#copy', () => {
     expect(copy.delete.confirmation).toBe(
       'Confirm that you want to delete this address.'
     )
-    expect(copy.delete.warning).toBe('This action cannot be undone.')
+    expect(copy.delete.warning).toBe(
+      'Deletions are permanent and you cannot undo this.'
+    )
     expect(copy.delete.notApplicable).toBe('Not applicable')
     expect(copy.delete.confirm).toBe('Yes, delete')
     expect(copy.delete.cancel).toBe('No, cancel')

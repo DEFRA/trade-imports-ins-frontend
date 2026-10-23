@@ -52,7 +52,9 @@ test.describe('delete address', () => {
     await expect(
       page.getByText('Confirm that you want to delete this address.')
     ).toBeVisible()
-    await expect(page.getByText('This action cannot be undone.')).toBeVisible()
+    await expect(
+      page.getByText('Deletions are permanent and you cannot undo this.')
+    ).toBeVisible()
     await expect(backLinkOf(page)).toHaveAttribute(
       'href',
       `/address-book/${SEED_ADDRESS_ID}`
