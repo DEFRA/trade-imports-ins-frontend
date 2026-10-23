@@ -396,7 +396,7 @@ describe(
       expectAddressFormWidths(result)
     })
 
-    test('GET opens the Country select on its blank first option, Select one, with nothing selected', async () => {
+    test('GET opens the Country select on its blank first option, Select a country, with nothing selected', async () => {
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-select-one'
@@ -406,7 +406,7 @@ describe(
       const $ = load(result)
       const firstOption = $(COUNTRY_OPTIONS).first()
       expect(firstOption.attr('value')).toBe('')
-      expect(firstOption.text().trim()).toBe('Select one')
+      expect(firstOption.text().trim()).toBe('Select a country')
       expect($(COUNTRY_OPTIONS).length).toBeGreaterThan(1)
       expect($('#countryCode option[selected]')).toHaveLength(0)
     })

@@ -36,7 +36,7 @@ describe('#copy', () => {
     expect(copy.form.addressHeading).toBe('Address')
     expect(copy.form.contactHeading).toBe('Contact details')
     expect(copy.form.fields.name).toBe('Name or organisation')
-    expect(copy.add.countryPlaceholder).toBe('Select one')
+    expect(copy.form.countryPlaceholder).toBe('Select a country')
     expect(copy.add.cancel).toBe('Cancel and return to address book')
   })
 

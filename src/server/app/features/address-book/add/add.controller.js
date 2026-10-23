@@ -33,7 +33,7 @@ const view = 'address-book/add/add'
 const copy = copyFor({ en, cy })
 
 const countryItemsOf = (countries) =>
-  buildCountrySelectItems(countries, copy.add.countryPlaceholder)
+  buildCountrySelectItems(countries, copy.form.countryPlaceholder)
 
 const buildView = (
   toolkit,

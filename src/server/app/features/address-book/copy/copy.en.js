@@ -50,8 +50,7 @@ export const copy = {
     title: 'Add address details',
     save: 'Save and continue',
     cancel: 'Cancel and return to address book',
-    cancelToJourney: 'Cancel and return to address page',
-    countryPlaceholder: 'Select one'
+    cancelToJourney: 'Cancel and return to address page'
   },
   edit: {
     title: 'Edit address and contact details',

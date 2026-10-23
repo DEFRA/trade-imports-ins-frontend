@@ -42,7 +42,9 @@ test.describe('add address', () => {
 
     const country = page.getByLabel('Country')
     await expect(country).toHaveValue('')
-    await expect(country.getByRole('option').first()).toHaveText('Select one')
+    await expect(country.getByRole('option').first()).toHaveText(
+      'Select a country'
+    )
     await expect(
       country.getByRole('option', { name: 'United Kingdom' })
     ).toHaveCount(1)
