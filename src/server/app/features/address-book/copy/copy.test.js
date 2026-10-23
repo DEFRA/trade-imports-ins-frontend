@@ -123,7 +123,7 @@ describe('#copy', () => {
   })
 
   it('Should ask for the missing name, postcode, country or phone in its required message', () => {
-    expect(copy.errors.name.required).toBe('Enter a name or organisation name')
+    expect(copy.errors.name.required).toBe('Enter a name or organisation')
     expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
     expect(copy.errors.countryCode.required).toBe('Select a country')
     expect(copy.errors.phone.required).toBe('Enter a phone number')

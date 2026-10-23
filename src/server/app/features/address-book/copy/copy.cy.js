@@ -74,7 +74,7 @@ export const copy = {
   },
   errors: {
     name: {
-      required: 'Rhowch enw neu enw’r sefydliad',
+      required: 'Rhowch enw neu sefydliad',
       maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`
     },
     addressLine1: {

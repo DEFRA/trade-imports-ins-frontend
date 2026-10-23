@@ -72,7 +72,7 @@ export const copy = {
   },
   errors: {
     name: {
-      required: 'Enter a name or organisation name',
+      required: 'Enter a name or organisation',
       maxLength: (max) => `Name must be ${max} characters or fewer`
     },
     addressLine1: {

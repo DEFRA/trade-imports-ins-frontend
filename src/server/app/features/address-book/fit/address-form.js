@@ -73,7 +73,7 @@ export async function expectErrorFocusOn(
 }
 
 export const requiredValidations = [
-  ['name', NAME_LABEL, 'Enter a name or organisation name'],
+  ['name', NAME_LABEL, 'Enter a name or organisation'],
   ['addressLine1', ADDRESS_LINE_1_LABEL, 'Enter address line 1'],
   ['townOrCity', TOWN_OR_CITY_LABEL, 'Enter a town or city'],
   ['postcode', POSTCODE_LABEL, 'Enter a postcode or Zip code'],
