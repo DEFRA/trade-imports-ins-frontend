@@ -89,6 +89,9 @@ export const returnDestinationOf = (addressId, honouredReturn) =>
     ? honouredReturn
     : addressBookPath()
 
+export const editLeaveDestinationOf = (addressId, honouredReturn) =>
+  honouredReturn ?? addressPath(addressId)
+
 export const deadLinkDestination = (request) =>
   returnDestinationOf(request.params?.id ?? '', honouredReturnOf(request))
 

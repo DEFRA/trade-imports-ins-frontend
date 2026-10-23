@@ -1,4 +1,3 @@
-import Boom from '@hapi/boom'
 import Joi from 'joi'
 
 import { createLogger } from '../../../common/helpers/logging/logger.js'
@@ -15,27 +14,17 @@ export const addressIdParams = Joi.object({
   })
 })
 
-const addressIdRouteOptionsFailingWith = (failAction) => ({
+export const redirectingAddressIdRouteOptions = (fallbackPathOf) => ({
   ...routeOptions,
-  validate: { params: addressIdParams, failAction }
-})
-
-export const redirectingAddressIdRouteOptions = (fallbackPathOf) =>
-  addressIdRouteOptionsFailingWith((request, toolkit, err) => {
-    const fallbackPath = fallbackPathOf(request)
-    logger.info(
-      { err, addressId: request.params.id, fallbackPath },
-      'Address id failed validation, redirecting'
-    )
-    return toolkit.redirect(fallbackPath).takeover()
-  })
-
-export const addressIdRouteOptions = addressIdRouteOptionsFailingWith(
-  (request, _toolkit, err) => {
-    logger.info(
-      { err, addressId: request.params.id },
-      'Address id failed validation, not found'
-    )
-    throw Boom.notFound()
+  validate: {
+    params: addressIdParams,
+    failAction: (request, toolkit, err) => {
+      const fallbackPath = fallbackPathOf(request)
+      logger.info(
+        { err, addressId: request.params.id, fallbackPath },
+        'Address id failed validation, redirecting'
+      )
+      return toolkit.redirect(fallbackPath).takeover()
+    }
   }
-)
+})

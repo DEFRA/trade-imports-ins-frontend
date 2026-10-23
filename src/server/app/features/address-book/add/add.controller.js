@@ -1,3 +1,5 @@
+import Boom from '@hapi/boom'
+
 import {
   createAddress,
   isValidationFailure,
@@ -31,7 +33,7 @@ const view = 'address-book/add/add'
 const copy = copyFor({ en, cy })
 
 const countryItemsOf = (countries) =>
-  buildCountrySelectItems(countries, copy.add.countryPlaceholder)
+  buildCountrySelectItems(countries, copy.form.countryPlaceholder)
 
 const buildView = (
   toolkit,
@@ -86,7 +88,7 @@ const get = async (request, toolkit) => {
       handshakeContext
     })
   } catch (err) {
-    if (err.isBoom) {
+    if (Boom.isBoom(err)) {
       throw err
     }
     logger.error({ err }, 'Failed to load address form countries')
@@ -124,7 +126,7 @@ const submitAddress = async (
     }
     return redirectAfterAdd(toolkit, handshakeContext, createdAddress)
   } catch (err) {
-    if (err.isBoom) {
+    if (Boom.isBoom(err)) {
       throw err
     }
     if (isValidationFailure(err)) {

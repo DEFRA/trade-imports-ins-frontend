@@ -3,8 +3,17 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
+import {
+  expectRedirectTo,
+  expectServerErrorPage,
+  getPage,
+  getPageAsOtherOrganisation,
+  MALFORMED_ADDRESS_ID,
+  ORGANISATION_ID_HEADER,
+  serveAddressBookServerError,
+  serveAddressNotFoundForOtherOrganisation
+} from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
-import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { buildRows } from './view.controller.js'
@@ -14,10 +23,8 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 }))
 
 const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
-const OTHER_ORGANISATION_ID = '0c4e7a92-3b1d-4f58-a6e2-9d8b5c1f7a34'
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
 const ADDRESS_PATH = `/organisation/${ORGANISATION_ID}/addresses/${addressId}`
-const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL = 'exports@example.com'
 const UK_NAME = 'United Kingdom'
@@ -48,7 +55,7 @@ describe('#buildRows', () => {
     )
 
     expect(rows.map((row) => row.key.text)).toEqual([
-      'Name or organisation name',
+      'Name or organisation',
       'Address line 1',
       'Town or city',
       'Postcode or Zip code',
@@ -70,7 +77,7 @@ describe('#buildRows', () => {
     const rows = buildRows(mockAddress, UK_NAME)
 
     expect(rows.map((row) => row.key.text)).toEqual([
-      'Name or organisation name',
+      'Name or organisation',
       'Address line 1',
       'Address line 2 (optional)',
       'Town or city',
@@ -108,11 +115,11 @@ describe('GET /address-book/{addressId}', () => {
       .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(200, mockAddress)
 
-    const { result, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}`,
-      auth: sessionAuth('view-get')
-    })
+    const { result, statusCode } = await getPage(
+      server(),
+      `/address-book/${addressId}`,
+      'view-get'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
@@ -133,11 +140,11 @@ describe('GET /address-book/{addressId}', () => {
   test('Should show Edit as a secondary button and Delete as a warning button in the button group', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    const { result } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}`,
-      auth: sessionAuth('view-get-buttons')
-    })
+    const { result } = await getPage(
+      server(),
+      `/address-book/${addressId}`,
+      'view-get-buttons'
+    )
 
     const group = load(result)('.govuk-button-group')
     const editLink = group.find(`a[href="/address-book/${addressId}/edit"]`)
@@ -151,11 +158,11 @@ describe('GET /address-book/{addressId}', () => {
   test('Should title the page with the address name', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    const { result } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}`,
-      auth: sessionAuth('view-get-title')
-    })
+    const { result } = await getPage(
+      server(),
+      `/address-book/${addressId}`,
+      'view-get-title'
+    )
 
     expect(
       load(result)('head > title').text().replace(/\s+/g, ' ').trim()
@@ -165,44 +172,37 @@ describe('GET /address-book/{addressId}', () => {
   test('Should redirect to the address book when the address is not found', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
-    const { headers, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}`,
-      auth: sessionAuth('view-not-found')
-    })
+    const { headers, statusCode } = await getPage(
+      server(),
+      `/address-book/${addressId}`,
+      'view-not-found'
+    )
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
   })
 
   test("Should redirect to the address book for another organisation's address", async () => {
-    const scope = addressBookApi()
-      .get(`/organisation/${OTHER_ORGANISATION_ID}/addresses/${addressId}`)
-      .matchHeader(ORGANISATION_ID_HEADER, OTHER_ORGANISATION_ID)
-      .reply(404, { message: 'Not found' })
+    const scope = serveAddressNotFoundForOtherOrganisation(addressId)
 
-    const { headers, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}`,
-      auth: sessionAuth('view-other-org', {
-        organisationId: OTHER_ORGANISATION_ID
-      })
-    })
+    const response = await getPageAsOtherOrganisation(
+      server(),
+      `/address-book/${addressId}`,
+      'view-other-org'
+    )
 
     expect(scope.isDone()).toBe(true)
-    expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, ADDRESS_BOOK_PATH)
   })
 
   test('Should redirect to the address book for a malformed address id without reaching the address book', async () => {
-    const { headers, statusCode } = await server().inject({
-      method: 'GET',
-      url: '/address-book/not-a-valid-id',
-      auth: sessionAuth('view-bad-id')
-    })
+    const response = await getPage(
+      server(),
+      `/address-book/${MALFORMED_ADDRESS_ID}`,
+      'view-bad-id'
+    )
 
-    expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, ADDRESS_BOOK_PATH)
   })
 
   test('Should redirect to the address book for soft-deleted tombstones', async () => {
@@ -210,29 +210,22 @@ describe('GET /address-book/{addressId}', () => {
       .get(ADDRESS_PATH)
       .reply(200, { ...mockAddress, deleted: true })
 
-    const { headers, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}`,
-      auth: sessionAuth('view-get-tombstone')
-    })
+    const { headers, statusCode } = await getPage(
+      server(),
+      `/address-book/${addressId}`,
+      'view-get-tombstone'
+    )
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
   })
 
   test('Should return 500 when the address book cannot be reached', async () => {
-    addressBookApi()
-      .get(ADDRESS_PATH)
-      .reply(503, { title: 'Service Unavailable' })
+    serveAddressBookServerError(ADDRESS_PATH)
 
-    const { result, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}`,
-      auth: sessionAuth('view-get-500')
-    })
-
-    expect(statusCode).toBe(statusCodes.internalServerError)
-    expect(result).toContain('Something went wrong')
+    expectServerErrorPage(
+      await getPage(server(), `/address-book/${addressId}`, 'view-get-500')
+    )
   })
 })
 
@@ -242,11 +235,11 @@ describe('GET /address-book/{addressId} with a return', () => {
   test('Should link Back to an INS return and carry it on Edit and Delete', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    const { result, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}?return=${INS_HOME_RETURN}`,
-      auth: sessionAuth('view-return-ins')
-    })
+    const { result, statusCode } = await getPage(
+      server(),
+      `/address-book/${addressId}?return=${INS_HOME_RETURN}`,
+      'view-return-ins'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
@@ -268,11 +261,11 @@ describe('GET /address-book/{addressId} with a return', () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
     const ownPage = `/address-book/${addressId}`
 
-    const { result, statusCode } = await server().inject({
-      method: 'GET',
-      url: `${ownPage}?return=${encodeURIComponent(ownPage)}`,
-      auth: sessionAuth('view-return-own-page')
-    })
+    const { result, statusCode } = await getPage(
+      server(),
+      `${ownPage}?return=${encodeURIComponent(ownPage)}`,
+      'view-return-own-page'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(load(result)(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
@@ -282,11 +275,11 @@ describe('GET /address-book/{addressId} with a return', () => {
     const animalsUrl = `${new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin}/live-animals/notifications/abc`
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    const { result, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}?return=${encodeURIComponent(animalsUrl)}`,
-      auth: sessionAuth('view-return-animals')
-    })
+    const { result, statusCode } = await getPage(
+      server(),
+      `/address-book/${addressId}?return=${encodeURIComponent(animalsUrl)}`,
+      'view-return-animals'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(load(result)(BACK_LINK).attr('href')).toBe(animalsUrl)
@@ -295,11 +288,11 @@ describe('GET /address-book/{addressId} with a return', () => {
   test('Should point Back at the address book and carry no return for a return on another origin', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
 
-    const { result, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}?return=https%3A%2F%2Fevil.example%2F`,
-      auth: sessionAuth('view-return-other-origin')
-    })
+    const { result, statusCode } = await getPage(
+      server(),
+      `/address-book/${addressId}?return=https%3A%2F%2Fevil.example%2F`,
+      'view-return-other-origin'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
@@ -310,22 +303,22 @@ describe('GET /address-book/{addressId} with a return', () => {
   test('Should redirect to an honoured return when the address is not found', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
-    const { headers, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/${addressId}?return=${INS_HOME_RETURN}`,
-      auth: sessionAuth('view-return-not-found')
-    })
+    const { headers, statusCode } = await getPage(
+      server(),
+      `/address-book/${addressId}?return=${INS_HOME_RETURN}`,
+      'view-return-not-found'
+    )
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(INS_HOME)
   })
 
   test('Should redirect to an honoured return for a malformed address id', async () => {
-    const { headers, statusCode } = await server().inject({
-      method: 'GET',
-      url: `/address-book/not-a-valid-id?return=${INS_HOME_RETURN}`,
-      auth: sessionAuth('view-return-bad-id')
-    })
+    const { headers, statusCode } = await getPage(
+      server(),
+      `/address-book/${MALFORMED_ADDRESS_ID}?return=${INS_HOME_RETURN}`,
+      'view-return-bad-id'
+    )
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(headers.location).toBe(INS_HOME)
@@ -337,11 +330,11 @@ describe('GET /address-book/{addressId} with a return', () => {
   ])(
     'Should redirect a malformed address id to a return of %s percent-encoded as %s',
     async (encoded, location) => {
-      const { headers, statusCode } = await server().inject({
-        method: 'GET',
-        url: `/address-book/not-a-valid-id?return=${encoded}`,
-        auth: sessionAuth('view-return-encoded')
-      })
+      const { headers, statusCode } = await getPage(
+        server(),
+        `/address-book/${MALFORMED_ADDRESS_ID}?return=${encoded}`,
+        'view-return-encoded'
+      )
 
       expect(statusCode).toBe(statusCodes.redirectFound)
       expect(headers.location).toBe(location)

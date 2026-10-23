@@ -1,7 +1,7 @@
 import { expect } from 'vitest'
 
 export const REQUIRED_MESSAGES = {
-  name: 'Enter a name or organisation name',
+  name: 'Enter a name or organisation',
   postcode: 'Enter a postcode or Zip code',
   countryCode: 'Select a country',
   phone: 'Enter a phone number'

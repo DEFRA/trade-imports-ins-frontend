@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../config/config.js'
+import { MALFORMED_ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
 import {
   deadLinkDestination,
+  editLeaveDestinationOf,
   landsOnAddressBook,
   honouredReturnOf,
   returnDestinationOf,
@@ -150,6 +152,24 @@ describe('#returnDestinationOf', () => {
   })
 })
 
+describe('#editLeaveDestinationOf', () => {
+  test('Should give the address’s view page when there is no return', () => {
+    expect(editLeaveDestinationOf(ADDRESS_ID, null)).toBe(
+      `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}`
+    )
+  })
+
+  test.each([
+    ['a page of this service', '/'],
+    ['an animals frontend URL', LIVE_ANIMALS_URL],
+    ['the address’s own view page', `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}`]
+  ])('Should give %s unchanged', (_name, honouredReturn) => {
+    expect(editLeaveDestinationOf(ADDRESS_ID, honouredReturn)).toBe(
+      honouredReturn
+    )
+  })
+})
+
 describe('#landsOnAddressBook', () => {
   test.each([ADDRESS_BOOK_PATH, `${ADDRESS_BOOK_PATH}?search=x`])(
     'Should be true for %s',
@@ -170,7 +190,7 @@ describe('#deadLinkDestination', () => {
   test('Should give an honoured return even for a malformed id', () => {
     expect(
       deadLinkDestination({
-        params: { id: 'not-a-valid-id' },
+        params: { id: MALFORMED_ADDRESS_ID },
         query: { return: '/' }
       })
     ).toBe('/')

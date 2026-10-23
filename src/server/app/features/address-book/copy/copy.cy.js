@@ -27,7 +27,7 @@ export const copy = {
   successBanner: {
     title: 'Llwyddiant',
     added: (name) => `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
-    updated: (name) => `${name} wedi’i ddiweddaru yn eich llyfr cyfeiriadau`,
+    updated: (name) => `Cyfeiriad ${name} wedi’i ddiweddaru`,
     deleted: (name) => `Cyfeiriad ${name} wedi’i ddileu`,
     deletedUnnamed: 'Cyfeiriad wedi’i ddileu'
   },
@@ -35,7 +35,7 @@ export const copy = {
     addressHeading: 'Cyfeiriad',
     contactHeading: 'Manylion cyswllt',
     fields: {
-      name: 'Enw neu enw’r sefydliad',
+      name: 'Enw neu sefydliad',
       addressLine1: 'Llinell gyfeiriad 1',
       addressLine2: 'Llinell gyfeiriad 2 (dewisol)',
       townOrCity: 'Tref neu ddinas',
@@ -52,12 +52,10 @@ export const copy = {
     title: 'Ychwanegu manylion cyfeiriad',
     save: 'Cadw a pharhau',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
-    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
-    nameLabel: 'Enw neu sefydliad',
-    countryPlaceholder: 'Dewiswch un'
+    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad'
   },
   edit: {
-    title: 'Golygu manylion cyfeiriad',
+    title: 'Golygu manylion cyfeiriad a manylion cyswllt',
     save: 'Cadw’r newidiadau',
     cancel: 'Canslo'
   },
@@ -69,14 +67,14 @@ export const copy = {
     title: 'Dileu’r cyfeiriad hwn?',
     summaryAddress: 'Cyfeiriad',
     confirmation: 'Cadarnhewch eich bod am ddileu’r cyfeiriad hwn.',
-    warning: 'Ni ellir dadwneud y weithred hon.',
+    warning: 'Mae dileadau’n barhaol ac ni allwch ddadwneud hyn.',
     notApplicable: 'Amherthnasol',
     confirm: 'Ie, dileu',
     cancel: 'Na, canslo'
   },
   errors: {
     name: {
-      required: 'Rhowch enw neu enw’r sefydliad',
+      required: 'Rhowch enw neu sefydliad',
       maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`
     },
     addressLine1: {

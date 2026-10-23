@@ -11,6 +11,8 @@ const textOf = (value) => {
   return typeof value === 'function' ? value(...sampleArguments) : value
 }
 
+const ADDRESS_NAME = 'Green Farm'
+
 const LOCALES = [
   ['en', copy],
   ['cy', cy]
@@ -30,12 +32,11 @@ describe('#copy', () => {
     }
   )
 
-  it('Should word the add-details form with its own name label, country placeholder and section headings', () => {
+  it('Should word the add-details form with its name label, country placeholder and section headings', () => {
     expect(copy.form.addressHeading).toBe('Address')
     expect(copy.form.contactHeading).toBe('Contact details')
-    expect(copy.add.nameLabel).toBe('Name or organisation')
-    expect(copy.form.fields.name).toBe('Name or organisation name')
-    expect(copy.add.countryPlaceholder).toBe('Select one')
+    expect(copy.form.fields.name).toBe('Name or organisation')
+    expect(copy.form.countryPlaceholder).toBe('Select a country')
     expect(copy.add.cancel).toBe('Cancel and return to address book')
   })
 
@@ -67,15 +68,13 @@ describe('#copy', () => {
   )
 
   it('Should name the address in each success banner', () => {
-    const addressName = 'Green Farm'
-
-    expect(copy.successBanner.added(addressName)).toBe(
+    expect(copy.successBanner.added(ADDRESS_NAME)).toBe(
       'Green Farm added to your address book'
     )
-    expect(copy.successBanner.updated(addressName)).toBe(
-      'Green Farm updated in your address book'
+    expect(copy.successBanner.updated(ADDRESS_NAME)).toBe(
+      'Green Farm address updated'
     )
-    expect(copy.successBanner.deleted(addressName)).toBe(
+    expect(copy.successBanner.deleted(ADDRESS_NAME)).toBe(
       'Green Farm address deleted'
     )
     expect(copy.successBanner.deletedUnnamed).toBe('Address deleted')
@@ -86,7 +85,9 @@ describe('#copy', () => {
     expect(copy.delete.confirmation).toBe(
       'Confirm that you want to delete this address.'
     )
-    expect(copy.delete.warning).toBe('This action cannot be undone.')
+    expect(copy.delete.warning).toBe(
+      'Deletions are permanent and you cannot undo this.'
+    )
     expect(copy.delete.notApplicable).toBe('Not applicable')
     expect(copy.delete.confirm).toBe('Yes, delete')
     expect(copy.delete.cancel).toBe('No, cancel')
@@ -102,11 +103,18 @@ describe('#copy', () => {
   })
 
   it('Should name the address in the Welsh deleted banner', () => {
-    const addressName = 'Green Farm'
-    const welsh = cy.successBanner.deleted(addressName)
+    const welsh = cy.successBanner.deleted(ADDRESS_NAME)
 
-    expect(welsh).toContain(addressName)
-    expect(welsh).not.toBe(copy.successBanner.deleted(addressName))
+    expect(welsh).toContain(ADDRESS_NAME)
+    expect(welsh).not.toBe(copy.successBanner.deleted(ADDRESS_NAME))
+  })
+
+  it('Should carry a Welsh edit page title and updated banner that name the address and differ from the English', () => {
+    const welshBanner = cy.successBanner.updated(ADDRESS_NAME)
+
+    expect(cy.edit.title).not.toBe(copy.edit.title)
+    expect(welshBanner).toContain(ADDRESS_NAME)
+    expect(welshBanner).not.toBe(copy.successBanner.updated(ADDRESS_NAME))
   })
 
   it('Should carry the Welsh for the delete page heading and confirm button', () => {
@@ -115,7 +123,7 @@ describe('#copy', () => {
   })
 
   it('Should ask for the missing name, postcode, country or phone in its required message', () => {
-    expect(copy.errors.name.required).toBe('Enter a name or organisation name')
+    expect(copy.errors.name.required).toBe('Enter a name or organisation')
     expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
     expect(copy.errors.countryCode.required).toBe('Select a country')
     expect(copy.errors.phone.required).toBe('Enter a phone number')

@@ -25,7 +25,7 @@ export const copy = {
   successBanner: {
     title: 'Success',
     added: (name) => `${name} added to your address book`,
-    updated: (name) => `${name} updated in your address book`,
+    updated: (name) => `${name} address updated`,
     deleted: (name) => `${name} address deleted`,
     deletedUnnamed: 'Address deleted'
   },
@@ -33,7 +33,7 @@ export const copy = {
     addressHeading: 'Address',
     contactHeading: 'Contact details',
     fields: {
-      name: 'Name or organisation name',
+      name: 'Name or organisation',
       addressLine1: 'Address line 1',
       addressLine2: 'Address line 2 (optional)',
       townOrCity: 'Town or city',
@@ -50,12 +50,10 @@ export const copy = {
     title: 'Add address details',
     save: 'Save and continue',
     cancel: 'Cancel and return to address book',
-    cancelToJourney: 'Cancel and return to address page',
-    nameLabel: 'Name or organisation',
-    countryPlaceholder: 'Select one'
+    cancelToJourney: 'Cancel and return to address page'
   },
   edit: {
-    title: 'Edit address details',
+    title: 'Edit address and contact details',
     save: 'Save changes',
     cancel: 'Cancel'
   },
@@ -67,14 +65,14 @@ export const copy = {
     title: 'Delete this address?',
     summaryAddress: 'Address',
     confirmation: 'Confirm that you want to delete this address.',
-    warning: 'This action cannot be undone.',
+    warning: 'Deletions are permanent and you cannot undo this.',
     notApplicable: 'Not applicable',
     confirm: 'Yes, delete',
     cancel: 'No, cancel'
   },
   errors: {
     name: {
-      required: 'Enter a name or organisation name',
+      required: 'Enter a name or organisation',
       maxLength: (max) => `Name must be ${max} characters or fewer`
     },
     addressLine1: {

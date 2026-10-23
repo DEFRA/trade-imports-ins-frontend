@@ -7,12 +7,14 @@ import {
 import {
   buildCountryItems,
   buildCountrySelectItems,
+  buildEditCountrySelectItems,
   countryLabelOf,
   countryCodeMatching,
   GB_COUNTRY
 } from './address-countries.js'
 
 const originalMode = process.env.STUB_MODE
+const COUNTRY_PLACEHOLDER = 'Select a country'
 const UK_NAME = 'United Kingdom'
 const GB_AND_FRANCE = [
   { code: 'GB', name: UK_NAME },
@@ -69,12 +71,45 @@ describe('#getAddressFormCountries', () => {
 
 describe('#buildCountrySelectItems', () => {
   test('Should put the placeholder option before the country options', () => {
-    expect(buildCountrySelectItems(GB_AND_FRANCE, 'Select a country')).toEqual([
-      { value: '', text: 'Select a country' },
-      { value: 'GB', text: UK_NAME },
-      { value: 'FR', text: 'France' }
-    ])
+    expect(buildCountrySelectItems(GB_AND_FRANCE, COUNTRY_PLACEHOLDER)).toEqual(
+      [
+        { value: '', text: COUNTRY_PLACEHOLDER },
+        { value: 'GB', text: UK_NAME },
+        { value: 'FR', text: 'France' }
+      ]
+    )
   })
+})
+
+describe('#buildEditCountrySelectItems', () => {
+  const countryItems = [
+    { value: 'GB', text: UK_NAME },
+    { value: 'FR', text: 'France' }
+  ]
+  const blankOption = { value: '', text: COUNTRY_PLACEHOLDER }
+
+  test('Should offer only the countries when the shown country is one of them', () => {
+    expect(
+      buildEditCountrySelectItems(GB_AND_FRANCE, 'FR', COUNTRY_PLACEHOLDER)
+    ).toEqual(countryItems)
+  })
+
+  test.each([
+    ['a country that is not offered', 'XX'],
+    ['a blank country', ''],
+    ['no country', undefined]
+  ])(
+    'Should put one blank option before the countries for %s',
+    (_name, shownCountryCode) => {
+      expect(
+        buildEditCountrySelectItems(
+          GB_AND_FRANCE,
+          shownCountryCode,
+          COUNTRY_PLACEHOLDER
+        )
+      ).toEqual([blankOption, ...countryItems])
+    }
+  )
 })
 
 describe('#buildCountryItems', () => {

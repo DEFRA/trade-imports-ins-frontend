@@ -13,7 +13,7 @@ export async function stopTestServer(server) {
   await server.stop({ timeout: 0 })
 }
 
-export const startRealModeServerServingCountries = (countries) => {
+export const startRealModeServer = () => {
   let startedServer
 
   runInRealMode()
@@ -26,9 +26,15 @@ export const startRealModeServerServingCountries = (countries) => {
     await stopTestServer(startedServer)
   })
 
+  return () => startedServer
+}
+
+export const startRealModeServerServingCountries = (countries) => {
+  const startedServer = startRealModeServer()
+
   beforeEach(() => {
     serveCountries(countries)
   })
 
-  return () => startedServer
+  return startedServer
 }

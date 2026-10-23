@@ -3,7 +3,6 @@ import { expect } from '@playwright/test'
 import { FIELD_RULES } from '../fields.js'
 
 export const NAME_LABEL = 'Name or organisation'
-export const EDIT_NAME_LABEL = 'Name or organisation name'
 const ADDRESS_LINE_1_LABEL = 'Address line 1'
 const TOWN_OR_CITY_LABEL = 'Town or city'
 const POSTCODE_LABEL = 'Postcode or Zip code'
@@ -22,8 +21,6 @@ export const fieldLabels = {
   email: EMAIL_LABEL
 }
 
-export const editFieldLabels = { ...fieldLabels, name: EDIT_NAME_LABEL }
-
 export const validAddress = {
   name: 'Highland Livestock Ltd',
   addressLine1: "14 Drover's Way",
@@ -36,8 +33,8 @@ export const validAddress = {
   phone: '+44 1463 234567'
 }
 
-export async function setFieldValue(page, field, value, labels = fieldLabels) {
-  const control = page.getByLabel(labels[field])
+export async function setFieldValue(page, field, value) {
+  const control = page.getByLabel(fieldLabels[field])
   if (field === 'countryCode') {
     await control.selectOption(value)
   } else {
@@ -76,7 +73,7 @@ export async function expectErrorFocusOn(
 }
 
 export const requiredValidations = [
-  ['name', NAME_LABEL, 'Enter a name or organisation name'],
+  ['name', NAME_LABEL, 'Enter a name or organisation'],
   ['addressLine1', ADDRESS_LINE_1_LABEL, 'Enter address line 1'],
   ['townOrCity', TOWN_OR_CITY_LABEL, 'Enter a town or city'],
   ['postcode', POSTCODE_LABEL, 'Enter a postcode or Zip code'],
