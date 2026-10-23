@@ -40,6 +40,19 @@ describe('#copy', () => {
     expect(copy.add.cancel).toBe('Cancel and return to address book')
   })
 
+  it('Should word the list intro, filter disclosure, search field, search button and empty results line', () => {
+    expect(copy.list.intro).toBe(
+      'Manage your addresses for use across all your import notifications'
+    )
+    expect(copy.list.search).toEqual({
+      summary: 'Filter addresses',
+      label: 'Search',
+      placeholder: 'Search by name, address or country',
+      button: 'Search'
+    })
+    expect(copy.list.noResults).toBe('Showing 0 of 0')
+  })
+
   it.each(LOCALES)(
     'Should label every %s form field, and no other',
     (_locale, bundle) => {

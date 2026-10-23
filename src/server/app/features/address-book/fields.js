@@ -27,15 +27,15 @@ export const FIELDS = Object.keys(FIELD_RULES)
 
 export const isRequiredField = (field) => FIELD_RULES[field].required === true
 
-export const ADDRESS_FIELDS = [
-  'name',
+export const POSTAL_LINE_FIELDS = [
   'addressLine1',
   'addressLine2',
   'townOrCity',
   'county',
-  'postcode',
-  'countryCode'
+  'postcode'
 ]
+
+export const ADDRESS_FIELDS = ['name', ...POSTAL_LINE_FIELDS, 'countryCode']
 
 export const addressFieldText = (address, countryLabel, field) =>
   field === 'countryCode' ? countryLabel : (address[field] ?? null)

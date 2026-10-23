@@ -1,21 +1,71 @@
 import { describe, expect, test } from 'vitest'
 
+import { copy } from '../copy/copy.en.js'
 import {
   addressBookPageHref,
+  postalLinesOf,
   buildAddressBookQueryString,
-  buildAddressLine,
-  mapAddressRows
+  mapAddressRows,
+  nameLinesOf,
+  resultsLabelOf
 } from './list.js'
 
-describe('#buildAddressLine', () => {
-  test('Should join addressLine1, townOrCity and postcode with commas', () => {
+describe('#nameLinesOf', () => {
+  test('Should give the first word then the rest, single-spaced, for a name of several words', () => {
+    expect(nameLinesOf('Green Valley   Farm')).toEqual(['Green', 'Valley Farm'])
+  })
+
+  test('Should give one line for a one-word name', () => {
+    expect(nameLinesOf('  Farm ')).toEqual(['Farm'])
+  })
+
+  test('Should give no lines for a blank name', () => {
+    expect(nameLinesOf('   ')).toEqual([])
+  })
+})
+
+describe('#postalLinesOf', () => {
+  test('Should give address line 1, address line 2, town or city, county and postcode in that order', () => {
     expect(
-      buildAddressLine({
-        addressLine1: "14 Drover's Way",
+      postalLinesOf({
+        postcode: 'IV2 3JH',
+        county: 'Highland',
         townOrCity: 'Inverness',
-        postcode: 'IV2 3JH'
+        addressLine2: 'Unit 3',
+        addressLine1: "14 Drover's Way"
       })
-    ).toBe("14 Drover's Way, Inverness, IV2 3JH")
+    ).toEqual(["14 Drover's Way", 'Unit 3', 'Inverness', 'Highland', 'IV2 3JH'])
+  })
+
+  test('Should leave out blank and missing lines', () => {
+    expect(
+      postalLinesOf({
+        addressLine1: '1 Road',
+        addressLine2: '  ',
+        townOrCity: 'Town',
+        postcode: 'AB1 2CD'
+      })
+    ).toEqual(['1 Road', 'Town', 'AB1 2CD'])
+  })
+})
+
+describe('#resultsLabelOf', () => {
+  test('Should give the range label for a page with results', () => {
+    expect(
+      resultsLabelOf(
+        { page: 1, pageSize: 25, totalItems: 1, totalPages: 1 },
+        copy.list
+      )
+    ).toBe('Showing 1-1 of 1')
+  })
+
+  test('Should give Showing 0 of 0 for a page with no results', () => {
+    expect(
+      resultsLabelOf(
+        { page: 1, pageSize: 25, totalItems: 0, totalPages: 0 },
+        copy.list
+      )
+    ).toBe('Showing 0 of 0')
   })
 })
 
@@ -54,13 +104,13 @@ describe('#addressBookPageHref', () => {
 })
 
 describe('#mapAddressRows', () => {
-  test('Should map each address to a row with its address line and country label', () => {
+  test('Should map each address to a row with its name lines, postal lines and country label', () => {
     expect(
       mapAddressRows(
         [
           {
             id: '1',
-            name: 'Farm',
+            name: 'Green Farm',
             addressLine1: '1 Road',
             townOrCity: 'Town',
             postcode: 'AB1 2CD',
@@ -72,8 +122,9 @@ describe('#mapAddressRows', () => {
     ).toEqual([
       {
         id: '1',
-        name: 'Farm',
-        addressLine: '1 Road, Town, AB1 2CD',
+        name: 'Green Farm',
+        nameLines: ['Green', 'Farm'],
+        postalLines: ['1 Road', 'Town', 'AB1 2CD'],
         countryCode: 'GB',
         countryLabel: 'United Kingdom'
       }

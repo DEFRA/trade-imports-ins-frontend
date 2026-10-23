@@ -7,8 +7,7 @@ import { copyFor } from '../../../shared/copy.js'
 import {
   escapeHtml,
   buildPaginationLinks,
-  parsePage,
-  buildResultsLabel
+  parsePage
 } from '../../../shared/list-page.js'
 import {
   addressAddPath,
@@ -21,7 +20,11 @@ import {
   countryCodeMatching
 } from '../address-countries.js'
 import { takeSuccessMessage } from '../success-message.js'
-import { addressBookPageHref, mapAddressRows } from '../view-model/list.js'
+import {
+  addressBookPageHref,
+  mapAddressRows,
+  resultsLabelOf
+} from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
@@ -32,10 +35,14 @@ const copy = copyFor({ en, cy })
 const viewLink = (address) =>
   `<a class="govuk-link" href="${addressPath(address.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
 
+const linesCell = (lines, lineSuffix = '') => ({
+  html: lines.map(escapeHtml).join(`${lineSuffix}<br> `)
+})
+
 const tableRowsOf = (addresses) =>
   addresses.map((address) => [
-    { text: address.name },
-    { text: address.addressLine },
+    linesCell(address.nameLines),
+    linesCell(address.postalLines, ','),
     { text: address.countryLabel },
     { html: viewLink(address) }
   ])
@@ -61,7 +68,6 @@ const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const page = parsePage(request.query.page)
   const searchTerm = request.query.q?.trim() ?? ''
-  const hasSearch = Boolean(searchTerm)
   const successMessage = takeSuccessMessage(request)
 
   try {
@@ -75,15 +81,13 @@ const get = async (request, toolkit) => {
     const addresses = mapAddressRows(addressPage.items ?? [], countries)
 
     return buildView(toolkit, {
+      listLoaded: true,
       tableRows: tableRowsOf(addresses),
-      resultsLabel: buildResultsLabel(pagination, copy.list.results),
+      resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
         addressBookPageHref(targetPage, search)
       ),
       searchTerm,
-      hasSearch,
-      isEmpty: addressPage.totalItems === 0 && !hasSearch,
-      noSearchResults: addressPage.totalItems === 0 && hasSearch,
       successMessage
     })
   } catch (err) {
@@ -92,13 +96,8 @@ const get = async (request, toolkit) => {
     }
     logger.error({ err, organisationId }, 'Failed to load address book')
     return buildView(toolkit, {
-      tableRows: [],
-      resultsLabel: null,
-      pagination: null,
+      listLoaded: false,
       searchTerm,
-      hasSearch,
-      isEmpty: false,
-      noSearchResults: false,
       successMessage,
       recoverableError: true
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)

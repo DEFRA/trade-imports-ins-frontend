@@ -62,7 +62,7 @@ const get = async (request, toolkit) => {
     return toolkit.view(view, {
       ...kit.base(copy.delete.title, { backLink: addressPageHref }),
       copy,
-      addressLines: lines.length ? lines : [copy.delete.notApplicable],
+      postalLines: lines.length ? lines : [copy.delete.notApplicable],
       cancelHref: addressPageHref
     })
   } catch (err) {

@@ -5,7 +5,7 @@
 {% block journeyContent %}
   <h1 class="govuk-heading-l">{{ copy.delete.title }}</h1>
 
-  {% set addressHtml %}{% for line in addressLines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}{% endset %}
+  {% set addressHtml %}{% for line in postalLines %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}{% endset %}
   {{ govukSummaryList({
     rows: [{
       key: { text: copy.delete.summaryAddress },
