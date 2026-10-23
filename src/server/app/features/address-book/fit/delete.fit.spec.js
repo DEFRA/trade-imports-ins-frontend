@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test'
 
-import { expectAddressBookList } from './address-book-list.js'
+import {
+  expectAddressBookList,
+  expectEmptyAddressBookList
+} from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { expectDashboard } from './dashboard.js'
 import {
@@ -97,7 +100,7 @@ test.describe('delete address', () => {
     await expect(
       page.getByRole('link', { name: `View ${SEED_ADDRESS_NAME}` })
     ).toHaveCount(0)
-    await expect(page.getByText('You have no addresses yet.')).toBeVisible()
+    await expectEmptyAddressBookList(page)
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
@@ -143,7 +146,7 @@ test.describe('delete address', () => {
 
       await page.goto('/address-book')
       await expect(page.getByText(DELETED_BANNER)).toHaveCount(0)
-      await expect(page.getByText('You have no addresses yet.')).toBeVisible()
+      await expectEmptyAddressBookList(page)
     })
 
     test("Yes, delete with a return to the deleted address's own page lands on the list", async ({

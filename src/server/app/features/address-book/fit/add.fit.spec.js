@@ -157,9 +157,8 @@ test.describe('add address validation', () => {
 })
 
 test.describe('save and confirm', () => {
-  test('saves a valid address, shows a confirmation banner and lists the new address', async ({
-    page
-  }) => {
+  const saveValidAddress = async (page) => {
+    await page.clock.install()
     await signIn(page, {
       organisationId: `stub-org-add-save-${crypto.randomUUID()}`
     })
@@ -169,15 +168,36 @@ test.describe('save and confirm', () => {
     await submit(page)
 
     await expect(page).toHaveURL(/\/address-book$/)
+  }
+
+  test('saves a valid address and keeps the confirmation banner showing 10 seconds after the list loads', async ({
+    page
+  }) => {
+    await saveValidAddress(page)
+
     const banner = page.getByText(
       'Highland Livestock Ltd added to your address book'
     )
     await expect(banner).toBeVisible()
+    await page.clock.runFor(10_000)
+    await expect(banner).toBeVisible()
+  })
+
+  test('lists the saved address with each stored line on its own line, each but the last ending in a comma', async ({
+    page
+  }) => {
+    await saveValidAddress(page)
+
+    const table = page.getByRole('table')
     await expect(
-      page
-        .getByRole('table')
-        .getByRole('cell', { name: 'Highland Livestock Ltd', exact: true })
+      table.getByRole('cell', { name: 'Highland Livestock Ltd', exact: true })
     ).toBeVisible()
+    await expect(
+      table.getByRole('cell', { name: "14 Drover's Way," })
+    ).toHaveText(
+      /^14 Drover's Way,\nUnit 3,\nInverness,\nHighland,\nIV2 3JH$/,
+      { useInnerText: true }
+    )
   })
 })
 

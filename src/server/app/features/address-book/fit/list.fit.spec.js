@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test'
 
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import {
+  expectEmptyAddressBookList,
+  openFilterDisclosure,
+  expectFilterDisclosureOpensAndCloses,
+  searchAndExpectQuery,
+  searchFieldOf
+} from './address-book-list.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 const ORG_DEFAULT = 'stub-org-1'
@@ -29,7 +36,7 @@ test.describe('navigation', () => {
 })
 
 test.describe('list and pagination', () => {
-  test('renders addresses in a table with Name, Address and Country columns', async ({
+  test('renders addresses in a table with Name, Address, Country and Action columns', async ({
     page
   }) => {
     await signIn(page, { organisationId: ORG_DEFAULT })
@@ -44,6 +51,9 @@ test.describe('list and pagination', () => {
     ).toBeVisible()
     await expect(
       table.getByRole('columnheader', { name: 'Country' })
+    ).toBeVisible()
+    await expect(
+      table.getByRole('columnheader', { name: 'Action' })
     ).toBeVisible()
     await expect(
       table.getByRole('cell', { name: 'Stub Farm 1', exact: true })
@@ -96,16 +106,128 @@ test.describe('list and pagination', () => {
   })
 })
 
-test.describe('empty state', () => {
-  test('shows an empty-state message and an option to add one', async ({
+test.describe('intro and cells', () => {
+  test('shows the intro and the Add a new address button', async ({ page }) => {
+    await signIn(page, { organisationId: ORG_DEFAULT })
+    await page.goto(LIST_PATH)
+
+    await expect(
+      page.getByText(
+        'Manage your addresses for use across all your import notifications',
+        { exact: true }
+      )
+    ).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: ADD_NEW_ADDRESS })
+    ).toBeVisible()
+  })
+
+  test('shows the name on two lines and the address on one line per stored line', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: ORG_DEFAULT })
+    await page.goto(LIST_PATH)
+
+    const nameCell = page.getByRole('cell', {
+      name: 'Stub Farm 1',
+      exact: true
+    })
+    await expect(nameCell).toHaveText(/^Stub\nFarm 1$/, { useInnerText: true })
+    const addressCell = page.getByRole('cell', {
+      name: '1 Stub Way, Stubton, ST1 1UB',
+      exact: true
+    })
+    await expect(addressCell).toHaveText(/^1 Stub Way,\nStubton,\nST1 1UB$/, {
+      useInnerText: true
+    })
+  })
+})
+
+const SUBMIT_METHODS = [
+  { submitWith: 'button', how: 'the Search button' },
+  { submitWith: 'enter', how: 'Enter in the Search field' }
+]
+
+test.describe('filter addresses', () => {
+  test('keeps the Search field hidden until Filter addresses is opened, and hides it again when closed', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: ORG_DEFAULT })
+    await page.goto(LIST_PATH)
+
+    await expectFilterDisclosureOpensAndCloses(page)
+  })
+
+  test('shows the Search field with its placeholder and no hint', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: ORG_DEFAULT })
+    await page.goto(LIST_PATH)
+
+    await openFilterDisclosure(page)
+    const searchField = searchFieldOf(page)
+
+    await expect(searchField).toHaveAttribute(
+      'placeholder',
+      'Search by name, address or country'
+    )
+    await expect(searchField).toHaveAccessibleDescription('')
+  })
+
+  for (const { submitWith, how } of SUBMIT_METHODS) {
+    test(`searches by the term when submitted with ${how}`, async ({
+      page
+    }) => {
+      await signIn(page, { organisationId: ORG_DEFAULT })
+      await page.goto(LIST_PATH)
+
+      await searchAndExpectQuery(page, 'stub', { submitWith })
+    })
+  }
+
+  test('has no serious or critical axe violations with the disclosure open', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: ORG_DEFAULT })
+    await page.goto(LIST_PATH)
+    await openFilterDisclosure(page)
+
+    await expectNoSeriousOrCriticalViolations(
+      page,
+      'Address book list with filter open'
+    )
+  })
+})
+
+test.describe('filter addresses without JavaScript', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('opens and closes the disclosure', async ({ page }) => {
+    await signIn(page, { organisationId: ORG_DEFAULT })
+    await page.goto(LIST_PATH)
+
+    await expectFilterDisclosureOpensAndCloses(page)
+  })
+
+  for (const { submitWith, how } of SUBMIT_METHODS) {
+    test(`searches by the term when submitted with ${how} and JavaScript is off`, async ({
+      page
+    }) => {
+      await signIn(page, { organisationId: ORG_DEFAULT })
+      await page.goto(LIST_PATH)
+
+      await searchAndExpectQuery(page, 'stub', { submitWith })
+    })
+  }
+})
+
+test.describe('empty book', () => {
+  test('shows Showing 0 of 0 and the table headings with no rows', async ({
     page
   }) => {
     await signIn(page, { organisationId: ORG_EMPTY })
     await page.goto(LIST_PATH)
 
-    await expect(page.getByText('You have no addresses yet.')).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: ADD_NEW_ADDRESS })
-    ).toBeVisible()
+    await expectEmptyAddressBookList(page)
   })
 })

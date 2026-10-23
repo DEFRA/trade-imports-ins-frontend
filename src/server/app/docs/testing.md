@@ -51,6 +51,13 @@ read the banner),
 `startRealModeServerServingCountries(countries)`, which returns a getter
 for the started server).
 
+[`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
+holds the list's fixtures and Cheerio readers: `listPageOf(server, url,
+sessionId)`, `contentOf`, `tableHeadOf`, `resultsLineOf`, `bodyRowCountOf`
+and `tagNamesOf`. A list controller test starts its server with
+`startRealModeServerServingCountries(countries)` and reads pages through
+`getPage()`.
+
 Mock at the network boundary: nock answers the HTTP calls the real
 clients make — never `vi.mock` a service barrel, and never mock
 `global.fetch`. The real server boots (`createServer()` +
@@ -101,6 +108,12 @@ Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 [`address-form.js`](../features/address-book/fit/address-form.js) —
 labels, `validAddress`, `fillValidAddress`, `expectErrorFocusOn`, the two
 validation tables.
+[`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
+`expectAddressBookList`, `expectEmptyAddressBookList`, `searchFieldOf`,
+`openFilterDisclosure`, `expectFilterDisclosureOpensAndCloses`,
+`searchAndExpectQuery`.
+[`dashboard.js`](../features/address-book/fit/dashboard.js) —
+`expectDashboard`.
 [`axe.js`](../features/address-book/fit/axe.js) — the address-book group's
 shared axe helper, `expectNoSeriousOrCriticalViolations`.
 [`seed-address.js`](../features/address-book/fit/seed-address.js) — the
