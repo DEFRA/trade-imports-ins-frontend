@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import { expectAddressBookList } from './address-book-list.js'
 import {
-  EDIT_NAME_LABEL,
-  editFieldLabels,
+  fieldLabels,
   expectErrorFocusOn,
   setFieldValue
 } from './address-form.js'
@@ -57,7 +56,7 @@ test.describe('edit address', () => {
       })
     ).toBeVisible()
     for (const [field, value] of Object.entries(seedValues)) {
-      await expect(page.getByLabel(editFieldLabels[field])).toHaveValue(value)
+      await expect(page.getByLabel(fieldLabels[field])).toHaveValue(value)
     }
     for (const name of ['Address', 'Contact details']) {
       await expect(
@@ -65,7 +64,7 @@ test.describe('edit address', () => {
       ).toBeVisible()
     }
     await expect(
-      page.getByLabel(EDIT_NAME_LABEL, { exact: true })
+      page.getByLabel(fieldLabels.name, { exact: true })
     ).toBeVisible()
     await expect(
       page.getByText('For international numbers include the country code')
@@ -81,15 +80,15 @@ test.describe('edit address', () => {
     await openEditForm(page, 'stub-org-edit-field-order')
 
     await expect(page.locator('form label')).toHaveText([
-      EDIT_NAME_LABEL,
-      editFieldLabels.addressLine1,
-      editFieldLabels.addressLine2,
-      editFieldLabels.townOrCity,
-      editFieldLabels.county,
-      editFieldLabels.postcode,
-      editFieldLabels.countryCode,
-      editFieldLabels.email,
-      editFieldLabels.phone
+      fieldLabels.name,
+      fieldLabels.addressLine1,
+      fieldLabels.addressLine2,
+      fieldLabels.townOrCity,
+      fieldLabels.county,
+      fieldLabels.postcode,
+      fieldLabels.countryCode,
+      fieldLabels.email,
+      fieldLabels.phone
     ])
   })
 
@@ -98,7 +97,7 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-countries')
 
-    const select = page.getByLabel(editFieldLabels.countryCode)
+    const select = page.getByLabel(fieldLabels.countryCode)
     const countryNames = await select.locator('option').allTextContents()
     expect(countryNames).toEqual(
       countryNames.toSorted((left, right) => left.localeCompare(right, 'en'))
@@ -118,17 +117,17 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-required')
 
-    await setFieldValue(page, 'townOrCity', 'Fort William', editFieldLabels)
-    await setFieldValue(page, 'name', '', editFieldLabels)
+    await setFieldValue(page, 'townOrCity', 'Fort William')
+    await setFieldValue(page, 'name', '')
     await save(page)
 
     await expectErrorFocusOn(page, {
       message: 'Enter a name or organisation name',
-      label: editFieldLabels.name,
+      label: fieldLabels.name,
       expectedValue: '',
       url: EDIT_URL
     })
-    await expect(page.getByLabel(editFieldLabels.townOrCity)).toHaveValue(
+    await expect(page.getByLabel(fieldLabels.townOrCity)).toHaveValue(
       'Fort William'
     )
   })
@@ -138,12 +137,12 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-email')
 
-    await setFieldValue(page, 'email', 'not-an-email', editFieldLabels)
+    await setFieldValue(page, 'email', 'not-an-email')
     await save(page)
 
     await expectErrorFocusOn(page, {
       message: 'Enter an email address in the correct format',
-      label: editFieldLabels.email,
+      label: fieldLabels.email,
       expectedValue: 'not-an-email',
       url: EDIT_URL
     })
@@ -154,7 +153,7 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-validation-axe')
 
-    await setFieldValue(page, 'name', '', editFieldLabels)
+    await setFieldValue(page, 'name', '')
     await save(page)
     await expect(page.getByRole('alert')).toBeVisible()
 
@@ -170,8 +169,8 @@ test.describe('edit address', () => {
     const newName = 'Glen Tanar Estate'
     await openEditForm(page, uniqueOrganisationId('save'))
 
-    await setFieldValue(page, 'name', newName, editFieldLabels)
-    await setFieldValue(page, 'townOrCity', 'Aboyne', editFieldLabels)
+    await setFieldValue(page, 'name', newName)
+    await setFieldValue(page, 'townOrCity', 'Aboyne')
     await save(page)
 
     await expect(page).toHaveURL(/\/address-book$/)
@@ -186,7 +185,7 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-cancel')
 
-    await setFieldValue(page, 'name', 'Should not be saved', editFieldLabels)
+    await setFieldValue(page, 'name', 'Should not be saved')
     await cancel(page)
 
     await expect(page).toHaveURL(new RegExp(`${SEED_ADDRESS_PATH}$`))

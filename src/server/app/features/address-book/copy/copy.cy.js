@@ -35,7 +35,7 @@ export const copy = {
     addressHeading: 'Cyfeiriad',
     contactHeading: 'Manylion cyswllt',
     fields: {
-      name: 'Enw neu enw’r sefydliad',
+      name: 'Enw neu sefydliad',
       addressLine1: 'Llinell gyfeiriad 1',
       addressLine2: 'Llinell gyfeiriad 2 (dewisol)',
       townOrCity: 'Tref neu ddinas',
@@ -53,7 +53,6 @@ export const copy = {
     save: 'Cadw a pharhau',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
     cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
-    nameLabel: 'Enw neu sefydliad',
     countryPlaceholder: 'Dewiswch un'
   },
   edit: {

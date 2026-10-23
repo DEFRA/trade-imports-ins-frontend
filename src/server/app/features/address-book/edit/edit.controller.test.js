@@ -122,7 +122,7 @@ describe('GET /address-book/{addressId}/edit', () => {
         .map((_, label) => $(label).text().trim())
         .get()
     ).toEqual([
-      'Name or organisation name',
+      'Name or organisation',
       'Address line 1',
       'Address line 2 (optional)',
       'Town or city',

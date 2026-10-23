@@ -33,7 +33,7 @@ export const copy = {
     addressHeading: 'Address',
     contactHeading: 'Contact details',
     fields: {
-      name: 'Name or organisation name',
+      name: 'Name or organisation',
       addressLine1: 'Address line 1',
       addressLine2: 'Address line 2 (optional)',
       townOrCity: 'Town or city',
@@ -51,7 +51,6 @@ export const copy = {
     save: 'Save and continue',
     cancel: 'Cancel and return to address book',
     cancelToJourney: 'Cancel and return to address page',
-    nameLabel: 'Name or organisation',
     countryPlaceholder: 'Select one'
   },
   edit: {

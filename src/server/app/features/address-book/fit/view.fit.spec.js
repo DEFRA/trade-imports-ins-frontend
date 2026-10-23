@@ -45,7 +45,7 @@ test.describe('view address', () => {
     await openSeedAddress(page, 'stub-org-view-rows')
 
     await expect(page.getByRole('term')).toHaveText([
-      'Name or organisation name',
+      'Name or organisation',
       'Address line 1',
       'Town or city',
       'Postcode or Zip code',
@@ -74,7 +74,7 @@ test.describe('view address', () => {
     await viewLink.click()
 
     await expect(page.getByRole('term')).toHaveText([
-      'Name or organisation name',
+      'Name or organisation',
       'Address line 1',
       'Address line 2 (optional)',
       'Town or city',

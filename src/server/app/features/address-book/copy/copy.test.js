@@ -32,11 +32,10 @@ describe('#copy', () => {
     }
   )
 
-  it('Should word the add-details form with its own name label, country placeholder and section headings', () => {
+  it('Should word the add-details form with its name label, country placeholder and section headings', () => {
     expect(copy.form.addressHeading).toBe('Address')
     expect(copy.form.contactHeading).toBe('Contact details')
-    expect(copy.add.nameLabel).toBe('Name or organisation')
-    expect(copy.form.fields.name).toBe('Name or organisation name')
+    expect(copy.form.fields.name).toBe('Name or organisation')
     expect(copy.add.countryPlaceholder).toBe('Select one')
     expect(copy.add.cancel).toBe('Cancel and return to address book')
   })

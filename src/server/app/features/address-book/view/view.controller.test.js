@@ -55,7 +55,7 @@ describe('#buildRows', () => {
     )
 
     expect(rows.map((row) => row.key.text)).toEqual([
-      'Name or organisation name',
+      'Name or organisation',
       'Address line 1',
       'Town or city',
       'Postcode or Zip code',
@@ -77,7 +77,7 @@ describe('#buildRows', () => {
     const rows = buildRows(mockAddress, UK_NAME)
 
     expect(rows.map((row) => row.key.text)).toEqual([
-      'Name or organisation name',
+      'Name or organisation',
       'Address line 1',
       'Address line 2 (optional)',
       'Town or city',
