@@ -16,6 +16,13 @@
         "notes": "basic-ftp quadratic-time CPU DoS in Client.list(); fixed in 6.2.1 but get-uri 6 and 8 require basic-ftp ^5. Fix blocked upstream: get-uri pins basic-ftp ^5; dev-only via @lhci/cli and puppeteer. Owner: Sam Farrington",
         "expiry": "2027-01-02"
       }
+    },
+    {
+      "GHSA-27r3-jxmh-p828": {
+        "active": true,
+        "notes": "body-parser DoS via trailing bytes after a compressed body; fixed in 1.20.9 (published 2026-10-22), which the 7-day npm min-release-age blocks until 2026-10-29. Dev-only via @lhci/cli > express. Remove and run npm update body-parser once 1.20.9 clears the window. Owner: Sam Farrington",
+        "expiry": "2026-11-05"
+      }
     }
   ]
 }
