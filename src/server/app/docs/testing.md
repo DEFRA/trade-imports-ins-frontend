@@ -95,8 +95,8 @@ external integration stubbed:
   — sign in, then the dashboard, the address book, add, view and delete,
   then an axe check. It names headings and buttons through the copy
   modules.
-- **`features`** runs `src/server/app/features/**/*.fit.spec.js` — six
-  specs, English literals.
+- **`features`** runs `src/server/app/features/**/*.fit.spec.js` —
+  English literals.
 
 The `webServer` boots `npm run fit:start` with `STUB_MODE=true`, so no
 other service runs. The Playwright default port is 3002, which is also
