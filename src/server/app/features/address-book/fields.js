@@ -37,8 +37,15 @@ export const POSTAL_LINE_FIELDS = [
 
 export const ADDRESS_FIELDS = ['name', ...POSTAL_LINE_FIELDS, 'countryCode']
 
+const displayTextOf = (value) => value?.trim() || null
+
 export const addressFieldText = (address, countryLabel, field) =>
-  field === 'countryCode' ? countryLabel : (address[field] ?? null)
+  displayTextOf(field === 'countryCode' ? countryLabel : address[field])
+
+export const postalLinesOf = (address) =>
+  POSTAL_LINE_FIELDS.map((field) => displayTextOf(address[field])).filter(
+    Boolean
+  )
 
 export const formValuesOf = (address = {}) =>
   Object.fromEntries(FIELDS.map((field) => [field, address[field] ?? '']))

@@ -25,8 +25,10 @@ root:
   `addressRules(countryCodes)`, plus `POSTAL_LINE_FIELDS` (address line 1,
   address line 2, town or city, county and postcode, in display order),
   `ADDRESS_FIELDS` (name, the postal-line fields and country) and
-  `addressFieldText`. The list reads `POSTAL_LINE_FIELDS`; the view rows and
-  the delete summary read `ADDRESS_FIELDS`. Each field's `required` sets both whether a blank value is
+  `addressFieldText` (a field's display text, or null when it is blank or
+  only spaces) with `postalLinesOf` built on the same blank rule. The list
+  reads `postalLinesOf`; the view rows and the delete summary read
+  `ADDRESS_FIELDS` through `addressFieldText`. Each field's `required` sets both whether a blank value is
   refused and whether the view always shows its row. Each field's
   `maxLength` and `required` match the address book API's `AddressRequest`
   validation, so the form refuses what the API would refuse.

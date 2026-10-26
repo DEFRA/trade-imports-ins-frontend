@@ -3,7 +3,6 @@ import { describe, expect, test } from 'vitest'
 import { copy } from '../copy/copy.en.js'
 import {
   addressBookPageHref,
-  postalLinesOf,
   buildAddressBookQueryString,
   mapAddressRows,
   nameLinesOf,
@@ -21,31 +20,6 @@ describe('#nameLinesOf', () => {
 
   test('Should give no lines for a blank name', () => {
     expect(nameLinesOf('   ')).toEqual([])
-  })
-})
-
-describe('#postalLinesOf', () => {
-  test('Should give address line 1, address line 2, town or city, county and postcode in that order', () => {
-    expect(
-      postalLinesOf({
-        postcode: 'IV2 3JH',
-        county: 'Highland',
-        townOrCity: 'Inverness',
-        addressLine2: 'Unit 3',
-        addressLine1: "14 Drover's Way"
-      })
-    ).toEqual(["14 Drover's Way", 'Unit 3', 'Inverness', 'Highland', 'IV2 3JH'])
-  })
-
-  test('Should leave out blank and missing lines', () => {
-    expect(
-      postalLinesOf({
-        addressLine1: '1 Road',
-        addressLine2: '  ',
-        townOrCity: 'Town',
-        postcode: 'AB1 2CD'
-      })
-    ).toEqual(['1 Road', 'Town', 'AB1 2CD'])
   })
 })
 

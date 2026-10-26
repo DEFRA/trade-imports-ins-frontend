@@ -6,7 +6,8 @@ import {
   FIELD_RULES,
   addressRules,
   formValuesOf,
-  isRequiredField
+  isRequiredField,
+  postalLinesOf
 } from './fields.js'
 import { copy } from './copy/copy.en.js'
 
@@ -192,5 +193,30 @@ describe('#formValuesOf', () => {
       phone: PHONE,
       email: EMAIL
     })
+  })
+})
+
+describe('#postalLinesOf', () => {
+  test('Should give address line 1, address line 2, town or city, county and postcode in that order', () => {
+    expect(
+      postalLinesOf({
+        postcode: 'IV2 3JH',
+        county: 'Highland',
+        townOrCity: 'Inverness',
+        addressLine2: 'Unit 3',
+        addressLine1: ADDRESS_LINE_1
+      })
+    ).toEqual([ADDRESS_LINE_1, 'Unit 3', 'Inverness', 'Highland', 'IV2 3JH'])
+  })
+
+  test('Should leave out blank and missing lines', () => {
+    expect(
+      postalLinesOf({
+        addressLine1: '1 Road',
+        addressLine2: '  ',
+        townOrCity: 'Town',
+        postcode: 'AB1 2CD'
+      })
+    ).toEqual(['1 Road', 'Town', 'AB1 2CD'])
   })
 })

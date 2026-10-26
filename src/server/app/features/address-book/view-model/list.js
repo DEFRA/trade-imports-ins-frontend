@@ -1,7 +1,7 @@
 import { buildResultsLabel } from '../../../shared/list-page.js'
 import { addressBookPath } from '../../../shared/paths.js'
 import { countryLabelOf } from '../address-countries.js'
-import { POSTAL_LINE_FIELDS } from '../fields.js'
+import { postalLinesOf } from '../fields.js'
 
 export const buildAddressBookQueryString = ({
   page,
@@ -31,9 +31,6 @@ export const nameLinesOf = (name) => {
     ? [firstWord, otherWords.join(' ')]
     : [firstWord].filter(Boolean)
 }
-
-export const postalLinesOf = (address) =>
-  POSTAL_LINE_FIELDS.map((field) => address[field]?.trim()).filter(Boolean)
 
 export const resultsLabelOf = (pagination, listCopy) =>
   buildResultsLabel(pagination, listCopy.results) ?? listCopy.noResults

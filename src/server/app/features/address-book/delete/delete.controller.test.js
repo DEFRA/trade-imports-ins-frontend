@@ -84,6 +84,21 @@ describe('#addressSummaryLines', () => {
     expect(lines).toEqual([BUSINESS_NAME, LINE_1, 'Inverness', UK_NAME])
   })
 
+  test('Should leave out an address line 2 and county that hold only spaces', () => {
+    const lines = addressSummaryLines(
+      { ...mockAddress, addressLine2: '   ', county: ' ' },
+      UK_NAME
+    )
+
+    expect(lines).toEqual([
+      BUSINESS_NAME,
+      LINE_1,
+      'Inverness',
+      'IV2 3JH',
+      UK_NAME
+    ])
+  })
+
   test('Should return no lines for an address with no name, lines or country', () => {
     expect(addressSummaryLines({}, undefined)).toEqual([])
   })
