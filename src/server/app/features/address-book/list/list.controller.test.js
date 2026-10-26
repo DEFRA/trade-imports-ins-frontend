@@ -14,7 +14,9 @@ import {
   highlandAddress,
   listPageOf,
   pageOf,
+  parisDepotAddress,
   resultsLineOf,
+  rowCellsOf,
   tableHeadOf,
   tagNamesOf
 } from './list.test-support.js'
@@ -31,22 +33,21 @@ describe('#addressBookListController', () => {
     addressBookApi()
       .get(ADDRESSES_PATH)
       .query({ page: '1' })
-      .reply(200, pageOf([highlandAddress]))
+      .reply(200, pageOf([highlandAddress, parisDepotAddress]))
 
-    const { $, html, statusCode } = await getList(
-      LIST_URL,
-      'list-with-addresses'
-    )
+    const { $, statusCode } = await getList(LIST_URL, 'list-with-addresses')
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(contentOf($).children('h1').text()).toBe('Address book')
-    expect(resultsLineOf($)).toBe('Showing 1-1 of 1')
+    expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
     expect(tableHeadOf($)).toEqual(TABLE_HEADINGS)
-    expect(html).toContain(
+    expect(rowCellsOf($, 0).eq(2).text().trim()).toBe('United Kingdom')
+    expect(rowCellsOf($, 0).eq(3).html().trim()).toBe(
       '<a class="govuk-link" href="/address-book/1">View<span class="govuk-visually-hidden"> Highland Livestock Ltd</span></a>'
     )
-    expect($('tbody tr').eq(0).children('td').eq(2).text().trim()).toBe(
-      'United Kingdom'
+    expect(rowCellsOf($, 1).eq(2).text().trim()).toBe('France')
+    expect(rowCellsOf($, 1).eq(3).html().trim()).toBe(
+      '<a class="govuk-link" href="/address-book/2">View<span class="govuk-visually-hidden"> Paris Depot</span></a>'
     )
   })
 
@@ -79,30 +80,18 @@ describe('#addressBookListController', () => {
     const scope = addressBookApi()
       .get(ADDRESSES_PATH)
       .query({ page: '1', q: 'France', countryCode: 'FR' })
-      .reply(
-        200,
-        pageOf([
-          {
-            id: '1',
-            name: 'Paris Depot',
-            addressLine1: '1 Rue de Rivoli',
-            townOrCity: 'Paris',
-            postcode: '75001',
-            countryCode: 'FR'
-          }
-        ])
-      )
+      .reply(200, pageOf([parisDepotAddress]))
 
-    const { html, statusCode } = await getList(
+    const { $, statusCode } = await getList(
       `${LIST_URL}?q=France`,
       'list-search-country'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
-    expect(html).toContain('Paris Depot')
-    expect(html).toContain('France')
-    expect(html).toContain('value="France"')
+    expect(rowCellsOf($, 0).eq(0).html()).toBe('Paris<br> Depot')
+    expect(rowCellsOf($, 0).eq(2).text().trim()).toBe('France')
+    expect($('input[name="q"]').val()).toBe('France')
   })
 
   test('pagination preserves the active search term', async () => {

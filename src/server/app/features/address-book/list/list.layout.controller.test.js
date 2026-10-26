@@ -18,6 +18,7 @@ import {
   listPageOf,
   pageOf,
   resultsLineOf,
+  rowCellsOf,
   tableHeadOf,
   tagNamesOf
 } from './list.test-support.js'
@@ -129,13 +130,12 @@ describe('#addressBookListLayout', () => {
 
     const { $ } = await getList(LIST_URL, 'list-cells')
 
-    const cellsOf = (rowIndex) => $('tbody tr').eq(rowIndex).children('td')
-    expect(cellsOf(0).eq(0).html()).toBe('Highland<br> Livestock Ltd')
-    expect(cellsOf(0).eq(1).html()).toBe(
+    expect(rowCellsOf($, 0).eq(0).html()).toBe('Highland<br> Livestock Ltd')
+    expect(rowCellsOf($, 0).eq(1).html()).toBe(
       "14 Drover's Way,<br> Inverness,<br> IV2 3JH"
     )
-    expect(cellsOf(1).eq(0).html()).toBe('Drover')
-    expect(cellsOf(1).eq(1).html()).toBe(
+    expect(rowCellsOf($, 1).eq(0).html()).toBe('Drover')
+    expect(rowCellsOf($, 1).eq(1).html()).toBe(
       "14 Drover's Way,<br> Unit 3,<br> Inverness,<br> Highland,<br> IV2 3JH"
     )
   })

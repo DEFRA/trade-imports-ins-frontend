@@ -23,6 +23,15 @@ export const highlandAddress = {
   countryCode: 'GB'
 }
 
+export const parisDepotAddress = {
+  id: '2',
+  name: 'Paris Depot',
+  addressLine1: '1 Rue de Rivoli',
+  townOrCity: 'Paris',
+  postcode: '75001',
+  countryCode: 'FR'
+}
+
 export const greenFarmAddress = {
   id: '1',
   name: 'Green Farm',
@@ -66,6 +75,9 @@ export const tableHeadOf = ($) =>
     .get()
 
 export const bodyRowCountOf = ($) => $('tbody tr').length
+
+export const rowCellsOf = ($, rowIndex) =>
+  $('tbody tr').eq(rowIndex).children('td')
 
 export const listPageOf = async (server, url, sessionId) => {
   const { result: html, statusCode } = await getPage(server, url, sessionId)
