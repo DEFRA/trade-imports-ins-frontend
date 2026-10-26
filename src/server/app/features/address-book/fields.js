@@ -65,29 +65,32 @@ const emailMessagesFor = (field) => ({
   format: errors[field].format
 })
 
-const emailRule = (field, required) =>
-  (required ? requiredEmail : maxEmail)(
+const emailRule = (field) =>
+  (isRequiredField(field) ? requiredEmail : maxEmail)(
     field,
     maxLengthOf(field),
     emailMessagesFor(field)
   )
 
-const countryRule = (field, required, countryCodes) =>
-  (required ? requiredOneOf : oneOf)(
+const countryRule = (field, countryCodes) =>
+  (isRequiredField(field) ? requiredOneOf : oneOf)(
     field,
     countryCodes,
     errors[field].required
   )
 
+const textRule = (field) =>
+  isRequiredField(field) ? requiredTextRule(field) : optionalTextRule(field)
+
 const ruleFor = (field, countryCodes) => {
-  const { required, email, oneOfCountryCodes } = FIELD_RULES[field]
+  const { email, oneOfCountryCodes } = FIELD_RULES[field]
   if (oneOfCountryCodes) {
-    return countryRule(field, required, countryCodes)
+    return countryRule(field, countryCodes)
   }
   if (email) {
-    return emailRule(field, required)
+    return emailRule(field)
   }
-  return required ? requiredTextRule(field) : optionalTextRule(field)
+  return textRule(field)
 }
 
 export const addressRules = (countryCodes) =>
