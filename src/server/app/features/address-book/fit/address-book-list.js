@@ -35,8 +35,7 @@ export const openFilterDisclosure = async (page) => {
 
 export const expectFilterDisclosureOpensAndCloses = async (page) => {
   await expect(searchFieldOf(page)).toBeHidden()
-  await toggleFilterDisclosure(page)
-  await expect(searchFieldOf(page)).toBeVisible()
+  await openFilterDisclosure(page)
   await toggleFilterDisclosure(page)
   await expect(searchFieldOf(page)).toBeHidden()
 }
