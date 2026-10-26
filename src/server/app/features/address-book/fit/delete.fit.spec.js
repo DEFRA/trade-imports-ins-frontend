@@ -97,9 +97,6 @@ test.describe('delete address', () => {
 
     await expect(page).toHaveURL(/\/address-book$/)
     await expect(page.getByText(DELETED_BANNER)).toBeVisible()
-    await expect(
-      page.getByRole('link', { name: `View ${SEED_ADDRESS_NAME}` })
-    ).toHaveCount(0)
     await expectEmptyAddressBookList(page)
   })
 
