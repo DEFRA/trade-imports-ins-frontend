@@ -18,7 +18,7 @@ const clampPage = (page, totalPages) =>
 
 export const buildResultsLabel = (
   { page, pageSize, totalItems, totalPages },
-  resultsLabelOf
+  rangeLabelOf
 ) => {
   if (totalItems < 1) {
     return null
@@ -26,7 +26,7 @@ export const buildResultsLabel = (
   const currentPage = clampPage(page, totalPages)
   const from = (currentPage - 1) * pageSize + 1
   const to = Math.min(currentPage * pageSize, totalItems)
-  return resultsLabelOf(from, to, totalItems)
+  return rangeLabelOf(from, to, totalItems)
 }
 
 export const buildPaginationLinks = ({ page, totalPages }, pageHrefOf) => {
