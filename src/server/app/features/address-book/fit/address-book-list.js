@@ -53,5 +53,6 @@ const submitSearch = async (page, term, { submitWith }) => {
 
 export const searchAndExpectQuery = async (page, term, { submitWith }) => {
   await submitSearch(page, term, { submitWith })
-  await expect(page).toHaveURL(`/address-book?q=${term}`)
+  const submittedQuery = new URLSearchParams({ q: term })
+  await expect(page).toHaveURL(`/address-book?${submittedQuery}`)
 }
