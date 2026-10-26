@@ -56,7 +56,8 @@ holds the list's fixtures and Cheerio readers: `listPageOf(server, url,
 sessionId)`, `contentOf`, `tableHeadOf`, `resultsLineOf`, `bodyRowCountOf`
 and `tagNamesOf`. A list controller test starts its server with
 `startRealModeServerServingCountries(countries)` and reads pages through
-`getPage()`.
+`listPageOf(server(), url, sessionId)`, which wraps `getPage()` and loads
+the HTML into Cheerio.
 
 Mock at the network boundary: nock answers the HTTP calls the real
 clients make — never `vi.mock` a service barrel, and never mock
