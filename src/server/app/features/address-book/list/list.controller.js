@@ -35,8 +35,8 @@ const copy = copyFor({ en, cy })
 const viewLink = (address) =>
   `<a class="govuk-link" href="${addressPath(address.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
 
-const linesCell = (lines, lineSuffix = '') => ({
-  html: lines.map(escapeHtml).join(`${lineSuffix}<br> `)
+const linesCell = (lines, lineSeparator = '') => ({
+  html: lines.map(escapeHtml).join(`${lineSeparator}<br> `)
 })
 
 const tableRowsOf = (addresses) =>
