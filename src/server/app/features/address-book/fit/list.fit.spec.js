@@ -10,6 +10,7 @@ import {
   searchFieldOf
 } from './address-book-list.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
+import { SEED_ADDRESS_NAME } from './seed-address.js'
 
 const ORG_DEFAULT = 'stub-org-1'
 const ORG_EMPTY = 'stub-org-empty'
@@ -55,7 +56,7 @@ test.describe('list and pagination', () => {
       table.getByRole('columnheader', { name: 'Action' })
     ).toBeVisible()
     await expect(
-      table.getByRole('cell', { name: 'Stub Farm 1', exact: true })
+      table.getByRole('cell', { name: SEED_ADDRESS_NAME, exact: true })
     ).toBeVisible()
     await expect(
       table.getByRole('cell', {
@@ -123,7 +124,7 @@ test.describe('intro and cells', () => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     const nameCell = page.getByRole('cell', {
-      name: 'Stub Farm 1',
+      name: SEED_ADDRESS_NAME,
       exact: true
     })
     await expect(nameCell).toHaveText(/^Stub\nFarm 1$/, { useInnerText: true })
