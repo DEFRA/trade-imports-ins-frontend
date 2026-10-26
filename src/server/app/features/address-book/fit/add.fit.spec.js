@@ -158,7 +158,6 @@ test.describe('add address validation', () => {
 
 test.describe('save and confirm', () => {
   const saveValidAddress = async (page) => {
-    await page.clock.install()
     await signIn(page, {
       organisationId: `stub-org-add-save-${crypto.randomUUID()}`
     })
@@ -173,6 +172,7 @@ test.describe('save and confirm', () => {
   test('saves a valid address and keeps the confirmation banner showing 10 seconds after the list loads', async ({
     page
   }) => {
+    await page.clock.install()
     await saveValidAddress(page)
 
     const banner = page.getByText(
