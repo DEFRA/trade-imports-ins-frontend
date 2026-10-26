@@ -87,6 +87,27 @@ describe('#addressBookListController', () => {
     expect($('input[name="q"]').val()).toBe('France')
   })
 
+  test.each([
+    ['matches', pageOf([greenFarmAddress])],
+    ['no matches', pageOf([])]
+  ])(
+    'Should link Clear search to the whole address book under the results line when a search has %s',
+    async (_, addressPage) => {
+      stubAddressPage({ page: '1', q: 'green' }, addressPage)
+
+      const { $ } = await getList(`${LIST_URL}?q=green`, 'list-clear-search')
+
+      const clearSearch = $('[data-testid="address-book-clear-search"]')
+      expect(clearSearch.text().trim()).toBe('Clear search')
+      expect(clearSearch.attr('href')).toBe(LIST_URL)
+      expect(
+        $('[data-testid="address-book-results-label"]')
+          .next()
+          .is(clearSearch.parent())
+      ).toBe(true)
+    }
+  )
+
   test('pagination preserves the active search term', async () => {
     const scope = stubAddressPage(
       { page: '2', q: 'green', countryCode: 'GB' },

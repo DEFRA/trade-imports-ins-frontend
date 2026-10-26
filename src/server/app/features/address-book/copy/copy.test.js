@@ -47,8 +47,9 @@ describe('#copy', () => {
     expect(copy.list.search).toEqual({
       summary: 'Filter addresses',
       label: 'Search',
-      placeholder: 'Search by name, address or country',
-      button: 'Search'
+      hint: 'Search by name, address or country',
+      button: 'Search',
+      clear: 'Clear search'
     })
     expect(copy.list.noResults).toBe('Showing 0 of 0')
   })

@@ -68,7 +68,7 @@ describe('#addressBookListLayout', () => {
     )
   })
 
-  test('holds the Search label, the input and one icon-only submit button inside the disclosure', async () => {
+  test('holds the Search label, its hint, the input and one icon-only submit button inside the disclosure', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await getList(LIST_URL, 'list-search-controls')
@@ -84,13 +84,16 @@ describe('#addressBookListLayout', () => {
         .get()
     ).toEqual([
       { tag: 'label', text: 'Search' },
+      { tag: 'div', text: 'Search by name, address or country' },
       { tag: 'input', text: '' },
       { tag: 'button', text: 'Search' }
     ])
     const input = controls.find('input')
     expect(input.attr('name')).toBe('q')
     expect(controls.find('label').attr('for')).toBe(input.attr('id'))
-    expect(input.attr('placeholder')).toBe('Search by name, address or country')
+    expect(input.attr('aria-describedby')).toBe(
+      controls.find('.govuk-hint').attr('id')
+    )
     const button = controls.find('button')
     expect(button.attr('type')).toBe('submit')
     expect(tagNamesOf(button.children())).toEqual(['svg', 'span'])
@@ -147,7 +150,7 @@ describe('#addressBookListLayout', () => {
     expect($('tbody b, tbody i')).toHaveLength(0)
   })
 
-  test('lists the match under the filter with its View link as the only link there', async () => {
+  test('lists the match under the filter with Clear search and its View link as the only links there', async () => {
     stubAddressPage({ page: '1', q: 'green' }, pageOf([greenFarmAddress]))
 
     const { $, statusCode } = await getList(
@@ -157,10 +160,13 @@ describe('#addressBookListLayout', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(resultsLineOf($)).toBe('Showing 1-1 of 1')
-    expect(anchorsAfterFilterForm($)).toEqual(['/address-book/1'])
+    expect(anchorsAfterFilterForm($)).toEqual([
+      '/address-book',
+      '/address-book/1'
+    ])
   })
 
-  test('shows Showing 0 of 0, the table headings, no rows and no links under the filter when a search matches nothing', async () => {
+  test('shows Showing 0 of 0, the table headings, no rows and Clear search as the only link under the filter when a search matches nothing', async () => {
     stubAddressPage({ page: '1', q: 'zzznomatch' }, pageOf([]))
 
     const { $, statusCode } = await getList(
@@ -173,6 +179,6 @@ describe('#addressBookListLayout', () => {
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
     expect($('input[name="q"]').val()).toBe('zzznomatch')
-    expect(anchorsAfterFilterForm($)).toEqual([])
+    expect(anchorsAfterFilterForm($)).toEqual(['/address-book'])
   })
 })

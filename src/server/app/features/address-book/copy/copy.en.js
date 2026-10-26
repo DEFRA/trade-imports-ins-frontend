@@ -7,8 +7,9 @@ export const copy = {
     search: {
       summary: 'Filter addresses',
       label: 'Search',
-      placeholder: 'Search by name, address or country',
-      button: 'Search'
+      hint: 'Search by name, address or country',
+      button: 'Search',
+      clear: 'Clear search'
     },
     add: 'Add a new address',
     results: (from, to, total) => `Showing ${from}-${to} of ${total}`,

@@ -39,14 +39,14 @@
       label: {
         text: copy.list.search.label
       },
+      hint: {
+        text: copy.list.search.hint
+      },
       id: "q",
       name: "q",
       type: "search",
       value: searchTerm,
-      classes: "govuk-!-width-two-thirds",
-      attributes: {
-        placeholder: copy.list.search.placeholder
-      }
+      classes: "govuk-!-width-two-thirds"
     }) }}
     {{ govukButton({
       html: searchButtonHtml
@@ -64,6 +64,12 @@
     <p class="govuk-body govuk-!-margin-bottom-4" data-testid="address-book-results-label">
       {{ resultsLabel }}
     </p>
+
+    {% if searchTerm %}
+      <p class="govuk-body govuk-!-margin-bottom-4">
+        <a class="govuk-link" href="{{ listHref }}" data-testid="address-book-clear-search">{{ copy.list.search.clear }}</a>
+      </p>
+    {% endif %}
 
     {{ govukTable({
       head: [

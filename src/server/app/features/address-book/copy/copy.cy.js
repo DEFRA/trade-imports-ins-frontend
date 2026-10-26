@@ -9,8 +9,9 @@ export const copy = {
     search: {
       summary: 'Hidlo cyfeiriadau',
       label: 'Chwilio',
-      placeholder: 'Chwilio yn ôl enw, cyfeiriad neu wlad',
-      button: 'Chwilio'
+      hint: 'Chwilio yn ôl enw, cyfeiriad neu wlad',
+      button: 'Chwilio',
+      clear: 'Clirio’r chwiliad'
     },
     add: 'Ychwanegu cyfeiriad newydd',
     results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,

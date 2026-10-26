@@ -152,19 +152,16 @@ test.describe('filter addresses', () => {
     await expectFilterDisclosureOpensAndCloses(page)
   })
 
-  test('shows the Search field with its placeholder and no hint', async ({
+  test('describes the Search field with the hint Search by name, address or country', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     await openFilterDisclosure(page)
-    const searchField = searchFieldOf(page)
 
-    await expect(searchField).toHaveAttribute(
-      'placeholder',
+    await expect(searchFieldOf(page)).toHaveAccessibleDescription(
       'Search by name, address or country'
     )
-    await expect(searchField).toHaveAccessibleDescription('')
   })
 
   for (const { submitWith, how } of SUBMIT_METHODS) {
@@ -176,6 +173,19 @@ test.describe('filter addresses', () => {
       await searchAndExpectQuery(page, 'stub', { submitWith })
     })
   }
+
+  test('Clear search after a search returns to the whole address book with an empty Search field', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await searchAndExpectQuery(page, 'stub', { submitWith: 'button' })
+
+    await page.getByRole('link', { name: 'Clear search' }).click()
+
+    await expect(page).toHaveURL('/address-book')
+    await openFilterDisclosure(page)
+    await expect(searchFieldOf(page)).toHaveValue('')
+  })
 
   test('has no serious or critical axe violations with the disclosure open', async ({
     page
