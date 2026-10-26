@@ -1,24 +1,22 @@
 import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
+import { pageOf } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
-import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
-import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import {
-  ADDRESSES_PATH,
+  ADD_PATH,
   LIST_URL,
   NO_RESULTS_LINE,
   TABLE_HEADINGS,
   bodyRowCountOf,
   contentOf,
-  countries,
   fullAddress,
   greenFarmAddress,
   highlandAddress,
-  listPageOf,
-  pageOf,
   resultsLineOf,
   rowCellsOf,
+  startListPage,
+  stubAddressPage,
   tableHeadingsOf,
   tagNamesOf
 } from './list.test-support.js'
@@ -26,8 +24,6 @@ import {
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
-
-const ADD_PATH = '/address-book/add'
 
 const anchorsAfterFilterForm = ($) =>
   contentOf($)
@@ -38,14 +34,10 @@ const anchorsAfterFilterForm = ($) =>
     .get()
 
 describe('#addressBookListLayout', () => {
-  const server = startRealModeServerServingCountries(countries)
-  const getList = (url, sessionId) => listPageOf(server(), url, sessionId)
+  const getList = startListPage()
 
   test('lays the page out as heading, large intro, Add button, then the filter form wrapping a collapsed Filter addresses disclosure', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(200, pageOf([highlandAddress]))
+    stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await getList(LIST_URL, 'list-layout')
 
@@ -77,10 +69,7 @@ describe('#addressBookListLayout', () => {
   })
 
   test('holds the Search label, the input and one icon-only submit button inside the disclosure', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(200, pageOf([highlandAddress]))
+    stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await getList(LIST_URL, 'list-search-controls')
 
@@ -110,10 +99,7 @@ describe('#addressBookListLayout', () => {
   })
 
   test('shows Showing 0 of 0 and the table headings with no rows when the book is empty', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(200, pageOf([]))
+    stubAddressPage({ page: '1' }, pageOf([]))
 
     const { $, statusCode } = await getList(LIST_URL, 'list-empty')
 
@@ -125,10 +111,7 @@ describe('#addressBookListLayout', () => {
   })
 
   test('breaks the name after its first word and puts every stored address line on its own line', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(200, pageOf([highlandAddress, fullAddress]))
+    stubAddressPage({ page: '1' }, pageOf([highlandAddress, fullAddress]))
 
     const { $ } = await getList(LIST_URL, 'list-cells')
 
@@ -143,22 +126,19 @@ describe('#addressBookListLayout', () => {
   })
 
   test('escapes markup in stored names and address lines', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(
-        200,
-        pageOf([
-          {
-            id: '3',
-            name: '<b>Bold</b> Farm',
-            addressLine1: "1 <i>Lane</i>'s End",
-            townOrCity: 'Inverness',
-            postcode: 'IV2 3JH',
-            countryCode: 'GB'
-          }
-        ])
-      )
+    stubAddressPage(
+      { page: '1' },
+      pageOf([
+        {
+          id: '3',
+          name: '<b>Bold</b> Farm',
+          addressLine1: "1 <i>Lane</i>'s End",
+          townOrCity: 'Inverness',
+          postcode: 'IV2 3JH',
+          countryCode: 'GB'
+        }
+      ])
+    )
 
     const { $, html } = await getList(LIST_URL, 'list-escaping')
 
@@ -168,10 +148,7 @@ describe('#addressBookListLayout', () => {
   })
 
   test('lists the match under the filter with its View link as the only link there', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1', q: 'green' })
-      .reply(200, pageOf([greenFarmAddress]))
+    stubAddressPage({ page: '1', q: 'green' }, pageOf([greenFarmAddress]))
 
     const { $, statusCode } = await getList(
       `${LIST_URL}?q=green`,
@@ -184,10 +161,7 @@ describe('#addressBookListLayout', () => {
   })
 
   test('shows Showing 0 of 0, the table headings, no rows and no links under the filter when a search matches nothing', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1', q: 'zzznomatch' })
-      .reply(200, pageOf([]))
+    stubAddressPage({ page: '1', q: 'zzznomatch' }, pageOf([]))
 
     const { $, statusCode } = await getList(
       `${LIST_URL}?q=zzznomatch`,

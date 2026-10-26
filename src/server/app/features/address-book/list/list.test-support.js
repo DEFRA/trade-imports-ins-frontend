@@ -1,18 +1,17 @@
 import { load } from 'cheerio'
 
-import { getPage } from '../../../../common/test-helpers/address-book-requests.js'
+import { statusCodes } from '../../../../common/constants/status-codes.js'
+import {
+  ADDRESSES_PATH,
+  getPage
+} from '../../../../common/test-helpers/address-book-requests.js'
+import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 
-const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
-
-export const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
 export const LIST_URL = '/address-book'
+export const ADD_PATH = '/address-book/add'
 export const NO_RESULTS_LINE = 'Showing 0 of 0'
 export const TABLE_HEADINGS = ['Name', 'Address', 'Country', 'Action']
-
-export const countries = [
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'FR', name: 'France' }
-]
 
 export const highlandAddress = {
   id: '1',
@@ -52,15 +51,6 @@ export const fullAddress = {
   countryCode: 'GB'
 }
 
-export const pageOf = (items, overrides = {}) => ({
-  items,
-  page: 1,
-  pageSize: 25,
-  totalItems: items.length,
-  totalPages: items.length ? 1 : 0,
-  ...overrides
-})
-
 export const contentOf = ($) => $('.govuk-grid-column-full')
 
 export const tagNamesOf = (elements) =>
@@ -79,7 +69,19 @@ export const bodyRowCountOf = ($) => $('tbody tr').length
 export const rowCellsOf = ($, rowIndex) =>
   $('tbody tr').eq(rowIndex).children('td')
 
-export const listPageOf = async (server, url, sessionId) => {
-  const { result: html, statusCode } = await getPage(server, url, sessionId)
-  return { $: load(html), html, statusCode }
+export const startListPage = () => {
+  const server = startRealModeServerServingCountries([
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'FR', name: 'France' }
+  ])
+  return async (url, sessionId) => {
+    const { result: html, statusCode } = await getPage(server(), url, sessionId)
+    return { $: load(html), html, statusCode }
+  }
 }
+
+export const stubAddressPage = (query, addressPage) =>
+  addressBookApi()
+    .get(ADDRESSES_PATH)
+    .query(query)
+    .reply(statusCodes.ok, addressPage)

@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
+  ADDRESSES_PATH,
   expectRedirectTo,
   expectServerErrorPage,
   getPage,
@@ -24,9 +25,8 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
-const ADDRESS_PATH = `/organisation/${ORGANISATION_ID}/addresses/${ADDRESS_ID}`
+const ADDRESS_PATH = `${ADDRESSES_PATH}/${ADDRESS_ID}`
 const EDIT_URL = `/address-book/${ADDRESS_ID}/edit`
 const VIEW_PATH = `/address-book/${ADDRESS_ID}`
 const ADDRESS_BOOK_PATH = '/address-book'

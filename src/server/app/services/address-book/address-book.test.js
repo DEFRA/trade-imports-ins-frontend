@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../config/config.js'
-import { ORGANISATION_ID_HEADER } from '../../../common/test-helpers/address-book-requests.js'
+import {
+  ADDRESSES_PATH,
+  ORGANISATION_ID_HEADER,
+  pageOf
+} from '../../../common/test-helpers/address-book-requests.js'
 import {
   addressBookApi,
   refuseOutboundHttp,
   runInRealMode
 } from '../../../common/test-helpers/real-mode.js'
+import { ORGANISATION_ID } from '../../../common/test-helpers/session-auth.js'
 import * as addressBook from './index.js'
 
 const getTraceIdMock = vi.hoisted(() => vi.fn())
@@ -15,8 +20,6 @@ vi.mock('@defra/hapi-tracing', () => ({
   getTraceId: getTraceIdMock
 }))
 
-const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
-const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
 const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 const ADDRESS_PATH = `${ADDRESSES_PATH}/${ADDRESS_ID}`
 const TRACING_HEADER = config.get('tracing.header')
@@ -40,14 +43,6 @@ const validationProblem = {
     email: [EMAIL_FORMAT_ERROR]
   }
 }
-
-const pageOf = (items) => ({
-  items,
-  page: 1,
-  pageSize: 25,
-  totalItems: items.length,
-  totalPages: items.length ? 1 : 0
-})
 
 describe('against the real address book', () => {
   runInRealMode()

@@ -3,11 +3,15 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
+  ADDRESSES_PATH,
   INVALID_ADDRESS_PAYLOAD,
   ORGANISATION_ID_HEADER
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
-import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
+import {
+  ORGANISATION_ID,
+  sessionAuth
+} from '../../../../common/test-helpers/session-auth.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
@@ -18,8 +22,6 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
-const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
 const ADDRESS_BOOK_PATH = '/address-book'
 const ADD_ADDRESS_URL = `${ADDRESS_BOOK_PATH}/add`
 const COUNTRY_OPTIONS = '#countryCode option'

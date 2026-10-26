@@ -1,22 +1,24 @@
 import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
-import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
-import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import {
   ADDRESSES_PATH,
+  pageOf
+} from '../../../../common/test-helpers/address-book-requests.js'
+import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import {
+  ADD_PATH,
   LIST_URL,
   TABLE_HEADINGS,
   contentOf,
-  countries,
   greenFarmAddress,
   highlandAddress,
-  listPageOf,
-  pageOf,
   parisDepotAddress,
   resultsLineOf,
   rowCellsOf,
+  startListPage,
+  stubAddressPage,
   tableHeadingsOf,
   tagNamesOf
 } from './list.test-support.js'
@@ -26,14 +28,10 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 }))
 
 describe('#addressBookListController', () => {
-  const server = startRealModeServerServingCountries(countries)
-  const getList = (url, sessionId) => listPageOf(server(), url, sessionId)
+  const getList = startListPage()
 
   test("renders the results count, column headings, and each address's View link and country label", async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(200, pageOf([highlandAddress, parisDepotAddress]))
+    stubAddressPage({ page: '1' }, pageOf([highlandAddress, parisDepotAddress]))
 
     const { $, statusCode } = await getList(LIST_URL, 'list-with-addresses')
 
@@ -52,18 +50,13 @@ describe('#addressBookListController', () => {
   })
 
   test('renders numbered pagination when more than one page', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '2' })
-      .reply(
-        200,
-        pageOf(
-          [
-            { id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }
-          ],
-          { page: 2, totalItems: 30, totalPages: 2 }
-        )
+    stubAddressPage(
+      { page: '2' },
+      pageOf(
+        [{ id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }],
+        { page: 2, totalItems: 30, totalPages: 2 }
       )
+    )
 
     const { html, statusCode } = await getList(
       `${LIST_URL}?page=2`,
@@ -77,10 +70,10 @@ describe('#addressBookListController', () => {
   })
 
   test('forwards search query and resolves country name to countryCode', async () => {
-    const scope = addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1', q: 'France', countryCode: 'FR' })
-      .reply(200, pageOf([parisDepotAddress]))
+    const scope = stubAddressPage(
+      { page: '1', q: 'France', countryCode: 'FR' },
+      pageOf([parisDepotAddress])
+    )
 
     const { $, statusCode } = await getList(
       `${LIST_URL}?q=France`,
@@ -95,13 +88,10 @@ describe('#addressBookListController', () => {
   })
 
   test('pagination preserves the active search term', async () => {
-    const scope = addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '2', q: 'green', countryCode: 'GB' })
-      .reply(
-        200,
-        pageOf([greenFarmAddress], { page: 2, totalItems: 30, totalPages: 2 })
-      )
+    const scope = stubAddressPage(
+      { page: '2', q: 'green', countryCode: 'GB' },
+      pageOf([greenFarmAddress], { page: 2, totalItems: 30, totalPages: 2 })
+    )
 
     const { html, statusCode } = await getList(
       `${LIST_URL}?q=green&countryCode=GB&page=2`,
@@ -139,7 +129,7 @@ describe('#addressBookListController', () => {
       'Manage your addresses for use across all your import notifications'
     )
     expect(contentOf($).children('p').next('div').find('a').attr('href')).toBe(
-      '/address-book/add'
+      ADD_PATH
     )
     expect(contentOf($).children('form').find('input[name="q"]')).toHaveLength(
       1

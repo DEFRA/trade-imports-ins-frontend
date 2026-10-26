@@ -6,6 +6,7 @@ import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
+  ADDRESSES_PATH,
   expectServerErrorPage,
   getPage,
   MALFORMED_ADDRESS_ID,
@@ -14,6 +15,7 @@ import {
   serveAddressBookServerError
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
+import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import {
   addressSummaryLines,
@@ -24,9 +26,8 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
-const ADDRESS_PATH = `/organisation/${ORGANISATION_ID}/addresses/${addressId}`
+const ADDRESS_PATH = `${ADDRESSES_PATH}/${addressId}`
 const ADDRESS_BOOK_PATH = '/address-book'
 const ADDRESS_PAGE_PATH = `/address-book/${addressId}`
 const UK_NAME = 'United Kingdom'
