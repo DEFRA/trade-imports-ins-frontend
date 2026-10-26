@@ -44,6 +44,5 @@ export const mapAddressRows = (addresses, countries = []) =>
     name: address.name,
     nameLines: nameLinesOf(address.name),
     postalLines: postalLinesOf(address),
-    countryCode: address.countryCode,
     countryLabel: countryLabelOf(countries, address.countryCode)
   }))

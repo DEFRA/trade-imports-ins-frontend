@@ -125,7 +125,6 @@ describe('#mapAddressRows', () => {
         name: 'Green Farm',
         nameLines: ['Green', 'Farm'],
         postalLines: ['1 Road', 'Town', 'AB1 2CD'],
-        countryCode: 'GB',
         countryLabel: 'United Kingdom'
       }
     ])
