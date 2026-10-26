@@ -19,7 +19,7 @@ import {
   pageOf,
   resultsLineOf,
   rowCellsOf,
-  tableHeadOf,
+  tableHeadingsOf,
   tagNamesOf
 } from './list.test-support.js'
 
@@ -119,7 +119,7 @@ describe('#addressBookListLayout', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(resultsLineOf($)).toBe(NO_RESULTS_LINE)
-    expect(tableHeadOf($)).toEqual(TABLE_HEADINGS)
+    expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
     expect(contentOf($).children('div').find('a').attr('href')).toBe(ADD_PATH)
   })
@@ -196,7 +196,7 @@ describe('#addressBookListLayout', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(resultsLineOf($)).toBe(NO_RESULTS_LINE)
-    expect(tableHeadOf($)).toEqual(TABLE_HEADINGS)
+    expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
     expect($('input[name="q"]').val()).toBe('zzznomatch')
     expect(anchorsAfterFilterForm($)).toEqual([])

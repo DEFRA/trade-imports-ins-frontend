@@ -53,7 +53,7 @@ for the started server).
 
 [`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
 holds the list's fixtures and Cheerio readers: `listPageOf(server, url,
-sessionId)`, `contentOf`, `tableHeadOf`, `resultsLineOf`, `bodyRowCountOf`
+sessionId)`, `contentOf`, `tableHeadingsOf`, `resultsLineOf`, `bodyRowCountOf`
 and `tagNamesOf`. A list controller test starts its server with
 `startRealModeServerServingCountries(countries)` and reads pages through
 `listPageOf(server(), url, sessionId)`, which wraps `getPage()` and loads

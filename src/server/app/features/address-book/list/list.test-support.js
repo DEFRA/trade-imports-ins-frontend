@@ -69,7 +69,7 @@ export const tagNamesOf = (elements) =>
 export const resultsLineOf = ($) =>
   $('[data-testid="address-book-results-label"]').text().trim()
 
-export const tableHeadOf = ($) =>
+export const tableHeadingsOf = ($) =>
   $('thead th')
     .map((_, heading) => $(heading).text().trim())
     .get()

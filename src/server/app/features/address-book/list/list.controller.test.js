@@ -17,7 +17,7 @@ import {
   parisDepotAddress,
   resultsLineOf,
   rowCellsOf,
-  tableHeadOf,
+  tableHeadingsOf,
   tagNamesOf
 } from './list.test-support.js'
 
@@ -40,7 +40,7 @@ describe('#addressBookListController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(contentOf($).children('h1').text()).toBe('Address book')
     expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
-    expect(tableHeadOf($)).toEqual(TABLE_HEADINGS)
+    expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(rowCellsOf($, 0).eq(2).text().trim()).toBe('United Kingdom')
     expect(rowCellsOf($, 0).eq(3).html().trim()).toBe(
       '<a class="govuk-link" href="/address-book/1">View<span class="govuk-visually-hidden"> Highland Livestock Ltd</span></a>'
@@ -145,6 +145,6 @@ describe('#addressBookListController', () => {
       1
     )
     expect(resultsLineOf($)).toBe('')
-    expect(tableHeadOf($)).toEqual([])
+    expect(tableHeadingsOf($)).toEqual([])
   })
 })
