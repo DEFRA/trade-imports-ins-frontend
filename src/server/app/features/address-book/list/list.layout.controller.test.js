@@ -104,7 +104,9 @@ describe('#addressBookListLayout', () => {
     expect(input.attr('placeholder')).toBe('Search by name, address or country')
     const button = controls.find('button')
     expect(button.attr('type')).toBe('submit')
-    expect(button.find('.govuk-visually-hidden').text()).toBe('Search')
+    expect(tagNamesOf(button.children())).toEqual(['svg', 'span'])
+    expect(button.children('svg').attr('aria-hidden')).toBe('true')
+    expect(button.children('span.govuk-visually-hidden').text()).toBe('Search')
   })
 
   test('shows Showing 0 of 0 and the table headings with no rows when the book is empty', async () => {
