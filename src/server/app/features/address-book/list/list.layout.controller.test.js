@@ -124,7 +124,7 @@ describe('#addressBookListLayout', () => {
     expect(contentOf($).children('div').find('a').attr('href')).toBe(ADD_PATH)
   })
 
-  test('shows the name on two lines and every stored address line on its own line', async () => {
+  test('breaks the name after its first word and puts every stored address line on its own line', async () => {
     addressBookApi()
       .get(ADDRESSES_PATH)
       .query({ page: '1' })
