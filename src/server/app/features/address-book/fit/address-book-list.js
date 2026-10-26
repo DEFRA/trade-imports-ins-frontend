@@ -1,5 +1,12 @@
 import { expect } from '@playwright/test'
 
+import { signIn } from '../../../../../../fit/sign-in.js'
+
+export const openAddressBookList = async (page, { organisationId }) => {
+  await signIn(page, { organisationId })
+  await page.goto('/address-book')
+}
+
 export const expectAddressBookList = async (page) => {
   await expect(page).toHaveURL(/\/address-book$/)
   await expect(

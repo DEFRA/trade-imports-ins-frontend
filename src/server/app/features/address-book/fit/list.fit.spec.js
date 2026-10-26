@@ -5,6 +5,7 @@ import {
   expectEmptyAddressBookList,
   openFilterDisclosure,
   expectFilterDisclosureOpensAndCloses,
+  openAddressBookList,
   searchAndExpectQuery,
   searchFieldOf
 } from './address-book-list.js'
@@ -13,7 +14,6 @@ import { signIn } from '../../../../../../fit/sign-in.js'
 const ORG_DEFAULT = 'stub-org-1'
 const ORG_EMPTY = 'stub-org-empty'
 const ORG_PAGINATED = 'stub-org-paginated'
-const LIST_PATH = '/address-book'
 const ADD_NEW_ADDRESS = 'Add a new address'
 
 test.describe('navigation', () => {
@@ -39,8 +39,7 @@ test.describe('list and pagination', () => {
   test('renders addresses in a table with Name, Address, Country and Action columns', async ({
     page
   }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     const table = page.getByRole('table')
     await expect(
@@ -75,8 +74,7 @@ test.describe('list and pagination', () => {
   test('clicking Add a new address navigates to the add form', async ({
     page
   }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     await page.getByRole('button', { name: ADD_NEW_ADDRESS }).click()
 
@@ -87,15 +85,13 @@ test.describe('list and pagination', () => {
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     await expectNoSeriousOrCriticalViolations(page, 'Address book list')
   })
 
   test('paginates when there are more than 25 addresses', async ({ page }) => {
-    await signIn(page, { organisationId: ORG_PAGINATED })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
 
     await expect(page.getByText('Showing 1-25 of 30')).toBeVisible()
 
@@ -108,8 +104,7 @@ test.describe('list and pagination', () => {
 
 test.describe('intro and cells', () => {
   test('shows the intro and the Add a new address button', async ({ page }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     await expect(
       page.getByText(
@@ -125,8 +120,7 @@ test.describe('intro and cells', () => {
   test('shows the name on two lines and the address on one line per stored line', async ({
     page
   }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     const nameCell = page.getByRole('cell', {
       name: 'Stub Farm 1',
@@ -152,8 +146,7 @@ test.describe('filter addresses', () => {
   test('keeps the Search field hidden until Filter addresses is opened, and hides it again when closed', async ({
     page
   }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     await expectFilterDisclosureOpensAndCloses(page)
   })
@@ -161,8 +154,7 @@ test.describe('filter addresses', () => {
   test('shows the Search field with its placeholder and no hint', async ({
     page
   }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     await openFilterDisclosure(page)
     const searchField = searchFieldOf(page)
@@ -178,8 +170,7 @@ test.describe('filter addresses', () => {
     test(`puts the term in the address book URL when submitted with ${how}`, async ({
       page
     }) => {
-      await signIn(page, { organisationId: ORG_DEFAULT })
-      await page.goto(LIST_PATH)
+      await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
       await searchAndExpectQuery(page, 'stub', { submitWith })
     })
@@ -188,8 +179,7 @@ test.describe('filter addresses', () => {
   test('has no serious or critical axe violations with the disclosure open', async ({
     page
   }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
     await openFilterDisclosure(page)
 
     await expectNoSeriousOrCriticalViolations(
@@ -203,8 +193,7 @@ test.describe('filter addresses without JavaScript', () => {
   test.use({ javaScriptEnabled: false })
 
   test('opens and closes the disclosure', async ({ page }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     await expectFilterDisclosureOpensAndCloses(page)
   })
@@ -213,8 +202,7 @@ test.describe('filter addresses without JavaScript', () => {
     test(`puts the term in the address book URL when submitted with ${how} and JavaScript is off`, async ({
       page
     }) => {
-      await signIn(page, { organisationId: ORG_DEFAULT })
-      await page.goto(LIST_PATH)
+      await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
       await searchAndExpectQuery(page, 'stub', { submitWith })
     })
@@ -225,8 +213,7 @@ test.describe('empty book', () => {
   test('shows Showing 0 of 0 and the table headings with no rows', async ({
     page
   }) => {
-    await signIn(page, { organisationId: ORG_EMPTY })
-    await page.goto(LIST_PATH)
+    await openAddressBookList(page, { organisationId: ORG_EMPTY })
 
     await expectEmptyAddressBookList(page)
   })
