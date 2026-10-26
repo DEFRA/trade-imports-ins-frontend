@@ -124,7 +124,7 @@ describe('GET /address-book/{addressId}/delete', () => {
     expect($('.govuk-summary-list__key')).toHaveLength(1)
     expect($('.govuk-summary-list__key').text().trim()).toBe('Address')
     expect($(SUMMARY_VALUE).html().trim()).toBe(
-      `${BUSINESS_NAME}<br>${LINE_1}<br>Unit 2<br>Inverness<br>Highland<br>IV2 3JH<br>${UK_NAME}`
+      `${BUSINESS_NAME}<br> ${LINE_1}<br> Unit 2<br> Inverness<br> Highland<br> IV2 3JH<br> ${UK_NAME}`
     )
     expect(result).not.toContain(EMAIL)
     expect(result).not.toContain(PHONE)

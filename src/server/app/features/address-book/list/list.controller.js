@@ -19,6 +19,7 @@ import {
   getAddressFormCountries,
   countryCodeMatching
 } from '../address-countries.js'
+import { addressLinesHtml } from '../address-lines.js'
 import { takeSuccessMessage } from '../success-message.js'
 import {
   addressBookPageHref,
@@ -35,14 +36,10 @@ const copy = copyFor({ en, cy })
 const viewLink = (address) =>
   `<a class="govuk-link" href="${addressPath(address.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
 
-const linesCell = (lines, lineSeparator = '') => ({
-  html: lines.map(escapeHtml).join(`${lineSeparator}<br> `)
-})
-
 const tableRowsOf = (addresses) =>
   addresses.map((address) => [
-    linesCell(address.nameLines),
-    linesCell(address.postalLines, ','),
+    { html: addressLinesHtml(address.nameLines) },
+    { html: addressLinesHtml(address.postalLines, ',') },
     { text: address.countryLabel },
     { html: viewLink(address) }
   ])
