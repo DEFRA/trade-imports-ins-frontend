@@ -175,7 +175,7 @@ test.describe('filter addresses', () => {
   })
 
   for (const { submitWith, how } of SUBMIT_METHODS) {
-    test(`searches by the term when submitted with ${how}`, async ({
+    test(`puts the term in the address book URL when submitted with ${how}`, async ({
       page
     }) => {
       await signIn(page, { organisationId: ORG_DEFAULT })
@@ -210,7 +210,7 @@ test.describe('filter addresses without JavaScript', () => {
   })
 
   for (const { submitWith, how } of SUBMIT_METHODS) {
-    test(`searches by the term when submitted with ${how} and JavaScript is off`, async ({
+    test(`puts the term in the address book URL when submitted with ${how} and JavaScript is off`, async ({
       page
     }) => {
       await signIn(page, { organisationId: ORG_DEFAULT })
