@@ -26,7 +26,8 @@ export const copy = {
   },
   successBanner: {
     title: 'Llwyddiant',
-    added: (name) => `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
+    added: (name) =>
+      `Cyfeiriad ${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
     updated: (name) => `Cyfeiriad ${name} wedi’i ddiweddaru`,
     deleted: (name) => `Cyfeiriad ${name} wedi’i ddileu`,
     deletedUnnamed: 'Cyfeiriad wedi’i ddileu'

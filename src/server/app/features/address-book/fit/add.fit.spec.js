@@ -9,6 +9,10 @@ import {
   requiredValidations,
   validAddress
 } from './address-form.js'
+import {
+  resultsLineOf,
+  searchAndExpectSingleMatch
+} from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
@@ -157,47 +161,88 @@ test.describe('add address validation', () => {
 })
 
 test.describe('save and confirm', () => {
-  const saveValidAddress = async (page) => {
+  const saveValidAddress = async (page, overrides = {}) => {
     await signIn(page, {
       organisationId: `stub-org-add-save-${crypto.randomUUID()}`
     })
     await page.goto(ADD_PATH)
 
-    await fillValidAddress(page)
+    await fillValidAddress(page, overrides)
     await submit(page)
 
     await expect(page).toHaveURL(/\/address-book$/)
   }
 
-  test('saves a valid address and keeps the confirmation banner showing 10 seconds after the list loads', async ({
+  test('saves a valid address and keeps the Success banner naming it showing 10 seconds after the list loads', async ({
     page
   }) => {
     await page.clock.install()
     await saveValidAddress(page)
 
-    const banner = page.getByText(
-      'Highland Livestock Ltd added to your address book'
-    )
+    const banner = page
+      .getByRole('alert', { name: 'Success' })
+      .getByText(`${validAddress.name} address added to your address book`, {
+        exact: true
+      })
     await expect(banner).toBeVisible()
     await page.clock.runFor(10_000)
     await expect(banner).toBeVisible()
   })
 
-  test('lists the saved address with each stored line on its own line, each but the last ending in a comma', async ({
+  test('lists the saved address first, ahead of the seeded address, with a View link to its own details page', async ({
+    page
+  }) => {
+    await saveValidAddress(page)
+
+    await expect(resultsLineOf(page)).toHaveText('Showing 1-2 of 2')
+    await expect(page.getByRole('link', { name: /^View / })).toHaveText([
+      `View ${validAddress.name}`,
+      'View Stub Farm 1'
+    ])
+    const viewLink = page.getByRole('link', {
+      name: `View ${validAddress.name}`
+    })
+    await expect(viewLink).toHaveAttribute(
+      'href',
+      /^\/address-book\/[0-9a-f]{24}$/
+    )
+    await viewLink.click()
+    await expect(
+      page.getByRole('heading', { level: 1, name: validAddress.name })
+    ).toBeVisible()
+  })
+
+  test('finds the saved address by its name, a fragment of its address and part of its country name', async ({
+    page
+  }) => {
+    await saveValidAddress(page, { countryCode: 'FR' })
+
+    for (const term of [validAddress.name, 'drover', 'fran']) {
+      await searchAndExpectSingleMatch(page, term, {
+        matchName: validAddress.name
+      })
+    }
+  })
+
+  test('lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart', async ({
     page
   }) => {
     await saveValidAddress(page)
 
     const table = page.getByRole('table')
     await expect(
-      table.getByRole('cell', { name: 'Highland Livestock Ltd', exact: true })
+      table.getByRole('cell', { name: validAddress.name, exact: true })
     ).toBeVisible()
-    await expect(
-      table.getByRole('cell', { name: "14 Drover's Way," })
-    ).toHaveText(
+    const addressCell = table.getByRole('cell', { name: "14 Drover's Way," })
+    await expect(addressCell).toHaveText(
       /^14 Drover's Way,\nUnit 3,\nInverness,\nHighland,\nIV2 3JH$/,
       { useInnerText: true }
     )
+    await expect(
+      table
+        .getByRole('row', { name: new RegExp(validAddress.name) })
+        .getByRole('cell', { name: 'United Kingdom', exact: true })
+    ).toBeVisible()
   })
 })
 

@@ -385,7 +385,29 @@ describe('in stub mode', () => {
     expect(addressPage.items).toHaveLength(3)
   })
 
-  test('Should list the addresses in any of the country codes, or matching the search term', async () => {
+  test('Should list created addresses newest first, ahead of the seeded address', async () => {
+    const organisationId = 'stub-org-newest-first'
+    await addressBook.createAddress(organisationId, {
+      ...highlandAddress,
+      name: GLEN_DEPOT
+    })
+    await addressBook.createAddress(organisationId, {
+      ...highlandAddress,
+      name: PARIS_DEPOT
+    })
+
+    const addressPage = await addressBook.listAddresses(organisationId, {
+      pageSize: 8
+    })
+
+    expect(addressPage.items.map(({ name }) => name)).toEqual([
+      PARIS_DEPOT,
+      GLEN_DEPOT,
+      SEED_ADDRESS_NAME
+    ])
+  })
+
+  test('Should list the addresses in any of the country codes, or matching the search term, newest first', async () => {
     const organisationId = 'stub-org-country-codes'
     await addressBook.createAddress(organisationId, {
       ...highlandAddress,
@@ -404,7 +426,7 @@ describe('in stub mode', () => {
     expect(await namesFor({ countryCodes: ['FR'] })).toEqual([PARIS_DEPOT])
     expect(
       await namesFor({ searchTerm: 'stub farm', countryCodes: ['FR'] })
-    ).toEqual([SEED_ADDRESS_NAME, PARIS_DEPOT])
+    ).toEqual([PARIS_DEPOT, SEED_ADDRESS_NAME])
   })
 
   test('Should report no matches over no pages for a search that matches nothing', async () => {

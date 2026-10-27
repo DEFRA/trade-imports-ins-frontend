@@ -83,7 +83,7 @@ describe('#copy', () => {
 
   it('Should name the address in each success banner', () => {
     expect(copy.successBanner.added(ADDRESS_NAME)).toBe(
-      'Green Farm added to your address book'
+      'Green Farm address added to your address book'
     )
     expect(copy.successBanner.updated(ADDRESS_NAME)).toBe(
       'Green Farm address updated'
@@ -116,19 +116,46 @@ describe('#copy', () => {
     )
   })
 
-  it('Should name the address in the Welsh deleted banner', () => {
-    const welsh = cy.successBanner.deleted(ADDRESS_NAME)
-
-    expect(welsh).toContain(ADDRESS_NAME)
-    expect(welsh).not.toBe(copy.successBanner.deleted(ADDRESS_NAME))
+  it('Should word the Welsh added, updated, deleted and unnamed deleted banners', () => {
+    expect(cy.successBanner.added(ADDRESS_NAME)).toBe(
+      'Cyfeiriad Green Farm wedi’i ychwanegu at eich llyfr cyfeiriadau'
+    )
+    expect(cy.successBanner.updated(ADDRESS_NAME)).toBe(
+      'Cyfeiriad Green Farm wedi’i ddiweddaru'
+    )
+    expect(cy.successBanner.deleted(ADDRESS_NAME)).toBe(
+      'Cyfeiriad Green Farm wedi’i ddileu'
+    )
+    expect(cy.successBanner.deletedUnnamed).toBe('Cyfeiriad wedi’i ddileu')
   })
 
-  it('Should carry a Welsh edit page title and updated banner that name the address and differ from the English', () => {
-    const welshBanner = cy.successBanner.updated(ADDRESS_NAME)
-
+  it('Should carry a Welsh edit page title that differs from the English', () => {
     expect(cy.edit.title).not.toBe(copy.edit.title)
-    expect(welshBanner).toContain(ADDRESS_NAME)
-    expect(welshBanner).not.toBe(copy.successBanner.updated(ADDRESS_NAME))
+  })
+
+  it('Should word the Welsh list title, intro, search, add link, results lines, table headings and View link', () => {
+    expect(
+      leaves(cy.list).map(({ path, value }) => [path, textOf(value)])
+    ).toEqual([
+      ['title', 'Llyfr cyfeiriadau'],
+      [
+        'intro',
+        'Rheoli eich cyfeiriadau i’w defnyddio ar draws eich holl hysbysiadau mewnforio'
+      ],
+      ['search.summary', 'Hidlo cyfeiriadau'],
+      ['search.label', 'Chwilio'],
+      ['search.hint', 'Chwilio yn ôl enw, cyfeiriad neu wlad'],
+      ['search.button', 'Chwilio'],
+      ['search.clear', 'Clirio’r chwiliad'],
+      ['add', 'Ychwanegu cyfeiriad newydd'],
+      ['results', 'Yn dangos 1-2 o 3'],
+      ['noResults', 'Yn dangos 0 o 0'],
+      ['table.name', 'Enw'],
+      ['table.address', 'Cyfeiriad'],
+      ['table.country', 'Gwlad'],
+      ['table.action', 'Cam gweithredu'],
+      ['table.view', 'Gweld']
+    ])
   })
 
   it('Should carry the Welsh for the delete page heading and confirm button', () => {

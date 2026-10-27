@@ -41,7 +41,8 @@ The [stub](../services/address-book/stub.js) keeps a `Map` per
 organisation, seeded by the id's suffix (`-empty`, `-paginated` for 30
 addresses, otherwise `Stub Farm 1` at `000000000000000000000001`), and
 mints 24-character hex ids because the `{id}` routes validate an
-ObjectId. It lists at the page size the request gives. An address
+ObjectId. It lists newest first, a created address ahead of the seeded
+ones, and at the page size the request gives. An address
 matches when the search term appears in its name, address lines, town,
 county or postcode, or when its country code is one of the request's
 country codes; with neither given, every address is listed. A delete

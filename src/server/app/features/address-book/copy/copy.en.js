@@ -24,7 +24,7 @@ export const copy = {
   },
   successBanner: {
     title: 'Success',
-    added: (name) => `${name} added to your address book`,
+    added: (name) => `${name} address added to your address book`,
     updated: (name) => `${name} address updated`,
     deleted: (name) => `${name} address deleted`,
     deletedUnnamed: 'Address deleted'

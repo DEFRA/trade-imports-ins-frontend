@@ -90,7 +90,7 @@ export const listAddresses = async (
 
 export const createAddress = async (organisationId, address) => {
   const created = { id: newObjectId(), ...address, deleted: false }
-  addressesOf(organisationId).push(created)
+  addressesOf(organisationId).unshift(created)
   return created
 }
 
