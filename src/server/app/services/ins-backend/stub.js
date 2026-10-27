@@ -9,7 +9,7 @@ const NOTIFICATIONS = [
     status: 'SUBMITTED',
     originCountry: 'FR',
     commodity: 'Cattle',
-    arrivalDate: '2026-09-10T00:00:00Z',
+    arrivalDate: '2026-09-10',
     lastUpdated: '2026-09-05T09:00:00Z'
   },
   {
@@ -19,7 +19,7 @@ const NOTIFICATIONS = [
     status: 'DRAFT',
     originCountry: 'IE',
     commodity: null,
-    arrivalDate: '2026-09-12T00:00:00Z',
+    arrivalDate: '2026-09-12',
     lastUpdated: '2026-09-04T11:30:00Z'
   },
   {
@@ -29,7 +29,7 @@ const NOTIFICATIONS = [
     status: 'AMEND',
     originCountry: 'DE',
     commodity: null,
-    arrivalDate: '2026-09-08T00:00:00Z',
+    arrivalDate: '2026-09-08',
     lastUpdated: '2026-09-06T08:15:00Z'
   },
   {
@@ -39,7 +39,7 @@ const NOTIFICATIONS = [
     status: DELETED_STATUS,
     originCountry: 'GB',
     commodity: null,
-    arrivalDate: '2026-09-09T00:00:00Z',
+    arrivalDate: '2026-09-09',
     lastUpdated: '2026-09-06T10:00:00Z'
   }
 ]

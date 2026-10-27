@@ -18,7 +18,7 @@ const NOTIFICATIONS_PATH = '/notifications'
 const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
-const ARRIVAL_DATE = '2026-09-10T00:00:00Z'
+const ARRIVAL_DATE = '2026-09-10'
 
 const pageOf = (content, overrides = {}) => ({
   content,
@@ -103,7 +103,7 @@ describe('#dashboard', () => {
               referenceNumber: OTHER_REFERENCE_NUMBER,
               status: 'DRAFT',
               originCountry: 'GB',
-              arrivalDate: '2026-09-11T00:00:00Z'
+              arrivalDate: '2026-09-11'
             }
           ],
           { totalElements: 2, totalPages: 1 }
