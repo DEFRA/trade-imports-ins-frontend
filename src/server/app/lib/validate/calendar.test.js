@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  EAST_OF_UTC,
+  WEST_OF_UTC,
+  runInZone
+} from '../../../common/test-helpers/run-in-zone.js'
+import {
   addUtcDays,
   addUtcMonths,
+  formatCalendarDate,
   formatDateText,
   parseDateText,
   startOfDayInZone,
@@ -10,6 +16,21 @@ import {
 } from './calendar.js'
 
 const utc = (year, month, day) => new Date(Date.UTC(year, month - 1, day))
+
+describe('#formatCalendarDate', () => {
+  it.each([WEST_OF_UTC, EAST_OF_UTC])(
+    'renders the UTC calendar day when the process zone is %s',
+    (zone) => {
+      runInZone(zone, () => {
+        expect(formatCalendarDate(utc(2026, 7, 21))).toBe('21 Jul 2026')
+      })
+    }
+  )
+
+  it('renders September with a three-letter month', () => {
+    expect(formatCalendarDate(utc(2026, 9, 10))).toBe('10 Sep 2026')
+  })
+})
 
 describe('#startOfUtcDay', () => {
   it('strips the time from an instant', () => {

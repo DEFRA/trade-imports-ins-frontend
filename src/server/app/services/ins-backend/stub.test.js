@@ -35,6 +35,19 @@ describe('#listNotifications (stub)', () => {
     })
   })
 
+  describe('listNotifications date shapes', () => {
+    test('returns arrivalDate as an ISO date and lastUpdated as a UTC instant', async () => {
+      const { content } = await listNotifications({ page: 1 })
+
+      for (const notification of content) {
+        expect(notification.arrivalDate).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+        expect(notification.lastUpdated).toMatch(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/
+        )
+      }
+    })
+  })
+
   describe('listNotifications visibility', () => {
     test('excludes DELETED-status rows from the results and totals', async () => {
       const result = await listNotifications({

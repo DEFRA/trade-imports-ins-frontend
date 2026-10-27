@@ -1,10 +1,9 @@
-import { format, isValid, parseISO } from 'date-fns'
+import { isValid, parseISO } from 'date-fns'
 
 import { SET_BASES } from '../../../../common/constants/journey-set-bases.js'
 import { buildSetBaseUrl } from '../../../../common/helpers/set-base-url.js'
+import { formatCalendarDate } from '../../../lib/validate/index.js'
 import { dashboardPath } from '../../../shared/paths.js'
-
-const LIST_DATE_FORMAT = 'd MMM yyyy'
 
 export const SORT_OPTIONS = [
   { value: 'arrivalDate,desc', copyKey: 'arrivalNewest' },
@@ -15,15 +14,12 @@ export const SORT_OPTIONS = [
 
 const DEFAULT_SORT = SORT_OPTIONS[0].value
 
-export function formatDisplayDate(dateOrIsoString) {
-  if (!dateOrIsoString) {
+export function formatDisplayDate(isoDate) {
+  if (!isoDate) {
     return ''
   }
-  const date =
-    typeof dateOrIsoString === 'string'
-      ? parseISO(dateOrIsoString)
-      : dateOrIsoString
-  return isValid(date) ? format(date, LIST_DATE_FORMAT) : ''
+  const date = parseISO(`${isoDate}T00:00:00Z`)
+  return isValid(date) ? formatCalendarDate(date) : ''
 }
 
 export function buildDashboardQueryString({

@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
+import {
+  EAST_OF_UTC,
+  WEST_OF_UTC,
+  runInZone
+} from '../../../../common/test-helpers/run-in-zone.js'
+
 const configState = vi.hoisted(() => {
   const defaultAnimalsBaseUrl = 'http://localhost:3000'
   return { defaultAnimalsBaseUrl, animalsBaseUrl: defaultAnimalsBaseUrl }
@@ -122,9 +128,18 @@ describe('#buildStartNewNotificationLink', () => {
 })
 
 describe('#formatDisplayDate', () => {
-  test('formats an ISO string as "d MMM yyyy"', () => {
-    expect(formatDisplayDate('2026-09-10T00:00:00Z')).toBe('10 Sep 2026')
+  test('formats an ISO date as "d MMM yyyy"', () => {
+    expect(formatDisplayDate('2026-09-10')).toBe('10 Sep 2026')
   })
+
+  test.each([WEST_OF_UTC, EAST_OF_UTC])(
+    'renders the ISO date as that calendar day when the process zone is %s',
+    (zone) => {
+      runInZone(zone, () => {
+        expect(formatDisplayDate('2026-07-21')).toBe('21 Jul 2026')
+      })
+    }
+  )
 
   test('returns an empty string for a missing value', () => {
     expect(formatDisplayDate(undefined)).toBe('')
@@ -144,7 +159,7 @@ describe('#mapNotificationRows', () => {
           status: 'SUBMITTED',
           originCountry: 'FR',
           commodity: null,
-          arrivalDate: '2026-09-10T00:00:00Z'
+          arrivalDate: '2026-09-10'
         }
       ],
       { FR: 'France' }

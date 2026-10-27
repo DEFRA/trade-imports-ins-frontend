@@ -26,6 +26,7 @@ export {
 export {
   addUtcDays,
   addUtcMonths,
+  formatCalendarDate,
   formatDateText,
   isRealDate,
   parseDateText,
