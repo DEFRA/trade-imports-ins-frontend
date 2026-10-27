@@ -1,12 +1,16 @@
 import { test, expect } from '@playwright/test'
 
+import { fillValidAddress } from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import {
   expectEmptyAddressBookList,
   openFilterDisclosure,
   expectFilterDisclosureOpensAndCloses,
   openAddressBookList,
+  resultsLineOf,
+  searchAndExpectMatches,
   searchAndExpectQuery,
+  searchAndExpectSingleMatch,
   searchFieldOf
 } from './address-book-list.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
@@ -16,6 +20,9 @@ const ORG_DEFAULT = 'stub-org-1'
 const ORG_EMPTY = 'stub-org-empty'
 const ORG_PAGINATED = 'stub-org-paginated'
 const ADD_NEW_ADDRESS = 'Add a new address'
+const FARM_12 = 'Stub Farm 12'
+const FIRST_PAGE_LINE = 'Showing 1-8 of 30'
+const TWO_ADDRESSES_LINE = 'Showing 1-2 of 2'
 
 test.describe('navigation', () => {
   test('Dashboard and Address book links are visible and navigate correctly', async ({
@@ -91,15 +98,39 @@ test.describe('list and pagination', () => {
     await expectNoSeriousOrCriticalViolations(page, 'Address book list')
   })
 
-  test('paginates when there are more than 25 addresses', async ({ page }) => {
+  test('lists 8 addresses a page', async ({ page }) => {
     await openAddressBookList(page, { organisationId: ORG_PAGINATED })
 
-    await expect(page.getByText('Showing 1-25 of 30')).toBeVisible()
+    await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
+    await expect(page.getByRole('row')).toHaveCount(9)
 
     await page.getByRole('link', { name: 'Page 2' }).click()
 
     await expect(page).toHaveURL(/page=2/)
-    await expect(page.getByText('Showing 26-30 of 30')).toBeVisible()
+    await expect(resultsLineOf(page)).toHaveText('Showing 9-16 of 30')
+  })
+
+  test('shows the last page when the page number is past the last page', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: ORG_PAGINATED })
+
+    await page.goto('/address-book?page=99')
+
+    await expect(resultsLineOf(page)).toHaveText('Showing 25-30 of 30')
+    await expect(page.getByRole('row')).toHaveCount(7)
+    await expect(page.getByRole('link', { name: 'Page 4' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    )
+  })
+
+  test('shows the first page when the page number is 0', async ({ page }) => {
+    await signIn(page, { organisationId: ORG_PAGINATED })
+
+    await page.goto('/address-book?page=0')
+
+    await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
   })
 })
 
@@ -165,14 +196,87 @@ test.describe('filter addresses', () => {
   })
 
   for (const { submitWith, how } of SUBMIT_METHODS) {
-    test(`puts the term in the address book URL when submitted with ${how}`, async ({
+    test(`lists only the matches, with the term in the address book URL, when submitted with ${how}`, async ({
       page
     }) => {
-      await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+      await openAddressBookList(page, { organisationId: ORG_PAGINATED })
 
-      await searchAndExpectQuery(page, 'stub', { submitWith })
+      await searchAndExpectSingleMatch(page, 'farm 12', {
+        submitWith,
+        matchName: FARM_12
+      })
     })
   }
+
+  test('lists the matches across all pages and keeps the term on the next page', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+
+    await searchAndExpectMatches(page, 'Farm 1', {
+      submitWith: 'button',
+      resultsLine: 'Showing 1-8 of 11'
+    })
+    await page.getByRole('link', { name: 'Page 2' }).click()
+
+    await expect(page).toHaveURL('/address-book?q=Farm+1&page=2')
+    await expect(resultsLineOf(page)).toHaveText('Showing 9-11 of 11')
+  })
+
+  test('counts the matches of a search that fits on one page and shows no pagination', async ({
+    page
+  }) => {
+    await signIn(page, {
+      organisationId: `stub-org-list-one-page-${crypto.randomUUID()}`
+    })
+    await page.goto('/address-book/add')
+    await fillValidAddress(page, { name: 'Stub Farm Annexe' })
+    await page.getByRole('button', { name: 'Save and continue' }).click()
+    await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
+
+    await searchAndExpectMatches(page, 'stub farm', {
+      submitWith: 'button',
+      resultsLine: TWO_ADDRESSES_LINE
+    })
+
+    await expect(page.locator('.govuk-pagination')).toHaveCount(0)
+  })
+
+  test('finds an address by a term inside its address line 1', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+
+    await searchAndExpectSingleMatch(page, '12 stub way', {
+      matchName: FARM_12
+    })
+  })
+
+  test('finds the addresses in a country by part of its name', async ({
+    page
+  }) => {
+    await signIn(page, {
+      organisationId: `stub-org-list-country-${crypto.randomUUID()}`
+    })
+    await page.goto('/address-book/add')
+    await fillValidAddress(page, { name: 'Paris Depot', countryCode: 'FR' })
+    await page.getByRole('button', { name: 'Save and continue' }).click()
+    await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
+
+    await searchAndExpectSingleMatch(page, 'fran', { matchName: 'France' })
+  })
+
+  test('leaves the list as it is while text is typed and not yet submitted', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+    await openFilterDisclosure(page)
+
+    await searchFieldOf(page).fill('farm 12')
+
+    await expect(page).toHaveURL('/address-book')
+    await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
+  })
 
   test('Clear search after a search returns to the whole address book with an empty Search field', async ({
     page
@@ -210,12 +314,15 @@ test.describe('filter addresses without JavaScript', () => {
   })
 
   for (const { submitWith, how } of SUBMIT_METHODS) {
-    test(`puts the term in the address book URL when submitted with ${how} and JavaScript is off`, async ({
+    test(`lists only the matches, with the term in the address book URL, when submitted with ${how} and JavaScript is off`, async ({
       page
     }) => {
-      await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+      await openAddressBookList(page, { organisationId: ORG_PAGINATED })
 
-      await searchAndExpectQuery(page, 'stub', { submitWith })
+      await searchAndExpectSingleMatch(page, 'farm 12', {
+        submitWith,
+        matchName: FARM_12
+      })
     })
   }
 })

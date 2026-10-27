@@ -37,7 +37,7 @@ root:
   `buildCountrySelectItems` (the add form's select, always opening on a blank
   option), `buildEditCountrySelectItems` (the edit form's select, with a
   blank option only when the country it shows is not one the list offers) and
-  `countryCodeMatching`.
+  `countryCodesMatching` (every country code whose name contains the search term).
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`

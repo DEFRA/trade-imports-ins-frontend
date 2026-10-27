@@ -62,3 +62,29 @@ export const searchAndExpectQuery = async (page, term, { submitWith }) => {
   const submittedQuery = new URLSearchParams({ q: term })
   await expect(page).toHaveURL(`/address-book?${submittedQuery}`)
 }
+
+export const resultsLineOf = (page) =>
+  page.getByTestId('address-book-results-label')
+
+export const searchAndExpectMatches = async (
+  page,
+  term,
+  { submitWith, resultsLine }
+) => {
+  await searchAndExpectQuery(page, term, { submitWith })
+  await expect(resultsLineOf(page)).toHaveText(resultsLine)
+}
+
+export const searchAndExpectSingleMatch = async (
+  page,
+  term,
+  { submitWith = 'button', matchName }
+) => {
+  await searchAndExpectMatches(page, term, {
+    submitWith,
+    resultsLine: 'Showing 1-1 of 1'
+  })
+  await expect(
+    page.getByRole('cell', { name: matchName, exact: true })
+  ).toBeVisible()
+}

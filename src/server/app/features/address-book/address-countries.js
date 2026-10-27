@@ -49,17 +49,15 @@ export const buildEditCountrySelectItems = (
 export const countryLabelOf = (countries, countryCode) =>
   countries.find((country) => country.code === countryCode)?.name ?? countryCode
 
-export const countryCodeMatching = (searchTerm, countries) => {
-  const term = searchTerm?.trim()
+export const countryCodesMatching = (searchTerm, countries) => {
+  const term = searchTerm?.trim().toLowerCase()
   if (!term) {
-    return null
+    return []
   }
 
-  const normalized = term.toLowerCase()
-  const match = countries.find(
-    (country) => country.name.toLowerCase() === normalized
-  )
-  return match?.code ?? null
+  return countries
+    .filter((country) => country.name.toLowerCase().includes(term))
+    .map((country) => country.code)
 }
 
 export { GB_COUNTRY }

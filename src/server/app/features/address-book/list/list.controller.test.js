@@ -1,23 +1,22 @@
 import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
-import {
-  ADDRESSES_PATH,
-  pageOf
-} from '../../../../common/test-helpers/address-book-requests.js'
+import { pageOf } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
-import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
   ADD_PATH,
   LIST_URL,
   TABLE_HEADINGS,
+  bodyRowCountOf,
   contentOf,
+  fullAddress,
   greenFarmAddress,
   highlandAddress,
   parisDepotAddress,
   resultsLineOf,
   rowCellsOf,
   startListPage,
+  stubAddressBookUnavailable,
   stubAddressPage,
   tableHeadingsOf,
   tagNamesOf
@@ -54,7 +53,7 @@ describe('#addressBookListController', () => {
       { page: '2' },
       pageOf(
         [{ id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }],
-        { page: 2, totalItems: 30, totalPages: 2 }
+        { page: 2, pageSize: 8, totalItems: 30, totalPages: 4 }
       )
     )
 
@@ -65,18 +64,76 @@ describe('#addressBookListController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(html).toContain('govuk-pagination')
-    expect(html).toContain('Showing 26-30 of 30')
+    expect(html).toContain('Showing 9-16 of 30')
     expect(html).toContain('?page=2')
   })
 
-  test('forwards search query and resolves country name to countryCode', async () => {
+  test.each(['0', 'abc'])(
+    'asks for page 1 when the page number is %s',
+    async (queryPage) => {
+      const scope = stubAddressPage(
+        { page: '1' },
+        pageOf([highlandAddress], { pageSize: 8 })
+      )
+
+      const { statusCode } = await getList(
+        `${LIST_URL}?page=${queryPage}`,
+        'list-unusable-page'
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(scope.isDone()).toBe(true)
+    }
+  )
+
+  test('shows the last page, asked for a second time, when the page number is past the last page', async () => {
+    const stalePage = stubAddressPage(
+      { page: '99' },
+      pageOf([], { page: 99, pageSize: 8, totalItems: 12, totalPages: 2 })
+    )
+    const lastPage = stubAddressPage(
+      { page: '2' },
+      pageOf([greenFarmAddress, fullAddress], {
+        page: 2,
+        pageSize: 8,
+        totalItems: 12,
+        totalPages: 2
+      })
+    )
+
+    const { $, statusCode } = await getList(
+      `${LIST_URL}?page=99`,
+      'list-stale-page'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(stalePage.isDone()).toBe(true)
+    expect(lastPage.isDone()).toBe(true)
+    expect(resultsLineOf($)).toBe('Showing 9-12 of 12')
+    expect(bodyRowCountOf($)).toBe(2)
+    expect($('.govuk-pagination__item--current').text().trim()).toBe('2')
+  })
+
+  test('shows no pagination when the matches of a search fit on one page', async () => {
+    stubAddressPage(
+      { page: '1', q: 'green' },
+      pageOf([greenFarmAddress, fullAddress], { pageSize: 8 })
+    )
+
+    const { $ } = await getList(`${LIST_URL}?q=green`, 'list-search-one-page')
+
+    expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
+    expect($('.govuk-pagination')).toHaveLength(0)
+  })
+
+  test('forwards the search query and the country code whose name contains it', async () => {
     const scope = stubAddressPage(
-      { page: '1', q: 'France', countryCode: 'FR' },
+      { page: '1', q: 'fran', countryCode: 'FR' },
       pageOf([parisDepotAddress])
     )
 
     const { $, statusCode } = await getList(
-      `${LIST_URL}?q=France`,
+      `${LIST_URL}?q=fran`,
       'list-search-country'
     )
 
@@ -84,7 +141,7 @@ describe('#addressBookListController', () => {
     expect(scope.isDone()).toBe(true)
     expect(rowCellsOf($, 0).eq(0).html()).toBe('Paris<br> Depot')
     expect(rowCellsOf($, 0).eq(2).text().trim()).toBe('France')
-    expect($('input[name="q"]').val()).toBe('France')
+    expect($('input[name="q"]').val()).toBe('fran')
   })
 
   test.each([
@@ -108,27 +165,38 @@ describe('#addressBookListController', () => {
     }
   )
 
-  test('pagination preserves the active search term', async () => {
+  test('links every page with the search term and the page number only', async () => {
     const scope = stubAddressPage(
-      { page: '2', q: 'green', countryCode: 'GB' },
-      pageOf([greenFarmAddress], { page: 2, totalItems: 30, totalPages: 2 })
+      { page: '2', q: 'green' },
+      pageOf([greenFarmAddress], {
+        page: 2,
+        pageSize: 8,
+        totalItems: 30,
+        totalPages: 4
+      })
     )
 
-    const { html, statusCode } = await getList(
+    const { $, statusCode } = await getList(
       `${LIST_URL}?q=green&countryCode=GB&page=2`,
       'list-search-page-2'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
-    expect(html).toContain('?q=green&amp;countryCode=GB')
+    expect(
+      $('.govuk-pagination__item a')
+        .map((_, link) => $(link).attr('href'))
+        .get()
+    ).toEqual([
+      `${LIST_URL}?q=green`,
+      `${LIST_URL}?q=green&page=2`,
+      `${LIST_URL}?q=green&page=3`,
+      `${LIST_URL}?q=green&page=4`
+    ])
   })
 
   test('returns 500 when the address book cannot be reached, with the heading, intro, Add button and filter but no results line or table', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(503, { title: 'Service Unavailable' })
+    stubAddressBookUnavailable()
 
     const { $, html, statusCode } = await getList(LIST_URL, 'list-500')
 

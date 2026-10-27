@@ -83,5 +83,11 @@ export const startListPage = () => {
 export const stubAddressPage = (query, addressPage) =>
   addressBookApi()
     .get(ADDRESSES_PATH)
-    .query(query)
+    .query({ pageSize: '8', ...query })
     .reply(statusCodes.ok, addressPage)
+
+export const stubAddressBookUnavailable = () =>
+  addressBookApi()
+    .get(ADDRESSES_PATH)
+    .query({ page: '1', pageSize: '8' })
+    .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })

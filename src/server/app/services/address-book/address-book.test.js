@@ -73,16 +73,22 @@ describe('against the real address book', () => {
       expect(scope.isDone()).toBe(true)
     })
 
-    test('Should forward the search term and country code as the q and countryCode query parameters', async () => {
+    test('Should forward the page size, the search term and one countryCode query parameter for each country code', async () => {
       const scope = addressBookApi()
         .get(ADDRESSES_PATH)
-        .query({ page: '1', q: 'France', countryCode: 'FR' })
-        .reply(200, pageOf([]))
+        .query({
+          page: '1',
+          pageSize: '8',
+          q: 'united',
+          countryCode: ['GB', 'US']
+        })
+        .reply(200, pageOf([], { pageSize: 8 }))
 
       await addressBook.listAddresses(ORGANISATION_ID, {
         page: 1,
-        searchTerm: 'France',
-        countryCode: 'FR'
+        pageSize: 8,
+        searchTerm: 'united',
+        countryCodes: ['GB', 'US']
       })
 
       expect(scope.isDone()).toBe(true)
@@ -295,36 +301,119 @@ describe('#isValidationFailure', () => {
 describe('in stub mode', () => {
   refuseOutboundHttp()
 
+  const PAGINATED_ORGANISATION_ID = 'stub-org-paginated'
+  const SEED_ADDRESS_NAME = 'Stub Farm 1'
+  const GLEN_DEPOT = 'Glen Depot'
+  const PARIS_DEPOT = 'Paris Depot'
+
   test('Should seed one GB address, Stub Farm 1 at id 000000000000000000000001, for an ordinary organisation', async () => {
-    const { items, totalItems } = await addressBook.listAddresses('stub-org-1')
+    const { items, totalItems } = await addressBook.listAddresses(
+      'stub-org-1',
+      {
+        pageSize: 8
+      }
+    )
 
     expect(totalItems).toBe(1)
     expect(items[0]).toMatchObject({
       id: '000000000000000000000001',
-      name: 'Stub Farm 1',
+      name: SEED_ADDRESS_NAME,
       countryCode: 'GB'
     })
   })
 
-  test('Should seed nothing for an organisation ending in -empty', async () => {
-    const { items, totalItems } =
-      await addressBook.listAddresses('stub-org-empty')
+  test('Should seed nothing, over no pages, for an organisation ending in -empty', async () => {
+    const addressPage = await addressBook.listAddresses('stub-org-empty', {
+      pageSize: 8
+    })
 
-    expect(totalItems).toBe(0)
-    expect(items).toEqual([])
+    expect(addressPage).toMatchObject({ totalItems: 0, totalPages: 0 })
+    expect(addressPage.items).toEqual([])
   })
 
-  test('Should seed thirty addresses over two pages for an organisation ending in -paginated', async () => {
-    const firstPage = await addressBook.listAddresses('stub-org-paginated', {
-      page: 1
-    })
-    const secondPage = await addressBook.listAddresses('stub-org-paginated', {
-      page: 2
+  test('Should seed thirty addresses, which 8 a page fall across four pages, for an organisation ending in -paginated', async () => {
+    const pages = await Promise.all(
+      [1, 2, 3, 4].map((page) =>
+        addressBook.listAddresses(PAGINATED_ORGANISATION_ID, {
+          page,
+          pageSize: 8
+        })
+      )
+    )
+
+    expect(pages.map((addressPage) => addressPage.items.length)).toEqual([
+      8, 8, 8, 6
+    ])
+    expect(pages[0]).toMatchObject({ totalItems: 30, totalPages: 4, page: 1 })
+  })
+
+  test('Should list only the addresses with the search term inside a name, address line, town, county or postcode, ignoring case', async () => {
+    const organisationId = 'stub-org-search-fields'
+    await addressBook.createAddress(organisationId, {
+      ...highlandAddress,
+      name: GLEN_DEPOT,
+      addressLine2: 'Ballymore Road',
+      county: 'Antrim'
     })
 
-    expect(firstPage).toMatchObject({ totalItems: 30, totalPages: 2, page: 1 })
-    expect(firstPage.items).toHaveLength(25)
-    expect(secondPage.items).toHaveLength(5)
+    const search = async (searchTerm) =>
+      (
+        await addressBook.listAddresses(organisationId, {
+          pageSize: 8,
+          searchTerm
+        })
+      ).items.map(({ name }) => name)
+
+    expect(await search(' BALLYMORE ')).toEqual([GLEN_DEPOT])
+    expect(await search('antrim')).toEqual([GLEN_DEPOT])
+    expect(await search('inverness')).toEqual([GLEN_DEPOT])
+    expect(await search('stub way')).toEqual([SEED_ADDRESS_NAME])
+    expect(await search('stubton')).toEqual([SEED_ADDRESS_NAME])
+  })
+
+  test('Should count the matches of a search over the whole book, not only the page', async () => {
+    const addressPage = await addressBook.listAddresses(
+      PAGINATED_ORGANISATION_ID,
+      { page: 2, pageSize: 8, searchTerm: 'farm 1' }
+    )
+
+    expect(addressPage).toMatchObject({
+      totalItems: 11,
+      totalPages: 2,
+      page: 2
+    })
+    expect(addressPage.items).toHaveLength(3)
+  })
+
+  test('Should list the addresses in any of the country codes, or matching the search term', async () => {
+    const organisationId = 'stub-org-country-codes'
+    await addressBook.createAddress(organisationId, {
+      ...highlandAddress,
+      name: PARIS_DEPOT,
+      countryCode: 'FR'
+    })
+
+    const namesFor = async (query) =>
+      (
+        await addressBook.listAddresses(organisationId, {
+          pageSize: 8,
+          ...query
+        })
+      ).items.map(({ name }) => name)
+
+    expect(await namesFor({ countryCodes: ['FR'] })).toEqual([PARIS_DEPOT])
+    expect(
+      await namesFor({ searchTerm: 'stub farm', countryCodes: ['FR'] })
+    ).toEqual([SEED_ADDRESS_NAME, PARIS_DEPOT])
+  })
+
+  test('Should report no matches over no pages for a search that matches nothing', async () => {
+    const addressPage = await addressBook.listAddresses(
+      PAGINATED_ORGANISATION_ID,
+      { pageSize: 8, searchTerm: 'zzznomatch' }
+    )
+
+    expect(addressPage).toMatchObject({ totalItems: 0, totalPages: 0 })
   })
 
   test('Should round-trip an address through create, update and delete', async () => {
@@ -353,8 +442,27 @@ describe('in stub mode', () => {
     })
 
     await addressBook.deleteAddress(organisationId, created.id)
+    expect(
+      await addressBook.getAddress(organisationId, created.id)
+    ).toMatchObject({ id: created.id, deleted: true })
+  })
+
+  test('Should leave a deleted address out of the list and refuse to update it', async () => {
+    const organisationId = 'stub-org-tombstone'
+    const created = await addressBook.createAddress(
+      organisationId,
+      highlandAddress
+    )
+    expect(created.deleted).toBe(false)
+
+    await addressBook.deleteAddress(organisationId, created.id)
+
+    const { items } = await addressBook.listAddresses(organisationId, {
+      pageSize: 8
+    })
+    expect(items.map(({ id }) => id)).not.toContain(created.id)
     await expect(
-      addressBook.getAddress(organisationId, created.id)
+      addressBook.updateAddress(organisationId, created.id, { name: 'Again' })
     ).rejects.toMatchObject({ status: 404 })
   })
 })

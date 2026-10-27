@@ -9,13 +9,15 @@ import {
   buildCountrySelectItems,
   buildEditCountrySelectItems,
   countryLabelOf,
-  countryCodeMatching,
+  countryCodesMatching,
   GB_COUNTRY
 } from './address-countries.js'
 
 const originalMode = process.env.STUB_MODE
 const COUNTRY_PLACEHOLDER = 'Select a country'
 const UK_NAME = 'United Kingdom'
+const UNITED_STATES = { code: 'US', name: 'United States' }
+const UNITED_ARAB_EMIRATES = { code: 'AE', name: 'United Arab Emirates' }
 const GB_AND_FRANCE = [
   { code: 'GB', name: UK_NAME },
   { code: 'FR', name: 'France' }
@@ -40,10 +42,10 @@ describe('#getAddressFormCountries', () => {
 
   test('Should list countries alphabetically with United Kingdom in its place, once', async () => {
     serveCountries([
-      { code: 'US', name: 'United States' },
+      UNITED_STATES,
       { code: 'FR', name: 'France' },
       { code: 'GB', name: 'United Kingdom duplicate' },
-      { code: 'AE', name: 'United Arab Emirates' }
+      UNITED_ARAB_EMIRATES
     ])
     const { getAddressFormCountries } = await importAddressCountriesInRealMode()
 
@@ -51,9 +53,9 @@ describe('#getAddressFormCountries', () => {
 
     expect(countries).toEqual([
       { code: 'FR', name: 'France' },
-      { code: 'AE', name: 'United Arab Emirates' },
+      UNITED_ARAB_EMIRATES,
       GB_COUNTRY,
-      { code: 'US', name: 'United States' }
+      UNITED_STATES
     ])
   })
 
@@ -121,18 +123,28 @@ describe('#buildCountryItems', () => {
   })
 })
 
-describe('#countryCodeMatching', () => {
-  test('Should return the alpha-2 code for a case-insensitive country name match', () => {
-    expect(countryCodeMatching('France', GB_AND_FRANCE)).toBe('FR')
-    expect(countryCodeMatching('france', GB_AND_FRANCE)).toBe('FR')
-    expect(countryCodeMatching(UK_NAME, GB_AND_FRANCE)).toBe('GB')
+describe('#countryCodesMatching', () => {
+  const COUNTRIES = [...GB_AND_FRANCE, UNITED_STATES, UNITED_ARAB_EMIRATES]
+
+  test('Should return the alpha-2 code of every country whose name contains the term, ignoring case and surrounding spaces', () => {
+    expect(countryCodesMatching(' FRAN ', COUNTRIES)).toEqual(['FR'])
+    expect(countryCodesMatching('united', COUNTRIES)).toEqual([
+      'GB',
+      'US',
+      'AE'
+    ])
   })
 
-  test('Should return null when the term does not match a country name', () => {
-    expect(countryCodeMatching('Paris', GB_AND_FRANCE)).toBeNull()
-    expect(countryCodeMatching('', GB_AND_FRANCE)).toBeNull()
-    expect(countryCodeMatching(undefined, GB_AND_FRANCE)).toBeNull()
+  test('Should return no codes when the term is not inside a country name', () => {
+    expect(countryCodesMatching('Paris', COUNTRIES)).toEqual([])
   })
+
+  test.each(['', '   ', undefined])(
+    'Should return no codes for the blank term %j',
+    (term) => {
+      expect(countryCodesMatching(term, COUNTRIES)).toEqual([])
+    }
+  )
 })
 
 describe('#countryLabelOf', () => {

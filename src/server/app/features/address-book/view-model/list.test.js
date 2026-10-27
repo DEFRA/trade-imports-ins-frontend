@@ -49,27 +49,19 @@ describe('#buildAddressBookQueryString', () => {
     expect(buildAddressBookQueryString({ page: 1 })).toBe('')
   })
 
-  test('Should carry q and countryCode before the page param', () => {
-    expect(
-      buildAddressBookQueryString({
-        searchTerm: 'green',
-        countryCode: 'GB',
-        page: 2
-      })
-    ).toBe('?q=green&countryCode=GB&page=2')
+  test('Should carry q before the page param', () => {
+    expect(buildAddressBookQueryString({ searchTerm: 'green', page: 2 })).toBe(
+      '?q=green&page=2'
+    )
   })
 })
 
 describe('#addressBookPageHref', () => {
-  test('Should link to the address book carrying q and countryCode, adding page only after the first page', () => {
-    const search = { searchTerm: 'green', countryCode: 'GB' }
+  test('Should link to the address book carrying q, adding page only after the first page', () => {
+    const search = { searchTerm: 'green' }
 
-    expect(addressBookPageHref(1, search)).toBe(
-      '/address-book?q=green&countryCode=GB'
-    )
-    expect(addressBookPageHref(2, search)).toBe(
-      '/address-book?q=green&countryCode=GB&page=2'
-    )
+    expect(addressBookPageHref(1, search)).toBe('/address-book?q=green')
+    expect(addressBookPageHref(2, search)).toBe('/address-book?q=green&page=2')
   })
 
   test('Should link to /address-book with no query for the first page and no search', () => {

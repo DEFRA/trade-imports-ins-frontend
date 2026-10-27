@@ -22,7 +22,7 @@ starting, and a test can switch modes with `config.set('stubMode', …)`.
 ### address-book
 
 [`index.js`](../services/address-book/index.js) exports `listAddresses(organisationId,
-listQuery)`, where `listQuery` is `{ page, searchTerm, countryCode }`,
+listQuery)`, where `listQuery` is `{ page, pageSize, searchTerm, countryCodes }`,
 `createAddress(organisationId, address)`, `getAddress(organisationId, addressId)`,
 `updateAddress(organisationId, addressId, address)`,
 `deleteAddress(organisationId, addressId)`, plus `mapApiErrorsToFormErrors(problemBody)`
@@ -41,7 +41,12 @@ The [stub](../services/address-book/stub.js) keeps a `Map` per
 organisation, seeded by the id's suffix (`-empty`, `-paginated` for 30
 addresses, otherwise `Stub Farm 1` at `000000000000000000000001`), and
 mints 24-character hex ids because the `{id}` routes validate an
-ObjectId.
+ObjectId. It lists at the page size the request gives. An address
+matches when the search term appears in its name, address lines, town,
+county or postcode, or when its country code is one of the request's
+country codes; with neither given, every address is listed. A delete
+marks the address deleted rather than removing it, so `getAddress` still
+returns it.
 
 ### countries
 

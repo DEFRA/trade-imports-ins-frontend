@@ -17,7 +17,7 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
   getAddressFormCountries,
-  countryCodeMatching
+  countryCodesMatching
 } from '../address-countries.js'
 import { addressLinesHtml } from '../address-lines.js'
 import { takeSuccessMessage } from '../success-message.js'
@@ -61,6 +61,29 @@ const buildView = (toolkit, { recoverableError = false, ...model }) =>
     ...model
   })
 
+const loadAddressPage = async (organisationId, { page, ...search }) => {
+  const pageSize = 8
+  const requestedAddressPage = await listAddresses(organisationId, {
+    page,
+    pageSize,
+    ...search
+  })
+  const lastPageNumber = requestedAddressPage.totalPages
+  if (page <= lastPageNumber || lastPageNumber < 1) {
+    return requestedAddressPage
+  }
+
+  logger.info(
+    { organisationId, requestedPage: page, servedPage: lastPageNumber },
+    'Address book page is past the last page, serving the last page'
+  )
+  return listAddresses(organisationId, {
+    page: lastPageNumber,
+    pageSize,
+    ...search
+  })
+}
+
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const page = parsePage(request.query.page)
@@ -69,11 +92,12 @@ const get = async (request, toolkit) => {
 
   try {
     const countries = await getAddressFormCountries()
-    const countryCode =
-      request.query.countryCode?.trim() ||
-      countryCodeMatching(searchTerm, countries)
-    const search = { searchTerm, countryCode }
-    const addressPage = await listAddresses(organisationId, { page, ...search })
+    const countryCodes = countryCodesMatching(searchTerm, countries)
+    const addressPage = await loadAddressPage(organisationId, {
+      page,
+      searchTerm,
+      countryCodes
+    })
     const pagination = paginationOf(addressPage)
     const addresses = mapAddressRows(addressPage.items ?? [], countries)
 
@@ -82,7 +106,7 @@ const get = async (request, toolkit) => {
       tableRows: tableRowsOf(addresses),
       resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
-        addressBookPageHref(targetPage, search)
+        addressBookPageHref(targetPage, { searchTerm })
       ),
       searchTerm,
       successMessage

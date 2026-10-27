@@ -110,9 +110,10 @@ Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 labels, `validAddress`, `fillValidAddress`, `expectErrorFocusOn`, the two
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
-`expectAddressBookList`, `expectEmptyAddressBookList`, `searchFieldOf`,
-`openFilterDisclosure`, `expectFilterDisclosureOpensAndCloses`,
-`searchAndExpectQuery`.
+`openAddressBookList`, `expectAddressBookList`,
+`expectEmptyAddressBookList`, `searchFieldOf`, `openFilterDisclosure`,
+`expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery`,
+`resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
 [`dashboard.js`](../features/address-book/fit/dashboard.js) —
 `expectDashboard`.
 [`axe.js`](../features/address-book/fit/axe.js) — the address-book group's
@@ -122,7 +123,7 @@ deterministic seed id.
 
 Every test signs in with its own organisation id, because the
 address-book stub keys its data by organisation; the `-empty` and
-`-paginated` suffixes select those seeds. No sleeps, no page objects, and
+`-paginated` suffixes select those seeds (thirty addresses, four pages of eight). No sleeps, no page objects, and
 `exact: true` on "Back". On failure read
 `test-results/<spec>/error-context.md` and the HTML report in
 `playwright-report/`.
