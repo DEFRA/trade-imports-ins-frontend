@@ -1,15 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
+import { textOf } from '../../../shared/copy-leaves.test-support.js'
 import { FIELDS, FIELD_RULES, isRequiredField } from '../fields.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
-
-const textOf = (value) => {
-  const sampleArguments = [1, 2, 3]
-
-  return typeof value === 'function' ? value(...sampleArguments) : value
-}
 
 const ADDRESS_NAME = 'Green Farm'
 

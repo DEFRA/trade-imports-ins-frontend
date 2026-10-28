@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { textOf } from './copy-leaves.test-support.js'
 import { copyFor } from './copy.js'
 import {
   copy as sharedEn,
@@ -100,11 +101,6 @@ describe('shared copy module', () => {
 })
 
 describe('validator defaults', () => {
-  const SAMPLE_ARGUMENTS = [1, 2]
-
-  const textOf = (value) =>
-    typeof value === 'function' ? value(...SAMPLE_ARGUMENTS) : value
-
   it.each([
     ['en', validatorDefaultsEn],
     ['cy', validatorDefaultsCy]

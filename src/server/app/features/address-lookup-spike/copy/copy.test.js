@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
+import { textOf } from '../../../shared/copy-leaves.test-support.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
-
-const SAMPLE_ARGUMENTS = [1, 2, 3]
-
-const textOf = (value) =>
-  typeof value === 'function' ? value(...SAMPLE_ARGUMENTS) : value
 
 describe('#copy', () => {
   it.each([
