@@ -11,14 +11,23 @@ environment, and **`STUB_MODE=true` for the whole suite** — a test that
 needs the HTTP clients opts into real mode itself. The `test` and
 `test:watch` scripts set `TZ=UTC`. Tests sit beside their subject.
 
-Date rendering tests move the process zone with
-[`runInZone`](../../common/test-helpers/run-in-zone.js), to `WEST_OF_UTC`
-(`America/New_York`) and `EAST_OF_UTC` (`Pacific/Auckland`). Under `TZ=UTC`, or
-under `Europe/London`, which is never behind UTC, code that reads the ambient
-zone renders the same day as code that does not, so a test there cannot fail.
-West of UTC an instant at midnight UTC falls on the day before. East of UTC a
-date-only string that is parsed as local midnight falls on the day before.
-Keep both zones: each one catches a different mistake.
+Date tests in [`lib/validate/calendar.test.js`](../lib/validate/calendar.test.js)
+move the process zone with
+[`runInZone`](../../common/test-helpers/run-in-zone.js). Under `TZ=UTC`, code
+that reads the process zone gives the same day as code that does not, so a
+zone mistake cannot fail a test there. Each zone guards one kind of input:
+
+- `WEST_OF_UTC` (`America/New_York`) guards a midnight-UTC instant. Read in
+  the process zone, it falls on the day before. The `formatDateText` case
+  covers this.
+- `EAST_OF_UTC` (`Pacific/Auckland`) guards a date-only string parsed as
+  local midnight. Read as UTC, it falls on the day before. The
+  `parseDateText` case covers this.
+
+Each mistake shows in one zone only, so a zone case runs in the zone that
+catches it. A function that creates no Date in the process zone, such as
+`formatDisplayCalendarDate`, gets no zone case: no zone can change its
+answer.
 
 Convention checks:
 
