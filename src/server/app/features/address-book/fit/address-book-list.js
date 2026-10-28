@@ -2,9 +2,13 @@ import { expect } from '@playwright/test'
 
 import { signIn } from '../../../../../../fit/sign-in.js'
 
-export const openAddressBookList = async (page, { organisationId }) => {
+export const openAddressBookList = async (
+  page,
+  { organisationId, pageNumber }
+) => {
   await signIn(page, { organisationId })
-  await page.goto('/address-book')
+  const query = pageNumber === undefined ? '' : `?page=${pageNumber}`
+  await page.goto(`/address-book${query}`)
 }
 
 export const expectAddressBookList = async (page) => {

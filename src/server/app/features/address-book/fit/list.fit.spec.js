@@ -113,9 +113,10 @@ test.describe('list and pagination', () => {
   test('shows the last page when the page number is past the last page', async ({
     page
   }) => {
-    await signIn(page, { organisationId: ORG_PAGINATED })
-
-    await page.goto('/address-book?page=99')
+    await openAddressBookList(page, {
+      organisationId: ORG_PAGINATED,
+      pageNumber: 99
+    })
 
     await expect(resultsLineOf(page)).toHaveText('Showing 25-30 of 30')
     await expect(page.getByRole('row')).toHaveCount(7)
@@ -126,9 +127,10 @@ test.describe('list and pagination', () => {
   })
 
   test('shows the first page when the page number is 0', async ({ page }) => {
-    await signIn(page, { organisationId: ORG_PAGINATED })
-
-    await page.goto('/address-book?page=0')
+    await openAddressBookList(page, {
+      organisationId: ORG_PAGINATED,
+      pageNumber: 0
+    })
 
     await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
   })
