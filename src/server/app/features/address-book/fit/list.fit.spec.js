@@ -226,15 +226,9 @@ test.describe('filter addresses', () => {
   test('counts the matches of a search that fits on one page and shows no pagination', async ({
     page
   }) => {
-    await signIn(page, {
-      organisationId: `stub-org-list-one-page-${crypto.randomUUID()}`
-    })
-    await page.goto('/address-book/add')
-    await fillValidAddress(page, { name: 'Stub Farm Annexe' })
-    await page.getByRole('button', { name: 'Save and continue' }).click()
-    await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
+    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
 
-    await searchAndExpectMatches(page, 'stub farm', {
+    await searchAndExpectMatches(page, 'farm 3', {
       submitWith: 'button',
       resultsLine: TWO_ADDRESSES_LINE
     })
