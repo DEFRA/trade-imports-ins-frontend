@@ -493,7 +493,7 @@ describe('in stub mode', () => {
     const { items } = await addressBook.listAddresses(organisationId, {
       pageSize: 8
     })
-    expect(items.map(({ id }) => id)).not.toContain(created.id)
+    expect(items.map(({ id }) => id)).toEqual(['000000000000000000000001'])
     await expect(
       addressBook.updateAddress(organisationId, created.id, { name: 'Again' })
     ).rejects.toMatchObject({ status: 404 })
