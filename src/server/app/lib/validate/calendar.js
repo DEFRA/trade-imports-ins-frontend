@@ -45,10 +45,9 @@ export const addUtcMonths = (date, months) =>
 
 export const parseDateText = (raw) => {
   const DATE_TEXT_FORMAT = 'd/M/yyyy'
-  const DATE_TEXT_SHAPE = /^\d{1,2}\/\d{1,2}\/\d{4}$/
+  const fourDigitYearDateText = /^\d{1,2}\/\d{1,2}\/\d{4}$/
   const text = String(raw ?? '').trim()
-  // date-fns reads `yyyy` as one to four digits, so without this guard `27/3/26` parses as year 26 and slips under a `max` bound.
-  if (!DATE_TEXT_SHAPE.test(text)) {
+  if (!fourDigitYearDateText.test(text)) {
     return null
   }
   const parsed = parse(text, DATE_TEXT_FORMAT, new Date())
