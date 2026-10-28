@@ -332,7 +332,7 @@ describe('in stub mode', () => {
     expect(addressPage.items).toEqual([])
   })
 
-  test('Should seed thirty addresses, which 8 a page fall across four pages, for an organisation ending in -paginated', async () => {
+  test('Should seed thirty addresses for an organisation ending in -paginated, over four pages of 8', async () => {
     const pages = await Promise.all(
       [1, 2, 3, 4].map((page) =>
         addressBook.listAddresses(PAGINATED_ORGANISATION_ID, {
