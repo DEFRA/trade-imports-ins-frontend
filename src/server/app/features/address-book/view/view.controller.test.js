@@ -83,9 +83,16 @@ describe('#buildRows', () => {
   test('Should treat a whitespace-only optional field as blank', () => {
     const rows = buildRows({ ...STORED_ADDRESS, addressLine2: '   ' }, UK_NAME)
 
-    expect(rows.map((row) => row.key.text)).not.toContain(
-      'Address line 2 (optional)'
-    )
+    expect(rows.map((row) => row.key.text)).toEqual([
+      'Name or organisation',
+      'Address line 1',
+      'Town or city',
+      'County (optional)',
+      'Postcode or Zip code',
+      'Country',
+      'Email address',
+      'Phone number'
+    ])
   })
 
   test('Should render one row per address field with its label and value, address line 2 and county marked optional', () => {
