@@ -1,4 +1,3 @@
-const PAGE_SIZE = 25
 const DELETED_STATUS = 'DELETED'
 
 const NOTIFICATIONS = [
@@ -63,15 +62,16 @@ export const listNotifications = async ({
     ? visible.filter((n) => n.referenceNumber === referenceNumber)
     : visible.slice().sort(sortComparator(sort))
 
+  const pageSize = 25
   const totalElements = matches.length
-  const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE))
-  const from = (page - 1) * PAGE_SIZE
-  const content = matches.slice(from, from + PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(totalElements / pageSize))
+  const from = (page - 1) * pageSize
+  const content = matches.slice(from, from + pageSize)
 
   return {
     content,
     page,
-    size: PAGE_SIZE,
+    size: pageSize,
     numberOfElements: content.length,
     totalElements,
     totalPages
