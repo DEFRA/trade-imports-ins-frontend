@@ -491,4 +491,10 @@ describe('in stub mode', () => {
       addressBook.updateAddress(organisationId, created.id, { name: 'Again' })
     ).rejects.toMatchObject({ status: 404 })
   })
+
+  test('Should refuse with a 404 to delete an address the organisation does not hold', async () => {
+    await expect(
+      addressBook.deleteAddress('stub-org-unknown-delete', ADDRESS_ID)
+    ).rejects.toMatchObject({ status: 404 })
+  })
 })

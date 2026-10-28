@@ -119,7 +119,8 @@ export const updateAddress = async (organisationId, addressId, address) => {
 export const deleteAddress = async (organisationId, addressId) => {
   const addresses = addressesOf(organisationId)
   const index = addresses.findIndex((address) => address.id === addressId)
-  if (index !== -1) {
-    addresses[index] = { ...addresses[index], deleted: true }
+  if (index === -1) {
+    throw notFound()
   }
+  addresses[index] = { ...addresses[index], deleted: true }
 }
