@@ -50,17 +50,6 @@ export async function fillValidAddress(page, overrides = {}) {
   }
 }
 
-const saveValidAddress = async (page, overrides = {}) => {
-  await page.goto('/address-book/add')
-  await fillValidAddress(page, overrides)
-  await page.getByRole('button', { name: 'Save and continue' }).click()
-}
-
-export const addValidAddressAndGetViewLink = async (page) => {
-  await saveValidAddress(page)
-  return page.getByRole('link', { name: `View ${validAddress.name}` })
-}
-
 export const addValidAddressToFreshOrganisation = async (
   page,
   { organisationPrefix, overrides = {} }
@@ -68,9 +57,14 @@ export const addValidAddressToFreshOrganisation = async (
   await signIn(page, {
     organisationId: `${organisationPrefix}-${crypto.randomUUID()}`
   })
-  await saveValidAddress(page, overrides)
+  await page.goto('/address-book/add')
+  await fillValidAddress(page, overrides)
+  await page.getByRole('button', { name: 'Save and continue' }).click()
   await expect(page).toHaveURL(/\/address-book$/)
 }
+
+export const validAddressViewLink = (page) =>
+  page.getByRole('link', { name: `View ${validAddress.name}` })
 
 export const errorLink = (page, message) =>
   page.getByRole('alert').getByRole('link', { name: message, exact: true })

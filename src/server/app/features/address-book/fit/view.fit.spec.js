@@ -2,7 +2,11 @@ import { test, expect } from '@playwright/test'
 
 import { expectAddressBookList } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
-import { addValidAddressAndGetViewLink, validAddress } from './address-form.js'
+import {
+  addValidAddressToFreshOrganisation,
+  validAddress,
+  validAddressViewLink
+} from './address-form.js'
 import { expectDashboard } from './dashboard.js'
 import {
   SEED_ADDRESS_ID,
@@ -67,11 +71,10 @@ test.describe('view address', () => {
   test('shows address line 2 and County (optional) when the address has them', async ({
     page
   }) => {
-    await signIn(page, {
-      organisationId: `stub-org-view-optional-${crypto.randomUUID()}`
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix: 'stub-org-view-optional'
     })
-    const viewLink = await addValidAddressAndGetViewLink(page)
-    await viewLink.click()
+    await validAddressViewLink(page).click()
 
     await expect(page.getByRole('term')).toHaveText([
       'Name or organisation',
@@ -150,11 +153,10 @@ test.describe('view address', () => {
     test("another organisation's address returns to the address book", async ({
       page
     }) => {
-      await signIn(page, {
-        organisationId: `stub-org-view-owner-${crypto.randomUUID()}`
+      await addValidAddressToFreshOrganisation(page, {
+        organisationPrefix: 'stub-org-view-owner'
       })
-      const viewLink = await addValidAddressAndGetViewLink(page)
-      const href = await viewLink.getAttribute('href')
+      const href = await validAddressViewLink(page).getAttribute('href')
 
       await signIn(page, {
         organisationId: `stub-org-view-other-${crypto.randomUUID()}`

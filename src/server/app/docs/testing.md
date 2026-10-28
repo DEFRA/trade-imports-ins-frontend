@@ -121,8 +121,9 @@ playwright:install` once (Chromium).
 Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 `signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
-labels, `validAddress`, `fillValidAddress`, `addValidAddressAndGetViewLink`,
-`addValidAddressToFreshOrganisation`, `expectErrorFocusOn`, the two
+labels, `validAddress`, `fillValidAddress`,
+`addValidAddressToFreshOrganisation`, `validAddressViewLink`,
+`expectErrorFocusOn`, the two
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
 `openAddressBookList`, `expectAddressBookList`,
