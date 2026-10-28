@@ -306,12 +306,21 @@ describe('in stub mode', () => {
   const GLEN_DEPOT = 'Glen Depot'
   const PARIS_DEPOT = 'Paris Depot'
   const BOSTON_DEPOT = 'Boston Depot'
+  const LIST_PAGE_SIZE = 8
+
+  const listedNames = async (organisationId, query = {}) =>
+    (
+      await addressBook.listAddresses(organisationId, {
+        pageSize: LIST_PAGE_SIZE,
+        ...query
+      })
+    ).items.map(({ name }) => name)
 
   test('Should seed one GB address, Stub Farm 1 at id 000000000000000000000001, for an ordinary organisation', async () => {
     const { items, totalItems } = await addressBook.listAddresses(
       'stub-org-1',
       {
-        pageSize: 8
+        pageSize: LIST_PAGE_SIZE
       }
     )
 
@@ -325,7 +334,7 @@ describe('in stub mode', () => {
 
   test('Should seed nothing, over no pages, for an organisation ending in -empty', async () => {
     const addressPage = await addressBook.listAddresses('stub-org-empty', {
-      pageSize: 8
+      pageSize: LIST_PAGE_SIZE
     })
 
     expect(addressPage).toMatchObject({ totalItems: 0, totalPages: 0 })
@@ -337,7 +346,7 @@ describe('in stub mode', () => {
       [1, 2, 3, 4].map((page) =>
         addressBook.listAddresses(PAGINATED_ORGANISATION_ID, {
           page,
-          pageSize: 8
+          pageSize: LIST_PAGE_SIZE
         })
       )
     )
@@ -357,13 +366,7 @@ describe('in stub mode', () => {
       county: 'Antrim'
     })
 
-    const search = async (searchTerm) =>
-      (
-        await addressBook.listAddresses(organisationId, {
-          pageSize: 8,
-          searchTerm
-        })
-      ).items.map(({ name }) => name)
+    const search = (searchTerm) => listedNames(organisationId, { searchTerm })
 
     expect(await search('glen')).toEqual([GLEN_DEPOT])
     expect(await search('iv2 3jh')).toEqual([GLEN_DEPOT])
@@ -377,7 +380,7 @@ describe('in stub mode', () => {
   test('Should count the matches of a search over the whole book, not only the page', async () => {
     const addressPage = await addressBook.listAddresses(
       PAGINATED_ORGANISATION_ID,
-      { page: 2, pageSize: 8, searchTerm: 'farm 1' }
+      { page: 2, pageSize: LIST_PAGE_SIZE, searchTerm: 'farm 1' }
     )
 
     expect(addressPage).toMatchObject({
@@ -399,11 +402,7 @@ describe('in stub mode', () => {
       name: PARIS_DEPOT
     })
 
-    const addressPage = await addressBook.listAddresses(organisationId, {
-      pageSize: 8
-    })
-
-    expect(addressPage.items.map(({ name }) => name)).toEqual([
+    expect(await listedNames(organisationId)).toEqual([
       PARIS_DEPOT,
       GLEN_DEPOT,
       SEED_ADDRESS_NAME
@@ -423,27 +422,21 @@ describe('in stub mode', () => {
       countryCode: 'US'
     })
 
-    const namesFor = async (query) =>
-      (
-        await addressBook.listAddresses(organisationId, {
-          pageSize: 8,
-          ...query
-        })
-      ).items.map(({ name }) => name)
-
-    expect(await namesFor({ countryCodes: ['FR', 'US'] })).toEqual([
-      BOSTON_DEPOT,
-      PARIS_DEPOT
-    ])
     expect(
-      await namesFor({ searchTerm: 'stub farm', countryCodes: ['FR'] })
+      await listedNames(organisationId, { countryCodes: ['FR', 'US'] })
+    ).toEqual([BOSTON_DEPOT, PARIS_DEPOT])
+    expect(
+      await listedNames(organisationId, {
+        searchTerm: 'stub farm',
+        countryCodes: ['FR']
+      })
     ).toEqual([PARIS_DEPOT, SEED_ADDRESS_NAME])
   })
 
   test('Should report no matches over no pages for a search that matches nothing', async () => {
     const addressPage = await addressBook.listAddresses(
       PAGINATED_ORGANISATION_ID,
-      { pageSize: 8, searchTerm: 'zzznomatch' }
+      { pageSize: LIST_PAGE_SIZE, searchTerm: 'zzznomatch' }
     )
 
     expect(addressPage).toMatchObject({ totalItems: 0, totalPages: 0 })
@@ -491,7 +484,7 @@ describe('in stub mode', () => {
     await addressBook.deleteAddress(organisationId, created.id)
 
     const { items } = await addressBook.listAddresses(organisationId, {
-      pageSize: 8
+      pageSize: LIST_PAGE_SIZE
     })
     expect(items.map(({ id }) => id)).toEqual(['000000000000000000000001'])
     await expect(
