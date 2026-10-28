@@ -14,6 +14,7 @@ import {
   searchAndExpectSingleMatch
 } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { SEED_ADDRESS_NAME } from './seed-address.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 const ADD_URL = /\/address-book\/add$/
@@ -197,7 +198,7 @@ test.describe('save and confirm', () => {
     await expect(resultsLineOf(page)).toHaveText('Showing 1-2 of 2')
     await expect(page.getByRole('link', { name: /^View / })).toHaveText([
       `View ${validAddress.name}`,
-      'View Stub Farm 1'
+      `View ${SEED_ADDRESS_NAME}`
     ])
     const viewLink = page.getByRole('link', {
       name: `View ${validAddress.name}`
