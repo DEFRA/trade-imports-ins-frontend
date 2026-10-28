@@ -38,12 +38,15 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 const UK_NAME = 'United Kingdom'
 const INS_HOME = '/'
 
+const ADDRESS_LINE_2_LABEL = 'Address line 2 (optional)'
+const COUNTY_LABEL = 'County (optional)'
+
 const STORED_ADDRESS_ROW_LABELS = [
   'Name or organisation',
   'Address line 1',
-  'Address line 2 (optional)',
+  ADDRESS_LINE_2_LABEL,
   'Town or city',
-  'County (optional)',
+  COUNTY_LABEL,
   'Postcode or Zip code',
   'Country',
   'Email address',
@@ -69,30 +72,23 @@ describe('#buildRows', () => {
       UK_NAME
     )
 
-    expect(rows.map((row) => row.key.text)).toEqual([
-      'Name or organisation',
-      'Address line 1',
-      'Town or city',
-      'Postcode or Zip code',
-      'Country',
-      'Email address',
-      'Phone number'
-    ])
+    expect(rows.map((row) => row.key.text)).toEqual(
+      STORED_ADDRESS_ROW_LABELS.filter(
+        (label) =>
+          label !== ADDRESS_LINE_2_LABEL &&
+          label !== COUNTY_LABEL
+      )
+    )
   })
 
   test('Should treat a whitespace-only optional field as blank', () => {
     const rows = buildRows({ ...STORED_ADDRESS, addressLine2: '   ' }, UK_NAME)
 
-    expect(rows.map((row) => row.key.text)).toEqual([
-      'Name or organisation',
-      'Address line 1',
-      'Town or city',
-      'County (optional)',
-      'Postcode or Zip code',
-      'Country',
-      'Email address',
-      'Phone number'
-    ])
+    expect(rows.map((row) => row.key.text)).toEqual(
+      STORED_ADDRESS_ROW_LABELS.filter(
+        (label) => label !== ADDRESS_LINE_2_LABEL
+      )
+    )
   })
 
   test('Should render one row per address field with its label and value, address line 2 and county marked optional', () => {
