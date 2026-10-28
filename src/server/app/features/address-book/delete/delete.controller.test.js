@@ -235,7 +235,7 @@ describe('GET /address-book/{addressId}/delete', () => {
     expect(headers.location).toBe(ADDRESS_BOOK_PATH)
   })
 
-  test('Should return 500 when the address book cannot be reached', async () => {
+  test('Should return 500 when the address book answers the lookup with a server error', async () => {
     serveAddressBookServerError(ADDRESS_PATH)
 
     expectServerErrorPage(await getDelete(server(), 'delete-get-500'))
@@ -313,7 +313,7 @@ describe('POST /address-book/{addressId}/delete', () => {
     expectServerErrorPage(await postDelete(server(), 'delete-post-500'))
   })
 
-  test('Should soft-delete the address for the organisation and redirect to the address book', async () => {
+  test('Should send the delete for the organisation and redirect to the address book', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
     const scope = addressBookApi()
       .delete(ADDRESS_PATH)
