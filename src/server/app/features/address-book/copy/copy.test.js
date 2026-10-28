@@ -35,7 +35,7 @@ describe('#copy', () => {
     expect(copy.add.cancel).toBe('Cancel and return to address book')
   })
 
-  it('Should word the list intro, filter disclosure, search field, search button and empty results line', () => {
+  it('Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line', () => {
     expect(copy.list.intro).toBe(
       'Manage your addresses for use across all your import notifications'
     )
