@@ -222,15 +222,17 @@ describe('#addressBookAddController', { concurrent: false }, () => {
         name: STORED_ADDRESS.name
       })
 
+    const { addressLine2, county, ...requiredFields } = VALID_ADDRESS_PAYLOAD
+
     const { statusCode } = await postAdd(server(), 'add-post-trimmed', {
-      ...VALID_ADDRESS_PAYLOAD,
+      ...requiredFields,
       name: `  ${STORED_ADDRESS.name}  `,
       crumb: 'not-for-the-api'
     })
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(scope.isDone()).toBe(true)
-    expect(posted).toEqual(VALID_ADDRESS_PAYLOAD)
+    expect(posted).toEqual({ ...requiredFields, addressLine2: '', county: '' })
   })
 
   test('POST with invalid data re-renders form with errors', async () => {
