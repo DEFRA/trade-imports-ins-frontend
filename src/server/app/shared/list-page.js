@@ -5,14 +5,6 @@ export const parsePage = (queryPage) => {
   return Number.isNaN(page) || page < FIRST_PAGE ? FIRST_PAGE : page
 }
 
-export const escapeHtml = (value) =>
-  String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-
 export const clampPage = (page, totalPages) =>
   Math.min(Math.max(page, FIRST_PAGE), Math.max(totalPages, FIRST_PAGE))
 

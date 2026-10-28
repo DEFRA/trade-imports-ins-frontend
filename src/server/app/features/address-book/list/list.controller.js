@@ -4,8 +4,8 @@ import { listAddresses } from '../../../services/address-book/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
+import { escapeHtml } from '../../../shared/escape-html.js'
 import {
-  escapeHtml,
   buildPaginationLinks,
   clampPage,
   parsePage
