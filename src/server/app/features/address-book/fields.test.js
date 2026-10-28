@@ -219,4 +219,14 @@ describe('#postalLinesOf', () => {
       })
     ).toEqual(['1 Road', 'Town', 'AB1 2CD'])
   })
+
+  test('Should trim the lines it keeps', () => {
+    expect(
+      postalLinesOf({
+        addressLine1: '  1 Road  ',
+        townOrCity: 'Town',
+        postcode: 'AB1 2CD'
+      })
+    ).toEqual(['1 Road', 'Town', 'AB1 2CD'])
+  })
 })
