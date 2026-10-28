@@ -116,7 +116,7 @@ describe('#parseDateText', () => {
 })
 
 describe('#formatDateText', () => {
-  it('drops leading zeros, matching what the picker writes back', () => {
+  it('drops leading zeros from the day and month', () => {
     expect(formatDateText(utc(2026, 8, 5))).toBe('5/8/2026')
   })
 
