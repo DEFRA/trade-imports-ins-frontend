@@ -3,24 +3,24 @@ import { load } from 'cheerio'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
   addressesApiPath,
-  getPage
+  COUNTRIES,
+  getPage,
+  STORED_ADDRESS
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { LIST_PAGE_SIZE } from './list.controller.js'
 
-export const LIST_URL = '/address-book'
-export const ADD_PATH = '/address-book/add'
 export const NO_RESULTS_LINE = 'Showing 0 of 0'
 export const TABLE_HEADINGS = ['Name', 'Address', 'Country', 'Action']
 
 export const highlandAddress = {
   id: '1',
-  name: 'Highland Livestock Ltd',
-  addressLine1: "14 Drover's Way",
-  townOrCity: 'Inverness',
-  postcode: 'IV2 3JH',
-  countryCode: 'GB'
+  name: STORED_ADDRESS.name,
+  addressLine1: STORED_ADDRESS.addressLine1,
+  townOrCity: STORED_ADDRESS.townOrCity,
+  postcode: STORED_ADDRESS.postcode,
+  countryCode: STORED_ADDRESS.countryCode
 }
 
 export const parisDepotAddress = {
@@ -71,10 +71,7 @@ export const rowCellsOf = ($, rowIndex) =>
   $('tbody tr').eq(rowIndex).children('td')
 
 export const startServerWithPageReader = () => {
-  const server = startRealModeServerServingCountries([
-    { code: 'GB', name: 'United Kingdom' },
-    { code: 'FR', name: 'France' }
-  ])
+  const server = startRealModeServerServingCountries(COUNTRIES)
   return async (url, sessionId) => {
     const { result: html, statusCode } = await getPage(server(), url, sessionId)
     return { $: load(html), html, statusCode }

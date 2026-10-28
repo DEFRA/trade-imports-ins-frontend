@@ -1,11 +1,13 @@
 import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
-import { pageOf } from '../../../../common/test-helpers/address-book-requests.js'
+import {
+  ADD_ADDRESS_PATH,
+  ADDRESS_BOOK_PATH,
+  pageOf
+} from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import {
-  ADD_PATH,
-  LIST_URL,
   TABLE_HEADINGS,
   bodyRowCountOf,
   contentOf,
@@ -32,7 +34,10 @@ describe('#addressBookListController', () => {
   test("renders the results count, column headings, and each address's View link and country label", async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, parisDepotAddress]))
 
-    const { $, statusCode } = await readPage(LIST_URL, 'list-with-addresses')
+    const { $, statusCode } = await readPage(
+      ADDRESS_BOOK_PATH,
+      'list-with-addresses'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(contentOf($).children('h1').text()).toBe('Address book')
@@ -58,7 +63,7 @@ describe('#addressBookListController', () => {
     )
 
     const { html, statusCode } = await readPage(
-      `${LIST_URL}?page=2`,
+      `${ADDRESS_BOOK_PATH}?page=2`,
       'list-page-2'
     )
 
@@ -74,7 +79,7 @@ describe('#addressBookListController', () => {
       const scope = stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
       const { statusCode } = await readPage(
-        `${LIST_URL}?page=${queryPage}`,
+        `${ADDRESS_BOOK_PATH}?page=${queryPage}`,
         'list-unusable-page'
       )
 
@@ -98,7 +103,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${LIST_URL}?page=99`,
+      `${ADDRESS_BOOK_PATH}?page=99`,
       'list-stale-page'
     )
 
@@ -116,7 +121,10 @@ describe('#addressBookListController', () => {
       pageOf([greenFarmAddress, fullAddress])
     )
 
-    const { $ } = await readPage(`${LIST_URL}?q=green`, 'list-search-one-page')
+    const { $ } = await readPage(
+      `${ADDRESS_BOOK_PATH}?q=green`,
+      'list-search-one-page'
+    )
 
     expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
     expect($('.govuk-pagination')).toHaveLength(0)
@@ -129,7 +137,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${LIST_URL}?q=fran`,
+      `${ADDRESS_BOOK_PATH}?q=fran`,
       'list-search-country'
     )
 
@@ -148,11 +156,14 @@ describe('#addressBookListController', () => {
     async (_, addressPage) => {
       stubAddressPage({ page: '1', q: 'green' }, addressPage)
 
-      const { $ } = await readPage(`${LIST_URL}?q=green`, 'list-clear-search')
+      const { $ } = await readPage(
+        `${ADDRESS_BOOK_PATH}?q=green`,
+        'list-clear-search'
+      )
 
       const clearSearch = $('[data-testid="address-book-clear-search"]')
       expect(clearSearch.text().trim()).toBe('Clear search')
-      expect(clearSearch.attr('href')).toBe(LIST_URL)
+      expect(clearSearch.attr('href')).toBe(ADDRESS_BOOK_PATH)
       expect(
         $('[data-testid="address-book-results-label"]')
           .next()
@@ -172,7 +183,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${LIST_URL}?q=green&countryCode=GB&page=2`,
+      `${ADDRESS_BOOK_PATH}?q=green&countryCode=GB&page=2`,
       'list-search-page-2'
     )
 
@@ -183,17 +194,20 @@ describe('#addressBookListController', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      `${LIST_URL}?q=green`,
-      `${LIST_URL}?q=green&page=2`,
-      `${LIST_URL}?q=green&page=3`,
-      `${LIST_URL}?q=green&page=4`
+      `${ADDRESS_BOOK_PATH}?q=green`,
+      `${ADDRESS_BOOK_PATH}?q=green&page=2`,
+      `${ADDRESS_BOOK_PATH}?q=green&page=3`,
+      `${ADDRESS_BOOK_PATH}?q=green&page=4`
     ])
   })
 
   test('returns 500 when the address book cannot be reached, with the heading, intro, Add button and filter but no results line or table', async () => {
     stubAddressBookUnavailable()
 
-    const { $, html, statusCode } = await readPage(LIST_URL, 'list-500')
+    const { $, html, statusCode } = await readPage(
+      ADDRESS_BOOK_PATH,
+      'list-500'
+    )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(html).toContain('govuk-notification-banner')
@@ -213,7 +227,7 @@ describe('#addressBookListController', () => {
       'Manage your addresses for use across all your import notifications'
     )
     expect(contentOf($).children('p').next('div').find('a').attr('href')).toBe(
-      ADD_PATH
+      ADD_ADDRESS_PATH
     )
     expect(contentOf($).children('form').find('input[name="q"]')).toHaveLength(
       1

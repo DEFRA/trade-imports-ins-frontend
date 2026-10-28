@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'vitest'
 
-import { MALFORMED_ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
+import {
+  ADDRESS_ID,
+  MALFORMED_ADDRESS_ID
+} from '../../../common/test-helpers/address-book-requests.js'
 import {
   addressIdParams,
   redirectingAddressIdRouteOptions
@@ -9,7 +12,7 @@ import {
 describe('#addressIdParams', () => {
   test('accepts a 24-character hex Mongo ObjectId', () => {
     const { error } = addressIdParams.validate({
-      id: '665f1c2ab3e4d51a2c9d0e77'
+      id: ADDRESS_ID
     })
 
     expect(error).toBeUndefined()

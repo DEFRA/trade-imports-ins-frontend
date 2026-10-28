@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../config/config.js'
+import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
 import {
   buildReturnUrl,
   isKnownJourneyType,
@@ -34,11 +35,11 @@ describe('journey-registry', () => {
         notificationId: NOTIFICATION_ID,
         fulfilmentId: FULFILMENT_ID
       },
-      { addressId: '665f1c2ab3e4d51a2c9d0e77' }
+      { addressId: ADDRESS_ID }
     )
 
     expect(url).toBe(
-      'http://localhost:3000/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&addressId=665f1c2ab3e4d51a2c9d0e77'
+      `http://localhost:3000/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&addressId=${ADDRESS_ID}`
     )
   })
 
