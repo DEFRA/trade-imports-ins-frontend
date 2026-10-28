@@ -49,6 +49,30 @@ const mockAddress = {
   deleted: false
 }
 
+const MOCK_ADDRESS_ROW_LABELS = [
+  'Name or organisation',
+  'Address line 1',
+  'Address line 2 (optional)',
+  'Town or city',
+  'County (optional)',
+  'Postcode or Zip code',
+  'Country',
+  'Email address',
+  'Phone number'
+]
+
+const MOCK_ADDRESS_ROW_VALUES = [
+  BUSINESS_NAME,
+  "14 Drover's Way",
+  'Unit 2',
+  'Inverness',
+  'Highland',
+  'IV2 3JH',
+  UK_NAME,
+  EMAIL,
+  '+44 1463 234567'
+]
+
 describe('#buildRows', () => {
   test('Should leave out address line 2 and county when the address has neither', () => {
     const rows = buildRows(
@@ -78,28 +102,8 @@ describe('#buildRows', () => {
   test('Should render one row per address field with its label and value, address line 2 and county marked optional', () => {
     const rows = buildRows(mockAddress, UK_NAME)
 
-    expect(rows.map((row) => row.key.text)).toEqual([
-      'Name or organisation',
-      'Address line 1',
-      'Address line 2 (optional)',
-      'Town or city',
-      'County (optional)',
-      'Postcode or Zip code',
-      'Country',
-      'Email address',
-      'Phone number'
-    ])
-    expect(rows.map((row) => row.value.text)).toEqual([
-      BUSINESS_NAME,
-      "14 Drover's Way",
-      'Unit 2',
-      'Inverness',
-      'Highland',
-      'IV2 3JH',
-      UK_NAME,
-      EMAIL,
-      '+44 1463 234567'
-    ])
+    expect(rows.map((row) => row.key.text)).toEqual(MOCK_ADDRESS_ROW_LABELS)
+    expect(rows.map((row) => row.value.text)).toEqual(MOCK_ADDRESS_ROW_VALUES)
   })
 })
 
@@ -125,18 +129,15 @@ describe('GET /address-book/{addressId}', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
-    expect(result).toContain(BUSINESS_NAME)
-    expect(result).toContain('14 Drover&#39;s Way')
-    expect(result).toContain('Inverness')
-    expect(result).toContain('IV2 3JH')
-    expect(result).not.toContain(
-      '14 Drover&#39;s Way, Unit 2, Inverness, Highland, IV2 3JH'
+    const $ = load(result)
+    const textsOf = (selector) =>
+      $(selector)
+        .map((_, element) => $(element).text().trim())
+        .get()
+    expect(textsOf('.govuk-summary-list__key')).toEqual(MOCK_ADDRESS_ROW_LABELS)
+    expect(textsOf('.govuk-summary-list__value')).toEqual(
+      MOCK_ADDRESS_ROW_VALUES
     )
-    expect(result).toContain(UK_NAME)
-    expect(result).not.toContain('>GB<')
-    expect(result).toContain(EMAIL)
-    expect(result).not.toContain('operator')
-    expect(result).not.toContain('Type')
   })
 
   test('Should show Edit as a secondary button and Delete as a warning button in the button group', async () => {
