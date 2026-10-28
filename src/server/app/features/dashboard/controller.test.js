@@ -67,7 +67,7 @@ describe('#dashboard', () => {
     expect(result).toContain('Showing 1-1 of 1')
   })
 
-  test('notifications from more than one status all appear in the same list (AC2)', async () => {
+  test('notifications from more than one status all appear in the same list', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -102,7 +102,7 @@ describe('#dashboard', () => {
     expect(result).toContain(OTHER_REFERENCE_NUMBER)
   })
 
-  test('selecting a submitted notification links into the notification-view page (AC3)', async () => {
+  test('selecting a submitted notification links into the notification-view page', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -129,7 +129,7 @@ describe('#dashboard', () => {
     )
   })
 
-  test('selecting a draft notification links back into the journey hub, not notification-view (AC3)', async () => {
+  test('selecting a draft notification links back into the journey hub, not notification-view', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -161,7 +161,7 @@ describe('#dashboard', () => {
 describe('#dashboard — search, sort and errors', () => {
   const getServer = startRealModeServerServingCountries(COUNTRIES)
 
-  test('searching by complete reference returns only the matching notification (AC4)', async () => {
+  test('searching by complete reference asks the backend for that reference and shows it', async () => {
     const scope = insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query({ ...DEFAULT_QUERY, referenceNumber: REFERENCE_NUMBER })
@@ -187,7 +187,7 @@ describe('#dashboard — search, sort and errors', () => {
     expect(result).toContain(REFERENCE_NUMBER)
   })
 
-  test('no matching notification shows "No notifications found" (AC5)', async () => {
+  test('no matching notification shows "No notifications found"', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query({ ...DEFAULT_QUERY, referenceNumber: 'GBN-AG-26-999999' })
@@ -203,7 +203,7 @@ describe('#dashboard — search, sort and errors', () => {
     expect(result).toContain('No notifications found')
   })
 
-  test('empty aggregated store shows an empty state with a way to start a new notification (AC6)', async () => {
+  test('empty aggregated store shows an empty state with a way to start a new notification', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
