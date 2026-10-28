@@ -15,12 +15,14 @@ import {
 
 const originalMode = process.env.STUB_MODE
 const COUNTRY_PLACEHOLDER = 'Select a country'
-const UK_NAME = 'United Kingdom'
+const UNITED_KINGDOM = { code: 'GB', name: 'United Kingdom' }
+const FRANCE = { code: 'FR', name: 'France' }
 const UNITED_STATES = { code: 'US', name: 'United States' }
 const UNITED_ARAB_EMIRATES = { code: 'AE', name: 'United Arab Emirates' }
-const GB_AND_FRANCE = [
-  { code: 'GB', name: UK_NAME },
-  { code: 'FR', name: 'France' }
+const GB_AND_FRANCE = [UNITED_KINGDOM, FRANCE]
+const GB_AND_FRANCE_ITEMS = [
+  { value: UNITED_KINGDOM.code, text: UNITED_KINGDOM.name },
+  { value: FRANCE.code, text: FRANCE.name }
 ]
 
 const importAddressCountriesInRealMode = async () => {
@@ -43,7 +45,7 @@ describe('#getAddressFormCountries', () => {
   test('Should list countries alphabetically with United Kingdom in its place, once', async () => {
     serveCountries([
       UNITED_STATES,
-      { code: 'FR', name: 'France' },
+      FRANCE,
       { code: 'GB', name: 'United Kingdom duplicate' },
       UNITED_ARAB_EMIRATES
     ])
@@ -52,7 +54,7 @@ describe('#getAddressFormCountries', () => {
     const countries = await getAddressFormCountries()
 
     expect(countries).toEqual([
-      { code: 'FR', name: 'France' },
+      FRANCE,
       UNITED_ARAB_EMIRATES,
       GB_COUNTRY,
       UNITED_STATES
@@ -74,26 +76,18 @@ describe('#getAddressFormCountries', () => {
 describe('#buildCountrySelectItems', () => {
   test('Should put the placeholder option before the country options', () => {
     expect(buildCountrySelectItems(GB_AND_FRANCE, COUNTRY_PLACEHOLDER)).toEqual(
-      [
-        { value: '', text: COUNTRY_PLACEHOLDER },
-        { value: 'GB', text: UK_NAME },
-        { value: 'FR', text: 'France' }
-      ]
+      [{ value: '', text: COUNTRY_PLACEHOLDER }, ...GB_AND_FRANCE_ITEMS]
     )
   })
 })
 
 describe('#buildEditCountrySelectItems', () => {
-  const countryItems = [
-    { value: 'GB', text: UK_NAME },
-    { value: 'FR', text: 'France' }
-  ]
   const blankOption = { value: '', text: COUNTRY_PLACEHOLDER }
 
   test('Should offer only the countries when the shown country is one of them', () => {
     expect(
       buildEditCountrySelectItems(GB_AND_FRANCE, 'FR', COUNTRY_PLACEHOLDER)
-    ).toEqual(countryItems)
+    ).toEqual(GB_AND_FRANCE_ITEMS)
   })
 
   test.each([
@@ -109,17 +103,14 @@ describe('#buildEditCountrySelectItems', () => {
           shownCountryCode,
           COUNTRY_PLACEHOLDER
         )
-      ).toEqual([blankOption, ...countryItems])
+      ).toEqual([blankOption, ...GB_AND_FRANCE_ITEMS])
     }
   )
 })
 
 describe('#buildCountryItems', () => {
   test('Should use the country code as the option value and the name as its text', () => {
-    expect(buildCountryItems(GB_AND_FRANCE)).toEqual([
-      { value: 'GB', text: UK_NAME },
-      { value: 'FR', text: 'France' }
-    ])
+    expect(buildCountryItems(GB_AND_FRANCE)).toEqual(GB_AND_FRANCE_ITEMS)
   })
 })
 
@@ -149,7 +140,7 @@ describe('#countryCodesMatching', () => {
 
 describe('#countryLabelOf', () => {
   test('Should return the country name for a listed code', () => {
-    expect(countryLabelOf(GB_AND_FRANCE, 'FR')).toBe('France')
+    expect(countryLabelOf(GB_AND_FRANCE, FRANCE.code)).toBe(FRANCE.name)
   })
 
   test('Should return the code itself when it is not listed', () => {
