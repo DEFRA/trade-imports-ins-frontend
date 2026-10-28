@@ -161,7 +161,10 @@ test.describe('intro and cells', () => {
       name: seedAddress.name,
       exact: true
     })
-    await expect(nameCell).toHaveText(/^Stub\nFarm 1$/, { useInnerText: true })
+    await expect(nameCell).toHaveText(
+      new RegExp(`^${seedAddress.name.replace(' ', '\n')}$`),
+      { useInnerText: true }
+    )
     const addressCell = page.getByRole('cell', {
       name: seedAddressLines.join(', '),
       exact: true
