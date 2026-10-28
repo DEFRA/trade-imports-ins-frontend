@@ -25,12 +25,15 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const anchorsAfterFilterForm = ($) =>
+const linksAfterFilterForm = ($) =>
   contentOf($)
     .children('form')
     .nextAll()
     .find('a')
-    .map((_, anchor) => $(anchor).attr('href'))
+    .map((_, anchor) => ({
+      text: $(anchor).text().trim(),
+      href: $(anchor).attr('href')
+    }))
     .get()
 
 describe('#addressBookListLayout', () => {
@@ -160,9 +163,12 @@ describe('#addressBookListLayout', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(resultsLineOf($)).toBe('Showing 1-1 of 1')
-    expect(anchorsAfterFilterForm($)).toEqual([
-      '/address-book',
-      '/address-book/1'
+    expect(linksAfterFilterForm($)).toEqual([
+      { text: 'Clear search', href: LIST_URL },
+      {
+        text: `View ${greenFarmAddress.name}`,
+        href: `${LIST_URL}/${greenFarmAddress.id}`
+      }
     ])
   })
 
@@ -179,6 +185,8 @@ describe('#addressBookListLayout', () => {
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
     expect($('input[name="q"]').val()).toBe('zzznomatch')
-    expect(anchorsAfterFilterForm($)).toEqual(['/address-book'])
+    expect(linksAfterFilterForm($)).toEqual([
+      { text: 'Clear search', href: LIST_URL }
+    ])
   })
 })
