@@ -33,6 +33,7 @@ const ADDRESS_BOOK_PATH = '/address-book'
 const RETURN_HOME = '?return=%2F'
 const BACK_LINK = 'a.govuk-back-link'
 const COUNTRY_OPTIONS = '#countryCode option'
+const SELECTED_COUNTRY = '#countryCode option[selected]'
 const UPDATED_NAME = 'Updated Farm Ltd'
 const UNOFFERED_COUNTRY_CODE = 'XX'
 const STORED_NAME = 'Highland Livestock Ltd'
@@ -132,8 +133,27 @@ describe('GET /address-book/{addressId}/edit', () => {
       'Email address',
       'Phone number'
     ])
-    expect($('#name').val()).toBe(STORED_NAME)
-    expect($('#addressLine2').val()).toBe('Unit 2')
+    expect({
+      name: $('#name').val(),
+      addressLine1: $('#addressLine1').val(),
+      addressLine2: $('#addressLine2').val(),
+      townOrCity: $('#townOrCity').val(),
+      county: $('#county').val(),
+      postcode: $('#postcode').val(),
+      countryCode: $(SELECTED_COUNTRY).attr('value'),
+      email: $('#email').val(),
+      phone: $('#phone').val()
+    }).toEqual({
+      name: mockAddress.name,
+      addressLine1: mockAddress.addressLine1,
+      addressLine2: mockAddress.addressLine2,
+      townOrCity: mockAddress.townOrCity,
+      county: mockAddress.county,
+      postcode: mockAddress.postcode,
+      countryCode: mockAddress.countryCode,
+      email: mockAddress.email,
+      phone: mockAddress.phone
+    })
   })
 
   test('Should lay out the fields at the add form widths', async () => {
@@ -156,7 +176,7 @@ describe('GET /address-book/{addressId}/edit', () => {
         .map((_, option) => $(option).text().trim())
         .get()
     ).toEqual(['France', 'Germany', 'Switzerland', 'United Kingdom'])
-    expect($('#countryCode option[selected]').attr('value')).toBe('FR')
+    expect($(SELECTED_COUNTRY).attr('value')).toBe('FR')
   })
 
   test('Should open on one blank option with no country selected when the stored country is not offered', async () => {
@@ -167,7 +187,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     const $ = load(result)
     expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', 'GB'])
     expect($(COUNTRY_OPTIONS).first().text().trim()).toBe(COUNTRY_PLACEHOLDER)
-    expect($('#countryCode option[selected]')).toHaveLength(0)
+    expect($(SELECTED_COUNTRY)).toHaveLength(0)
   })
 
   test('Should link Back to the address view page when the edit was opened with no return', async () => {
@@ -321,9 +341,11 @@ describe('POST /address-book/{addressId}/edit', () => {
     expect(result).toContain('href="#email"')
     expect(result).toContain('Enter an email address in the correct format')
     expect(result).toContain('govuk-error-message')
-    expect(load(result)('head > title').text()).toContain(
+    const $ = load(result)
+    expect($('head > title').text()).toContain(
       'Error: Edit address and contact details'
     )
+    expect($('#email').val()).toBe(INVALID_ADDRESS_PAYLOAD.email)
   })
 
   test('Should refuse a country the reference data does not list with Select a country, sending nothing', async () => {
@@ -384,16 +406,15 @@ describe('POST /address-book/{addressId}/edit', () => {
       .put(ADDRESS_PATH)
       .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
 
-    const { result, statusCode } = await postEdit(
-      server(),
-      'edit-post-500',
-      validPayload
-    )
+    const { result, statusCode } = await postEdit(server(), 'edit-post-500', {
+      ...validPayload,
+      name: UPDATED_NAME
+    })
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(result).toContain('govuk-notification-banner')
     expect(result).toContain(RECOVERABLE_ERROR_MESSAGE)
-    expect(result).toContain(`value="${STORED_NAME}"`)
+    expect(load(result)('#name').val()).toBe(UPDATED_NAME)
   })
 
   test('Should show the recoverable-error banner, keep the posted values and send nothing when the live read fails with a server error', async () => {
