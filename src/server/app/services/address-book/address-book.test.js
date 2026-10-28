@@ -35,6 +35,8 @@ const highlandAddress = {
   email: 'exports@example.com'
 }
 
+const PAGE_SIZE = 8
+
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
 const validationProblem = {
@@ -55,22 +57,22 @@ describe('against the real address book', () => {
     test('Should GET the organisation path with the organisation and trace headers and parse the page', async () => {
       const scope = addressBookApi()
         .get(ADDRESSES_PATH)
-        .query({ page: '1', pageSize: '8' })
+        .query({ page: '1', pageSize: String(PAGE_SIZE) })
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .matchHeader(TRACING_HEADER, TRACE_ID)
         .reply(
           200,
           pageOf([{ id: 'abc', name: 'Farm', addressLine1: '1 Road' }], {
-            pageSize: 8
+            pageSize: PAGE_SIZE
           })
         )
 
       const addressPage = await addressBook.listAddresses(ORGANISATION_ID, {
         page: 1,
-        pageSize: 8
+        pageSize: PAGE_SIZE
       })
 
-      expect(addressPage.pageSize).toBe(8)
+      expect(addressPage.pageSize).toBe(PAGE_SIZE)
       expect(addressPage.totalItems).toBe(1)
       expect(addressPage.items[0].addressLine1).toBe('1 Road')
       expect(scope.isDone()).toBe(true)
@@ -81,15 +83,15 @@ describe('against the real address book', () => {
         .get(ADDRESSES_PATH)
         .query({
           page: '1',
-          pageSize: '8',
+          pageSize: String(PAGE_SIZE),
           q: 'united',
           countryCode: ['GB', 'US']
         })
-        .reply(200, pageOf([], { pageSize: 8 }))
+        .reply(200, pageOf([], { pageSize: PAGE_SIZE }))
 
       await addressBook.listAddresses(ORGANISATION_ID, {
         page: 1,
-        pageSize: 8,
+        pageSize: PAGE_SIZE,
         searchTerm: 'united',
         countryCodes: ['GB', 'US']
       })
@@ -208,13 +210,16 @@ describe('against the real address book', () => {
     test('Should surface the API message and status when the body has no detail', async () => {
       addressBookApi()
         .get(ADDRESSES_PATH)
-        .query({ page: '1', pageSize: '8' })
+        .query({ page: '1', pageSize: String(PAGE_SIZE) })
         .reply(404, {
           message: 'No static resource organisation/5900001/addresses.'
         })
 
       await expect(
-        addressBook.listAddresses(ORGANISATION_ID, { page: 1, pageSize: 8 })
+        addressBook.listAddresses(ORGANISATION_ID, {
+          page: 1,
+          pageSize: PAGE_SIZE
+        })
       ).rejects.toMatchObject({
         message: 'No static resource organisation/5900001/addresses.',
         status: 404
@@ -312,12 +317,11 @@ describe('in stub mode', () => {
   const GLEN_DEPOT = 'Glen Depot'
   const PARIS_DEPOT = 'Paris Depot'
   const BOSTON_DEPOT = 'Boston Depot'
-  const LIST_PAGE_SIZE = 8
 
   const listedNames = async (organisationId, query = {}) =>
     (
       await addressBook.listAddresses(organisationId, {
-        pageSize: LIST_PAGE_SIZE,
+        pageSize: PAGE_SIZE,
         ...query
       })
     ).items.map(({ name }) => name)
@@ -326,7 +330,7 @@ describe('in stub mode', () => {
     const { items, totalItems } = await addressBook.listAddresses(
       'stub-org-1',
       {
-        pageSize: LIST_PAGE_SIZE
+        pageSize: PAGE_SIZE
       }
     )
 
@@ -340,7 +344,7 @@ describe('in stub mode', () => {
 
   test('Should seed nothing, over no pages, for an organisation ending in -empty', async () => {
     const addressPage = await addressBook.listAddresses('stub-org-empty', {
-      pageSize: LIST_PAGE_SIZE
+      pageSize: PAGE_SIZE
     })
 
     expect(addressPage).toMatchObject({ totalItems: 0, totalPages: 0 })
@@ -352,7 +356,7 @@ describe('in stub mode', () => {
       [1, 2, 3, 4].map((page) =>
         addressBook.listAddresses(PAGINATED_ORGANISATION_ID, {
           page,
-          pageSize: LIST_PAGE_SIZE
+          pageSize: PAGE_SIZE
         })
       )
     )
@@ -386,7 +390,7 @@ describe('in stub mode', () => {
   test('Should count the matches of a search over the whole book, not only the page', async () => {
     const addressPage = await addressBook.listAddresses(
       PAGINATED_ORGANISATION_ID,
-      { page: 2, pageSize: LIST_PAGE_SIZE, searchTerm: 'farm 1' }
+      { page: 2, pageSize: PAGE_SIZE, searchTerm: 'farm 1' }
     )
 
     expect(addressPage).toMatchObject({
@@ -442,7 +446,7 @@ describe('in stub mode', () => {
   test('Should report no matches over no pages for a search that matches nothing', async () => {
     const addressPage = await addressBook.listAddresses(
       PAGINATED_ORGANISATION_ID,
-      { pageSize: LIST_PAGE_SIZE, searchTerm: 'zzznomatch' }
+      { pageSize: PAGE_SIZE, searchTerm: 'zzznomatch' }
     )
 
     expect(addressPage).toMatchObject({ totalItems: 0, totalPages: 0 })
@@ -490,7 +494,7 @@ describe('in stub mode', () => {
     await addressBook.deleteAddress(organisationId, created.id)
 
     const { items } = await addressBook.listAddresses(organisationId, {
-      pageSize: LIST_PAGE_SIZE
+      pageSize: PAGE_SIZE
     })
     expect(items.map(({ id }) => id)).toEqual(['000000000000000000000001'])
     await expect(

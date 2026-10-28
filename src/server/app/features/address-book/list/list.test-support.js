@@ -7,6 +7,7 @@ import {
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
+import { LIST_PAGE_SIZE } from './list.controller.js'
 
 export const LIST_URL = '/address-book'
 export const ADD_PATH = '/address-book/add'
@@ -80,14 +81,18 @@ export const startServerWithPageReader = () => {
   }
 }
 
-export const stubAddressPage = (query, addressPage) =>
+const interceptListRequest = (query) =>
   addressBookApi()
     .get(ADDRESSES_PATH)
-    .query({ pageSize: '8', ...query })
-    .reply(statusCodes.ok, addressPage)
+    .query({ pageSize: String(LIST_PAGE_SIZE), ...query })
+
+export const stubAddressPage = (query, addressPage) =>
+  interceptListRequest(query).reply(statusCodes.ok, {
+    ...addressPage,
+    pageSize: LIST_PAGE_SIZE
+  })
 
 export const stubAddressBookUnavailable = () =>
-  addressBookApi()
-    .get(ADDRESSES_PATH)
-    .query({ page: '1', pageSize: '8' })
-    .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
+  interceptListRequest({ page: '1' }).reply(statusCodes.serviceUnavailable, {
+    title: 'Service Unavailable'
+  })

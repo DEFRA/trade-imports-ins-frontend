@@ -30,6 +30,8 @@ import {
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
+export const LIST_PAGE_SIZE = 8
+
 const logger = createLogger()
 const view = 'address-book/list/list'
 const copy = copyFor({ en, cy })
@@ -63,10 +65,9 @@ const buildView = (toolkit, { recoverableError = false, ...model }) =>
   })
 
 const loadAddressPage = async (organisationId, { page, ...search }) => {
-  const pageSize = 8
   const requestedAddressPage = await listAddresses(organisationId, {
     page,
-    pageSize,
+    pageSize: LIST_PAGE_SIZE,
     ...search
   })
   const servedPage = clampPage(page, requestedAddressPage.totalPages)
@@ -80,7 +81,7 @@ const loadAddressPage = async (organisationId, { page, ...search }) => {
   )
   return listAddresses(organisationId, {
     page: servedPage,
-    pageSize,
+    pageSize: LIST_PAGE_SIZE,
     ...search
   })
 }

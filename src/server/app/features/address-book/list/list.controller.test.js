@@ -53,7 +53,7 @@ describe('#addressBookListController', () => {
       { page: '2' },
       pageOf(
         [{ id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }],
-        { page: 2, pageSize: 8, totalItems: 30, totalPages: 4 }
+        { page: 2, totalItems: 30, totalPages: 4 }
       )
     )
 
@@ -71,10 +71,7 @@ describe('#addressBookListController', () => {
   test.each(['0', 'abc'])(
     'asks for page 1 when the page number is %s',
     async (queryPage) => {
-      const scope = stubAddressPage(
-        { page: '1' },
-        pageOf([highlandAddress], { pageSize: 8 })
-      )
+      const scope = stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
       const { statusCode } = await readPage(
         `${LIST_URL}?page=${queryPage}`,
@@ -89,13 +86,12 @@ describe('#addressBookListController', () => {
   test('shows the last page, asked for a second time, when the page number is past the last page', async () => {
     const stalePage = stubAddressPage(
       { page: '99' },
-      pageOf([], { page: 99, pageSize: 8, totalItems: 12, totalPages: 2 })
+      pageOf([], { page: 99, totalItems: 12, totalPages: 2 })
     )
     const lastPage = stubAddressPage(
       { page: '2' },
       pageOf([greenFarmAddress, fullAddress], {
         page: 2,
-        pageSize: 8,
         totalItems: 12,
         totalPages: 2
       })
@@ -117,7 +113,7 @@ describe('#addressBookListController', () => {
   test('shows no pagination when the matches of a search fit on one page', async () => {
     stubAddressPage(
       { page: '1', q: 'green' },
-      pageOf([greenFarmAddress, fullAddress], { pageSize: 8 })
+      pageOf([greenFarmAddress, fullAddress])
     )
 
     const { $ } = await readPage(`${LIST_URL}?q=green`, 'list-search-one-page')
@@ -170,7 +166,6 @@ describe('#addressBookListController', () => {
       { page: '2', q: 'green' },
       pageOf([greenFarmAddress], {
         page: 2,
-        pageSize: 8,
         totalItems: 30,
         totalPages: 4
       })
