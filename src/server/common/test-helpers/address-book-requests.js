@@ -39,6 +39,18 @@ export const COUNTRY_OPTIONS = '#countryCode option'
 
 export const SELECTED_COUNTRY = '#countryCode option[selected]'
 
+export const ADDRESS_FORM_LABELS = [
+  'Name or organisation',
+  'Address line 1',
+  'Address line 2 (optional)',
+  'Town or city',
+  'County (optional)',
+  'Postcode or Zip code',
+  'Country',
+  'Email address',
+  'Phone number'
+]
+
 export const COUNTRIES = [
   { code: 'GB', name: 'United Kingdom' },
   { code: 'FR', name: 'France' },

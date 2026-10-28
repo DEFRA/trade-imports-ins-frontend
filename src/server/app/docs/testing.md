@@ -50,6 +50,12 @@ organisationId)`, both defaulting to the session organisation), fixtures
 book test imports instead of keeping a local copy,
 `expect-address-form-widths.js` (`expectAddressFormWidths(result)`, the
 add and edit forms' field widths),
+`expect-address-form-autocomplete.js`
+(`expectAddressFormAutocomplete(result)`, the add and edit forms' browser
+autocomplete hints, read from `address-form-autocomplete.js`'s
+`AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
+`journey-handshake.js` (`JOURNEY_HANDSHAKE`, the one complete journey
+handshake the Vitest tests and the fit specs both send),
 `expect-address-summary-links.js` (`expectSummaryLinks(result)`),
 `open-empty-address-book-with-cookies.js`
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which

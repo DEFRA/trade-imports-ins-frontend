@@ -35,6 +35,12 @@ describe('#copy', () => {
     expect(copy.add.cancel).toBe('Cancel and return to address book')
   })
 
+  it('Should word the add page title and caption', () => {
+    expect(copy.add.title).toBe('Add address and contact details')
+    expect(copy.add.caption).toBe('Add new address')
+    expect(cy.add.caption).not.toBe(copy.add.caption)
+  })
+
   it('Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line', () => {
     expect(copy.list.intro).toBe(
       'Manage your addresses for use across all your import notifications'

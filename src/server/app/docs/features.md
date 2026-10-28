@@ -88,9 +88,11 @@ test; [`routes.test.js`](../routes.test.js) pins the exact route list.
 
 [`shared/kit.js`](../shared/kit.js):
 
-- **`base(title, { backLink, recoverableError })`** returns `{ layout,
-pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
-  — a two-thirds column by default; a page that lays out a table overrides
+- **`base(title, { backLink, recoverableError, journeyStrip })`** returns
+  `{ layout, pageTitle, backLink, sharedCopy, recoverableError,
+journeyStrip, contentColumnClass }` — `journeyStrip` is `null` unless a
+  page passes one, and the layout shows the strip above the page content
+  only when it is set; a two-thirds column by default; a page that lays out a table overrides
   `contentColumnClass: kit.surfaceClass('display')`.
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
@@ -99,10 +101,13 @@ pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
   returns to an honoured `return`, or to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
+- **`draftJourneyStrip(reference)`** returns the strip for a notification
+  in progress: `{ status: { text, classes }, reference }`, the status being
+  the shared copy's draft wording in a blue tag.
 - **`requireOrganisationId(request)`** throws `Boom.forbidden` when the
   session carries none.
-- `sharedCopy` is the resolved chrome copy. `fieldError` is exported and
-  unused — templates read the error map directly (see below).
+- `sharedCopy` is the resolved chrome copy. Templates read the error map
+  directly (see below).
 
 ## Controllers
 
@@ -148,8 +153,8 @@ may sit at a feature root.
 
 The controller resolves `const copy = copyFor({ en, cy })` from
 [`shared/copy.js`](../shared/copy.js) and passes it to the view. Shared
-chrome copy (`layout`, `unauthorised`, `errorSummary`, `recoverableError`,
-`errorPage`) and `validatorDefaults` live in
+chrome copy (`layout`, `journeyStrip`, `unauthorised`, `errorSummary`,
+`recoverableError`, `errorPage`) and `validatorDefaults` live in
 [`shared/copy.en.js`](../shared/copy.en.js) and `copy.cy.js`, and reach
 every view as `sharedCopy`.
 
@@ -164,8 +169,9 @@ govuk macros, `errorMessage: errors.field and { text: errors.field }`.
 The add and edit forms render their Address and Contact details fields
 through the one `addressFields` macro in
 [`address-fields.njk`](../features/address-book/address-fields.njk), passed
-its copy, form values, country items, errors and name label in a single
-params object.
+its copy, form values, country items and errors in a single params
+object, and it sets each personal-data field's browser `autocomplete`
+hint.
 Input `name`, `id` and the error-map key stay identical so the summary
 link focuses the control. Stay inside the govuk-frontend toolbox.
 

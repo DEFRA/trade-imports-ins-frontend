@@ -42,15 +42,24 @@ export const errorSummary = (
   }
 }
 
-export const fieldError = (fieldErrors, field) =>
-  fieldErrors?.[field] ? { text: fieldErrors[field] } : undefined
+export const draftJourneyStrip = (reference) => ({
+  status: {
+    text: sharedCopy.journeyStrip.draft,
+    classes: 'govuk-tag--blue'
+  },
+  reference
+})
 
-export const base = (title, { backLink, recoverableError = false } = {}) => ({
+export const base = (
+  title,
+  { backLink, recoverableError = false, journeyStrip = null } = {}
+) => ({
   layout: LAYOUT,
   pageTitle: title,
   backLink,
   sharedCopy,
   recoverableError,
+  journeyStrip,
   contentColumnClass: SURFACES.form
 })
 

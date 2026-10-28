@@ -49,7 +49,10 @@ const buildView = (
     .view(view, {
       ...kit.base(copy.add.title, {
         recoverableError,
-        backLink: handshakeContext ? undefined : addressBookPath()
+        backLink: handshakeContext ? undefined : addressBookPath(),
+        journeyStrip: handshakeContext
+          ? kit.draftJourneyStrip(handshakeContext.notificationId)
+          : null
       }),
       copy,
       formValues,

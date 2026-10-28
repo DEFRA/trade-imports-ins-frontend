@@ -89,7 +89,7 @@ test.describe('list and pagination', () => {
 
     await expect(page).toHaveURL(addressAddPath())
     await expect(
-      page.getByRole('heading', { name: 'Add address details' })
+      page.getByRole('heading', { name: 'Add address and contact details' })
     ).toBeVisible()
   })
 

@@ -28,6 +28,7 @@ import {
   VALID_ADDRESS_PAYLOAD
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
@@ -131,6 +132,14 @@ describe('GET /address-book/{addressId}/edit', () => {
     const { result } = await getEdit(server(), 'edit-get-widths')
 
     expectAddressFormWidths(result)
+  })
+
+  test('Should give each personal-data field its browser autocomplete hint and none to County or Country', async () => {
+    serveStoredAddress()
+
+    const { result } = await getEdit(server(), 'edit-get-autocomplete')
+
+    expectAddressFormAutocomplete(result)
   })
 
   test('Should offer exactly the countries by name with no blank option and the stored country selected', async () => {

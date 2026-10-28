@@ -83,6 +83,13 @@ describe('layout copy', () => {
   })
 })
 
+describe('journey strip copy', () => {
+  it('Should name the draft status in English and in Welsh', () => {
+    expect(sharedEn.journeyStrip).toEqual({ draft: 'Draft' })
+    expect(sharedCy.journeyStrip).toEqual({ draft: 'Drafft' })
+  })
+})
+
 describe('shared copy module', () => {
   it('Should have a non-empty string at every leaf', () => {
     for (const { path, value } of leaves(sharedEn)) {

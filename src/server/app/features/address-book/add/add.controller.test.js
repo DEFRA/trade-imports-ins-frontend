@@ -5,6 +5,7 @@ import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
   ADD_ADDRESS_PATH,
   ADDRESS_BOOK_PATH,
+  ADDRESS_FORM_LABELS,
   ADDRESS_ID,
   BACK_LINK,
   addressesApiPath,
@@ -21,7 +22,9 @@ import {
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
+import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
+import { JOURNEY_HANDSHAKE } from '../../../../common/test-helpers/journey-handshake.js'
 import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
@@ -35,13 +38,10 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
 const ANIMALS_BASE_URL = 'http://localhost:3000'
-const handshakeFields = {
-  'journey-type': 'gbn-ag',
-  'notification-id': 'GBN-AG-26-4F7K2P',
-  'fulfilment-id': '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',
-  'handshake-token': 'handshake-token-value'
-}
-const RETURN_URL = `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value`
+const RETURN_URL = `${ANIMALS_BASE_URL}/live-animals/notifications/${JOURNEY_HANDSHAKE['notification-id']}/address-return?fulfilment-id=${JOURNEY_HANDSHAKE['fulfilment-id']}&handshake-token=${JOURNEY_HANDSHAKE['handshake-token']}`
+const JOURNEY_STRIP = '.app-journey-strip'
+const CAPTION_SELECTOR = '.govuk-caption-l'
+const ADD_TITLE = 'Add address and contact details'
 
 const postAdd = (server, sessionId, payload) =>
   postPage(server, ADD_ADDRESS_PATH, sessionId, payload)
@@ -75,7 +75,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(headers['cache-control']).toBe('no-store')
   })
 
-  test('GET renders the add address details form with Back and cancel linking to the address book', async () => {
+  test('GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book', async () => {
     const saveAndContinue = 'Save and continue'
     const cancelToAddressBook = 'Cancel and return to address book'
 
@@ -83,21 +83,15 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect(textsOf($, 'h1')).toEqual(['Add address details'])
+    expect(textsOf($, 'h1')).toEqual([ADD_TITLE])
+    expect(textsOf($, CAPTION_SELECTOR)).toEqual(['Add new address'])
+    expect($(CAPTION_SELECTOR).next().is('h1')).toBe(true)
+    expect($(JOURNEY_STRIP)).toHaveLength(0)
+    expect($('main .govuk-tag')).toHaveLength(0)
     expect($(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
     expect(textsOf($, BACK_LINK)).toEqual(['Back'])
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
-    expect(textsOf($, 'form label')).toEqual([
-      'Name or organisation',
-      'Address line 1',
-      'Address line 2 (optional)',
-      'Town or city',
-      'County (optional)',
-      'Postcode or Zip code',
-      'Country',
-      'Email address',
-      'Phone number'
-    ])
+    expect(textsOf($, 'form label')).toEqual(ADDRESS_FORM_LABELS)
     expect(textsOf($, '#phone-hint')).toEqual([
       'For international numbers include the country code'
     ])
@@ -245,7 +239,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
     expect(result).toContain(
-      'Error: Add address details - Import notification service - GOV.UK'
+      `Error: ${ADD_TITLE} - Import notification service - GOV.UK`
     )
     expect(result).toContain('href="#name"')
     expectSummaryLinks(result)
@@ -289,11 +283,10 @@ describe(
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-handshake',
-        handshakeFields
+        JOURNEY_HANDSHAKE
       )
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Add address details')
       expect(result).toContain('name="journey-type"')
       expect(result).toContain('value="gbn-ag"')
       expect(result).toContain('name="notification-id"')
@@ -305,11 +298,37 @@ describe(
       expect(load(result)(SELECTED_COUNTRY)).toHaveLength(0)
     })
 
+    test('GET arriving through a journey handshake shows the Draft status and notification reference above the caption and heading, then the section headings, name label and County', async () => {
+      const { result, statusCode } = await getAdd(
+        server(),
+        'add-get-handshake-frame',
+        JOURNEY_HANDSHAKE
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('head title').text().trim()).toBe(
+        `${ADD_TITLE} - Import notification service - GOV.UK`
+      )
+      expect(textsOf($, `${JOURNEY_STRIP} .govuk-tag`)).toEqual(['Draft'])
+      expect($(`${JOURNEY_STRIP} .govuk-tag`).hasClass('govuk-tag--blue')).toBe(
+        true
+      )
+      expect(textsOf($, `${JOURNEY_STRIP} span.govuk-body`)).toEqual([
+        JOURNEY_HANDSHAKE['notification-id']
+      ])
+      expect($(JOURNEY_STRIP).nextAll(CAPTION_SELECTOR)).toHaveLength(1)
+      expect(textsOf($, CAPTION_SELECTOR)).toEqual(['Add new address'])
+      expect(textsOf($, 'h1')).toEqual([ADD_TITLE])
+      expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
+      expect(textsOf($, 'form label')).toEqual(ADDRESS_FORM_LABELS)
+    })
+
     test('GET through a handshake opens the form without a Back link to the address book', async () => {
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-handshake-no-back',
-        handshakeFields
+        JOURNEY_HANDSHAKE
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -318,7 +337,7 @@ describe(
 
     test('GET refuses an unrecognised journey type', async () => {
       const { statusCode } = await getAdd(server(), 'add-get-unknown-journey', {
-        ...handshakeFields,
+        ...JOURNEY_HANDSHAKE,
         'journey-type': 'not-a-journey'
       })
 
@@ -330,8 +349,8 @@ describe(
         server(),
         'add-get-incomplete-handshake',
         {
-          'journey-type': handshakeFields['journey-type'],
-          'notification-id': handshakeFields['notification-id']
+          'journey-type': JOURNEY_HANDSHAKE['journey-type'],
+          'notification-id': JOURNEY_HANDSHAKE['notification-id']
         }
       )
 
@@ -345,7 +364,7 @@ describe(
       })
 
       const response = await postAdd(server(), 'add-post-handshake', {
-        ...handshakeFields,
+        ...JOURNEY_HANDSHAKE,
         ...VALID_ADDRESS_PAYLOAD
       })
 
@@ -373,20 +392,25 @@ describe(
       const { result, statusCode } = await postAdd(
         server(),
         'add-post-handshake-api-400',
-        { ...handshakeFields, ...VALID_ADDRESS_PAYLOAD }
+        { ...JOURNEY_HANDSHAKE, ...VALID_ADDRESS_PAYLOAD }
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain(EMAIL_FORMAT_ERROR)
       expect(result).toContain('name="handshake-token"')
       expect(result).toContain('Cancel and return to address page')
+      const $ = load(result)
+      expect(textsOf($, `${JOURNEY_STRIP} .govuk-tag`)).toEqual(['Draft'])
+      expect(textsOf($, `${JOURNEY_STRIP} span.govuk-body`)).toEqual([
+        JOURNEY_HANDSHAKE['notification-id']
+      ])
     })
 
     test('Cancel from a handshake returns to the journey without creating an address', async () => {
       expectRedirectTo(
         await postAdd(server(), 'add-post-handshake-cancel', {
           cancel: 'true',
-          ...handshakeFields
+          ...JOURNEY_HANDSHAKE
         }),
         RETURN_URL
       )
@@ -404,6 +428,12 @@ describe(
       const { result } = await getAdd(server(), 'add-get-widths')
 
       expectAddressFormWidths(result)
+    })
+
+    test('GET gives each personal-data field its browser autocomplete hint and none to County or Country', async () => {
+      const { result } = await getAdd(server(), 'add-get-autocomplete')
+
+      expectAddressFormAutocomplete(result)
     })
 
     test('GET opens the Country select on its blank first option, Select a country, with nothing selected', async () => {

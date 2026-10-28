@@ -50,7 +50,8 @@ export const copy = {
     countryPlaceholder: SELECT_COUNTRY
   },
   add: {
-    title: 'Ychwanegu manylion cyfeiriad',
+    title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
+    caption: 'Ychwanegu cyfeiriad newydd',
     save: 'Cadw a pharhau',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
     cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad'

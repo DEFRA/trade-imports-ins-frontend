@@ -18,6 +18,8 @@ import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
+import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-form-autocomplete.js'
+import { JOURNEY_HANDSHAKE } from '../../../../common/test-helpers/journey-handshake.js'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -30,7 +32,7 @@ test.describe('add address', () => {
     await page.goto(addressAddPath())
 
     await expect(
-      page.getByRole('heading', { name: 'Add address details' })
+      page.getByRole('heading', { name: 'Add address and contact details' })
     ).toBeVisible()
     await expect(page.getByLabel(NAME_LABEL, { exact: true })).toBeVisible()
     for (const [, label] of [
@@ -79,6 +81,64 @@ test.describe('add address', () => {
     await page.goto(addressAddPath())
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address')
+  })
+})
+
+test.describe('add address reached from a notification journey', () => {
+  const openFromJourney = async (page, organisationId) => {
+    await signIn(page, { organisationId })
+    await page.goto(
+      `${addressAddPath()}?${new URLSearchParams(JOURNEY_HANDSHAKE)}`
+    )
+  }
+
+  test('shows the Draft status and notification reference above the caption, heading, section headings and fields', async ({
+    page
+  }) => {
+    await openFromJourney(page, 'stub-org-add-journey')
+
+    await expect(page).toHaveTitle(
+      'Add address and contact details - Import notification service - GOV.UK'
+    )
+    await expect(page.getByText('Draft', { exact: true })).toBeVisible()
+    await expect(
+      page.getByText(JOURNEY_HANDSHAKE['notification-id'], { exact: true })
+    ).toBeVisible()
+    await expect(
+      page.getByText('Add new address', { exact: true })
+    ).toBeVisible()
+    await expect(
+      page.getByRole('heading', {
+        level: 1,
+        name: 'Add address and contact details'
+      })
+    ).toBeVisible()
+    for (const name of ['Address', 'Contact details']) {
+      await expect(
+        page.getByRole('heading', { level: 2, name, exact: true })
+      ).toBeVisible()
+    }
+    await expect(page.getByLabel(NAME_LABEL, { exact: true })).toBeVisible()
+    await expect(page.getByLabel(fieldLabels.county)).toBeVisible()
+  })
+
+  test('gives each personal-data field its browser autocomplete hint', async ({
+    page
+  }) => {
+    await openFromJourney(page, 'stub-org-add-journey-autocomplete')
+
+    for (const [field, autocomplete] of Object.entries(AUTOCOMPLETE_BY_FIELD)) {
+      await expect(page.getByLabel(fieldLabels[field])).toHaveAttribute(
+        'autocomplete',
+        autocomplete
+      )
+    }
+  })
+
+  test('has no serious or critical axe violations', async ({ page }) => {
+    await openFromJourney(page, 'stub-org-add-journey-axe')
+
+    await expectNoSeriousOrCriticalViolations(page, 'Add address from journey')
   })
 })
 

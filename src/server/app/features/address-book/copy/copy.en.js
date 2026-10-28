@@ -47,7 +47,8 @@ export const copy = {
     countryPlaceholder: SELECT_COUNTRY
   },
   add: {
-    title: 'Add address details',
+    title: 'Add address and contact details',
+    caption: 'Add new address',
     save: 'Save and continue',
     cancel: 'Cancel and return to address book',
     cancelToJourney: 'Cancel and return to address page'
