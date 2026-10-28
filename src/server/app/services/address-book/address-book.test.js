@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import {
-  ADDRESSES_PATH,
+  addressApiPath,
+  addressesApiPath,
   ORGANISATION_ID_HEADER,
   pageOf
 } from '../../../common/test-helpers/address-book-requests.js'
@@ -21,7 +22,6 @@ vi.mock('@defra/hapi-tracing', () => ({
 }))
 
 const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
-const ADDRESS_PATH = `${ADDRESSES_PATH}/${ADDRESS_ID}`
 const TRACING_HEADER = config.get('tracing.header')
 const TRACE_ID = 'trace-123'
 
@@ -56,7 +56,7 @@ describe('against the real address book', () => {
   describe('#listAddresses', () => {
     test('Should GET the organisation path with the organisation and trace headers and parse the page', async () => {
       const scope = addressBookApi()
-        .get(ADDRESSES_PATH)
+        .get(addressesApiPath())
         .query({ page: '1', pageSize: String(PAGE_SIZE) })
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .matchHeader(TRACING_HEADER, TRACE_ID)
@@ -80,7 +80,7 @@ describe('against the real address book', () => {
 
     test('Should forward the page size, the search term and one countryCode query parameter for each country code', async () => {
       const scope = addressBookApi()
-        .get(ADDRESSES_PATH)
+        .get(addressesApiPath())
         .query({
           page: '1',
           pageSize: String(PAGE_SIZE),
@@ -103,7 +103,7 @@ describe('against the real address book', () => {
   describe('#createAddress', () => {
     test('Should POST the address with the organisation header and return the created record', async () => {
       const scope = addressBookApi()
-        .post(ADDRESSES_PATH, highlandAddress)
+        .post(addressesApiPath(), highlandAddress)
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .reply(201, { id: ADDRESS_ID, ...highlandAddress })
 
@@ -117,7 +117,7 @@ describe('against the real address book', () => {
     })
 
     test('Should raise the validation problem with its status and field errors on a 400', async () => {
-      addressBookApi().post(ADDRESSES_PATH).reply(400, validationProblem)
+      addressBookApi().post(addressesApiPath()).reply(400, validationProblem)
 
       await expect(
         addressBook.createAddress(ORGANISATION_ID, {
@@ -134,7 +134,7 @@ describe('against the real address book', () => {
   describe('#getAddress', () => {
     test('Should GET by id with the organisation and trace headers', async () => {
       const scope = addressBookApi()
-        .get(ADDRESS_PATH)
+        .get(addressApiPath(ADDRESS_ID))
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .matchHeader(TRACING_HEADER, TRACE_ID)
         .reply(200, { id: ADDRESS_ID, ...highlandAddress, deleted: false })
@@ -150,7 +150,10 @@ describe('against the real address book', () => {
       const organisationIdWithSlash = 'org/id'
       const scope = addressBookApi()
         .get(
-          `/organisation/${encodeURIComponent(organisationIdWithSlash)}/addresses/${encodeURIComponent(ADDRESS_ID)}`
+          addressApiPath(
+            encodeURIComponent(ADDRESS_ID),
+            encodeURIComponent(organisationIdWithSlash)
+          )
         )
         .matchHeader(ORGANISATION_ID_HEADER, organisationIdWithSlash)
         .reply(200, { id: ADDRESS_ID, name: 'Farm', deleted: false })
@@ -164,7 +167,7 @@ describe('against the real address book', () => {
   describe('#updateAddress', () => {
     test('Should PUT the address with the organisation header and return the updated record', async () => {
       const scope = addressBookApi()
-        .put(ADDRESS_PATH, highlandAddress)
+        .put(addressApiPath(ADDRESS_ID), highlandAddress)
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .reply(200, { id: ADDRESS_ID, ...highlandAddress })
 
@@ -179,7 +182,9 @@ describe('against the real address book', () => {
     })
 
     test('Should raise the validation problem with its status and field errors on a 400', async () => {
-      addressBookApi().put(ADDRESS_PATH).reply(400, validationProblem)
+      addressBookApi()
+        .put(addressApiPath(ADDRESS_ID))
+        .reply(400, validationProblem)
 
       await expect(
         addressBook.updateAddress(ORGANISATION_ID, ADDRESS_ID, {
@@ -196,7 +201,7 @@ describe('against the real address book', () => {
   describe('#deleteAddress', () => {
     test('Should DELETE by id with the organisation header', async () => {
       const scope = addressBookApi()
-        .delete(ADDRESS_PATH)
+        .delete(addressApiPath(ADDRESS_ID))
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .reply(204)
 
@@ -209,7 +214,7 @@ describe('against the real address book', () => {
   describe('on a failure', () => {
     test('Should surface the API message and status when the body has no detail', async () => {
       addressBookApi()
-        .get(ADDRESSES_PATH)
+        .get(addressesApiPath())
         .query({ page: '1', pageSize: String(PAGE_SIZE) })
         .reply(404, {
           message: 'No static resource organisation/5900001/addresses.'

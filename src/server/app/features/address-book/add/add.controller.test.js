@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESSES_PATH,
+  addressesApiPath,
   INVALID_ADDRESS_PAYLOAD,
   ORGANISATION_ID_HEADER
 } from '../../../../common/test-helpers/address-book-requests.js'
@@ -138,7 +138,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 
   test('POST re-renders form when API returns 400 validation errors', async () => {
     const scope = addressBookApi()
-      .post(ADDRESSES_PATH)
+      .post(addressesApiPath())
       .reply(400, {
         type: 'https://api.cdp.defra.cloud/problems/validation-error',
         errors: {
@@ -161,7 +161,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   test('POST sends the address to the address book for the organisation and redirects to the address book', async () => {
     let posted
     const scope = addressBookApi()
-      .post(ADDRESSES_PATH, (body) => {
+      .post(addressesApiPath(), (body) => {
         posted = body
         return true
       })
@@ -185,7 +185,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('POST shows the address added banner on the address book', async () => {
-    addressBookApi().post(ADDRESSES_PATH).reply(201, {
+    addressBookApi().post(addressesApiPath()).reply(201, {
       id: '665f1c2ab3e4d51a2c9d0e77',
       name: BUSINESS_NAME
     })
@@ -206,7 +206,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 
   test('POST shows the recoverable-error banner when the address book rejects the save with a server error', async () => {
     addressBookApi()
-      .post(ADDRESSES_PATH)
+      .post(addressesApiPath())
       .reply(503, { title: 'Service Unavailable' })
 
     const { result, statusCode, headers } = await postAdd(
@@ -227,7 +227,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   test('POST sends the trimmed form fields and nothing else to the address book', async () => {
     let posted
     const scope = addressBookApi()
-      .post(ADDRESSES_PATH, (body) => {
+      .post(addressesApiPath(), (body) => {
         posted = body
         return true
       })
@@ -356,7 +356,7 @@ describe(
     })
 
     test('POST from a handshake returns to the journey with the new address id and no address-book banner', async () => {
-      const scope = addressBookApi().post(ADDRESSES_PATH).reply(201, {
+      const scope = addressBookApi().post(addressesApiPath()).reply(201, {
         id: '665f1c2ab3e4d51a2c9d0e77',
         name: BUSINESS_NAME
       })
@@ -383,7 +383,7 @@ describe(
 
     test('POST from a handshake keeps the journey on the form when the API rejects the address', async () => {
       addressBookApi()
-        .post(ADDRESSES_PATH)
+        .post(addressesApiPath())
         .reply(statusCodes.badRequest, {
           type: 'https://api.cdp.defra.cloud/problems/validation-error',
           errors: {

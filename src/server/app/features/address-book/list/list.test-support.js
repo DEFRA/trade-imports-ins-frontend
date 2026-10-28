@@ -2,7 +2,7 @@ import { load } from 'cheerio'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESSES_PATH,
+  addressesApiPath,
   getPage
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
@@ -83,7 +83,7 @@ export const startServerWithPageReader = () => {
 
 const interceptListRequest = (query) =>
   addressBookApi()
-    .get(ADDRESSES_PATH)
+    .get(addressesApiPath())
     .query({ pageSize: String(LIST_PAGE_SIZE), ...query })
 
 export const stubAddressPage = (query, addressPage) =>

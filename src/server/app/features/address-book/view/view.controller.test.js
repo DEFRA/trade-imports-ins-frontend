@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESSES_PATH,
+  addressApiPath,
   expectRedirectTo,
   expectServerErrorPage,
   getPage,
@@ -25,7 +25,6 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 }))
 
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
-const ADDRESS_API_PATH = `${ADDRESSES_PATH}/${addressId}`
 const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL = 'exports@example.com'
 const UK_NAME = 'United Kingdom'
@@ -117,7 +116,7 @@ describe('GET /address-book/{addressId}', () => {
 
   test("Should show the signed-in organisation's address field by field with the country by name", async () => {
     const scope = addressBookApi()
-      .get(ADDRESS_API_PATH)
+      .get(addressApiPath(addressId))
       .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(200, mockAddress)
 
@@ -141,7 +140,7 @@ describe('GET /address-book/{addressId}', () => {
   })
 
   test('Should show Edit as a secondary button and Delete as a warning button in the button group', async () => {
-    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
+    addressBookApi().get(addressApiPath(addressId)).reply(200, mockAddress)
 
     const { result } = await getPage(
       server(),
@@ -159,7 +158,7 @@ describe('GET /address-book/{addressId}', () => {
   })
 
   test('Should title the page with the address name', async () => {
-    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
+    addressBookApi().get(addressApiPath(addressId)).reply(200, mockAddress)
 
     const { result } = await getPage(
       server(),
@@ -173,7 +172,9 @@ describe('GET /address-book/{addressId}', () => {
   })
 
   test('Should redirect to the address book when the address is not found', async () => {
-    addressBookApi().get(ADDRESS_API_PATH).reply(404, { message: 'Not found' })
+    addressBookApi()
+      .get(addressApiPath(addressId))
+      .reply(404, { message: 'Not found' })
 
     const { headers, statusCode } = await getPage(
       server(),
@@ -210,7 +211,7 @@ describe('GET /address-book/{addressId}', () => {
 
   test('Should redirect to the address book for soft-deleted tombstones', async () => {
     addressBookApi()
-      .get(ADDRESS_API_PATH)
+      .get(addressApiPath(addressId))
       .reply(200, { ...mockAddress, deleted: true })
 
     const { headers, statusCode } = await getPage(
@@ -224,7 +225,7 @@ describe('GET /address-book/{addressId}', () => {
   })
 
   test('Should return 500 when the address book cannot be reached', async () => {
-    serveAddressBookServerError(ADDRESS_API_PATH)
+    serveAddressBookServerError(addressApiPath(addressId))
 
     expectServerErrorPage(
       await getPage(server(), ADDRESS_PAGE_PATH, 'view-get-500')
@@ -236,7 +237,7 @@ describe('GET /address-book/{addressId} with a return', () => {
   const server = startRealModeServerServingCountries(countries)
 
   test('Should link Back to an INS return and carry it on Edit and Delete', async () => {
-    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
+    addressBookApi().get(addressApiPath(addressId)).reply(200, mockAddress)
 
     const { result, statusCode } = await getPage(
       server(),
@@ -261,7 +262,7 @@ describe('GET /address-book/{addressId} with a return', () => {
   })
 
   test("Should point Back at the address book for a return to the address's own page", async () => {
-    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
+    addressBookApi().get(addressApiPath(addressId)).reply(200, mockAddress)
 
     const { result, statusCode } = await getPage(
       server(),
@@ -275,7 +276,7 @@ describe('GET /address-book/{addressId} with a return', () => {
 
   test('Should link Back to a return on the animals frontend origin', async () => {
     const animalsUrl = `${new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin}/live-animals/notifications/abc`
-    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
+    addressBookApi().get(addressApiPath(addressId)).reply(200, mockAddress)
 
     const { result, statusCode } = await getPage(
       server(),
@@ -288,7 +289,7 @@ describe('GET /address-book/{addressId} with a return', () => {
   })
 
   test('Should point Back at the address book and carry no return for a return on another origin', async () => {
-    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
+    addressBookApi().get(addressApiPath(addressId)).reply(200, mockAddress)
 
     const { result, statusCode } = await getPage(
       server(),
@@ -303,7 +304,9 @@ describe('GET /address-book/{addressId} with a return', () => {
   })
 
   test('Should redirect to an honoured return when the address is not found', async () => {
-    addressBookApi().get(ADDRESS_API_PATH).reply(404, { message: 'Not found' })
+    addressBookApi()
+      .get(addressApiPath(addressId))
+      .reply(404, { message: 'Not found' })
 
     const { headers, statusCode } = await getPage(
       server(),

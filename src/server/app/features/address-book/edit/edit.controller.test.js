@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESSES_PATH,
+  addressApiPath,
   expectRedirectTo,
   expectServerErrorPage,
   getPage,
@@ -26,7 +26,6 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 }))
 
 const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
-const ADDRESS_PATH = `${ADDRESSES_PATH}/${ADDRESS_ID}`
 const EDIT_URL = `/address-book/${ADDRESS_ID}/edit`
 const VIEW_PATH = `/address-book/${ADDRESS_ID}`
 const ADDRESS_BOOK_PATH = '/address-book'
@@ -75,10 +74,12 @@ const validPayload = {
 }
 
 const serveLiveAddress = (address = mockAddress) =>
-  addressBookApi().get(ADDRESS_PATH).reply(200, address)
+  addressBookApi().get(addressApiPath(ADDRESS_ID)).reply(200, address)
 
 const serveNoAddress = () =>
-  addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
+  addressBookApi()
+    .get(addressApiPath(ADDRESS_ID))
+    .reply(404, { message: 'Not found' })
 
 const getEdit = (server, sessionId, query = '') =>
   getPage(server, `${EDIT_URL}${query}`, sessionId)
@@ -274,7 +275,7 @@ describe('GET /address-book/{addressId}/edit', () => {
   })
 
   test('Should return 500 when the address book cannot be reached', async () => {
-    serveAddressBookServerError(ADDRESS_PATH)
+    serveAddressBookServerError(addressApiPath(ADDRESS_ID))
 
     expectServerErrorPage(await getEdit(server(), 'edit-get-500'))
   })
@@ -287,7 +288,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     serveLiveAddress()
     let sent
     const scope = addressBookApi()
-      .put(ADDRESS_PATH, (body) => {
+      .put(addressApiPath(ADDRESS_ID), (body) => {
         sent = body
         return true
       })
@@ -308,7 +309,7 @@ describe('POST /address-book/{addressId}/edit', () => {
   test('Should show the address book banner naming the address as the address book returns it', async () => {
     serveLiveAddress()
     addressBookApi()
-      .put(ADDRESS_PATH)
+      .put(addressApiPath(ADDRESS_ID))
       .reply(200, { ...mockAddress, name: 'GREEN VALLEY FARM' })
 
     const { headers } = await postEdit(server(), 'edit-post-banner', {
@@ -392,7 +393,9 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should redirect to the address book when the address is deleted between the read and the update', async () => {
     serveLiveAddress()
-    addressBookApi().put(ADDRESS_PATH).reply(404, { message: 'Not found' })
+    addressBookApi()
+      .put(addressApiPath(ADDRESS_ID))
+      .reply(404, { message: 'Not found' })
 
     expectRedirectTo(
       await postEdit(server(), 'edit-post-update-404', validPayload),
@@ -403,7 +406,7 @@ describe('POST /address-book/{addressId}/edit', () => {
   test('Should show the recoverable-error banner and keep the posted values when the address book rejects the update with a server error', async () => {
     serveLiveAddress()
     addressBookApi()
-      .put(ADDRESS_PATH)
+      .put(addressApiPath(ADDRESS_ID))
       .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
 
     const { result, statusCode } = await postEdit(server(), 'edit-post-500', {
@@ -418,7 +421,7 @@ describe('POST /address-book/{addressId}/edit', () => {
   })
 
   test('Should show the recoverable-error banner, keep the posted values and send nothing when the live read fails with a server error', async () => {
-    serveAddressBookServerError(ADDRESS_PATH)
+    serveAddressBookServerError(addressApiPath(ADDRESS_ID))
 
     const { result, statusCode } = await postEdit(
       server(),

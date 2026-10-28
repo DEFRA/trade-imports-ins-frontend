@@ -10,7 +10,11 @@ export const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
 export const OTHER_ORGANISATION_ID = '0c4e7a92-3b1d-4f58-a6e2-9d8b5c1f7a34'
 
-export const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
+export const addressesApiPath = (organisationId = ORGANISATION_ID) =>
+  `/organisation/${organisationId}/addresses`
+
+export const addressApiPath = (addressId, organisationId = ORGANISATION_ID) =>
+  `${addressesApiPath(organisationId)}/${addressId}`
 
 export const INVALID_ADDRESS_PAYLOAD = {
   name: '',
@@ -51,7 +55,7 @@ export const serveAddressBookServerError = (path) =>
 
 export const serveAddressNotFoundForOtherOrganisation = (addressId) =>
   addressBookApi()
-    .get(`/organisation/${OTHER_ORGANISATION_ID}/addresses/${addressId}`)
+    .get(addressApiPath(addressId, OTHER_ORGANISATION_ID))
     .matchHeader(ORGANISATION_ID_HEADER, OTHER_ORGANISATION_ID)
     .reply(statusCodes.notFound, { message: 'Not found' })
 

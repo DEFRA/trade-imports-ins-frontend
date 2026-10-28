@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../common/constants/status-codes.js'
 import {
-  ADDRESSES_PATH,
+  addressApiPath,
   INVALID_ADDRESS_PAYLOAD
 } from '../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
@@ -84,7 +84,7 @@ describe('#referenceDataOutage', () => {
 
   test('Should serve a stored address as a 503 error page', async () => {
     addressBookApi()
-      .get(`${ADDRESSES_PATH}/${ADDRESS_ID}`)
+      .get(addressApiPath(ADDRESS_ID))
       .reply(statusCodes.ok, STORED_ADDRESS)
     refuseCountries()
 
@@ -99,7 +99,7 @@ describe('#referenceDataOutage', () => {
 
   test('Should serve saving an edited address as a 503 error page', async () => {
     addressBookApi()
-      .get(`${ADDRESSES_PATH}/${ADDRESS_ID}`)
+      .get(addressApiPath(ADDRESS_ID))
       .reply(statusCodes.ok, STORED_ADDRESS)
     refuseCountries()
 
