@@ -364,6 +364,8 @@ describe('in stub mode', () => {
         })
       ).items.map(({ name }) => name)
 
+    expect(await search('glen')).toEqual([GLEN_DEPOT])
+    expect(await search('iv2 3jh')).toEqual([GLEN_DEPOT])
     expect(await search(' BALLYMORE ')).toEqual([GLEN_DEPOT])
     expect(await search('antrim')).toEqual([GLEN_DEPOT])
     expect(await search('inverness')).toEqual([GLEN_DEPOT])
