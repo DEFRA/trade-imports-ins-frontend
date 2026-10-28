@@ -19,17 +19,24 @@ const utc = (year, month, day) => new Date(Date.UTC(year, month - 1, day))
 
 describe('#formatCalendarDate', () => {
   it.each([WEST_OF_UTC, EAST_OF_UTC])(
-    'renders the UTC calendar day when the process zone is %s',
+    'renders the calendar day when the process zone is %s',
     (zone) => {
       runInZone(zone, () => {
-        expect(formatCalendarDate(utc(2026, 7, 21))).toBe('21 Jul 2026')
+        expect(formatCalendarDate('2026-07-21')).toBe('21 Jul 2026')
       })
     }
   )
 
   it('renders September with a three-letter month', () => {
-    expect(formatCalendarDate(utc(2026, 9, 10))).toBe('10 Sep 2026')
+    expect(formatCalendarDate('2026-09-10')).toBe('10 Sep 2026')
   })
+
+  it.each(['2026-02-30', 'not-a-date', undefined])(
+    'returns an empty string for %s, which is not a real YYYY-MM-DD date',
+    (calendarDate) => {
+      expect(formatCalendarDate(calendarDate)).toBe('')
+    }
+  )
 })
 
 describe('#startOfUtcDay', () => {

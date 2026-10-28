@@ -1,11 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-import {
-  EAST_OF_UTC,
-  WEST_OF_UTC,
-  runInZone
-} from '../../../../common/test-helpers/run-in-zone.js'
-
 const configState = vi.hoisted(() => {
   const defaultAnimalsBaseUrl = 'http://localhost:3000'
   return { defaultAnimalsBaseUrl, animalsBaseUrl: defaultAnimalsBaseUrl }
@@ -34,7 +28,6 @@ const {
   buildNotificationLink,
   buildStartNewNotificationLink,
   dashboardPageHref,
-  formatDisplayDate,
   mapNotificationRows
 } = await import('./list.js')
 
@@ -124,29 +117,6 @@ describe('#buildStartNewNotificationLink', () => {
     expect(buildStartNewNotificationLink()).toBe(
       'http://localhost:3000/live-animals'
     )
-  })
-})
-
-describe('#formatDisplayDate', () => {
-  test('formats an ISO date as "d MMM yyyy"', () => {
-    expect(formatDisplayDate('2026-09-10')).toBe('10 Sep 2026')
-  })
-
-  test.each([WEST_OF_UTC, EAST_OF_UTC])(
-    'renders the ISO date as that calendar day when the process zone is %s',
-    (zone) => {
-      runInZone(zone, () => {
-        expect(formatDisplayDate('2026-07-21')).toBe('21 Jul 2026')
-      })
-    }
-  )
-
-  test('returns an empty string for a missing value', () => {
-    expect(formatDisplayDate(undefined)).toBe('')
-  })
-
-  test('returns an empty string for an invalid value', () => {
-    expect(formatDisplayDate('not-a-date')).toBe('')
   })
 })
 
