@@ -26,8 +26,8 @@ export {
 export {
   addUtcDays,
   addUtcMonths,
-  formatCalendarDate,
   formatDateText,
+  formatDisplayCalendarDate,
   isRealDate,
   parseDateText,
   startOfDayInZone,

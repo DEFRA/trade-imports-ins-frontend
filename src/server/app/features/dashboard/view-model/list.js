@@ -1,7 +1,7 @@
 import { SET_BASES } from '../../../../common/constants/journey-set-bases.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { buildSetBaseUrl } from '../../../../common/helpers/set-base-url.js'
-import { formatCalendarDate } from '../../../lib/validate/index.js'
+import { formatDisplayCalendarDate } from '../../../lib/validate/index.js'
 import { dashboardPath } from '../../../shared/paths.js'
 
 const logger = createLogger()
@@ -70,7 +70,7 @@ export function mapNotificationRows(notifications, countryNames = {}) {
 }
 
 function formatArrivalDate({ referenceNumber, arrivalDate }) {
-  const formatted = formatCalendarDate(arrivalDate)
+  const formatted = formatDisplayCalendarDate(arrivalDate)
   if (!formatted && arrivalDate != null) {
     logger.warn(
       { referenceNumber, arrivalDate },
