@@ -55,19 +55,22 @@ describe('against the real address book', () => {
     test('Should GET the organisation path with the organisation and trace headers and parse the page', async () => {
       const scope = addressBookApi()
         .get(ADDRESSES_PATH)
-        .query({ page: '1' })
+        .query({ page: '1', pageSize: '8' })
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .matchHeader(TRACING_HEADER, TRACE_ID)
         .reply(
           200,
-          pageOf([{ id: 'abc', name: 'Farm', addressLine1: '1 Road' }])
+          pageOf([{ id: 'abc', name: 'Farm', addressLine1: '1 Road' }], {
+            pageSize: 8
+          })
         )
 
       const addressPage = await addressBook.listAddresses(ORGANISATION_ID, {
-        page: 1
+        page: 1,
+        pageSize: 8
       })
 
-      expect(addressPage.pageSize).toBe(25)
+      expect(addressPage.pageSize).toBe(8)
       expect(addressPage.totalItems).toBe(1)
       expect(addressPage.items[0].addressLine1).toBe('1 Road')
       expect(scope.isDone()).toBe(true)
@@ -203,12 +206,15 @@ describe('against the real address book', () => {
 
   describe('on a failure', () => {
     test('Should surface the API message and status when the body has no detail', async () => {
-      addressBookApi().get(ADDRESSES_PATH).query({ page: '1' }).reply(404, {
-        message: 'No static resource organisation/5900001/addresses.'
-      })
+      addressBookApi()
+        .get(ADDRESSES_PATH)
+        .query({ page: '1', pageSize: '8' })
+        .reply(404, {
+          message: 'No static resource organisation/5900001/addresses.'
+        })
 
       await expect(
-        addressBook.listAddresses(ORGANISATION_ID)
+        addressBook.listAddresses(ORGANISATION_ID, { page: 1, pageSize: 8 })
       ).rejects.toMatchObject({
         message: 'No static resource organisation/5900001/addresses.',
         status: 404

@@ -48,9 +48,7 @@ export const listAddresses = async (
 ) => {
   const url = new URL(addressesUrl(organisationId))
   url.searchParams.set('page', String(page))
-  if (pageSize) {
-    url.searchParams.set('pageSize', String(pageSize))
-  }
+  url.searchParams.set('pageSize', String(pageSize))
   if (searchTerm) {
     url.searchParams.set('q', searchTerm)
   }
