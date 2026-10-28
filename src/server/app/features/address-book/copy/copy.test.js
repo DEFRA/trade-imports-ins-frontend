@@ -59,6 +59,20 @@ describe('#copy', () => {
     expect(copy.list.noResults).toBe('Showing 0 of 0')
   })
 
+  it('Should label the English form fields with the labels the design sets', () => {
+    expect(copy.form.fields).toEqual({
+      name: 'Name or organisation',
+      addressLine1: 'Address line 1',
+      addressLine2: 'Address line 2 (optional)',
+      townOrCity: 'Town or city',
+      county: 'County (optional)',
+      postcode: 'Postcode or Zip code',
+      countryCode: 'Country',
+      phone: 'Phone number',
+      email: 'Email address'
+    })
+  })
+
   it.each(LOCALES)(
     'Should label every %s form field, and no other',
     (_locale, bundle) => {
