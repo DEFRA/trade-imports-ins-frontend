@@ -15,7 +15,7 @@ import {
   parisDepotAddress,
   resultsLineOf,
   rowCellsOf,
-  startListPage,
+  startServerWithPageReader,
   stubAddressBookUnavailable,
   stubAddressPage,
   tableHeadingsOf,
@@ -27,12 +27,12 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 }))
 
 describe('#addressBookListController', () => {
-  const getList = startListPage()
+  const readPage = startServerWithPageReader()
 
   test("renders the results count, column headings, and each address's View link and country label", async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, parisDepotAddress]))
 
-    const { $, statusCode } = await getList(LIST_URL, 'list-with-addresses')
+    const { $, statusCode } = await readPage(LIST_URL, 'list-with-addresses')
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(contentOf($).children('h1').text()).toBe('Address book')
@@ -57,7 +57,7 @@ describe('#addressBookListController', () => {
       )
     )
 
-    const { html, statusCode } = await getList(
+    const { html, statusCode } = await readPage(
       `${LIST_URL}?page=2`,
       'list-page-2'
     )
@@ -76,7 +76,7 @@ describe('#addressBookListController', () => {
         pageOf([highlandAddress], { pageSize: 8 })
       )
 
-      const { statusCode } = await getList(
+      const { statusCode } = await readPage(
         `${LIST_URL}?page=${queryPage}`,
         'list-unusable-page'
       )
@@ -101,7 +101,7 @@ describe('#addressBookListController', () => {
       })
     )
 
-    const { $, statusCode } = await getList(
+    const { $, statusCode } = await readPage(
       `${LIST_URL}?page=99`,
       'list-stale-page'
     )
@@ -120,7 +120,7 @@ describe('#addressBookListController', () => {
       pageOf([greenFarmAddress, fullAddress], { pageSize: 8 })
     )
 
-    const { $ } = await getList(`${LIST_URL}?q=green`, 'list-search-one-page')
+    const { $ } = await readPage(`${LIST_URL}?q=green`, 'list-search-one-page')
 
     expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
     expect($('.govuk-pagination')).toHaveLength(0)
@@ -132,7 +132,7 @@ describe('#addressBookListController', () => {
       pageOf([parisDepotAddress])
     )
 
-    const { $, statusCode } = await getList(
+    const { $, statusCode } = await readPage(
       `${LIST_URL}?q=fran`,
       'list-search-country'
     )
@@ -152,7 +152,7 @@ describe('#addressBookListController', () => {
     async (_, addressPage) => {
       stubAddressPage({ page: '1', q: 'green' }, addressPage)
 
-      const { $ } = await getList(`${LIST_URL}?q=green`, 'list-clear-search')
+      const { $ } = await readPage(`${LIST_URL}?q=green`, 'list-clear-search')
 
       const clearSearch = $('[data-testid="address-book-clear-search"]')
       expect(clearSearch.text().trim()).toBe('Clear search')
@@ -176,7 +176,7 @@ describe('#addressBookListController', () => {
       })
     )
 
-    const { $, statusCode } = await getList(
+    const { $, statusCode } = await readPage(
       `${LIST_URL}?q=green&countryCode=GB&page=2`,
       'list-search-page-2'
     )
@@ -198,7 +198,7 @@ describe('#addressBookListController', () => {
   test('returns 500 when the address book cannot be reached, with the heading, intro, Add button and filter but no results line or table', async () => {
     stubAddressBookUnavailable()
 
-    const { $, html, statusCode } = await getList(LIST_URL, 'list-500')
+    const { $, html, statusCode } = await readPage(LIST_URL, 'list-500')
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(html).toContain('govuk-notification-banner')

@@ -15,7 +15,7 @@ import {
   highlandAddress,
   resultsLineOf,
   rowCellsOf,
-  startListPage,
+  startServerWithPageReader,
   stubAddressPage,
   tableHeadingsOf,
   tagNamesOf
@@ -37,12 +37,12 @@ const linksAfterFilterForm = ($) =>
     .get()
 
 describe('#addressBookListLayout', () => {
-  const getList = startListPage()
+  const readPage = startServerWithPageReader()
 
   test('lays the page out as heading, large intro, Add button, then the filter form wrapping a collapsed Filter addresses disclosure', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
-    const { $ } = await getList(LIST_URL, 'list-layout')
+    const { $ } = await readPage(LIST_URL, 'list-layout')
 
     const content = contentOf($)
     expect(tagNamesOf(content.children())).toEqual([
@@ -74,7 +74,7 @@ describe('#addressBookListLayout', () => {
   test('holds the Search label, its hint, the input and one icon-only submit button inside the disclosure', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
-    const { $ } = await getList(LIST_URL, 'list-search-controls')
+    const { $ } = await readPage(LIST_URL, 'list-search-controls')
 
     const controls = contentOf($).find('form details .govuk-details__text')
     expect(
@@ -107,7 +107,7 @@ describe('#addressBookListLayout', () => {
   test('shows Showing 0 of 0 and the table headings with no rows when the book is empty', async () => {
     stubAddressPage({ page: '1' }, pageOf([]))
 
-    const { $, statusCode } = await getList(LIST_URL, 'list-empty')
+    const { $, statusCode } = await readPage(LIST_URL, 'list-empty')
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(resultsLineOf($)).toBe(NO_RESULTS_LINE)
@@ -119,7 +119,7 @@ describe('#addressBookListLayout', () => {
   test('breaks the name after its first word and puts every stored address line on its own line', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, fullAddress]))
 
-    const { $ } = await getList(LIST_URL, 'list-cells')
+    const { $ } = await readPage(LIST_URL, 'list-cells')
 
     expect(rowCellsOf($, 0).eq(0).html()).toBe('Highland<br> Livestock Ltd')
     expect(rowCellsOf($, 0).eq(1).html()).toBe(
@@ -146,7 +146,7 @@ describe('#addressBookListLayout', () => {
       ])
     )
 
-    const { $, html } = await getList(LIST_URL, 'list-escaping')
+    const { $, html } = await readPage(LIST_URL, 'list-escaping')
 
     expect(html).toContain('&lt;b&gt;Bold&lt;/b&gt;<br> Farm')
     expect(html).toContain('1 &lt;i&gt;Lane&lt;/i&gt;&#39;s End,<br> Inverness')
@@ -156,7 +156,7 @@ describe('#addressBookListLayout', () => {
   test('lists the match under the filter with Clear search and its View link as the only links there', async () => {
     stubAddressPage({ page: '1', q: 'green' }, pageOf([greenFarmAddress]))
 
-    const { $, statusCode } = await getList(
+    const { $, statusCode } = await readPage(
       `${LIST_URL}?q=green`,
       'list-search-with-results'
     )
@@ -175,7 +175,7 @@ describe('#addressBookListLayout', () => {
   test('shows Showing 0 of 0, the table headings, no rows and Clear search as the only link under the filter when a search matches nothing', async () => {
     stubAddressPage({ page: '1', q: 'zzznomatch' }, pageOf([]))
 
-    const { $, statusCode } = await getList(
+    const { $, statusCode } = await readPage(
       `${LIST_URL}?q=zzznomatch`,
       'list-no-results'
     )

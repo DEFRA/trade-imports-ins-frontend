@@ -52,12 +52,13 @@ read the banner),
 for the started server).
 
 [`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
-holds the list's fixtures, nock stubs and Cheerio readers: `startListPage()`,
-`stubAddressPage(query, addressPage)`, `stubAddressBookUnavailable()`,
-`contentOf`, `tableHeadingsOf`, `resultsLineOf`, `bodyRowCountOf`,
-`rowCellsOf` and `tagNamesOf`. A list controller test calls
-`const getList = startListPage()`, which starts the server serving GB and FR,
-and reads pages with `getList(url, sessionId)`, which wraps `getPage()`,
+holds the list's fixtures, nock stubs and Cheerio readers:
+`startServerWithPageReader()`, `stubAddressPage(query, addressPage)`,
+`stubAddressBookUnavailable()`, `contentOf`, `tableHeadingsOf`,
+`resultsLineOf`, `bodyRowCountOf`, `rowCellsOf` and `tagNamesOf`. A list
+controller test calls `const readPage = startServerWithPageReader()`, which
+starts the server serving GB and FR and returns a page reader, and reads
+pages with `readPage(url, sessionId)`, which wraps `getPage()`,
 loads the HTML into Cheerio and returns `{ $, html, statusCode }`.
 
 Mock at the network boundary: nock answers the HTTP calls the real

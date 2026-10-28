@@ -69,7 +69,7 @@ export const bodyRowCountOf = ($) => $('tbody tr').length
 export const rowCellsOf = ($, rowIndex) =>
   $('tbody tr').eq(rowIndex).children('td')
 
-export const startListPage = () => {
+export const startServerWithPageReader = () => {
   const server = startRealModeServerServingCountries([
     { code: 'GB', name: 'United Kingdom' },
     { code: 'FR', name: 'France' }
