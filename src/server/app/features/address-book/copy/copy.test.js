@@ -129,8 +129,8 @@ describe('#copy', () => {
     expect(cy.successBanner.deletedUnnamed).toBe('Cyfeiriad wedi’i ddileu')
   })
 
-  it('Should carry a Welsh edit page title that differs from the English', () => {
-    expect(cy.edit.title).not.toBe(copy.edit.title)
+  it('Should carry the Welsh edit page title', () => {
+    expect(cy.edit.title).toBe('Golygu manylion cyfeiriad a manylion cyswllt')
   })
 
   it('Should word the Welsh list title, intro, search, add link, results lines, table headings and View link', () => {
