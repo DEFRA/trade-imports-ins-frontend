@@ -1,11 +1,11 @@
 import { addDays, addMonths, isValid, parse } from 'date-fns'
 
 export const isRealDate = (year, month, day) => {
-  const MONTHS_IN_YEAR = 12
+  const monthsInYear = 12
   if (![year, month, day].every(Number.isInteger)) {
     return false
   }
-  if (month < 1 || month > MONTHS_IN_YEAR) {
+  if (month < 1 || month > monthsInYear) {
     return false
   }
   if (day < 1) {
@@ -44,13 +44,13 @@ export const addUtcMonths = (date, months) =>
   addMonths(startOfUtcDay(date), months)
 
 export const parseDateText = (raw) => {
-  const DATE_TEXT_FORMAT = 'd/M/yyyy'
+  const dateTextFormat = 'd/M/yyyy'
   const fourDigitYearDateText = /^\d{1,2}\/\d{1,2}\/\d{4}$/
   const text = String(raw ?? '').trim()
   if (!fourDigitYearDateText.test(text)) {
     return null
   }
-  const parsed = parse(text, DATE_TEXT_FORMAT, new Date())
+  const parsed = parse(text, dateTextFormat, new Date())
   return isValid(parsed)
     ? new Date(
         Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
