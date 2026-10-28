@@ -25,11 +25,12 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 }))
 
 const addressId = '665f1c2ab3e4d51a2c9d0e77'
-const ADDRESS_PATH = `${ADDRESSES_PATH}/${addressId}`
+const ADDRESS_API_PATH = `${ADDRESSES_PATH}/${addressId}`
 const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL = 'exports@example.com'
 const UK_NAME = 'United Kingdom'
 const ADDRESS_BOOK_PATH = '/address-book'
+const ADDRESS_PAGE_PATH = `${ADDRESS_BOOK_PATH}/${addressId}`
 const BACK_LINK = 'a.govuk-back-link'
 const INS_HOME = '/'
 const INS_HOME_RETURN = encodeURIComponent(INS_HOME)
@@ -112,13 +113,13 @@ describe('GET /address-book/{addressId}', () => {
 
   test("Should show the signed-in organisation's address field by field with the country by name", async () => {
     const scope = addressBookApi()
-      .get(ADDRESS_PATH)
+      .get(ADDRESS_API_PATH)
       .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(200, mockAddress)
 
     const { result, statusCode } = await getPage(
       server(),
-      `/address-book/${addressId}`,
+      ADDRESS_PAGE_PATH,
       'view-get'
     )
 
@@ -139,17 +140,17 @@ describe('GET /address-book/{addressId}', () => {
   })
 
   test('Should show Edit as a secondary button and Delete as a warning button in the button group', async () => {
-    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
 
     const { result } = await getPage(
       server(),
-      `/address-book/${addressId}`,
+      ADDRESS_PAGE_PATH,
       'view-get-buttons'
     )
 
     const group = load(result)('.govuk-button-group')
-    const editLink = group.find(`a[href="/address-book/${addressId}/edit"]`)
-    const deleteLink = group.find(`a[href="/address-book/${addressId}/delete"]`)
+    const editLink = group.find(`a[href="${ADDRESS_PAGE_PATH}/edit"]`)
+    const deleteLink = group.find(`a[href="${ADDRESS_PAGE_PATH}/delete"]`)
     expect(editLink).toHaveLength(1)
     expect(editLink.hasClass('govuk-button--secondary')).toBe(true)
     expect(deleteLink).toHaveLength(1)
@@ -157,11 +158,11 @@ describe('GET /address-book/{addressId}', () => {
   })
 
   test('Should title the page with the address name', async () => {
-    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
 
     const { result } = await getPage(
       server(),
-      `/address-book/${addressId}`,
+      ADDRESS_PAGE_PATH,
       'view-get-title'
     )
 
@@ -171,11 +172,11 @@ describe('GET /address-book/{addressId}', () => {
   })
 
   test('Should redirect to the address book when the address is not found', async () => {
-    addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
+    addressBookApi().get(ADDRESS_API_PATH).reply(404, { message: 'Not found' })
 
     const { headers, statusCode } = await getPage(
       server(),
-      `/address-book/${addressId}`,
+      ADDRESS_PAGE_PATH,
       'view-not-found'
     )
 
@@ -188,7 +189,7 @@ describe('GET /address-book/{addressId}', () => {
 
     const response = await getPageAsOtherOrganisation(
       server(),
-      `/address-book/${addressId}`,
+      ADDRESS_PAGE_PATH,
       'view-other-org'
     )
 
@@ -208,12 +209,12 @@ describe('GET /address-book/{addressId}', () => {
 
   test('Should redirect to the address book for soft-deleted tombstones', async () => {
     addressBookApi()
-      .get(ADDRESS_PATH)
+      .get(ADDRESS_API_PATH)
       .reply(200, { ...mockAddress, deleted: true })
 
     const { headers, statusCode } = await getPage(
       server(),
-      `/address-book/${addressId}`,
+      ADDRESS_PAGE_PATH,
       'view-get-tombstone'
     )
 
@@ -222,10 +223,10 @@ describe('GET /address-book/{addressId}', () => {
   })
 
   test('Should return 500 when the address book cannot be reached', async () => {
-    serveAddressBookServerError(ADDRESS_PATH)
+    serveAddressBookServerError(ADDRESS_API_PATH)
 
     expectServerErrorPage(
-      await getPage(server(), `/address-book/${addressId}`, 'view-get-500')
+      await getPage(server(), ADDRESS_PAGE_PATH, 'view-get-500')
     )
   })
 })
@@ -234,11 +235,11 @@ describe('GET /address-book/{addressId} with a return', () => {
   const server = startRealModeServerServingCountries(countries)
 
   test('Should link Back to an INS return and carry it on Edit and Delete', async () => {
-    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
 
     const { result, statusCode } = await getPage(
       server(),
-      `/address-book/${addressId}?return=${INS_HOME_RETURN}`,
+      `${ADDRESS_PAGE_PATH}?return=${INS_HOME_RETURN}`,
       'view-return-ins'
     )
 
@@ -248,23 +249,22 @@ describe('GET /address-book/{addressId} with a return', () => {
     const group = $('.govuk-button-group')
     expect(
       group.find(
-        `a[href="/address-book/${addressId}/edit?return=${INS_HOME_RETURN}"]`
+        `a[href="${ADDRESS_PAGE_PATH}/edit?return=${INS_HOME_RETURN}"]`
       )
     ).toHaveLength(1)
     expect(
       group.find(
-        `a[href="/address-book/${addressId}/delete?return=${INS_HOME_RETURN}"]`
+        `a[href="${ADDRESS_PAGE_PATH}/delete?return=${INS_HOME_RETURN}"]`
       )
     ).toHaveLength(1)
   })
 
   test("Should point Back at the address book for a return to the address's own page", async () => {
-    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
-    const ownPage = `/address-book/${addressId}`
+    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
 
     const { result, statusCode } = await getPage(
       server(),
-      `${ownPage}?return=${encodeURIComponent(ownPage)}`,
+      `${ADDRESS_PAGE_PATH}?return=${encodeURIComponent(ADDRESS_PAGE_PATH)}`,
       'view-return-own-page'
     )
 
@@ -274,11 +274,11 @@ describe('GET /address-book/{addressId} with a return', () => {
 
   test('Should link Back to a return on the animals frontend origin', async () => {
     const animalsUrl = `${new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin}/live-animals/notifications/abc`
-    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
 
     const { result, statusCode } = await getPage(
       server(),
-      `/address-book/${addressId}?return=${encodeURIComponent(animalsUrl)}`,
+      `${ADDRESS_PAGE_PATH}?return=${encodeURIComponent(animalsUrl)}`,
       'view-return-animals'
     )
 
@@ -287,11 +287,11 @@ describe('GET /address-book/{addressId} with a return', () => {
   })
 
   test('Should point Back at the address book and carry no return for a return on another origin', async () => {
-    addressBookApi().get(ADDRESS_PATH).reply(200, mockAddress)
+    addressBookApi().get(ADDRESS_API_PATH).reply(200, mockAddress)
 
     const { result, statusCode } = await getPage(
       server(),
-      `/address-book/${addressId}?return=https%3A%2F%2Fevil.example%2F`,
+      `${ADDRESS_PAGE_PATH}?return=https%3A%2F%2Fevil.example%2F`,
       'view-return-other-origin'
     )
 
@@ -302,11 +302,11 @@ describe('GET /address-book/{addressId} with a return', () => {
   })
 
   test('Should redirect to an honoured return when the address is not found', async () => {
-    addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
+    addressBookApi().get(ADDRESS_API_PATH).reply(404, { message: 'Not found' })
 
     const { headers, statusCode } = await getPage(
       server(),
-      `/address-book/${addressId}?return=${INS_HOME_RETURN}`,
+      `${ADDRESS_PAGE_PATH}?return=${INS_HOME_RETURN}`,
       'view-return-not-found'
     )
 
