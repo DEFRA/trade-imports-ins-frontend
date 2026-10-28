@@ -68,7 +68,7 @@ export const formatDateText = (date) =>
  * @param {string} [calendarDate] - The date as `YYYY-MM-DD`.
  * @returns {string} e.g. `21 Jul 2026`, or `''` when the value is not a real `YYYY-MM-DD` date.
  */
-export const formatCalendarDate = (calendarDate) => {
+export const formatDisplayCalendarDate = (calendarDate) => {
   const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(calendarDate ?? '')
   if (!parts) {
     return ''
