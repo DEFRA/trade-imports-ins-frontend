@@ -27,18 +27,25 @@ export const FIELDS = Object.keys(FIELD_RULES)
 
 export const isRequiredField = (field) => FIELD_RULES[field].required === true
 
-export const ADDRESS_FIELDS = [
-  'name',
+export const POSTAL_LINE_FIELDS = [
   'addressLine1',
   'addressLine2',
   'townOrCity',
   'county',
-  'postcode',
-  'countryCode'
+  'postcode'
 ]
 
+export const ADDRESS_FIELDS = ['name', ...POSTAL_LINE_FIELDS, 'countryCode']
+
+const displayTextOf = (value) => value?.trim() || null
+
 export const addressFieldText = (address, countryLabel, field) =>
-  field === 'countryCode' ? countryLabel : (address[field] ?? null)
+  displayTextOf(field === 'countryCode' ? countryLabel : address[field])
+
+export const postalLinesOf = (address) =>
+  POSTAL_LINE_FIELDS.map((field) => displayTextOf(address[field])).filter(
+    Boolean
+  )
 
 export const formValuesOf = (address = {}) =>
   Object.fromEntries(FIELDS.map((field) => [field, address[field] ?? '']))
@@ -65,29 +72,32 @@ const emailMessagesFor = (field) => ({
   format: errors[field].format
 })
 
-const emailRule = (field, required) =>
-  (required ? requiredEmail : maxEmail)(
+const emailRule = (field) =>
+  (isRequiredField(field) ? requiredEmail : maxEmail)(
     field,
     maxLengthOf(field),
     emailMessagesFor(field)
   )
 
-const countryRule = (field, required, countryCodes) =>
-  (required ? requiredOneOf : oneOf)(
+const countryRule = (field, countryCodes) =>
+  (isRequiredField(field) ? requiredOneOf : oneOf)(
     field,
     countryCodes,
     errors[field].required
   )
 
+const textRule = (field) =>
+  isRequiredField(field) ? requiredTextRule(field) : optionalTextRule(field)
+
 const ruleFor = (field, countryCodes) => {
-  const { required, email, oneOfCountryCodes } = FIELD_RULES[field]
+  const { email, oneOfCountryCodes } = FIELD_RULES[field]
   if (oneOfCountryCodes) {
-    return countryRule(field, required, countryCodes)
+    return countryRule(field, countryCodes)
   }
   if (email) {
-    return emailRule(field, required)
+    return emailRule(field)
   }
-  return required ? requiredTextRule(field) : optionalTextRule(field)
+  return textRule(field)
 }
 
 export const addressRules = (countryCodes) =>

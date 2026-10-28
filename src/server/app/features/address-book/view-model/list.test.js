@@ -1,21 +1,45 @@
 import { describe, expect, test } from 'vitest'
 
+import { copy } from '../copy/copy.en.js'
 import {
   addressBookPageHref,
   buildAddressBookQueryString,
-  buildAddressLine,
-  mapAddressRows
+  mapAddressRows,
+  nameLinesOf,
+  resultsLabelOf
 } from './list.js'
 
-describe('#buildAddressLine', () => {
-  test('Should join addressLine1, townOrCity and postcode with commas', () => {
+describe('#nameLinesOf', () => {
+  test('Should give the first word then the rest, single-spaced, for a name of several words', () => {
+    expect(nameLinesOf('Green Valley   Farm')).toEqual(['Green', 'Valley Farm'])
+  })
+
+  test('Should give one line for a one-word name', () => {
+    expect(nameLinesOf('  Farm ')).toEqual(['Farm'])
+  })
+
+  test('Should give no lines for a blank name', () => {
+    expect(nameLinesOf('   ')).toEqual([])
+  })
+})
+
+describe('#resultsLabelOf', () => {
+  test('Should give the range label for a page with results', () => {
     expect(
-      buildAddressLine({
-        addressLine1: "14 Drover's Way",
-        townOrCity: 'Inverness',
-        postcode: 'IV2 3JH'
-      })
-    ).toBe("14 Drover's Way, Inverness, IV2 3JH")
+      resultsLabelOf(
+        { page: 1, pageSize: 25, totalItems: 1, totalPages: 1 },
+        copy.list
+      )
+    ).toBe('Showing 1-1 of 1')
+  })
+
+  test('Should give Showing 0 of 0 for a page with no results', () => {
+    expect(
+      resultsLabelOf(
+        { page: 1, pageSize: 25, totalItems: 0, totalPages: 0 },
+        copy.list
+      )
+    ).toBe('Showing 0 of 0')
   })
 })
 
@@ -25,27 +49,19 @@ describe('#buildAddressBookQueryString', () => {
     expect(buildAddressBookQueryString({ page: 1 })).toBe('')
   })
 
-  test('Should carry q and countryCode before the page param', () => {
-    expect(
-      buildAddressBookQueryString({
-        searchTerm: 'green',
-        countryCode: 'GB',
-        page: 2
-      })
-    ).toBe('?q=green&countryCode=GB&page=2')
+  test('Should carry q before the page param', () => {
+    expect(buildAddressBookQueryString({ searchTerm: 'green', page: 2 })).toBe(
+      '?q=green&page=2'
+    )
   })
 })
 
 describe('#addressBookPageHref', () => {
-  test('Should link to the address book carrying q and countryCode, adding page only after the first page', () => {
-    const search = { searchTerm: 'green', countryCode: 'GB' }
+  test('Should link to the address book carrying q, adding page only after the first page', () => {
+    const search = { searchTerm: 'green' }
 
-    expect(addressBookPageHref(1, search)).toBe(
-      '/address-book?q=green&countryCode=GB'
-    )
-    expect(addressBookPageHref(2, search)).toBe(
-      '/address-book?q=green&countryCode=GB&page=2'
-    )
+    expect(addressBookPageHref(1, search)).toBe('/address-book?q=green')
+    expect(addressBookPageHref(2, search)).toBe('/address-book?q=green&page=2')
   })
 
   test('Should link to /address-book with no query for the first page and no search', () => {
@@ -54,13 +70,13 @@ describe('#addressBookPageHref', () => {
 })
 
 describe('#mapAddressRows', () => {
-  test('Should map each address to a row with its address line and country label', () => {
+  test('Should map each address to a row with its name lines, postal lines and country label', () => {
     expect(
       mapAddressRows(
         [
           {
             id: '1',
-            name: 'Farm',
+            name: 'Green Farm',
             addressLine1: '1 Road',
             townOrCity: 'Town',
             postcode: 'AB1 2CD',
@@ -72,9 +88,9 @@ describe('#mapAddressRows', () => {
     ).toEqual([
       {
         id: '1',
-        name: 'Farm',
-        addressLine: '1 Road, Town, AB1 2CD',
-        countryCode: 'GB',
+        name: 'Green Farm',
+        nameLines: ['Green', 'Farm'],
+        postalLines: ['1 Road', 'Town', 'AB1 2CD'],
         countryLabel: 'United Kingdom'
       }
     ])

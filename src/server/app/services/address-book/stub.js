@@ -47,25 +47,50 @@ const addressesOf = (organisationId) => {
 const notFound = () =>
   Object.assign(new Error('Not found'), { status: HTTP_STATUS_NOT_FOUND })
 
-export const listAddresses = async (organisationId, { page = 1 } = {}) => {
-  const pageSize = 25
-  const addresses = addressesOf(organisationId)
-  const totalItems = addresses.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
-  const from = (page - 1) * pageSize
+const isLive = (address) => !address.deleted
 
-  return {
-    items: addresses.slice(from, from + pageSize),
-    page,
-    pageSize,
-    totalItems,
-    totalPages
+const matchesSearch = (address, { searchTerm, countryCodes = [] }) => {
+  const term = searchTerm?.trim().toLowerCase()
+  if (!term && countryCodes.length === 0) {
+    return true
   }
+  const textSearchFields = [
+    'name',
+    'addressLine1',
+    'addressLine2',
+    'townOrCity',
+    'county',
+    'postcode'
+  ]
+  const textMatches =
+    Boolean(term) &&
+    textSearchFields.some((field) =>
+      (address[field] ?? '').toLowerCase().includes(term)
+    )
+  return textMatches || countryCodes.includes(address.countryCode)
+}
+
+const pageOfMatches = (matches, { page, pageSize }) => ({
+  items: matches.slice((page - 1) * pageSize, page * pageSize),
+  page,
+  pageSize,
+  totalItems: matches.length,
+  totalPages: Math.ceil(matches.length / pageSize)
+})
+
+export const listAddresses = async (
+  organisationId,
+  { page = 1, pageSize, ...search } = {}
+) => {
+  const matches = addressesOf(organisationId)
+    .filter(isLive)
+    .filter((address) => matchesSearch(address, search))
+  return pageOfMatches(matches, { page, pageSize })
 }
 
 export const createAddress = async (organisationId, address) => {
-  const created = { id: newObjectId(), ...address }
-  addressesOf(organisationId).push(created)
+  const created = { id: newObjectId(), ...address, deleted: false }
+  addressesOf(organisationId).unshift(created)
   return created
 }
 
@@ -82,7 +107,7 @@ export const getAddress = async (organisationId, addressId) => {
 export const updateAddress = async (organisationId, addressId, address) => {
   const addresses = addressesOf(organisationId)
   const index = addresses.findIndex(
-    (storedAddress) => storedAddress.id === addressId
+    (storedAddress) => storedAddress.id === addressId && isLive(storedAddress)
   )
   if (index === -1) {
     throw notFound()
@@ -94,7 +119,8 @@ export const updateAddress = async (organisationId, addressId, address) => {
 export const deleteAddress = async (organisationId, addressId) => {
   const addresses = addressesOf(organisationId)
   const index = addresses.findIndex((address) => address.id === addressId)
-  if (index !== -1) {
-    addresses.splice(index, 1)
+  if (index === -1) {
+    throw notFound()
   }
+  addresses[index] = { ...addresses[index], deleted: true }
 }

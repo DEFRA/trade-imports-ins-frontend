@@ -3,17 +3,17 @@ const SELECT_COUNTRY = 'Select a country'
 export const copy = {
   list: {
     title: 'Address book',
-    intro: 'Manage addresses used across import and export services.',
+    intro: 'Manage your addresses for use across all your import notifications',
     search: {
-      label: 'Search addresses',
-      hint: 'Search by name, town or city, postcode or country',
+      summary: 'Filter addresses',
+      label: 'Search',
+      hint: 'Search by name, address or country',
       button: 'Search',
       clear: 'Clear search'
     },
     add: 'Add a new address',
-    empty: 'You have no addresses yet.',
-    noMatchPrefix: 'No addresses match',
     results: (from, to, total) => `Showing ${from}-${to} of ${total}`,
+    noResults: 'Showing 0 of 0',
     table: {
       name: 'Name',
       address: 'Address',
@@ -24,7 +24,7 @@ export const copy = {
   },
   successBanner: {
     title: 'Success',
-    added: (name) => `${name} added to your address book`,
+    added: (name) => `${name} address added to your address book`,
     updated: (name) => `${name} address updated`,
     deleted: (name) => `${name} address deleted`,
     deletedUnnamed: 'Address deleted'

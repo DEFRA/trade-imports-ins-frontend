@@ -1,268 +1,213 @@
-import { load } from 'cheerio'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
-import { createServer } from '../../../../server.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
-import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
 import {
-  addressBookApi,
-  runInRealMode,
-  serveCountries
-} from '../../../../common/test-helpers/real-mode.js'
+  ADD_ADDRESS_PATH,
+  ADDRESS_BOOK_PATH,
+  pageOf
+} from '../../../../common/test-helpers/address-book-requests.js'
+import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import {
+  TABLE_HEADINGS,
+  bodyRowCountOf,
+  contentOf,
+  fullAddress,
+  greenFarmAddress,
+  highlandAddress,
+  parisDepotAddress,
+  resultsLineOf,
+  rowCellsOf,
+  startServerWithPageReader,
+  stubAddressBookUnavailable,
+  stubAddressPage,
+  tableHeadingsOf,
+  tagNamesOf
+} from './list.test-support.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
-const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
-const LIST_URL = '/address-book'
-
-const countries = [
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'FR', name: 'France' }
-]
-
-const highlandAddress = {
-  id: '1',
-  name: 'Highland Livestock Ltd',
-  addressLine1: "14 Drover's Way",
-  townOrCity: 'Inverness',
-  postcode: 'IV2 3JH',
-  countryCode: 'GB'
-}
-
-const greenFarmAddress = {
-  id: '1',
-  name: 'Green Farm',
-  addressLine1: '1 Road',
-  townOrCity: 'Inverness',
-  postcode: 'IV2 3JH',
-  countryCode: 'GB'
-}
-
-const pageOf = (items, overrides = {}) => ({
-  items,
-  page: 1,
-  pageSize: 25,
-  totalItems: items.length,
-  totalPages: items.length ? 1 : 0,
-  ...overrides
-})
-
 describe('#addressBookListController', () => {
-  let server
+  const readPage = startServerWithPageReader()
 
-  runInRealMode()
+  test("renders the results count, column headings, and each address's View link and country label", async () => {
+    stubAddressPage({ page: '1' }, pageOf([highlandAddress, parisDepotAddress]))
 
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  beforeEach(() => {
-    serveCountries(countries)
-  })
-
-  test('renders the results count, column headings, each address row and the Add link', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(200, pageOf([highlandAddress]))
-
-    const { result: html, statusCode } = await server.inject({
-      method: 'GET',
-      url: LIST_URL,
-      auth: sessionAuth('list-with-addresses')
-    })
+    const { $, statusCode } = await readPage(
+      ADDRESS_BOOK_PATH,
+      'list-with-addresses'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(html).toContain('govuk-grid-column-full')
-    expect(html).toContain('Address book')
-    expect(html).toContain('Showing 1-1 of 1')
-    const $ = load(html)
-    expect(
-      $('thead th')
-        .map((_, heading) => $(heading).text().trim())
-        .get()
-    ).toEqual(['Name', 'Address', 'Country', 'Action'])
-    expect(html).toContain('Highland Livestock Ltd')
-    expect(html).toContain(
+    expect(contentOf($).children('h1').text()).toBe('Address book')
+    expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
+    expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
+    expect(rowCellsOf($, 0).eq(2).text().trim()).toBe('United Kingdom')
+    expect(rowCellsOf($, 0).eq(3).html().trim()).toBe(
       '<a class="govuk-link" href="/address-book/1">View<span class="govuk-visually-hidden"> Highland Livestock Ltd</span></a>'
     )
-    expect(html).toContain('14 Drover&#39;s Way, Inverness, IV2 3JH')
-    expect(html).toContain('United Kingdom')
-    expect(html).not.toContain('>GB<')
-    expect(html).toContain('Add a new address')
-    expect(html).toContain('href="/address-book/add"')
-  })
-
-  test('shows empty state when org has no addresses', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(200, pageOf([]))
-
-    const { result: html, statusCode } = await server.inject({
-      method: 'GET',
-      url: LIST_URL,
-      auth: sessionAuth('list-empty')
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(html).toContain('You have no addresses yet')
-    expect(html).toContain('Add a new address')
-    expect(html).toContain('href="/address-book/add"')
-    expect(html).not.toContain('No addresses match')
+    expect(rowCellsOf($, 1).eq(2).text().trim()).toBe('France')
+    expect(rowCellsOf($, 1).eq(3).html().trim()).toBe(
+      '<a class="govuk-link" href="/address-book/2">View<span class="govuk-visually-hidden"> Paris Depot</span></a>'
+    )
   })
 
   test('renders numbered pagination when more than one page', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '2' })
-      .reply(
-        200,
-        pageOf(
-          [
-            { id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }
-          ],
-          { page: 2, totalItems: 30, totalPages: 2 }
-        )
+    stubAddressPage(
+      { page: '2' },
+      pageOf(
+        [{ id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }],
+        { page: 2, totalItems: 30, totalPages: 4 }
       )
+    )
 
-    const { result: html, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/address-book?page=2',
-      auth: sessionAuth('list-page-2')
-    })
+    const { html, statusCode } = await readPage(
+      `${ADDRESS_BOOK_PATH}?page=2`,
+      'list-page-2'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(html).toContain('govuk-pagination')
-    expect(html).toContain('Showing 26-30 of 30')
+    expect(html).toContain('Showing 9-16 of 30')
     expect(html).toContain('?page=2')
   })
 
-  test('does not show clear search on the unfiltered list', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(200, pageOf([highlandAddress]))
+  test.each(['0', 'abc'])(
+    'asks for page 1 when the page number is %s',
+    async (queryPage) => {
+      const scope = stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
-    const { result: html, statusCode } = await server.inject({
-      method: 'GET',
-      url: LIST_URL,
-      auth: sessionAuth('list-no-clear-search')
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(html).not.toContain('data-testid="address-book-clear-search"')
-  })
-
-  test('shows clear search when search results are returned', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1', q: 'green' })
-      .reply(200, pageOf([greenFarmAddress]))
-
-    const { result: html, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/address-book?q=green',
-      auth: sessionAuth('list-search-with-results')
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(html).toContain('data-testid="address-book-clear-search"')
-    expect(html).toContain('Clear search</a>')
-    expect(html).toContain('Green Farm')
-    expect(html).toContain('Showing 1-1 of 1')
-  })
-
-  test('forwards search query and resolves country name to countryCode', async () => {
-    const scope = addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1', q: 'France', countryCode: 'FR' })
-      .reply(
-        200,
-        pageOf([
-          {
-            id: '1',
-            name: 'Paris Depot',
-            addressLine1: '1 Rue de Rivoli',
-            townOrCity: 'Paris',
-            postcode: '75001',
-            countryCode: 'FR'
-          }
-        ])
+      const { statusCode } = await readPage(
+        `${ADDRESS_BOOK_PATH}?page=${queryPage}`,
+        'list-unusable-page'
       )
 
-    const { result: html, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/address-book?q=France',
-      auth: sessionAuth('list-search-country')
-    })
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(scope.isDone()).toBe(true)
+    }
+  )
+
+  test('shows the last page, asked for a second time, when the page number is past the last page', async () => {
+    const stalePage = stubAddressPage(
+      { page: '99' },
+      pageOf([], { page: 99, totalItems: 12, totalPages: 2 })
+    )
+    const lastPage = stubAddressPage(
+      { page: '2' },
+      pageOf([greenFarmAddress, fullAddress], {
+        page: 2,
+        totalItems: 12,
+        totalPages: 2
+      })
+    )
+
+    const { $, statusCode } = await readPage(
+      `${ADDRESS_BOOK_PATH}?page=99`,
+      'list-stale-page'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(stalePage.isDone()).toBe(true)
+    expect(lastPage.isDone()).toBe(true)
+    expect(resultsLineOf($)).toBe('Showing 9-12 of 12')
+    expect(bodyRowCountOf($)).toBe(2)
+    expect($('.govuk-pagination__item--current').text().trim()).toBe('2')
+  })
+
+  test('shows no pagination when the matches of a search fit on one page', async () => {
+    stubAddressPage(
+      { page: '1', q: 'green' },
+      pageOf([greenFarmAddress, fullAddress])
+    )
+
+    const { $ } = await readPage(
+      `${ADDRESS_BOOK_PATH}?q=green`,
+      'list-search-one-page'
+    )
+
+    expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
+    expect($('.govuk-pagination')).toHaveLength(0)
+  })
+
+  test('forwards the search query and the country code whose name contains it', async () => {
+    const scope = stubAddressPage(
+      { page: '1', q: 'fran', countryCode: 'FR' },
+      pageOf([parisDepotAddress])
+    )
+
+    const { $, statusCode } = await readPage(
+      `${ADDRESS_BOOK_PATH}?q=fran`,
+      'list-search-country'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
-    expect(html).toContain('Paris Depot')
-    expect(html).toContain('France')
-    expect(html).toContain('value="France"')
+    expect(rowCellsOf($, 0).eq(0).html()).toBe('Paris<br> Depot')
+    expect(rowCellsOf($, 0).eq(2).text().trim()).toBe('France')
+    expect($('input[name="q"]').val()).toBe('fran')
   })
 
-  test('shows no-results state distinct from empty state when search has no matches', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1', q: 'zzznomatch' })
-      .reply(200, pageOf([]))
+  test.each([
+    ['matches', pageOf([greenFarmAddress])],
+    ['no matches', pageOf([])]
+  ])(
+    'Should link Clear search to the whole address book under the results line when a search has %s',
+    async (_, addressPage) => {
+      stubAddressPage({ page: '1', q: 'green' }, addressPage)
 
-    const { result: html, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/address-book?q=zzznomatch',
-      auth: sessionAuth('list-no-results')
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(html).toContain('No addresses match "zzznomatch"')
-    expect(html).toContain('Clear search')
-    expect(html).not.toContain('You have no addresses yet')
-    expect(html).toContain('value="zzznomatch"')
-  })
-
-  test('pagination preserves the active search term', async () => {
-    const scope = addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '2', q: 'green', countryCode: 'GB' })
-      .reply(
-        200,
-        pageOf([greenFarmAddress], { page: 2, totalItems: 30, totalPages: 2 })
+      const { $ } = await readPage(
+        `${ADDRESS_BOOK_PATH}?q=green`,
+        'list-clear-search'
       )
 
-    const { result: html, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/address-book?q=green&countryCode=GB&page=2',
-      auth: sessionAuth('list-search-page-2')
-    })
+      const clearSearch = $('[data-testid="address-book-clear-search"]')
+      expect(clearSearch.text().trim()).toBe('Clear search')
+      expect(clearSearch.attr('href')).toBe(ADDRESS_BOOK_PATH)
+      expect(
+        $('[data-testid="address-book-results-label"]')
+          .next()
+          .is(clearSearch.parent())
+      ).toBe(true)
+    }
+  )
+
+  test('links every page with the search term and the page number only', async () => {
+    const scope = stubAddressPage(
+      { page: '2', q: 'green' },
+      pageOf([greenFarmAddress], {
+        page: 2,
+        totalItems: 30,
+        totalPages: 4
+      })
+    )
+
+    const { $, statusCode } = await readPage(
+      `${ADDRESS_BOOK_PATH}?q=green&countryCode=GB&page=2`,
+      'list-search-page-2'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
-    expect(html).toContain('?q=green&amp;countryCode=GB')
+    expect(
+      $('.govuk-pagination__item a')
+        .map((_, link) => $(link).attr('href'))
+        .get()
+    ).toEqual([
+      `${ADDRESS_BOOK_PATH}?q=green`,
+      `${ADDRESS_BOOK_PATH}?q=green&page=2`,
+      `${ADDRESS_BOOK_PATH}?q=green&page=3`,
+      `${ADDRESS_BOOK_PATH}?q=green&page=4`
+    ])
   })
 
-  test('returns 500 when the address book cannot be reached', async () => {
-    addressBookApi()
-      .get(ADDRESSES_PATH)
-      .query({ page: '1' })
-      .reply(503, { title: 'Service Unavailable' })
+  test('returns 500 when the address book cannot be reached, with the heading, intro, Add button and filter but no results line or table', async () => {
+    stubAddressBookUnavailable()
 
-    const { result: html, statusCode } = await server.inject({
-      method: 'GET',
-      url: LIST_URL,
-      auth: sessionAuth('list-500')
-    })
+    const { $, html, statusCode } = await readPage(
+      ADDRESS_BOOK_PATH,
+      'list-500'
+    )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(html).toContain('govuk-notification-banner')
@@ -270,5 +215,24 @@ describe('#addressBookListController', () => {
       'Sorry, there is a problem with the service. Try again in a few minutes.'
     )
     expect(html).not.toContain('govuk-error-summary')
+    expect(tagNamesOf(contentOf($).children())).toEqual([
+      'div',
+      'h1',
+      'p',
+      'div',
+      'form'
+    ])
+    expect(contentOf($).children('h1').text()).toBe('Address book')
+    expect(contentOf($).children('p.govuk-body-l').text()).toBe(
+      'Manage your addresses for use across all your import notifications'
+    )
+    expect(contentOf($).children('p').next('div').find('a').attr('href')).toBe(
+      ADD_ADDRESS_PATH
+    )
+    expect(contentOf($).children('form').find('input[name="q"]')).toHaveLength(
+      1
+    )
+    expect(resultsLineOf($)).toBe('')
+    expect(tableHeadingsOf($)).toEqual([])
   })
 })

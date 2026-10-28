@@ -4,11 +4,11 @@ import { listAddresses } from '../../../services/address-book/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
+import { escapeHtml } from '../../../shared/escape-html.js'
 import {
-  escapeHtml,
   buildPaginationLinks,
-  parsePage,
-  buildResultsLabel
+  clampPage,
+  parsePage
 } from '../../../shared/list-page.js'
 import {
   addressAddPath,
@@ -18,12 +18,19 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
   getAddressFormCountries,
-  countryCodeMatching
+  countryCodesMatching
 } from '../address-countries.js'
+import { linesHtml } from '../lines-html.js'
 import { takeSuccessMessage } from '../success-message.js'
-import { addressBookPageHref, mapAddressRows } from '../view-model/list.js'
+import {
+  addressBookPageHref,
+  mapAddressRows,
+  resultsLabelOf
+} from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
+
+export const LIST_PAGE_SIZE = 8
 
 const logger = createLogger()
 const view = 'address-book/list/list'
@@ -34,8 +41,8 @@ const viewLink = (address) =>
 
 const tableRowsOf = (addresses) =>
   addresses.map((address) => [
-    { text: address.name },
-    { text: address.addressLine },
+    { html: linesHtml(address.nameLines) },
+    { html: linesHtml(address.postalLines, { lineEnding: ',' }) },
     { text: address.countryLabel },
     { html: viewLink(address) }
   ])
@@ -57,33 +64,53 @@ const buildView = (toolkit, { recoverableError = false, ...model }) =>
     ...model
   })
 
+const loadAddressPage = async (organisationId, { page, ...search }) => {
+  const requestedAddressPage = await listAddresses(organisationId, {
+    page,
+    pageSize: LIST_PAGE_SIZE,
+    ...search
+  })
+  const servedPage = clampPage(page, requestedAddressPage.totalPages)
+  if (servedPage === page) {
+    return requestedAddressPage
+  }
+
+  logger.info(
+    { organisationId, requestedPage: page, servedPage },
+    'Address book page is past the last page, serving the last page'
+  )
+  return listAddresses(organisationId, {
+    page: servedPage,
+    pageSize: LIST_PAGE_SIZE,
+    ...search
+  })
+}
+
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const page = parsePage(request.query.page)
   const searchTerm = request.query.q?.trim() ?? ''
-  const hasSearch = Boolean(searchTerm)
   const successMessage = takeSuccessMessage(request)
 
   try {
     const countries = await getAddressFormCountries()
-    const countryCode =
-      request.query.countryCode?.trim() ||
-      countryCodeMatching(searchTerm, countries)
-    const search = { searchTerm, countryCode }
-    const addressPage = await listAddresses(organisationId, { page, ...search })
+    const countryCodes = countryCodesMatching(searchTerm, countries)
+    const addressPage = await loadAddressPage(organisationId, {
+      page,
+      searchTerm,
+      countryCodes
+    })
     const pagination = paginationOf(addressPage)
     const addresses = mapAddressRows(addressPage.items ?? [], countries)
 
     return buildView(toolkit, {
+      listLoaded: true,
       tableRows: tableRowsOf(addresses),
-      resultsLabel: buildResultsLabel(pagination, copy.list.results),
+      resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
-        addressBookPageHref(targetPage, search)
+        addressBookPageHref(targetPage, { searchTerm })
       ),
       searchTerm,
-      hasSearch,
-      isEmpty: addressPage.totalItems === 0 && !hasSearch,
-      noSearchResults: addressPage.totalItems === 0 && hasSearch,
       successMessage
     })
   } catch (err) {
@@ -92,13 +119,8 @@ const get = async (request, toolkit) => {
     }
     logger.error({ err, organisationId }, 'Failed to load address book')
     return buildView(toolkit, {
-      tableRows: [],
-      resultsLabel: null,
-      pagination: null,
+      listLoaded: false,
       searchTerm,
-      hasSearch,
-      isEmpty: false,
-      noSearchResults: false,
       successMessage,
       recoverableError: true
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)

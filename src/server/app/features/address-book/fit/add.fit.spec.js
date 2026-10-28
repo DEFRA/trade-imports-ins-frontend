@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import {
   NAME_LABEL,
+  addValidAddressToFreshOrganisation,
   expectErrorFocusOn,
   fieldLabels,
   fillValidAddress,
@@ -9,11 +10,14 @@ import {
   requiredValidations,
   validAddress
 } from './address-form.js'
+import {
+  resultsLineOf,
+  searchAndExpectSingleMatch
+} from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { seedAddress } from './seed-address.js'
+import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
-
-const ADD_URL = /\/address-book\/add$/
-const ADD_PATH = '/address-book/add'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -23,7 +27,7 @@ test.describe('add address', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-render' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await expect(
       page.getByRole('heading', { name: 'Add address details' })
@@ -52,16 +56,16 @@ test.describe('add address', () => {
 
   test('has a Back link to the address book', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-back' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', '/address-book')
+    ).toHaveAttribute('href', addressBookPath())
   })
 
   test('groups fields under Address and Contact details', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-sections' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     for (const name of ['Address', 'Contact details']) {
       await expect(
@@ -72,7 +76,7 @@ test.describe('add address', () => {
 
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-axe' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address')
   })
@@ -84,7 +88,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-required' })
-      await page.goto(ADD_PATH)
+      await page.goto(addressAddPath())
 
       await fillValidAddress(page, { [field]: '' })
       await submit(page)
@@ -93,7 +97,7 @@ test.describe('add address validation', () => {
         message: error,
         label,
         expectedValue: '',
-        url: ADD_URL
+        url: addressAddPath()
       })
       await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
         field === 'name' ? '' : validAddress.name
@@ -106,7 +110,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-maxlength' })
-      await page.goto(ADD_PATH)
+      await page.goto(addressAddPath())
 
       const value = 'A'.repeat(maxLength + 1)
       await fillValidAddress(page, { [field]: value })
@@ -116,7 +120,7 @@ test.describe('add address validation', () => {
         message: error,
         label,
         expectedValue: value,
-        url: ADD_URL
+        url: addressAddPath()
       })
       await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
         field === 'name' ? value : validAddress.name
@@ -126,7 +130,7 @@ test.describe('add address validation', () => {
 
   test('rejects a malformed email address', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-email' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await fillValidAddress(page, { email: 'not-an-email' })
     await submit(page)
@@ -135,7 +139,7 @@ test.describe('add address validation', () => {
       message: 'Enter an email address in the correct format',
       label: fieldLabels.email,
       expectedValue: 'not-an-email',
-      url: ADD_URL
+      url: addressAddPath()
     })
   })
 
@@ -143,7 +147,7 @@ test.describe('add address validation', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-validation-axe' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await fillValidAddress(page, { name: '' })
     await submit(page)
@@ -157,26 +161,96 @@ test.describe('add address validation', () => {
 })
 
 test.describe('save and confirm', () => {
-  test('saves a valid address, shows a confirmation banner and lists the new address', async ({
+  const organisationPrefix = 'stub-org-add-save'
+
+  test('saves a valid address and keeps the Success banner naming it showing 10 seconds after the list loads', async ({
     page
   }) => {
-    await signIn(page, {
-      organisationId: `stub-org-add-save-${crypto.randomUUID()}`
-    })
-    await page.goto(ADD_PATH)
+    await page.clock.install()
+    await addValidAddressToFreshOrganisation(page, { organisationPrefix })
 
-    await fillValidAddress(page)
-    await submit(page)
-
-    await expect(page).toHaveURL(/\/address-book$/)
-    const banner = page.getByText(
-      'Highland Livestock Ltd added to your address book'
-    )
+    const banner = page
+      .getByRole('alert', { name: 'Success' })
+      .getByText(`${validAddress.name} address added to your address book`, {
+        exact: true
+      })
     await expect(banner).toBeVisible()
+    await page.clock.runFor(10_000)
+    await expect(banner).toBeVisible()
+  })
+
+  test('lists the saved address first, ahead of the seeded address, with a View link to its own details page', async ({
+    page
+  }) => {
+    const nameAfterSeedAlphabetically = 'Zetland Livestock Ltd'
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix,
+      overrides: { name: nameAfterSeedAlphabetically }
+    })
+
+    await expect(resultsLineOf(page)).toHaveText('Showing 1-2 of 2')
+    await expect(page.getByRole('link', { name: /^View / })).toHaveText([
+      `View ${nameAfterSeedAlphabetically}`,
+      `View ${seedAddress.name}`
+    ])
+    const viewLink = page.getByRole('link', {
+      name: `View ${nameAfterSeedAlphabetically}`
+    })
+    await expect(viewLink).toHaveAttribute(
+      'href',
+      new RegExp(`^${addressBookPath()}/[0-9a-f]{24}$`)
+    )
+    await viewLink.click()
     await expect(
-      page
-        .getByRole('table')
-        .getByRole('cell', { name: 'Highland Livestock Ltd', exact: true })
+      page.getByRole('heading', {
+        level: 1,
+        name: nameAfterSeedAlphabetically
+      })
+    ).toBeVisible()
+  })
+
+  test('finds the saved address by its name, a fragment of its address and part of its country name', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix,
+      overrides: { countryCode: 'FR' }
+    })
+
+    for (const term of [validAddress.name, 'drover', 'fran']) {
+      await searchAndExpectSingleMatch(page, term, {
+        matchedCellText: validAddress.name
+      })
+    }
+  })
+
+  test('lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, { organisationPrefix })
+
+    const table = page.getByRole('table')
+    await expect(
+      table.getByRole('cell', { name: validAddress.name, exact: true })
+    ).toBeVisible()
+    const storedLines = [
+      validAddress.addressLine1,
+      validAddress.addressLine2,
+      validAddress.townOrCity,
+      validAddress.county,
+      validAddress.postcode
+    ]
+    const addressCell = table.getByRole('cell', {
+      name: `${validAddress.addressLine1},`
+    })
+    await expect(addressCell).toHaveText(
+      new RegExp(`^${storedLines.join(',\n')}$`),
+      { useInnerText: true }
+    )
+    await expect(
+      table
+        .getByRole('row', { name: new RegExp(validAddress.name) })
+        .getByRole('cell', { name: 'United Kingdom', exact: true })
     ).toBeVisible()
   })
 })
@@ -186,7 +260,7 @@ test.describe('cancel', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-cancel' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await page.getByLabel(NAME_LABEL).fill('Should not be saved')
 
@@ -194,7 +268,7 @@ test.describe('cancel', () => {
       .getByRole('link', { name: 'Cancel and return to address book' })
       .click()
 
-    await expect(page).toHaveURL(/\/address-book$/)
+    await expect(page).toHaveURL(addressBookPath())
     await expect(page.getByText('Should not be saved')).toHaveCount(0)
   })
 })

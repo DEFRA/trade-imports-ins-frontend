@@ -22,9 +22,13 @@ root:
 
 - [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
   `FIELDS`, `isRequiredField`, `formValuesOf` and
-  `addressRules(countryCodes)`, plus `ADDRESS_FIELDS` (the address lines in
-  display order) and `addressFieldText`, shared by the view rows and the
-  delete summary. Each field's `required` sets both whether a blank value is
+  `addressRules(countryCodes)`, plus `POSTAL_LINE_FIELDS` (address line 1,
+  address line 2, town or city, county and postcode, in display order),
+  `ADDRESS_FIELDS` (name, the postal-line fields and country) and
+  `addressFieldText` (a field's display text, or null when it is blank or
+  only spaces) with `postalLinesOf` built on the same blank rule. The list
+  reads `postalLinesOf`; the view rows and the delete summary read
+  `ADDRESS_FIELDS` through `addressFieldText`. Each field's `required` sets both whether a blank value is
   refused and whether the view always shows its row. Each field's
   `maxLength` and `required` match the address book API's `AddressRequest`
   validation, so the form refuses what the API would refuse.
@@ -33,7 +37,7 @@ root:
   `buildCountrySelectItems` (the add form's select, always opening on a blank
   option), `buildEditCountrySelectItems` (the edit form's select, with a
   blank option only when the country it shows is not one the list offers) and
-  `countryCodeMatching`.
+  `countryCodesMatching` (every country code whose name contains the search term).
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
@@ -60,7 +64,10 @@ root:
   yar-backed, read-once.
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
-specs plus the fixtures `address-form.js`, `axe.js` and `seed-address.js`.
+specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
+`dashboard.js` and `seed-address.js`. `view-model/list.js` owns the list's
+name lines, postal lines and results line, which the list controller builds
+into table cells.
 
 ## Paths
 
@@ -183,7 +190,7 @@ stays on Joi directly because Hapi's `validate.params` takes a Joi schema.
 ## Client JavaScript
 
 [`src/client/javascripts/application.js`](../../../client/javascripts/application.js)
-initialises the govuk components and `address-book-success-banner.js`. A
+initialises the govuk components. A
 page needing more adds a named `entry` to `webpack.config.js` and loads it
 with `getAssetPath('<entry>.js')`. Build config is load-bearing.
 

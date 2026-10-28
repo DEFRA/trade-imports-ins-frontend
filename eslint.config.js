@@ -61,7 +61,12 @@ export default [
   },
   {
     files: ['src/server/**/*.js'],
-    ignores: ['**/*.test.js', '**/*.spec.js', '**/*.cy.js'],
+    ignores: [
+      '**/*.test.js',
+      '**/*.test-support.js',
+      '**/*.spec.js',
+      '**/*.cy.js'
+    ],
     rules: {
       'no-magic-numbers': [
         'error',

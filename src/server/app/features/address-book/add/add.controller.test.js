@@ -3,13 +3,27 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
+  ADD_ADDRESS_PATH,
+  ADDRESS_BOOK_PATH,
+  ADDRESS_ID,
+  BACK_LINK,
+  addressesApiPath,
+  COUNTRIES,
+  COUNTRY_OPTIONS,
+  expectRedirectTo,
+  getPage,
   INVALID_ADDRESS_PAYLOAD,
-  ORGANISATION_ID_HEADER
+  ORGANISATION_ID_HEADER,
+  postPage,
+  SELECTED_COUNTRY,
+  STORED_ADDRESS,
+  VALID_ADDRESS_PAYLOAD
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
-import { sessionAuth } from '../../../../common/test-helpers/session-auth.js'
+import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
+import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { config } from '../../../../../config/config.js'
@@ -18,30 +32,7 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
-const ADDRESSES_PATH = `/organisation/${ORGANISATION_ID}/addresses`
-const ADDRESS_BOOK_PATH = '/address-book'
-const ADD_ADDRESS_URL = `${ADDRESS_BOOK_PATH}/add`
-const COUNTRY_OPTIONS = '#countryCode option'
-const BUSINESS_NAME = 'Highland Livestock Ltd'
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
-
-const mockCountries = [
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'FR', name: 'France' },
-  { code: 'CH', name: 'Switzerland' },
-  { code: 'DE', name: 'Germany' }
-]
-
-const validPayload = {
-  name: BUSINESS_NAME,
-  addressLine1: "14 Drover's Way",
-  townOrCity: 'Inverness',
-  postcode: 'IV2 3JH',
-  countryCode: 'GB',
-  phone: '+44 1463 234567',
-  email: 'exports@example.com'
-}
 
 const ANIMALS_BASE_URL = 'http://localhost:3000'
 const handshakeFields = {
@@ -52,20 +43,17 @@ const handshakeFields = {
 }
 const RETURN_URL = `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value`
 
-const postAdd = (server, session, payload) =>
-  server.inject({
-    method: 'POST',
-    url: ADD_ADDRESS_URL,
-    auth: sessionAuth(session),
-    payload
-  })
+const postAdd = (server, sessionId, payload) =>
+  postPage(server, ADD_ADDRESS_PATH, sessionId, payload)
 
-const getAdd = (server, session, query = {}) =>
-  server.inject({
-    method: 'GET',
-    url: `${ADD_ADDRESS_URL}?${new URLSearchParams(query)}`,
-    auth: sessionAuth(session)
-  })
+const getAdd = (server, sessionId, query = {}) =>
+  getPage(
+    server,
+    `${ADD_ADDRESS_PATH}?${new URLSearchParams(query)}`,
+    sessionId
+  )
+
+const SUCCESS_BANNER = '.govuk-notification-banner--success'
 
 const textsOf = ($, selector) =>
   $(selector)
@@ -78,7 +66,7 @@ beforeEach(() => {
 })
 
 describe('#addressBookAddController', { concurrent: false }, () => {
-  const server = startRealModeServerServingCountries(mockCountries)
+  const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('GET sets Cache-Control: no-store', async () => {
     const { headers, statusCode } = await getAdd(server(), 'add-get-cache')
@@ -96,8 +84,8 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
     expect(textsOf($, 'h1')).toEqual(['Add address details'])
-    expect($('.govuk-back-link').attr('href')).toBe(ADDRESS_BOOK_PATH)
-    expect(textsOf($, '.govuk-back-link')).toEqual(['Back'])
+    expect($(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect(textsOf($, BACK_LINK)).toEqual(['Back'])
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
     expect(textsOf($, 'form label')).toEqual([
       'Name or organisation',
@@ -133,7 +121,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 
   test('POST re-renders form when API returns 400 validation errors', async () => {
     const scope = addressBookApi()
-      .post(ADDRESSES_PATH)
+      .post(addressesApiPath())
       .reply(400, {
         type: 'https://api.cdp.defra.cloud/problems/validation-error',
         errors: {
@@ -144,7 +132,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     const { result, statusCode, headers } = await postAdd(
       server(),
       'add-post-api-400',
-      validPayload
+      VALID_ADDRESS_PAYLOAD
     )
 
     expect(statusCode).toBe(statusCodes.badRequest)
@@ -156,38 +144,61 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   test('POST sends the address to the address book for the organisation and redirects to the address book', async () => {
     let posted
     const scope = addressBookApi()
-      .post(ADDRESSES_PATH, (body) => {
+      .post(addressesApiPath(), (body) => {
         posted = body
         return true
       })
       .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .reply(201, {
-        id: '665f1c2ab3e4d51a2c9d0e77',
-        name: BUSINESS_NAME
+        id: ADDRESS_ID,
+        name: STORED_ADDRESS.name
       })
 
-    const { statusCode, headers } = await postAdd(
+    const response = await postAdd(
       server(),
       'add-post-success',
-      validPayload
+      VALID_ADDRESS_PAYLOAD
     )
 
-    expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, ADDRESS_BOOK_PATH)
     expect(scope.isDone()).toBe(true)
-    expect(posted).toMatchObject(validPayload)
-    expect(headers['cache-control']).not.toBe('no-store')
+    expect(posted).toMatchObject(VALID_ADDRESS_PAYLOAD)
+    expect(response.headers['cache-control']).not.toBe('no-store')
+  })
+
+  test('POST shows the address added banner on the address book', async () => {
+    addressBookApi().post(addressesApiPath()).reply(201, {
+      id: ADDRESS_ID,
+      name: STORED_ADDRESS.name
+    })
+
+    const { headers } = await postAdd(
+      server(),
+      'add-post-banner',
+      VALID_ADDRESS_PAYLOAD
+    )
+
+    const listResponse = await openEmptyAddressBookWithCookiesFrom(
+      server(),
+      'add-post-banner',
+      headers
+    )
+    expect(textsOf(load(listResponse.result), SUCCESS_BANNER)).toEqual([
+      expect.stringContaining(
+        `${STORED_ADDRESS.name} address added to your address book`
+      )
+    ])
   })
 
   test('POST shows the recoverable-error banner when the address book rejects the save with a server error', async () => {
     addressBookApi()
-      .post(ADDRESSES_PATH)
+      .post(addressesApiPath())
       .reply(503, { title: 'Service Unavailable' })
 
     const { result, statusCode, headers } = await postAdd(
       server(),
       'add-post-500',
-      validPayload
+      VALID_ADDRESS_PAYLOAD
     )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
@@ -195,35 +206,33 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(result).toContain(
       'Sorry, there is a problem with the service. Try again in a few minutes.'
     )
-    expect(result).toContain('value="Highland Livestock Ltd"')
+    expect(result).toContain(`value="${STORED_ADDRESS.name}"`)
     expect(headers['cache-control']).toBe('no-store')
   })
 
   test('POST sends the trimmed form fields and nothing else to the address book', async () => {
     let posted
     const scope = addressBookApi()
-      .post(ADDRESSES_PATH, (body) => {
+      .post(addressesApiPath(), (body) => {
         posted = body
         return true
       })
       .reply(201, {
-        id: '665f1c2ab3e4d51a2c9d0e77',
-        name: BUSINESS_NAME
+        id: ADDRESS_ID,
+        name: STORED_ADDRESS.name
       })
 
+    const { addressLine2, county, ...requiredFields } = VALID_ADDRESS_PAYLOAD
+
     const { statusCode } = await postAdd(server(), 'add-post-trimmed', {
-      ...validPayload,
-      name: '  Highland Livestock Ltd  ',
+      ...requiredFields,
+      name: `  ${STORED_ADDRESS.name}  `,
       crumb: 'not-for-the-api'
     })
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(scope.isDone()).toBe(true)
-    expect(posted).toEqual({
-      ...validPayload,
-      addressLine2: '',
-      county: ''
-    })
+    expect(posted).toEqual({ ...requiredFields, addressLine2: '', county: '' })
   })
 
   test('POST with invalid data re-renders form with errors', async () => {
@@ -251,7 +260,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
       server(),
       'add-post-unlisted-country',
       {
-        ...validPayload,
+        ...VALID_ADDRESS_PAYLOAD,
         countryCode: 'ZZ'
       }
     )
@@ -261,13 +270,12 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('Cancel returns to list without creating an address', async () => {
-    const { statusCode, headers } = await postAdd(server(), 'add-post-cancel', {
+    const response = await postAdd(server(), 'add-post-cancel', {
       cancel: 'true'
     })
 
-    expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toBe(ADDRESS_BOOK_PATH)
-    expect(headers['cache-control']).not.toBe('no-store')
+    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expect(response.headers['cache-control']).not.toBe('no-store')
   })
 })
 
@@ -275,7 +283,7 @@ describe(
   '#addressBookAddController — journey handshake',
   { concurrent: false },
   () => {
-    const server = startRealModeServerServingCountries(mockCountries)
+    const server = startRealModeServerServingCountries(COUNTRIES)
 
     test('GET arriving through a journey handshake carries the journey forward in hidden fields and the cancel label', async () => {
       const { result, statusCode } = await getAdd(
@@ -294,7 +302,7 @@ describe(
       expect(result).toContain('Cancel and return to address page')
       expect(result).toContain('name="cancel"')
       expect(result).not.toContain('Cancel and return to address book')
-      expect(load(result)('#countryCode option[selected]')).toHaveLength(0)
+      expect(load(result)(SELECTED_COUNTRY)).toHaveLength(0)
     })
 
     test('GET through a handshake opens the form without a Back link to the address book', async () => {
@@ -331,27 +339,30 @@ describe(
     })
 
     test('POST from a handshake returns to the journey with the new address id and no address-book banner', async () => {
-      const scope = addressBookApi().post(ADDRESSES_PATH).reply(201, {
-        id: '665f1c2ab3e4d51a2c9d0e77',
-        name: BUSINESS_NAME
+      const scope = addressBookApi().post(addressesApiPath()).reply(201, {
+        id: ADDRESS_ID,
+        name: STORED_ADDRESS.name
       })
 
-      const { statusCode, headers } = await postAdd(
+      const response = await postAdd(server(), 'add-post-handshake', {
+        ...handshakeFields,
+        ...VALID_ADDRESS_PAYLOAD
+      })
+
+      expectRedirectTo(response, `${RETURN_URL}&addressId=${ADDRESS_ID}`)
+      expect(scope.isDone()).toBe(true)
+
+      const listResponse = await openEmptyAddressBookWithCookiesFrom(
         server(),
         'add-post-handshake',
-        { ...handshakeFields, ...validPayload }
+        response.headers
       )
-
-      expect(statusCode).toBe(statusCodes.redirectFound)
-      expect(headers.location).toBe(
-        `${RETURN_URL}&addressId=665f1c2ab3e4d51a2c9d0e77`
-      )
-      expect(scope.isDone()).toBe(true)
+      expect(load(listResponse.result)(SUCCESS_BANNER)).toHaveLength(0)
     })
 
     test('POST from a handshake keeps the journey on the form when the API rejects the address', async () => {
       addressBookApi()
-        .post(ADDRESSES_PATH)
+        .post(addressesApiPath())
         .reply(statusCodes.badRequest, {
           type: 'https://api.cdp.defra.cloud/problems/validation-error',
           errors: {
@@ -362,7 +373,7 @@ describe(
       const { result, statusCode } = await postAdd(
         server(),
         'add-post-handshake-api-400',
-        { ...handshakeFields, ...validPayload }
+        { ...handshakeFields, ...VALID_ADDRESS_PAYLOAD }
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
@@ -372,14 +383,13 @@ describe(
     })
 
     test('Cancel from a handshake returns to the journey without creating an address', async () => {
-      const { statusCode, headers } = await postAdd(
-        server(),
-        'add-post-handshake-cancel',
-        { cancel: 'true', ...handshakeFields }
+      expectRedirectTo(
+        await postAdd(server(), 'add-post-handshake-cancel', {
+          cancel: 'true',
+          ...handshakeFields
+        }),
+        RETURN_URL
       )
-
-      expect(statusCode).toBe(statusCodes.redirectFound)
-      expect(headers.location).toBe(RETURN_URL)
     })
   }
 )
@@ -388,7 +398,7 @@ describe(
   '#addressBookAddController — field layout',
   { concurrent: false },
   () => {
-    const server = startRealModeServerServingCountries(mockCountries)
+    const server = startRealModeServerServingCountries(COUNTRIES)
 
     test('GET renders name, address lines and email full width, town, county, postcode and country at one half, and phone at two thirds', async () => {
       const { result } = await getAdd(server(), 'add-get-widths')
@@ -408,7 +418,7 @@ describe(
       expect(firstOption.attr('value')).toBe('')
       expect(firstOption.text().trim()).toBe('Select a country')
       expect($(COUNTRY_OPTIONS).length).toBeGreaterThan(1)
-      expect($('#countryCode option[selected]')).toHaveLength(0)
+      expect($(SELECTED_COUNTRY)).toHaveLength(0)
     })
 
     test('GET lists the countries by name, not by code, with United Kingdom in its place', async () => {

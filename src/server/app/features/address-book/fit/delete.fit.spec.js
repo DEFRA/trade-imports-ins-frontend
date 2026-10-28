@@ -1,19 +1,31 @@
 import { test, expect } from '@playwright/test'
 
-import { expectAddressBookList } from './address-book-list.js'
+import {
+  expectAddressBookList,
+  expectEmptyAddressBookList
+} from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { expectDashboard } from './dashboard.js'
+import { withReturn } from './return-query.js'
 import {
-  SEED_ADDRESS_ID,
-  SEED_ADDRESS_NAME,
+  seedAddress,
+  seedAddressLines,
   MALFORMED_ADDRESS_ID,
   UNKNOWN_ADDRESS_ID
 } from './seed-address.js'
+import {
+  addressBookPath,
+  addressDeletePath,
+  addressPath,
+  dashboardPath
+} from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 const CONFIRM_PAGE_TITLE = 'Delete this address?'
 const CANCEL_LINK = 'No, cancel'
-const DELETED_BANNER = `${SEED_ADDRESS_NAME} address deleted`
+const DELETED_BANNER = `${seedAddress.name} address deleted`
+const seedViewPath = addressPath(seedAddress.id)
+const seedDeletePath = addressDeletePath(seedAddress.id)
 
 const confirmButtonOf = (page) =>
   page.getByRole('button', { name: 'Yes, delete', exact: true })
@@ -27,12 +39,7 @@ const signInAndOpenSeedAddressDelete = async (
   { returnTo } = {}
 ) => {
   await signIn(page, { organisationId })
-  const deletePath = `/address-book/${SEED_ADDRESS_ID}/delete`
-  await page.goto(
-    returnTo === undefined
-      ? deletePath
-      : `${deletePath}?return=${encodeURIComponent(returnTo)}`
-  )
+  await page.goto(withReturn(seedDeletePath, returnTo))
 }
 
 test.describe('delete address', () => {
@@ -46,7 +53,7 @@ test.describe('delete address', () => {
     ).toBeVisible()
     await expect(page.getByRole('term')).toHaveText(['Address'])
     await expect(page.getByRole('definition')).toHaveText(
-      'Stub Farm 1 1 Stub Way Stubton ST1 1UB United Kingdom',
+      [seedAddress.name, ...seedAddressLines, 'United Kingdom'].join(' '),
       { useInnerText: true }
     )
     await expect(
@@ -55,10 +62,7 @@ test.describe('delete address', () => {
     await expect(
       page.getByText('Deletions are permanent and you cannot undo this.')
     ).toBeVisible()
-    await expect(backLinkOf(page)).toHaveAttribute(
-      'href',
-      `/address-book/${SEED_ADDRESS_ID}`
-    )
+    await expect(backLinkOf(page)).toHaveAttribute('href', seedViewPath)
   })
 
   test('No, cancel returns to the address details with nothing deleted', async ({
@@ -68,16 +72,14 @@ test.describe('delete address', () => {
 
     await page.getByRole('link', { name: CANCEL_LINK }).click()
 
-    await expect(page).toHaveURL(
-      new RegExp(`/address-book/${SEED_ADDRESS_ID}$`)
-    )
+    await expect(page).toHaveURL(seedViewPath)
     await expect(
-      page.getByRole('heading', { level: 1, name: SEED_ADDRESS_NAME })
+      page.getByRole('heading', { level: 1, name: seedAddress.name })
     ).toBeVisible()
 
-    await page.goto('/address-book')
+    await page.goto(addressBookPath())
     await expect(
-      page.getByRole('link', { name: `View ${SEED_ADDRESS_NAME}` })
+      page.getByRole('link', { name: `View ${seedAddress.name}` })
     ).toBeVisible()
     await expect(page.getByText('address deleted')).toHaveCount(0)
   })
@@ -92,12 +94,9 @@ test.describe('delete address', () => {
 
     await confirmButtonOf(page).click()
 
-    await expect(page).toHaveURL(/\/address-book$/)
+    await expect(page).toHaveURL(addressBookPath())
     await expect(page.getByText(DELETED_BANNER)).toBeVisible()
-    await expect(
-      page.getByRole('link', { name: `View ${SEED_ADDRESS_NAME}` })
-    ).toHaveCount(0)
-    await expect(page.getByText('You have no addresses yet.')).toBeVisible()
+    await expectEmptyAddressBookList(page)
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
@@ -111,10 +110,10 @@ test.describe('delete address', () => {
       page
     }) => {
       await signInAndOpenSeedAddressDelete(page, 'stub-org-delete-return', {
-        returnTo: '/'
+        returnTo: dashboardPath()
       })
 
-      const addressPageHref = `/address-book/${SEED_ADDRESS_ID}?return=%2F`
+      const addressPageHref = withReturn(seedViewPath, dashboardPath())
       await expect(backLinkOf(page)).toHaveAttribute('href', addressPageHref)
       await expect(
         page.getByRole('link', { name: CANCEL_LINK })
@@ -122,11 +121,9 @@ test.describe('delete address', () => {
 
       await page.getByRole('link', { name: CANCEL_LINK }).click()
 
-      await expect(page).toHaveURL(
-        new RegExp(`/address-book/${SEED_ADDRESS_ID}\\?return=%2F$`)
-      )
+      await expect(page).toHaveURL(addressPageHref)
       await expect(
-        page.getByRole('heading', { level: 1, name: SEED_ADDRESS_NAME })
+        page.getByRole('heading', { level: 1, name: seedAddress.name })
       ).toBeVisible()
     })
 
@@ -134,16 +131,16 @@ test.describe('delete address', () => {
       await signInAndOpenSeedAddressDelete(
         page,
         `stub-org-delete-return-land-${crypto.randomUUID()}`,
-        { returnTo: '/' }
+        { returnTo: dashboardPath() }
       )
 
       await confirmButtonOf(page).click()
 
       await expectDashboard(page)
 
-      await page.goto('/address-book')
+      await page.goto(addressBookPath())
       await expect(page.getByText(DELETED_BANNER)).toHaveCount(0)
-      await expect(page.getByText('You have no addresses yet.')).toBeVisible()
+      await expectEmptyAddressBookList(page)
     })
 
     test("Yes, delete with a return to the deleted address's own page lands on the list", async ({
@@ -152,12 +149,12 @@ test.describe('delete address', () => {
       await signInAndOpenSeedAddressDelete(
         page,
         `stub-org-delete-return-own-${crypto.randomUUID()}`,
-        { returnTo: `/address-book/${SEED_ADDRESS_ID}` }
+        { returnTo: seedViewPath }
       )
 
       await confirmButtonOf(page).click()
 
-      await expect(page).toHaveURL(/\/address-book$/)
+      await expect(page).toHaveURL(addressBookPath())
       await expect(page.getByText(DELETED_BANNER)).toBeVisible()
     })
 
@@ -168,15 +165,14 @@ test.describe('delete address', () => {
         { returnTo: 'https://evil.example/' }
       )
 
-      const addressPageHref = `/address-book/${SEED_ADDRESS_ID}`
-      await expect(backLinkOf(page)).toHaveAttribute('href', addressPageHref)
+      await expect(backLinkOf(page)).toHaveAttribute('href', seedViewPath)
       await expect(
         page.getByRole('link', { name: CANCEL_LINK })
-      ).toHaveAttribute('href', addressPageHref)
+      ).toHaveAttribute('href', seedViewPath)
 
       await confirmButtonOf(page).click()
 
-      await expect(page).toHaveURL(/\/address-book$/)
+      await expect(page).toHaveURL(addressBookPath())
       await expect(page.getByText(DELETED_BANNER)).toBeVisible()
     })
   })
@@ -187,7 +183,7 @@ test.describe('delete address dead links', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-delete-unknown' })
-    await page.goto(`/address-book/${UNKNOWN_ADDRESS_ID}/delete`)
+    await page.goto(addressDeletePath(UNKNOWN_ADDRESS_ID))
 
     await expectAddressBookList(page)
   })
@@ -196,7 +192,9 @@ test.describe('delete address dead links', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-delete-dead-return' })
-    await page.goto(`/address-book/${UNKNOWN_ADDRESS_ID}/delete?return=%2F`)
+    await page.goto(
+      withReturn(addressDeletePath(UNKNOWN_ADDRESS_ID), dashboardPath())
+    )
 
     await expectDashboard(page)
     await expect(page.getByText('Page not found')).toHaveCount(0)
@@ -206,7 +204,7 @@ test.describe('delete address dead links', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-delete-malformed' })
-    await page.goto(`/address-book/${MALFORMED_ADDRESS_ID}/delete`)
+    await page.goto(addressDeletePath(MALFORMED_ADDRESS_ID))
 
     await expectAddressBookList(page)
   })
@@ -220,7 +218,7 @@ test.describe('delete address dead links', () => {
     )
 
     const secondTab = await page.context().newPage()
-    await secondTab.goto(`/address-book/${SEED_ADDRESS_ID}/delete`)
+    await secondTab.goto(seedDeletePath)
     await confirmButtonOf(secondTab).click()
     await expect(secondTab.getByText(DELETED_BANNER)).toBeVisible()
     await secondTab.close()
