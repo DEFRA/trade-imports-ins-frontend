@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test'
 
 import { FIELD_RULES } from '../fields.js'
+import { signIn } from '../../../../../../fit/sign-in.js'
 
 export const NAME_LABEL = 'Name or organisation'
 const ADDRESS_LINE_1_LABEL = 'Address line 1'
@@ -49,11 +50,26 @@ export async function fillValidAddress(page, overrides = {}) {
   }
 }
 
-export const addValidAddressAndGetViewLink = async (page) => {
+const saveValidAddress = async (page, overrides = {}) => {
   await page.goto('/address-book/add')
-  await fillValidAddress(page)
+  await fillValidAddress(page, overrides)
   await page.getByRole('button', { name: 'Save and continue' }).click()
+}
+
+export const addValidAddressAndGetViewLink = async (page) => {
+  await saveValidAddress(page)
   return page.getByRole('link', { name: `View ${validAddress.name}` })
+}
+
+export const addValidAddressToFreshOrganisation = async (
+  page,
+  { organisationPrefix, overrides = {} }
+) => {
+  await signIn(page, {
+    organisationId: `${organisationPrefix}-${crypto.randomUUID()}`
+  })
+  await saveValidAddress(page, overrides)
+  await expect(page).toHaveURL(/\/address-book$/)
 }
 
 export const errorLink = (page, message) =>

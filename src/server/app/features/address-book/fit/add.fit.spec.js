@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import {
   NAME_LABEL,
+  addValidAddressToFreshOrganisation,
   expectErrorFocusOn,
   fieldLabels,
   fillValidAddress,
@@ -162,23 +163,13 @@ test.describe('add address validation', () => {
 })
 
 test.describe('save and confirm', () => {
-  const saveValidAddress = async (page, overrides = {}) => {
-    await signIn(page, {
-      organisationId: `stub-org-add-save-${crypto.randomUUID()}`
-    })
-    await page.goto(ADD_PATH)
-
-    await fillValidAddress(page, overrides)
-    await submit(page)
-
-    await expect(page).toHaveURL(/\/address-book$/)
-  }
+  const organisationPrefix = 'stub-org-add-save'
 
   test('saves a valid address and keeps the Success banner naming it showing 10 seconds after the list loads', async ({
     page
   }) => {
     await page.clock.install()
-    await saveValidAddress(page)
+    await addValidAddressToFreshOrganisation(page, { organisationPrefix })
 
     const banner = page
       .getByRole('alert', { name: 'Success' })
@@ -194,7 +185,10 @@ test.describe('save and confirm', () => {
     page
   }) => {
     const nameAfterSeedAlphabetically = 'Zetland Livestock Ltd'
-    await saveValidAddress(page, { name: nameAfterSeedAlphabetically })
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix,
+      overrides: { name: nameAfterSeedAlphabetically }
+    })
 
     await expect(resultsLineOf(page)).toHaveText('Showing 1-2 of 2')
     await expect(page.getByRole('link', { name: /^View / })).toHaveText([
@@ -220,7 +214,10 @@ test.describe('save and confirm', () => {
   test('finds the saved address by its name, a fragment of its address and part of its country name', async ({
     page
   }) => {
-    await saveValidAddress(page, { countryCode: 'FR' })
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix,
+      overrides: { countryCode: 'FR' }
+    })
 
     for (const term of [validAddress.name, 'drover', 'fran']) {
       await searchAndExpectSingleMatch(page, term, {
@@ -232,7 +229,7 @@ test.describe('save and confirm', () => {
   test('lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart', async ({
     page
   }) => {
-    await saveValidAddress(page)
+    await addValidAddressToFreshOrganisation(page, { organisationPrefix })
 
     const table = page.getByRole('table')
     await expect(

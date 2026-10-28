@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-import { fillValidAddress } from './address-form.js'
+import { addValidAddressToFreshOrganisation } from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import {
   expectEmptyAddressBookList,
@@ -251,12 +251,10 @@ test.describe('filter addresses', () => {
   test('finds the addresses in a country by part of its name', async ({
     page
   }) => {
-    await signIn(page, {
-      organisationId: `stub-org-list-country-${crypto.randomUUID()}`
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix: 'stub-org-list-country',
+      overrides: { name: 'Paris Depot', countryCode: 'FR' }
     })
-    await page.goto('/address-book/add')
-    await fillValidAddress(page, { name: 'Paris Depot', countryCode: 'FR' })
-    await page.getByRole('button', { name: 'Save and continue' }).click()
     await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
 
     await searchAndExpectSingleMatch(page, 'fran', {
