@@ -14,8 +14,11 @@ export const expectAddressBookList = async (page) => {
   ).toBeVisible()
 }
 
+export const resultsLineOf = (page) =>
+  page.getByTestId('address-book-results-label')
+
 export const expectEmptyAddressBookList = async (page) => {
-  await expect(page.getByText('Showing 0 of 0')).toBeVisible()
+  await expect(resultsLineOf(page)).toHaveText('Showing 0 of 0')
   await expect(page.getByRole('columnheader')).toHaveText([
     'Name',
     'Address',
@@ -62,9 +65,6 @@ export const searchAndExpectQuery = async (page, term, { submitWith }) => {
   const submittedQuery = new URLSearchParams({ q: term })
   await expect(page).toHaveURL(`/address-book?${submittedQuery}`)
 }
-
-export const resultsLineOf = (page) =>
-  page.getByTestId('address-book-results-label')
 
 export const searchAndExpectMatches = async (
   page,
