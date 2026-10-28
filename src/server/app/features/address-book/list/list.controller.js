@@ -19,7 +19,7 @@ import {
   getAddressFormCountries,
   countryCodesMatching
 } from '../address-countries.js'
-import { addressLinesHtml } from '../address-lines.js'
+import { linesHtml } from '../lines-html.js'
 import { takeSuccessMessage } from '../success-message.js'
 import {
   addressBookPageHref,
@@ -38,8 +38,8 @@ const viewLink = (address) =>
 
 const tableRowsOf = (addresses) =>
   addresses.map((address) => [
-    { html: addressLinesHtml(address.nameLines) },
-    { html: addressLinesHtml(address.postalLines, { lineEnding: ',' }) },
+    { html: linesHtml(address.nameLines) },
+    { html: linesHtml(address.postalLines, { lineEnding: ',' }) },
     { text: address.countryLabel },
     { html: viewLink(address) }
   ])

@@ -5,7 +5,7 @@ import { addressDeleteRoutePath, addressPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
 import { ADDRESS_FIELDS, addressFieldText } from '../fields.js'
-import { addressLinesHtml } from '../address-lines.js'
+import { linesHtml } from '../lines-html.js'
 import {
   boomFor,
   findLiveAddress,
@@ -63,7 +63,7 @@ const get = async (request, toolkit) => {
     return toolkit.view(view, {
       ...kit.base(copy.delete.title, { backLink: addressPageHref }),
       copy,
-      addressHtml: addressLinesHtml(
+      addressHtml: linesHtml(
         lines.length ? lines : [copy.delete.notApplicable]
       ),
       cancelHref: addressPageHref
