@@ -224,7 +224,7 @@ test.describe('save and confirm', () => {
 
     for (const term of [validAddress.name, 'drover', 'fran']) {
       await searchAndExpectSingleMatch(page, term, {
-        matchName: validAddress.name
+        matchedCellText: validAddress.name
       })
     }
   })

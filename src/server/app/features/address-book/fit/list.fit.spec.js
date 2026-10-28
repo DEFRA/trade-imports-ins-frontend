@@ -205,7 +205,7 @@ test.describe('filter addresses', () => {
 
       await searchAndExpectSingleMatch(page, 'farm 12', {
         submitWith,
-        matchName: FARM_12
+        matchedCellText: FARM_12
       })
     })
   }
@@ -244,7 +244,7 @@ test.describe('filter addresses', () => {
     await openAddressBookList(page, { organisationId: ORG_PAGINATED })
 
     await searchAndExpectSingleMatch(page, '12 stub way', {
-      matchName: FARM_12
+      matchedCellText: FARM_12
     })
   })
 
@@ -259,7 +259,9 @@ test.describe('filter addresses', () => {
     await page.getByRole('button', { name: 'Save and continue' }).click()
     await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
 
-    await searchAndExpectSingleMatch(page, 'fran', { matchName: 'France' })
+    await searchAndExpectSingleMatch(page, 'fran', {
+      matchedCellText: 'France'
+    })
   })
 
   test('leaves the list as it is while text is typed and not yet submitted', async ({
@@ -317,7 +319,7 @@ test.describe('filter addresses without JavaScript', () => {
 
       await searchAndExpectSingleMatch(page, 'farm 12', {
         submitWith,
-        matchName: FARM_12
+        matchedCellText: FARM_12
       })
     })
   }

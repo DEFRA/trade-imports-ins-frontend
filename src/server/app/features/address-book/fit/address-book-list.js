@@ -82,13 +82,13 @@ export const searchAndExpectMatches = async (
 export const searchAndExpectSingleMatch = async (
   page,
   term,
-  { submitWith = 'button', matchName }
+  { submitWith = 'button', matchedCellText }
 ) => {
   await searchAndExpectMatches(page, term, {
     submitWith,
     resultsLine: 'Showing 1-1 of 1'
   })
   await expect(
-    page.getByRole('cell', { name: matchName, exact: true })
+    page.getByRole('cell', { name: matchedCellText, exact: true })
   ).toBeVisible()
 }
