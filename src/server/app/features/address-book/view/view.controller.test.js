@@ -74,9 +74,7 @@ describe('#buildRows', () => {
 
     expect(rows.map((row) => row.key.text)).toEqual(
       STORED_ADDRESS_ROW_LABELS.filter(
-        (label) =>
-          label !== ADDRESS_LINE_2_LABEL &&
-          label !== COUNTY_LABEL
+        (label) => label !== ADDRESS_LINE_2_LABEL && label !== COUNTY_LABEL
       )
     )
   })
