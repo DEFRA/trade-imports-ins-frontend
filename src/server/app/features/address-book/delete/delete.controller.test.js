@@ -177,6 +177,30 @@ describe('GET /address-book/{addressId}/delete', () => {
     expect(load(result)(SUMMARY_VALUE).text().trim()).toBe('Not applicable')
   })
 
+  test('Should escape markup in a stored name and address line', async () => {
+    addressBookApi().get(ADDRESS_PATH).reply(200, {
+      id: addressId,
+      name: '<b>Bold</b> Farm',
+      addressLine1: '1 <i>Lane</i> End',
+      townOrCity: 'Inverness',
+      postcode: 'IV2 3JH',
+      countryCode: 'GB',
+      deleted: false
+    })
+
+    const { result, statusCode } = await getDelete(
+      server(),
+      'delete-get-escaping'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    expect($(SUMMARY_VALUE).html().trim()).toBe(
+      `&lt;b&gt;Bold&lt;/b&gt; Farm<br> 1 &lt;i&gt;Lane&lt;/i&gt; End<br> Inverness<br> IV2 3JH<br> ${UK_NAME}`
+    )
+    expect($(`${SUMMARY_VALUE} b, ${SUMMARY_VALUE} i`)).toHaveLength(0)
+  })
+
   test('Should redirect to the address book when the address is not found', async () => {
     addressBookApi().get(ADDRESS_PATH).reply(404, { message: 'Not found' })
 
