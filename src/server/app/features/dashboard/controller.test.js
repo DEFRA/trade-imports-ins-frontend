@@ -44,7 +44,7 @@ describe('#dashboard', () => {
             referenceNumber: REFERENCE_NUMBER,
             status: 'SUBMITTED',
             originCountry: 'FR',
-            commodity: null,
+            commodity: 'Cattle',
             arrivalDate: ARRIVAL_DATE
           }
         ])
@@ -63,6 +63,7 @@ describe('#dashboard', () => {
     expect(result).toContain('SUBMITTED')
     expect(result).toContain('France')
     expect(result).not.toContain('>FR<')
+    expect(result).toContain('>Cattle</td>')
     expect(result).toContain('10 Sep 2026')
     expect(result).toContain('Showing 1-1 of 1')
   })
