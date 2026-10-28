@@ -14,7 +14,8 @@ import {
   searchFieldOf
 } from './address-book-list.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
-import { SEED_ADDRESS_NAME } from './seed-address.js'
+import { seedAddress, seedAddressLines } from './seed-address.js'
+import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 
 const ORG_DEFAULT = 'stub-org-1'
 const ORG_EMPTY = 'stub-org-empty'
@@ -36,7 +37,7 @@ test.describe('navigation', () => {
 
     await addressBookLink.click()
 
-    await expect(page).toHaveURL(/\/address-book$/)
+    await expect(page).toHaveURL(addressBookPath())
     await expect(
       page.getByRole('heading', { name: 'Address book', exact: true })
     ).toBeVisible()
@@ -63,11 +64,11 @@ test.describe('list and pagination', () => {
       table.getByRole('columnheader', { name: 'Action' })
     ).toBeVisible()
     await expect(
-      table.getByRole('cell', { name: SEED_ADDRESS_NAME, exact: true })
+      table.getByRole('cell', { name: seedAddress.name, exact: true })
     ).toBeVisible()
     await expect(
       table.getByRole('cell', {
-        name: '1 Stub Way, Stubton, ST1 1UB',
+        name: seedAddressLines.join(', '),
         exact: true
       })
     ).toBeVisible()
@@ -86,7 +87,7 @@ test.describe('list and pagination', () => {
 
     await page.getByRole('button', { name: ADD_NEW_ADDRESS }).click()
 
-    await expect(page).toHaveURL(/\/address-book\/add$/)
+    await expect(page).toHaveURL(addressAddPath())
     await expect(
       page.getByRole('heading', { name: 'Add address details' })
     ).toBeVisible()
@@ -157,17 +158,20 @@ test.describe('intro and cells', () => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     const nameCell = page.getByRole('cell', {
-      name: SEED_ADDRESS_NAME,
+      name: seedAddress.name,
       exact: true
     })
     await expect(nameCell).toHaveText(/^Stub\nFarm 1$/, { useInnerText: true })
     const addressCell = page.getByRole('cell', {
-      name: '1 Stub Way, Stubton, ST1 1UB',
+      name: seedAddressLines.join(', '),
       exact: true
     })
-    await expect(addressCell).toHaveText(/^1 Stub Way,\nStubton,\nST1 1UB$/, {
-      useInnerText: true
-    })
+    await expect(addressCell).toHaveText(
+      new RegExp(`^${seedAddressLines.join(',\n')}$`),
+      {
+        useInnerText: true
+      }
+    )
   })
 })
 
@@ -221,7 +225,7 @@ test.describe('filter addresses', () => {
     })
     await page.getByRole('link', { name: 'Page 2' }).click()
 
-    await expect(page).toHaveURL('/address-book?q=Farm+1&page=2')
+    await expect(page).toHaveURL(`${addressBookPath()}?q=Farm+1&page=2`)
     await expect(resultsLineOf(page)).toHaveText('Showing 9-11 of 11')
   })
 
@@ -270,7 +274,7 @@ test.describe('filter addresses', () => {
 
     await searchFieldOf(page).fill('farm 12')
 
-    await expect(page).toHaveURL('/address-book')
+    await expect(page).toHaveURL(addressBookPath())
     await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
   })
 
@@ -282,7 +286,7 @@ test.describe('filter addresses', () => {
 
     await page.getByRole('link', { name: 'Clear search' }).click()
 
-    await expect(page).toHaveURL('/address-book')
+    await expect(page).toHaveURL(addressBookPath())
     await openFilterDisclosure(page)
     await expect(searchFieldOf(page)).toHaveValue('')
   })

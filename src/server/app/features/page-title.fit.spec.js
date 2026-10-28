@@ -5,9 +5,14 @@ import { copy as sharedCopy } from '../shared/copy.en.js'
 import { copy as addressBookCopy } from './address-book/copy/copy.en.js'
 import { copy as dashboardCopy } from './dashboard/copy/copy.en.js'
 import {
-  SEED_ADDRESS_ID,
-  SEED_ADDRESS_NAME
-} from './address-book/fit/seed-address.js'
+  addressAddPath,
+  addressBookPath,
+  addressDeletePath,
+  addressEditPath,
+  addressPath,
+  dashboardPath
+} from '../shared/paths.js'
+import { seedAddress } from './address-book/fit/seed-address.js'
 
 const { serviceName, govukSuffix, errorTitlePrefix } = sharedCopy.layout
 
@@ -19,7 +24,7 @@ test.describe('page title', () => {
   test('titles the home Dashboard, then the service name and GOV.UK, joined by hyphens', async ({
     page
   }) => {
-    await page.goto('/')
+    await page.goto(dashboardPath())
 
     await expect(
       page.getByRole('heading', {
@@ -34,7 +39,7 @@ test.describe('page title', () => {
   })
 
   test('titles the address book page the same way', async ({ page }) => {
-    await page.goto('/address-book')
+    await page.goto(addressBookPath())
 
     await expect(
       page.getByRole('heading', { name: addressBookCopy.list.title })
@@ -45,15 +50,15 @@ test.describe('page title', () => {
   })
 
   test("titles an address's own page with its name", async ({ page }) => {
-    await page.goto(`/address-book/${SEED_ADDRESS_ID}`)
+    await page.goto(addressPath(seedAddress.id))
 
     await expect(page).toHaveTitle(
-      `${SEED_ADDRESS_NAME} - ${serviceName} - ${govukSuffix}`
+      `${seedAddress.name} - ${serviceName} - ${govukSuffix}`
     )
   })
 
   test('titles the delete page Delete this address?', async ({ page }) => {
-    await page.goto(`/address-book/${SEED_ADDRESS_ID}/delete`)
+    await page.goto(addressDeletePath(seedAddress.id))
 
     await expect(page).toHaveTitle(
       'Delete this address? - Import notification service - GOV.UK'
@@ -63,7 +68,7 @@ test.describe('page title', () => {
   test('titles the edit page Edit address and contact details', async ({
     page
   }) => {
-    await page.goto(`/address-book/${SEED_ADDRESS_ID}/edit`)
+    await page.goto(addressEditPath(seedAddress.id))
 
     await expect(page).toHaveTitle(
       'Edit address and contact details - Import notification service - GOV.UK'
@@ -73,7 +78,7 @@ test.describe('page title', () => {
   test('puts the error prefix in front of the whole title when the page shows errors', async ({
     page
   }) => {
-    await page.goto('/address-book/add')
+    await page.goto(addressAddPath())
 
     await page.getByRole('button', { name: addressBookCopy.add.save }).click()
 

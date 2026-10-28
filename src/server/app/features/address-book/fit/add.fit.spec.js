@@ -15,11 +15,9 @@ import {
   searchAndExpectSingleMatch
 } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
-import { SEED_ADDRESS_NAME } from './seed-address.js'
+import { seedAddress } from './seed-address.js'
+import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
-
-const ADD_URL = /\/address-book\/add$/
-const ADD_PATH = '/address-book/add'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -29,7 +27,7 @@ test.describe('add address', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-render' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await expect(
       page.getByRole('heading', { name: 'Add address details' })
@@ -58,16 +56,16 @@ test.describe('add address', () => {
 
   test('has a Back link to the address book', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-back' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', '/address-book')
+    ).toHaveAttribute('href', addressBookPath())
   })
 
   test('groups fields under Address and Contact details', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-sections' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     for (const name of ['Address', 'Contact details']) {
       await expect(
@@ -78,7 +76,7 @@ test.describe('add address', () => {
 
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-axe' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address')
   })
@@ -90,7 +88,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-required' })
-      await page.goto(ADD_PATH)
+      await page.goto(addressAddPath())
 
       await fillValidAddress(page, { [field]: '' })
       await submit(page)
@@ -99,7 +97,7 @@ test.describe('add address validation', () => {
         message: error,
         label,
         expectedValue: '',
-        url: ADD_URL
+        url: addressAddPath()
       })
       await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
         field === 'name' ? '' : validAddress.name
@@ -112,7 +110,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-maxlength' })
-      await page.goto(ADD_PATH)
+      await page.goto(addressAddPath())
 
       const value = 'A'.repeat(maxLength + 1)
       await fillValidAddress(page, { [field]: value })
@@ -122,7 +120,7 @@ test.describe('add address validation', () => {
         message: error,
         label,
         expectedValue: value,
-        url: ADD_URL
+        url: addressAddPath()
       })
       await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
         field === 'name' ? value : validAddress.name
@@ -132,7 +130,7 @@ test.describe('add address validation', () => {
 
   test('rejects a malformed email address', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-email' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await fillValidAddress(page, { email: 'not-an-email' })
     await submit(page)
@@ -141,7 +139,7 @@ test.describe('add address validation', () => {
       message: 'Enter an email address in the correct format',
       label: fieldLabels.email,
       expectedValue: 'not-an-email',
-      url: ADD_URL
+      url: addressAddPath()
     })
   })
 
@@ -149,7 +147,7 @@ test.describe('add address validation', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-validation-axe' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await fillValidAddress(page, { name: '' })
     await submit(page)
@@ -193,14 +191,14 @@ test.describe('save and confirm', () => {
     await expect(resultsLineOf(page)).toHaveText('Showing 1-2 of 2')
     await expect(page.getByRole('link', { name: /^View / })).toHaveText([
       `View ${nameAfterSeedAlphabetically}`,
-      `View ${SEED_ADDRESS_NAME}`
+      `View ${seedAddress.name}`
     ])
     const viewLink = page.getByRole('link', {
       name: `View ${nameAfterSeedAlphabetically}`
     })
     await expect(viewLink).toHaveAttribute(
       'href',
-      /^\/address-book\/[0-9a-f]{24}$/
+      new RegExp(`^${addressBookPath()}/[0-9a-f]{24}$`)
     )
     await viewLink.click()
     await expect(
@@ -235,9 +233,18 @@ test.describe('save and confirm', () => {
     await expect(
       table.getByRole('cell', { name: validAddress.name, exact: true })
     ).toBeVisible()
-    const addressCell = table.getByRole('cell', { name: "14 Drover's Way," })
+    const storedLines = [
+      validAddress.addressLine1,
+      validAddress.addressLine2,
+      validAddress.townOrCity,
+      validAddress.county,
+      validAddress.postcode
+    ]
+    const addressCell = table.getByRole('cell', {
+      name: `${validAddress.addressLine1},`
+    })
     await expect(addressCell).toHaveText(
-      /^14 Drover's Way,\nUnit 3,\nInverness,\nHighland,\nIV2 3JH$/,
+      new RegExp(`^${storedLines.join(',\n')}$`),
       { useInnerText: true }
     )
     await expect(
@@ -253,7 +260,7 @@ test.describe('cancel', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-cancel' })
-    await page.goto(ADD_PATH)
+    await page.goto(addressAddPath())
 
     await page.getByLabel(NAME_LABEL).fill('Should not be saved')
 
@@ -261,7 +268,7 @@ test.describe('cancel', () => {
       .getByRole('link', { name: 'Cancel and return to address book' })
       .click()
 
-    await expect(page).toHaveURL(/\/address-book$/)
+    await expect(page).toHaveURL(addressBookPath())
     await expect(page.getByText('Should not be saved')).toHaveCount(0)
   })
 })

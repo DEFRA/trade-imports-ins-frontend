@@ -134,8 +134,12 @@ validation tables.
 `expectDashboard`.
 [`axe.js`](../features/address-book/fit/axe.js) — the address-book group's
 shared axe helper, `expectNoSeriousOrCriticalViolations`.
-[`seed-address.js`](../features/address-book/fit/seed-address.js) — the
-deterministic seed id.
+[`seed-address.js`](../features/address-book/fit/seed-address.js) —
+`seedAddress`, the address the stub seeds for an ordinary organisation,
+its `seedAddressLines`, and the unknown and malformed ids.
+[`return-query.js`](../features/address-book/fit/return-query.js) —
+`withReturn(path, returnTo)`. Page paths come from the app's own
+[`shared/paths.js`](../shared/paths.js), never a literal in a spec.
 
 Every test signs in with its own organisation id, because the
 address-book stub keys its data by organisation; the `-empty` and

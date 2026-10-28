@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test'
 
+import { addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 export const openAddressBookList = async (
@@ -8,11 +9,11 @@ export const openAddressBookList = async (
 ) => {
   await signIn(page, { organisationId })
   const query = pageNumber === undefined ? '' : `?page=${pageNumber}`
-  await page.goto(`/address-book${query}`)
+  await page.goto(`${addressBookPath()}${query}`)
 }
 
 export const expectAddressBookList = async (page) => {
-  await expect(page).toHaveURL(/\/address-book$/)
+  await expect(page).toHaveURL(addressBookPath())
   await expect(
     page.getByRole('heading', { level: 1, name: 'Address book' })
   ).toBeVisible()
@@ -67,7 +68,7 @@ const submitSearch = async (page, term, { submitWith }) => {
 export const searchAndExpectQuery = async (page, term, { submitWith }) => {
   await submitSearch(page, term, { submitWith })
   const submittedQuery = new URLSearchParams({ q: term })
-  await expect(page).toHaveURL(`/address-book?${submittedQuery}`)
+  await expect(page).toHaveURL(`${addressBookPath()}?${submittedQuery}`)
 }
 
 export const searchAndExpectMatches = async (

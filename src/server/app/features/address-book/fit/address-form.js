@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test'
 
 import { FIELD_RULES } from '../fields.js'
+import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 export const NAME_LABEL = 'Name or organisation'
@@ -57,10 +58,10 @@ export const addValidAddressToFreshOrganisation = async (
   await signIn(page, {
     organisationId: `${organisationPrefix}-${crypto.randomUUID()}`
   })
-  await page.goto('/address-book/add')
+  await page.goto(addressAddPath())
   await fillValidAddress(page, overrides)
   await page.getByRole('button', { name: 'Save and continue' }).click()
-  await expect(page).toHaveURL(/\/address-book$/)
+  await expect(page).toHaveURL(addressBookPath())
 }
 
 export const validAddressViewLink = (page) =>
