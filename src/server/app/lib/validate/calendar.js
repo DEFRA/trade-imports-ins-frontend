@@ -1,10 +1,7 @@
 import { addDays, addMonths, isValid, parse } from 'date-fns'
 
-const DATE_TEXT_FORMAT = 'd/M/yyyy'
-const DATE_TEXT_SHAPE = /^\d{1,2}\/\d{1,2}\/\d{4}$/
-const MONTHS_IN_YEAR = 12
-
 export const isRealDate = (year, month, day) => {
+  const MONTHS_IN_YEAR = 12
   if (![year, month, day].every(Number.isInteger)) {
     return false
   }
@@ -47,6 +44,8 @@ export const addUtcMonths = (date, months) =>
   addMonths(startOfUtcDay(date), months)
 
 export const parseDateText = (raw) => {
+  const DATE_TEXT_FORMAT = 'd/M/yyyy'
+  const DATE_TEXT_SHAPE = /^\d{1,2}\/\d{1,2}\/\d{4}$/
   const text = String(raw ?? '').trim()
   // date-fns reads `yyyy` as one to four digits, so without this guard `27/3/26` parses as year 26 and slips under a `max` bound.
   if (!DATE_TEXT_SHAPE.test(text)) {
