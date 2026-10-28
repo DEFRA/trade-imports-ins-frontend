@@ -14,6 +14,7 @@ import {
 } from '../../../../common/test-helpers/session-auth.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
+import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { config } from '../../../../../config/config.js'
@@ -68,6 +69,8 @@ const getAdd = (server, session, query = {}) =>
     url: `${ADD_ADDRESS_URL}?${new URLSearchParams(query)}`,
     auth: sessionAuth(session)
   })
+
+const SUCCESS_BANNER = '.govuk-notification-banner--success'
 
 const textsOf = ($, selector) =>
   $(selector)
@@ -179,6 +182,26 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(scope.isDone()).toBe(true)
     expect(posted).toMatchObject(validPayload)
     expect(headers['cache-control']).not.toBe('no-store')
+  })
+
+  test('POST shows the address added banner on the address book', async () => {
+    addressBookApi().post(ADDRESSES_PATH).reply(201, {
+      id: '665f1c2ab3e4d51a2c9d0e77',
+      name: BUSINESS_NAME
+    })
+
+    const { headers } = await postAdd(server(), 'add-post-banner', validPayload)
+
+    const listResponse = await openEmptyAddressBookWithCookiesFrom(
+      server(),
+      'add-post-banner',
+      headers
+    )
+    expect(textsOf(load(listResponse.result), SUCCESS_BANNER)).toEqual([
+      expect.stringContaining(
+        `${BUSINESS_NAME} address added to your address book`
+      )
+    ])
   })
 
   test('POST shows the recoverable-error banner when the address book rejects the save with a server error', async () => {
@@ -349,6 +372,13 @@ describe(
         `${RETURN_URL}&addressId=665f1c2ab3e4d51a2c9d0e77`
       )
       expect(scope.isDone()).toBe(true)
+
+      const listResponse = await openEmptyAddressBookWithCookiesFrom(
+        server(),
+        'add-post-handshake',
+        headers
+      )
+      expect(load(listResponse.result)(SUCCESS_BANNER)).toHaveLength(0)
     })
 
     test('POST from a handshake keeps the journey on the form when the API rejects the address', async () => {
