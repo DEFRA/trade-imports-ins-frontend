@@ -20,7 +20,7 @@ const expectNoSeriousOrCriticalViolations = async (page, subject) => {
 }
 
 test.describe('dashboard', () => {
-  test('shows notifications from every status with enough to identify the consignment (AC1, AC2)', async ({
+  test('shows notifications from every status with enough to identify the consignment', async ({
     page
   }) => {
     await signIn(page)
@@ -30,8 +30,6 @@ test.describe('dashboard', () => {
       page.getByRole('heading', { name: 'Dashboard', exact: true })
     ).toBeVisible()
 
-    // Stub dataset spans SUBMITTED, DRAFT and AMEND — all three must appear
-    // in the same list (AC2), each with enough to identify the consignment.
     await expect(
       page.getByRole('cell', { name: REFERENCE_NUMBER, exact: true })
     ).toBeVisible()
@@ -58,7 +56,7 @@ test.describe('dashboard', () => {
     await expectNoSeriousOrCriticalViolations(page, 'dashboard')
   })
 
-  test('opening a submitted notification links into the read-only notification-view page (AC3)', async ({
+  test('opening a submitted notification links into the read-only notification-view page', async ({
     page
   }) => {
     await signIn(page)
@@ -71,7 +69,7 @@ test.describe('dashboard', () => {
     )
   })
 
-  test('opening a draft notification links back to the journey hub, not notification-view (AC3)', async ({
+  test('opening a draft notification links back to the journey hub, not notification-view', async ({
     page
   }) => {
     await signIn(page)
@@ -84,7 +82,7 @@ test.describe('dashboard', () => {
     )
   })
 
-  test('searching by complete reference returns only the matching notification (AC4)', async ({
+  test('searching by complete reference returns only the matching notification', async ({
     page
   }) => {
     await signIn(page)
@@ -103,7 +101,7 @@ test.describe('dashboard', () => {
     ).toHaveCount(0)
   })
 
-  test('no matching notification shows "No notifications found" (AC5)', async ({
+  test('no matching notification shows "No notifications found"', async ({
     page
   }) => {
     await signIn(page)
