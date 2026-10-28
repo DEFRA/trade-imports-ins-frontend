@@ -19,8 +19,15 @@ vi.mock('../../../../../config/config.js', () => ({
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const LAST_UPDATED_OLDEST_FIRST = 'lastUpdated,asc'
 
+const loggerWarnMock = vi.hoisted(() => vi.fn())
+
+vi.mock('../../../../common/helpers/logging/logger.js', () => ({
+  createLogger: () => ({ warn: loggerWarnMock })
+}))
+
 afterEach(() => {
   configState.animalsBaseUrl = configState.defaultAnimalsBaseUrl
+  loggerWarnMock.mockReset()
 })
 
 const {
@@ -160,5 +167,43 @@ describe('#mapNotificationRows', () => {
     )
 
     expect(row.originCountry).toBe('ZZ')
+  })
+
+  test('shows an unparseable arrival date blank and warns with the reference and raw value', () => {
+    const [row] = mapNotificationRows([
+      {
+        referenceNumber: REFERENCE_NUMBER,
+        status: 'SUBMITTED',
+        arrivalDate: '2026-02-30'
+      }
+    ])
+
+    expect(row.arrivalDate).toBe('')
+    expect(loggerWarnMock).toHaveBeenCalledOnce()
+    expect(loggerWarnMock).toHaveBeenCalledWith(
+      { referenceNumber: REFERENCE_NUMBER, arrivalDate: '2026-02-30' },
+      'Arrival date from the backend is not a calendar date, showing it blank'
+    )
+  })
+
+  test('does not warn for a valid arrival date', () => {
+    mapNotificationRows([
+      {
+        referenceNumber: REFERENCE_NUMBER,
+        status: 'SUBMITTED',
+        arrivalDate: '2026-09-10'
+      }
+    ])
+
+    expect(loggerWarnMock).not.toHaveBeenCalled()
+  })
+
+  test('shows a missing arrival date blank without warning', () => {
+    const [row] = mapNotificationRows([
+      { referenceNumber: REFERENCE_NUMBER, status: 'DRAFT' }
+    ])
+
+    expect(row.arrivalDate).toBe('')
+    expect(loggerWarnMock).not.toHaveBeenCalled()
   })
 })
