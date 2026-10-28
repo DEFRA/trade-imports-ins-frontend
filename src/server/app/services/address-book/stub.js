@@ -54,7 +54,7 @@ const matchesSearch = (address, { searchTerm, countryCodes = [] }) => {
   if (!term && countryCodes.length === 0) {
     return true
   }
-  const searchedTextFields = [
+  const textSearchFields = [
     'name',
     'addressLine1',
     'addressLine2',
@@ -64,7 +64,7 @@ const matchesSearch = (address, { searchTerm, countryCodes = [] }) => {
   ]
   const textMatches =
     Boolean(term) &&
-    searchedTextFields.some((field) =>
+    textSearchFields.some((field) =>
       (address[field] ?? '').toLowerCase().includes(term)
     )
   return textMatches || countryCodes.includes(address.countryCode)
