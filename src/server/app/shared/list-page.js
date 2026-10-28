@@ -13,7 +13,7 @@ export const escapeHtml = (value) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;')
 
-const clampPage = (page, totalPages) =>
+export const clampPage = (page, totalPages) =>
   Math.min(Math.max(page, FIRST_PAGE), Math.max(totalPages, FIRST_PAGE))
 
 export const buildResultsLabel = (

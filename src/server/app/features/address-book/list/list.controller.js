@@ -7,6 +7,7 @@ import { copyFor } from '../../../shared/copy.js'
 import {
   escapeHtml,
   buildPaginationLinks,
+  clampPage,
   parsePage
 } from '../../../shared/list-page.js'
 import {
@@ -68,17 +69,17 @@ const loadAddressPage = async (organisationId, { page, ...search }) => {
     pageSize,
     ...search
   })
-  const lastPageNumber = requestedAddressPage.totalPages
-  if (page <= lastPageNumber || lastPageNumber < 1) {
+  const servedPage = clampPage(page, requestedAddressPage.totalPages)
+  if (servedPage === page) {
     return requestedAddressPage
   }
 
   logger.info(
-    { organisationId, requestedPage: page, servedPage: lastPageNumber },
+    { organisationId, requestedPage: page, servedPage },
     'Address book page is past the last page, serving the last page'
   )
   return listAddresses(organisationId, {
-    page: lastPageNumber,
+    page: servedPage,
     pageSize,
     ...search
   })
