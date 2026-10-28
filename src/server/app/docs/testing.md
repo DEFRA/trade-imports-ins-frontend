@@ -32,12 +32,22 @@ for the pattern, and the helpers in
 [`common/test-helpers/`](../../common/test-helpers/): `real-mode.js`
 (`runInRealMode()`, `refuseOutboundHttp()`, `addressBookApi()`,
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
-`address-book-requests.js` (`getPage()`, `postPage()`,
-`getPageAsOtherOrganisation()`, `serveAddressBookServerError(path)`,
-`serveAddressNotFoundForOtherOrganisation(addressId)`,
-`expectRedirectTo()`, `expectServerErrorPage()`, `MALFORMED_ADDRESS_ID`,
-`INVALID_ADDRESS_PAYLOAD`, `ORGANISATION_ID_HEADER`,
-`OTHER_ORGANISATION_ID`),
+`address-book-requests.js`, the one owner of the address book tests'
+set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
+`addressPagePath(addressId)`, `editAddressPagePath(addressId)`,
+`deleteAddressPagePath(addressId)`, `RETURN_HOME`), address book API paths
+(`addressesApiPath(organisationId)`, `addressApiPath(addressId,
+organisationId)`, both defaulting to the session organisation), fixtures
+(`ADDRESS_ID`, `STORED_ADDRESS`, `VALID_ADDRESS_PAYLOAD`,
+`INVALID_ADDRESS_PAYLOAD`, `COUNTRIES`, `MALFORMED_ADDRESS_ID`,
+`ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,
+`COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()`,
+`postPage()`, `getPageAsOtherOrganisation()`), address book API stubs
+(`pageOf(items, overrides)`, `serveStoredAddress(address)`,
+`serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
+`serveAddressNotFoundForOtherOrganisation(addressId)`) and checks
+(`expectRedirectTo()`, `expectServerErrorPage()`), which every address
+book test imports instead of keeping a local copy,
 `expect-address-form-widths.js` (`expectAddressFormWidths(result)`, the
 add and edit forms' field widths),
 `expect-address-summary-links.js` (`expectSummaryLinks(result)`),
@@ -45,7 +55,8 @@ add and edit forms' field widths),
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
 opens the address book list with the cookies a POST set so a test can
 read the banner),
-`session-auth.js` (`sessionAuth(sessionId, overrides)`),
+`session-auth.js` (`sessionAuth(sessionId, overrides)` and
+`ORGANISATION_ID`, the one test organisation id),
 `mock-oidc-config.js` (`mockOidcConfig`), `mock-auth-config.js`
 (`mockAuthConfig(importOriginal)`), `test-server.js`
 (`startTestServer()`, `stopTestServer(server)`, `startRealModeServer()`,
@@ -58,7 +69,7 @@ holds the list's fixtures, nock stubs and Cheerio readers:
 `stubAddressBookUnavailable()`, `contentOf`, `tableHeadingsOf`,
 `resultsLineOf`, `bodyRowCountOf`, `rowCellsOf` and `tagNamesOf`. A list
 controller test calls `const readPage = startServerWithPageReader()`, which
-starts the server serving GB and FR and returns a page reader, and reads
+starts the server serving `COUNTRIES` and returns a page reader, and reads
 pages with `readPage(url, sessionId)`, which wraps `getPage()`,
 loads the HTML into Cheerio and returns `{ $, html, statusCode }`.
 
