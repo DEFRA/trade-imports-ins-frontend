@@ -1,7 +1,6 @@
-import { addDays, addMonths, format, isValid, parse } from 'date-fns'
+import { addDays, addMonths, isValid, parse } from 'date-fns'
 
 const DATE_TEXT_FORMAT = 'd/M/yyyy'
-const CALENDAR_DATE_DISPLAY_FORMAT = 'd MMM yyyy'
 const DATE_TEXT_SHAPE = /^\d{1,2}\/\d{1,2}\/\d{4}$/
 const MONTHS_IN_YEAR = 12
 
@@ -65,12 +64,32 @@ export const formatDateText = (date) =>
   `${date.getUTCDate()}/${date.getUTCMonth() + 1}/${date.getUTCFullYear()}`
 
 /**
- * Renders the calendar day a `Date` names in UTC, whatever the process zone.
- * @param {Date} date - Midnight UTC on the day, as a `YYYY-MM-DD` value parses to.
- * @returns {string} e.g. `21 Jul 2026`.
+ * Renders a `YYYY-MM-DD` calendar date as `d MMM yyyy`.
+ * @param {string} [calendarDate] - The date as `YYYY-MM-DD`.
+ * @returns {string} e.g. `21 Jul 2026`, or `''` when the value is not a real `YYYY-MM-DD` date.
  */
-export const formatCalendarDate = (date) =>
-  format(
-    new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-    CALENDAR_DATE_DISPLAY_FORMAT
-  )
+export const formatCalendarDate = (calendarDate) => {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(calendarDate ?? '')
+  if (!parts) {
+    return ''
+  }
+  const [year, month, day] = parts.slice(1).map(Number)
+  if (!isRealDate(year, month, day)) {
+    return ''
+  }
+  const monthAbbreviations = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ]
+  return `${day} ${monthAbbreviations[month - 1]} ${year}`
+}

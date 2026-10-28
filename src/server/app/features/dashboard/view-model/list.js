@@ -1,5 +1,3 @@
-import { isValid, parseISO } from 'date-fns'
-
 import { SET_BASES } from '../../../../common/constants/journey-set-bases.js'
 import { buildSetBaseUrl } from '../../../../common/helpers/set-base-url.js'
 import { formatCalendarDate } from '../../../lib/validate/index.js'
@@ -13,14 +11,6 @@ export const SORT_OPTIONS = [
 ]
 
 const DEFAULT_SORT = SORT_OPTIONS[0].value
-
-export function formatDisplayDate(isoDate) {
-  if (!isoDate) {
-    return ''
-  }
-  const date = parseISO(`${isoDate}T00:00:00Z`)
-  return isValid(date) ? formatCalendarDate(date) : ''
-}
 
 export function buildDashboardQueryString({
   page,
@@ -68,7 +58,7 @@ export function mapNotificationRows(notifications, countryNames = {}) {
       notification.originCountry ??
       '',
     commodity: notification.commodity ?? '',
-    arrivalDate: formatDisplayDate(notification.arrivalDate),
+    arrivalDate: formatCalendarDate(notification.arrivalDate),
     href: buildNotificationLink(
       notification.status,
       notification.referenceNumber
