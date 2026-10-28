@@ -38,7 +38,11 @@ describe('#copy', () => {
   it('Should word the add page title and caption', () => {
     expect(copy.add.title).toBe('Add address and contact details')
     expect(copy.add.caption).toBe('Add new address')
-    expect(cy.add.caption).not.toBe(copy.add.caption)
+  })
+
+  it('Should carry the Welsh add page caption and title', () => {
+    expect(cy.add.caption).toBe('Ychwanegu cyfeiriad newydd')
+    expect(cy.add.title).toBe('Ychwanegu manylion cyfeiriad a manylion cyswllt')
   })
 
   it('Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line', () => {

@@ -89,11 +89,11 @@ test; [`routes.test.js`](../routes.test.js) pins the exact route list.
 [`shared/kit.js`](../shared/kit.js):
 
 - **`base(title, { backLink, recoverableError, journeyStrip })`** returns
-  `{ layout, pageTitle, backLink, sharedCopy, recoverableError,
-journeyStrip, contentColumnClass }` — `journeyStrip` is `null` unless a
-  page passes one, and the layout shows the strip above the page content
-  only when it is set; a two-thirds column by default; a page that lays out a table overrides
-  `contentColumnClass: kit.surfaceClass('display')`.
+  `{ layout, pageTitle, backLink, sharedCopy, recoverableError, journeyStrip, contentColumnClass }`.
+  `journeyStrip` is `null` unless a page passes one, and the layout shows the strip above the page content
+  only when it is set. `contentColumnClass` is the two-thirds form column
+  (`SURFACES.form`) by default, and a page that lays out a table overrides
+  it with `kit.surfaceClass('display')`.
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
 'session' }`; the view, edit and delete pages pass

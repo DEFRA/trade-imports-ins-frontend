@@ -2,6 +2,7 @@ import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
+import { JOURNEY_HANDSHAKE } from '../../../common/test-helpers/journey-handshake.js'
 import {
   buildReturnUrl,
   isKnownJourneyType,
@@ -10,8 +11,9 @@ import {
 
 const defaultAnimalsBaseUrl = 'http://localhost:3000'
 const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
-const NOTIFICATION_ID = 'GBN-AG-26-4F7K2P'
-const FULFILMENT_ID = '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+const NOTIFICATION_ID = JOURNEY_HANDSHAKE['notification-id']
+const FULFILMENT_ID = JOURNEY_HANDSHAKE['fulfilment-id']
+const RETURN_URL_WITHOUT_ADDRESS = `${defaultAnimalsBaseUrl}/live-animals/notifications/${NOTIFICATION_ID}/address-return?fulfilment-id=${FULFILMENT_ID}`
 const BASE_URL_CONFIG_KEY = 'tradeImportsAnimalsFrontend.baseUrl'
 
 describe('journey-registry', () => {
@@ -38,17 +40,15 @@ describe('journey-registry', () => {
       { addressId: ADDRESS_ID }
     )
 
-    expect(url).toBe(
-      `http://localhost:3000/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&addressId=${ADDRESS_ID}`
-    )
+    expect(url).toBe(`${RETURN_URL_WITHOUT_ADDRESS}&addressId=${ADDRESS_ID}`)
   })
 
   test("buildReturnUrl returns under the journey set's base, not the frontend root", () => {
     const url = new URL(
       buildReturnUrl({
         journeyType: JOURNEY_TYPES.GBN_AG,
-        notificationId: 'GBN-AG-26-4F7K2P',
-        fulfilmentId: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+        notificationId: NOTIFICATION_ID,
+        fulfilmentId: FULFILMENT_ID
       })
     )
 
@@ -62,9 +62,7 @@ describe('journey-registry', () => {
       fulfilmentId: FULFILMENT_ID
     })
 
-    expect(url).toBe(
-      'http://localhost:3000/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
-    )
+    expect(url).toBe(RETURN_URL_WITHOUT_ADDRESS)
   })
 
   test('buildReturnUrl strips a trailing slash from the animals base URL', () => {
@@ -76,9 +74,7 @@ describe('journey-registry', () => {
       fulfilmentId: FULFILMENT_ID
     })
 
-    expect(url).toBe(
-      'http://localhost:3000/live-animals/notifications/GBN-AG-26-4F7K2P/address-return?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
-    )
+    expect(url).toBe(RETURN_URL_WITHOUT_ADDRESS)
   })
 
   test('buildReturnUrl URI-encodes opaque ids that contain reserved characters', () => {

@@ -39,7 +39,9 @@ set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
 (`addressesApiPath(organisationId)`, `addressApiPath(addressId,
 organisationId)`, both defaulting to the session organisation), fixtures
 (`ADDRESS_ID`, `STORED_ADDRESS`, `VALID_ADDRESS_PAYLOAD`,
-`INVALID_ADDRESS_PAYLOAD`, `COUNTRIES`, `MALFORMED_ADDRESS_ID`,
+`INVALID_ADDRESS_PAYLOAD`, `ADDRESS_FORM_LABELS` (the add and edit forms'
+field labels in page order, read from the English copy), `COUNTRIES`,
+`MALFORMED_ADDRESS_ID`,
 `ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,
 `COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()`,
 `postPage()`, `getPageAsOtherOrganisation()`), address book API stubs
@@ -56,6 +58,9 @@ autocomplete hints, read from `address-form-autocomplete.js`'s
 `AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
 `journey-handshake.js` (`JOURNEY_HANDSHAKE`, the one complete journey
 handshake the Vitest tests and the fit specs both send),
+`expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
+notificationReference)`, the Draft tag and notification reference in the
+journey strip, and `JOURNEY_STRIP`, its selector),
 `expect-address-summary-links.js` (`expectSummaryLinks(result)`),
 `open-empty-address-book-with-cookies.js`
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which

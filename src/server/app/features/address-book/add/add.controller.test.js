@@ -22,6 +22,10 @@ import {
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
+import {
+  expectDraftJourneyStrip,
+  JOURNEY_STRIP
+} from '../../../../common/test-helpers/expect-draft-journey-strip.js'
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import { JOURNEY_HANDSHAKE } from '../../../../common/test-helpers/journey-handshake.js'
@@ -39,7 +43,6 @@ const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
 const ANIMALS_BASE_URL = 'http://localhost:3000'
 const RETURN_URL = `${ANIMALS_BASE_URL}/live-animals/notifications/${JOURNEY_HANDSHAKE['notification-id']}/address-return?fulfilment-id=${JOURNEY_HANDSHAKE['fulfilment-id']}&handshake-token=${JOURNEY_HANDSHAKE['handshake-token']}`
-const JOURNEY_STRIP = '.app-journey-strip'
 const CAPTION_SELECTOR = '.govuk-caption-l'
 const ADD_TITLE = 'Add address and contact details'
 
@@ -310,13 +313,10 @@ describe(
       expect($('head title').text().trim()).toBe(
         `${ADD_TITLE} - Import notification service - GOV.UK`
       )
-      expect(textsOf($, `${JOURNEY_STRIP} .govuk-tag`)).toEqual(['Draft'])
+      expectDraftJourneyStrip($, JOURNEY_HANDSHAKE['notification-id'])
       expect($(`${JOURNEY_STRIP} .govuk-tag`).hasClass('govuk-tag--blue')).toBe(
         true
       )
-      expect(textsOf($, `${JOURNEY_STRIP} span.govuk-body`)).toEqual([
-        JOURNEY_HANDSHAKE['notification-id']
-      ])
       expect($(JOURNEY_STRIP).nextAll(CAPTION_SELECTOR)).toHaveLength(1)
       expect(textsOf($, CAPTION_SELECTOR)).toEqual(['Add new address'])
       expect(textsOf($, 'h1')).toEqual([ADD_TITLE])
@@ -379,7 +379,7 @@ describe(
       expect(load(listResponse.result)(SUCCESS_BANNER)).toHaveLength(0)
     })
 
-    test('POST from a handshake keeps the journey on the form when the API rejects the address', async () => {
+    test('POST from a handshake keeps the journey, the Draft status and the notification reference on the form when the API rejects the address', async () => {
       addressBookApi()
         .post(addressesApiPath())
         .reply(statusCodes.badRequest, {
@@ -399,11 +399,10 @@ describe(
       expect(result).toContain(EMAIL_FORMAT_ERROR)
       expect(result).toContain('name="handshake-token"')
       expect(result).toContain('Cancel and return to address page')
-      const $ = load(result)
-      expect(textsOf($, `${JOURNEY_STRIP} .govuk-tag`)).toEqual(['Draft'])
-      expect(textsOf($, `${JOURNEY_STRIP} span.govuk-body`)).toEqual([
+      expectDraftJourneyStrip(
+        load(result),
         JOURNEY_HANDSHAKE['notification-id']
-      ])
+      )
     })
 
     test('Cancel from a handshake returns to the journey without creating an address', async () => {

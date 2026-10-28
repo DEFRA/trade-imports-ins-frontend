@@ -4,6 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
   ADDRESS_BOOK_PATH,
+  ADDRESS_FORM_LABELS,
   ADDRESS_ID,
   addressApiPath,
   addressPagePath,
@@ -92,17 +93,7 @@ describe('GET /address-book/{addressId}/edit', () => {
       $('form label')
         .map((_, label) => $(label).text().trim())
         .get()
-    ).toEqual([
-      'Name or organisation',
-      'Address line 1',
-      'Address line 2 (optional)',
-      'Town or city',
-      'County (optional)',
-      'Postcode or Zip code',
-      'Country',
-      'Email address',
-      'Phone number'
-    ])
+    ).toEqual(ADDRESS_FORM_LABELS)
     expect({
       name: $('#name').val(),
       addressLine1: $('#addressLine1').val(),

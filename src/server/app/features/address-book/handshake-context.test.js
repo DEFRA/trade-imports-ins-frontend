@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import Boom from '@hapi/boom'
 
+import { JOURNEY_HANDSHAKE } from '../../../common/test-helpers/journey-handshake.js'
 import {
   loadHandshakeContext,
   readHandshakePayload,
@@ -11,15 +12,15 @@ import {
 } from './handshake-context.js'
 
 const SESSION_KEY = 'addressBookHandshake'
-const NOTIFICATION_ID = 'GBN-AG-26-4F7K2P'
+const NOTIFICATION_ID = JOURNEY_HANDSHAKE['notification-id']
 const INCOMPLETE_HANDSHAKE_ERROR = 'Incomplete journey handshake'
 const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
 
 const validContext = {
-  journeyType: 'gbn-ag',
+  journeyType: JOURNEY_HANDSHAKE['journey-type'],
   notificationId: NOTIFICATION_ID,
-  fulfilmentId: '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d',
-  handshakeToken: 'handshake-token-value'
+  fulfilmentId: JOURNEY_HANDSHAKE['fulfilment-id'],
+  handshakeToken: JOURNEY_HANDSHAKE['handshake-token']
 }
 
 const mockRequest = (query = {}, payload = undefined, session = {}) => {

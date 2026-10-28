@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
 import {
-  NAME_LABEL,
   addValidAddressToFreshOrganisation,
   expectErrorFocusOn,
   fieldLabels,
@@ -34,11 +33,13 @@ test.describe('add address', () => {
     await expect(
       page.getByRole('heading', { name: 'Add address and contact details' })
     ).toBeVisible()
-    await expect(page.getByLabel(NAME_LABEL, { exact: true })).toBeVisible()
+    await expect(
+      page.getByLabel(fieldLabels.name, { exact: true })
+    ).toBeVisible()
     for (const [, label] of [
       ...requiredValidations,
-      ['addressLine2', 'Address line 2 (optional)'],
-      ['county', 'County (optional)']
+      ['addressLine2', fieldLabels.addressLine2],
+      ['county', fieldLabels.county]
     ]) {
       await expect(page.getByLabel(label)).toBeVisible()
     }
@@ -113,13 +114,29 @@ test.describe('add address reached from a notification journey', () => {
         name: 'Add address and contact details'
       })
     ).toBeVisible()
-    for (const name of ['Address', 'Contact details']) {
-      await expect(
-        page.getByRole('heading', { level: 2, name, exact: true })
-      ).toBeVisible()
+    const sectionHeadings = ['Address', 'Contact details'].map((name) =>
+      page.getByRole('heading', { level: 2, name, exact: true })
+    )
+    for (const sectionHeading of sectionHeadings) {
+      await expect(sectionHeading).toBeVisible()
     }
-    await expect(page.getByLabel(NAME_LABEL, { exact: true })).toBeVisible()
+    await expect(
+      page.getByLabel(fieldLabels.name, { exact: true })
+    ).toBeVisible()
     await expect(page.getByLabel(fieldLabels.county)).toBeVisible()
+
+    const strip = await page.locator('.app-journey-strip').boundingBox()
+    const belowTheStrip = [
+      page.getByText('Add new address', { exact: true }),
+      page.getByRole('heading', { level: 1 }),
+      ...sectionHeadings,
+      page.getByLabel(fieldLabels.name, { exact: true }),
+      page.getByLabel(fieldLabels.county)
+    ]
+    for (const element of belowTheStrip) {
+      const { y } = await element.boundingBox()
+      expect(y).toBeGreaterThanOrEqual(strip.y + strip.height)
+    }
   })
 
   test('gives each personal-data field its browser autocomplete hint', async ({
@@ -159,7 +176,7 @@ test.describe('add address validation', () => {
         expectedValue: '',
         url: addressAddPath()
       })
-      await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
+      await expect(page.getByLabel(fieldLabels.name)).toHaveValue(
         field === 'name' ? '' : validAddress.name
       )
     })
@@ -182,7 +199,7 @@ test.describe('add address validation', () => {
         expectedValue: value,
         url: addressAddPath()
       })
-      await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
+      await expect(page.getByLabel(fieldLabels.name)).toHaveValue(
         field === 'name' ? value : validAddress.name
       )
     })
@@ -322,7 +339,7 @@ test.describe('cancel', () => {
     await signIn(page, { organisationId: 'stub-org-add-cancel' })
     await page.goto(addressAddPath())
 
-    await page.getByLabel(NAME_LABEL).fill('Should not be saved')
+    await page.getByLabel(fieldLabels.name).fill('Should not be saved')
 
     await page
       .getByRole('link', { name: 'Cancel and return to address book' })
