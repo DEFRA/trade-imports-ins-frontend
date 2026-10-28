@@ -305,6 +305,7 @@ describe('in stub mode', () => {
   const SEED_ADDRESS_NAME = 'Stub Farm 1'
   const GLEN_DEPOT = 'Glen Depot'
   const PARIS_DEPOT = 'Paris Depot'
+  const BOSTON_DEPOT = 'Boston Depot'
 
   test('Should seed one GB address, Stub Farm 1 at id 000000000000000000000001, for an ordinary organisation', async () => {
     const { items, totalItems } = await addressBook.listAddresses(
@@ -416,6 +417,11 @@ describe('in stub mode', () => {
       name: PARIS_DEPOT,
       countryCode: 'FR'
     })
+    await addressBook.createAddress(organisationId, {
+      ...highlandAddress,
+      name: BOSTON_DEPOT,
+      countryCode: 'US'
+    })
 
     const namesFor = async (query) =>
       (
@@ -425,7 +431,10 @@ describe('in stub mode', () => {
         })
       ).items.map(({ name }) => name)
 
-    expect(await namesFor({ countryCodes: ['FR'] })).toEqual([PARIS_DEPOT])
+    expect(await namesFor({ countryCodes: ['FR', 'US'] })).toEqual([
+      BOSTON_DEPOT,
+      PARIS_DEPOT
+    ])
     expect(
       await namesFor({ searchTerm: 'stub farm', countryCodes: ['FR'] })
     ).toEqual([PARIS_DEPOT, SEED_ADDRESS_NAME])
