@@ -29,6 +29,15 @@ const GB_AND_FRANCE_ITEMS = [
   { value: FRANCE.code, text: FRANCE.name }
 ]
 
+const anyCountryContexts = [
+  [
+    'the place of origin',
+    handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE.placeOfOrigin)
+  ],
+  ['the consignor', handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE.consignor)],
+  ['no handshake', null]
+]
+
 const importAddressCountriesInRealMode = async () => {
   process.env.STUB_MODE = 'false'
   vi.resetModules()
@@ -99,14 +108,7 @@ describe('#addFormCountryOffer', () => {
     }
   )
 
-  test.each([
-    [
-      'the place of origin',
-      handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE.placeOfOrigin)
-    ],
-    ['the consignor', handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE.consignor)],
-    ['no handshake', null]
-  ])(
+  test.each(anyCountryContexts)(
     'Should offer the placeholder then every served country for %s',
     async (_name, handshakeContext) => {
       serveCountries([FRANCE, UNITED_KINGDOM])
@@ -147,14 +149,7 @@ describe('#formValuesWithRequiredCountry', () => {
     }
   )
 
-  test.each([
-    [
-      'the place of origin',
-      handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE.placeOfOrigin)
-    ],
-    ['the consignor', handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE.consignor)],
-    ['no handshake', null]
-  ])(
+  test.each(anyCountryContexts)(
     'Should leave the posted country as posted for %s',
     async (_name, handshakeContext) => {
       const { formValuesWithRequiredCountry } =
