@@ -20,7 +20,15 @@ import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-form-autocomplete.js'
-import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../../common/test-helpers/journey-handshake.js'
+import {
+  ANIMALS_BASE_URL,
+  CONSIGNMENT_CONTACT_HANDSHAKE,
+  JOURNEY_HANDSHAKES_BY_ROLE
+} from '../../../../common/test-helpers/journey-handshake.js'
+
+const NOTIFICATION_RETURN_PATH = `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7K2P/address-return`
+const CONSIGNOR_RETURN_URL = `${NOTIFICATION_RETURN_PATH}?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value`
+const CONTACT_RETURN_URL = `${NOTIFICATION_RETURN_PATH}?fulfilment-id=f037e8f9-a0b1-4c26-8d72-fe5f60718293&handshake-token=handshake-token-value`
 
 const COUNTRY_PLACEHOLDER = 'Select a country'
 
@@ -216,7 +224,7 @@ test.describe('add address reached from a notification journey', () => {
     )
 
     await fillValidAddress(page, { name: '' })
-    await submit(page)
+    await page.getByRole('button', { name: 'Save and select' }).click()
 
     await expectErrorFocusOn(page, {
       message: 'Enter a name or organisation',
@@ -228,6 +236,41 @@ test.describe('add address reached from a notification journey', () => {
       page,
       'Add address from journey validation error'
     )
+  })
+
+  test('from a role handshake offers Back to the journey, Save and select, Save and return to address page and a Cancel and return to hub link', async ({
+    page
+  }) => {
+    await openFromJourney(page, 'stub-org-add-journey-actions')
+
+    await expect(
+      page.getByRole('link', { name: 'Back', exact: true })
+    ).toHaveAttribute('href', CONSIGNOR_RETURN_URL)
+    await expect(page.locator('form button')).toHaveText([
+      'Save and select',
+      'Save and return to address page'
+    ])
+    await expect(
+      page.getByRole('link', { name: 'Cancel and return to hub' })
+    ).toHaveAttribute('href', `${CONSIGNOR_RETURN_URL}&landing=cancel`)
+  })
+
+  test('from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page', async ({
+    page
+  }) => {
+    await openFromJourney(
+      page,
+      'stub-org-add-journey-contact',
+      CONSIGNMENT_CONTACT_HANDSHAKE
+    )
+
+    await expect(
+      page.getByRole('link', { name: 'Back', exact: true })
+    ).toHaveAttribute('href', CONTACT_RETURN_URL)
+    await expect(page.locator('form button')).toHaveText([
+      'Save and continue',
+      'Cancel and return to address page'
+    ])
   })
 })
 

@@ -53,8 +53,11 @@ export const copy = {
     title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
     caption: 'Ychwanegu cyfeiriad newydd',
     save: 'Cadw a pharhau',
+    saveAndSelect: 'Cadw a dewis',
+    saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
-    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad'
+    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
+    cancelToHub: 'Canslo a dychwelyd i’r hyb'
   },
   edit: {
     title: 'Golygu manylion cyfeiriad a manylion cyswllt',

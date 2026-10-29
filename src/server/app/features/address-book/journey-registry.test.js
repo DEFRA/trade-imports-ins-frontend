@@ -3,11 +3,15 @@ import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 import { config } from '../../../../config/config.js'
 import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
 import {
+  CONSIGNMENT_CONTACT_HANDSHAKE,
   handshakeContextOf,
   JOURNEY_HANDSHAKES_BY_ROLE
 } from '../../../common/test-helpers/journey-handshake.js'
 import {
+  ADDRESS_LANDING,
+  CONSIGNMENT_CONTACT_FULFILMENT_ID,
   buildReturnUrl,
+  isConsignmentContact,
   isKnownJourneyType,
   JOURNEY_TYPES,
   requiresUnitedKingdomAddress
@@ -58,12 +62,10 @@ describe('journey-registry', () => {
     )
 
     test('is false for the contact address and for a fulfilment id the registry does not list', () => {
-      const contactAddressFulfilmentId = 'f037e8f9-a0b1-4c26-8d72-fe5f60718293'
-
       expect(
         requiresUnitedKingdomAddress({
           journeyType: JOURNEY_TYPES.GBN_AG,
-          fulfilmentId: contactAddressFulfilmentId
+          fulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID
         })
       ).toBe(false)
       expect(
@@ -110,7 +112,50 @@ describe('journey-registry', () => {
     expect(url.pathname.startsWith('/live-animals/')).toBe(true)
   })
 
-  test('buildReturnUrl omits addressId on cancel', () => {
+  test.each(Object.values(ADDRESS_LANDING))(
+    'buildReturnUrl carries the address id and the %s landing',
+    (landing) => {
+      const url = buildReturnUrl(
+        {
+          journeyType: JOURNEY_TYPES.GBN_AG,
+          notificationId: NOTIFICATION_ID,
+          fulfilmentId: FULFILMENT_ID
+        },
+        { addressId: ADDRESS_ID, landing }
+      )
+
+      expect(url).toBe(
+        `${RETURN_URL_WITHOUT_ADDRESS}&addressId=${ADDRESS_ID}&landing=${landing}`
+      )
+    }
+  )
+
+  describe('isConsignmentContact', () => {
+    test('is true for the consignment contact handshake', () => {
+      expect(
+        isConsignmentContact(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE))
+      ).toBe(true)
+    })
+
+    test.each(Object.entries(JOURNEY_HANDSHAKES_BY_ROLE))(
+      'is false for the %s handshake',
+      (_role, handshake) => {
+        expect(isConsignmentContact(handshakeContextOf(handshake))).toBe(false)
+      }
+    )
+
+    test('is false for no context and for the contact fulfilment id under an unregistered journey type', () => {
+      expect(isConsignmentContact(null)).toBe(false)
+      expect(
+        isConsignmentContact({
+          journeyType: UNREGISTERED_JOURNEY_TYPE,
+          fulfilmentId: CONSIGNMENT_CONTACT_HANDSHAKE['fulfilment-id']
+        })
+      ).toBe(false)
+    })
+  })
+
+  test('buildReturnUrl carries neither an address id nor a landing when given neither', () => {
     const url = buildReturnUrl({
       journeyType: JOURNEY_TYPES.GBN_AG,
       notificationId: NOTIFICATION_ID,

@@ -1,3 +1,5 @@
+import { CONSIGNMENT_CONTACT_FULFILMENT_ID } from '../../app/features/address-book/journey-registry.js'
+
 const handshakeForFulfilmentId = (fulfilmentId) =>
   Object.freeze({
     'journey-type': 'gbn-ag',
@@ -17,6 +19,12 @@ export const JOURNEY_HANDSHAKES_BY_ROLE = Object.freeze({
     'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60'
   )
 })
+
+export const CONSIGNMENT_CONTACT_HANDSHAKE = handshakeForFulfilmentId(
+  CONSIGNMENT_CONTACT_FULFILMENT_ID
+)
+
+export const ANIMALS_BASE_URL = 'http://localhost:3000'
 
 export const handshakeContextOf = (handshake) => ({
   journeyType: handshake['journey-type'],

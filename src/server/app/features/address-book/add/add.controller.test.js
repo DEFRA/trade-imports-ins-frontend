@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -14,8 +14,8 @@ import {
   expectRedirectTo,
   getPage,
   INVALID_ADDRESS_PAYLOAD,
-  ORGANISATION_ID_HEADER,
   postPage,
+  replyAddressCreated,
   SELECTED_COUNTRY,
   serveAddressCreationCapturingBody,
   STORED_ADDRESS,
@@ -29,7 +29,13 @@ import {
 } from '../../../../common/test-helpers/expect-draft-journey-strip.js'
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
-import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../../common/test-helpers/journey-handshake.js'
+import {
+  ANIMALS_BASE_URL,
+  CONSIGNMENT_CONTACT_HANDSHAKE,
+  JOURNEY_HANDSHAKES_BY_ROLE
+} from '../../../../common/test-helpers/journey-handshake.js'
+import { createLogger } from '../../../../common/helpers/logging/logger.js'
+import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
   expectCountryOptionsAfterPlaceholder,
   expectUnitedKingdomAloneSelected
@@ -50,14 +56,17 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
-const ANIMALS_BASE_URL = 'http://localhost:3000'
 const { consignor: CONSIGNOR_HANDSHAKE, consignee: CONSIGNEE_HANDSHAKE } =
   JOURNEY_HANDSHAKES_BY_ROLE
-const returnUrlFor = (handshake) =>
-  `${ANIMALS_BASE_URL}/live-animals/notifications/${handshake['notification-id']}/address-return?fulfilment-id=${handshake['fulfilment-id']}&handshake-token=${handshake['handshake-token']}`
-const RETURN_URL = returnUrlFor(CONSIGNOR_HANDSHAKE)
+const NOTIFICATION_RETURN_PATH = `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7K2P/address-return`
+const CONSIGNOR_RETURN_URL = `${NOTIFICATION_RETURN_PATH}?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value`
+const CONSIGNEE_RETURN_URL = `${NOTIFICATION_RETURN_PATH}?fulfilment-id=abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e&handshake-token=handshake-token-value`
+const CONTACT_RETURN_URL = `${NOTIFICATION_RETURN_PATH}?fulfilment-id=f037e8f9-a0b1-4c26-8d72-fe5f60718293&handshake-token=handshake-token-value`
+const HAND_BACK_MESSAGE = 'Address handed back to the journey'
+const CANCEL_HAND_BACK_MESSAGE = 'Cancel handed back to the journey'
 const CAPTION_SELECTOR = '.govuk-caption-l'
 const FORM_LABELS = 'form label'
+const FORM_LINK = 'form a.govuk-link'
 const ADD_TITLE = 'Add address and contact details'
 
 const postAdd = (server, sessionId, payload) =>
@@ -113,8 +122,8 @@ describe('#addressBookAddController', { concurrent: false }, () => {
       'For international numbers include the country code'
     ])
     expect(textsOf($, 'form button')).toEqual([saveAndContinue])
-    expect($('form a.govuk-link').attr('href')).toBe(ADDRESS_BOOK_PATH)
-    expect(textsOf($, 'form a.govuk-link')).toEqual([cancelToAddressBook])
+    expect($(FORM_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect(textsOf($, FORM_LINK)).toEqual([cancelToAddressBook])
     expect(result.indexOf(saveAndContinue)).toBeLessThan(
       result.indexOf(cancelToAddressBook)
     )
@@ -153,17 +162,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('POST sends the address to the address book for the organisation and redirects to the address book', async () => {
-    let posted
-    const scope = addressBookApi()
-      .post(addressesApiPath(), (body) => {
-        posted = body
-        return true
-      })
-      .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
-      .reply(201, {
-        id: ADDRESS_ID,
-        name: STORED_ADDRESS.name
-      })
+    const { scope, captured } = serveAddressCreationCapturingBody()
 
     const response = await postAdd(
       server(),
@@ -173,15 +172,12 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 
     expectRedirectTo(response, ADDRESS_BOOK_PATH)
     expect(scope.isDone()).toBe(true)
-    expect(posted).toMatchObject(VALID_ADDRESS_PAYLOAD)
+    expect(captured.body).toMatchObject(VALID_ADDRESS_PAYLOAD)
     expect(response.headers['cache-control']).not.toBe('no-store')
   })
 
   test('POST shows the address added banner on the address book', async () => {
-    addressBookApi().post(addressesApiPath()).reply(201, {
-      id: ADDRESS_ID,
-      name: STORED_ADDRESS.name
-    })
+    replyAddressCreated()
 
     const { headers } = await postAdd(
       server(),
@@ -285,13 +281,23 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 })
 
+const buttonsOf = ($) =>
+  $('form button')
+    .map((_, button) => ({
+      text: $(button).text().trim(),
+      name: $(button).attr('name') ?? null,
+      value: $(button).attr('value') ?? null,
+      secondary: $(button).hasClass('govuk-button--secondary')
+    }))
+    .get()
+
 describe(
-  '#addressBookAddController — journey handshake',
+  '#addressBookAddController — journey handshake page',
   { concurrent: false },
   () => {
     const server = startRealModeServerServingCountries(COUNTRIES)
 
-    test('GET arriving through a journey handshake carries the journey forward in hidden fields and the cancel label', async () => {
+    test('GET from a role handshake offers Save and select, Save and return to address page and a Cancel and return to hub link, and carries the journey forward in hidden fields', async () => {
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-handshake',
@@ -299,14 +305,64 @@ describe(
       )
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('name="journey-type"')
-      expect(result).toContain('value="gbn-ag"')
-      expect(result).toContain('name="notification-id"')
-      expect(result).toContain('name="fulfilment-id"')
-      expect(result).toContain('name="handshake-token"')
-      expect(result).toContain('Cancel and return to address page')
-      expect(result).toContain('name="cancel"')
-      expect(result).not.toContain('Cancel and return to address book')
+      const $ = load(result)
+      expect(buttonsOf($)).toEqual([
+        {
+          text: 'Save and select',
+          name: 'action',
+          value: ADDRESS_LANDING.SELECT,
+          secondary: false
+        },
+        {
+          text: 'Save and return to address page',
+          name: 'action',
+          value: ADDRESS_LANDING.RETURN,
+          secondary: true
+        }
+      ])
+      expect(textsOf($, FORM_LINK)).toEqual(['Cancel and return to hub'])
+      expect($(FORM_LINK).attr('href')).toBe(
+        `${CONSIGNOR_RETURN_URL}&landing=cancel`
+      )
+      expect(
+        $('form input[type="hidden"]')
+          .map((_, input) => $(input).attr('name'))
+          .get()
+      ).toEqual([
+        'crumb',
+        'journey-type',
+        'notification-id',
+        'fulfilment-id',
+        'handshake-token'
+      ])
+      expect($('input[name="journey-type"]').attr('value')).toBe('gbn-ag')
+    })
+
+    test('GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the contact page', async () => {
+      const { result, statusCode } = await getAdd(
+        server(),
+        'add-get-handshake-contact',
+        CONSIGNMENT_CONTACT_HANDSHAKE
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect(buttonsOf($)).toEqual([
+        {
+          text: 'Save and continue',
+          name: null,
+          value: null,
+          secondary: false
+        },
+        {
+          text: 'Cancel and return to address page',
+          name: 'cancel',
+          value: 'true',
+          secondary: true
+        }
+      ])
+      expect($(FORM_LINK)).toHaveLength(0)
+      expect($(BACK_LINK).attr('href')).toBe(CONTACT_RETURN_URL)
     })
 
     test('GET arriving through a journey handshake shows the Draft status and notification reference above the caption and heading, then the section headings, name label and County', async () => {
@@ -332,16 +388,42 @@ describe(
       expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
     })
 
-    test('GET through a handshake opens the form without a Back link to the address book', async () => {
+    test('GET from a role handshake links Back to the journey return with no address and no landing', async () => {
       const { result, statusCode } = await getAdd(
         server(),
-        'add-get-handshake-no-back',
+        'add-get-handshake-back',
         CONSIGNOR_HANDSHAKE
       )
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).not.toContain('govuk-back-link')
+      expect(load(result)(BACK_LINK).attr('href')).toBe(CONSIGNOR_RETURN_URL)
     })
+  }
+)
+
+describe(
+  '#addressBookAddController — journey handshake',
+  { concurrent: false },
+  () => {
+    const server = startRealModeServerServingCountries(COUNTRIES)
+    const loggedEntries = []
+    let infoSpy
+
+    beforeEach(() => {
+      loggedEntries.length = 0
+      infoSpy = vi
+        .spyOn(createLogger(), 'info')
+        .mockImplementation((fields, message) => {
+          loggedEntries.push({ fields, message })
+        })
+    })
+
+    afterEach(() => {
+      infoSpy.mockRestore()
+    })
+
+    const loggedWith = (message) =>
+      loggedEntries.filter((entry) => entry.message === message)
 
     test('GET refuses an unrecognised journey type', async () => {
       const { statusCode } = await getAdd(server(), 'add-get-unknown-journey', {
@@ -365,19 +447,32 @@ describe(
       expect(statusCode).toBe(statusCodes.badRequest)
     })
 
-    test('POST from a handshake returns to the journey with the new address id and no address-book banner', async () => {
-      const scope = addressBookApi().post(addressesApiPath()).reply(201, {
-        id: ADDRESS_ID,
-        name: STORED_ADDRESS.name
-      })
+    test('POST of Save and select returns to the journey with the new address id and the select landing, logs the hand-back once, and shows no address-book banner', async () => {
+      const scope = replyAddressCreated()
 
       const response = await postAdd(server(), 'add-post-handshake', {
         ...CONSIGNOR_HANDSHAKE,
-        ...VALID_ADDRESS_PAYLOAD
+        ...VALID_ADDRESS_PAYLOAD,
+        action: ADDRESS_LANDING.SELECT
       })
 
-      expectRedirectTo(response, `${RETURN_URL}&addressId=${ADDRESS_ID}`)
+      expectRedirectTo(
+        response,
+        `${CONSIGNOR_RETURN_URL}&addressId=${ADDRESS_ID}&landing=select`
+      )
       expect(scope.isDone()).toBe(true)
+      expect(loggedWith(HAND_BACK_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            addressId: ADDRESS_ID,
+            notificationId: CONSIGNOR_HANDSHAKE['notification-id'],
+            fulfilmentId: CONSIGNOR_HANDSHAKE['fulfilment-id'],
+            landing: ADDRESS_LANDING.SELECT
+          },
+          message: HAND_BACK_MESSAGE
+        }
+      ])
 
       const listResponse = await openEmptyAddressBookWithCookiesFrom(
         server(),
@@ -385,6 +480,36 @@ describe(
         response.headers
       )
       expect(load(listResponse.result)(SUCCESS_BANNER)).toHaveLength(0)
+    })
+
+    test('POST of Save and return to address page returns to the journey with the new address id and the return landing', async () => {
+      const scope = replyAddressCreated()
+
+      const response = await postAdd(server(), 'add-post-handshake-return', {
+        ...CONSIGNOR_HANDSHAKE,
+        ...VALID_ADDRESS_PAYLOAD,
+        action: ADDRESS_LANDING.RETURN
+      })
+
+      expectRedirectTo(
+        response,
+        `${CONSIGNOR_RETURN_URL}&addressId=${ADDRESS_ID}&landing=return`
+      )
+      expect(scope.isDone()).toBe(true)
+    })
+
+    test('POST of the consignment contact Save and continue, which carries no action, returns to the journey with the select landing', async () => {
+      replyAddressCreated()
+
+      const response = await postAdd(server(), 'add-post-handshake-contact', {
+        ...CONSIGNMENT_CONTACT_HANDSHAKE,
+        ...VALID_ADDRESS_PAYLOAD
+      })
+
+      expectRedirectTo(
+        response,
+        `${CONTACT_RETURN_URL}&addressId=${ADDRESS_ID}&landing=select`
+      )
     })
 
     test('POST from the consignee handshake keeps the journey, the Draft status, the notification reference and United Kingdom alone on the form when the API rejects the address', async () => {
@@ -406,20 +531,43 @@ describe(
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain(EMAIL_FORMAT_ERROR)
       expect(result).toContain('name="handshake-token"')
-      expect(result).toContain('Cancel and return to address page')
       const $ = load(result)
+      expect(buttonsOf($).map(({ text }) => text)).toEqual([
+        'Save and select',
+        'Save and return to address page'
+      ])
+      expect(textsOf($, FORM_LINK)).toEqual(['Cancel and return to hub'])
       expectDraftJourneyStrip($, CONSIGNEE_HANDSHAKE['notification-id'])
       expectUnitedKingdomAloneSelected($)
     })
 
-    test('Cancel from a handshake returns to the journey without creating an address', async () => {
+    test('Cancel from a role handshake returns to the journey with the cancel landing and no address', async () => {
       expectRedirectTo(
-        await postAdd(server(), 'add-post-handshake-cancel', {
+        await postAdd(server(), 'add-post-handshake-cancel-role', {
           cancel: 'true',
           ...CONSIGNOR_HANDSHAKE
         }),
-        RETURN_URL
+        `${CONSIGNOR_RETURN_URL}&landing=cancel`
       )
+    })
+
+    test('Cancel from the consignment contact handshake returns to the journey with no address and no landing, and logs the hand-back once', async () => {
+      expectRedirectTo(
+        await postAdd(server(), 'add-post-handshake-cancel', {
+          cancel: 'true',
+          ...CONSIGNMENT_CONTACT_HANDSHAKE
+        }),
+        CONTACT_RETURN_URL
+      )
+      expect(loggedWith(CANCEL_HAND_BACK_MESSAGE)).toEqual([
+        {
+          fields: {
+            notificationId: CONSIGNMENT_CONTACT_HANDSHAKE['notification-id'],
+            fulfilmentId: CONSIGNMENT_CONTACT_HANDSHAKE['fulfilment-id']
+          },
+          message: CANCEL_HAND_BACK_MESSAGE
+        }
+      ])
     })
   }
 )
@@ -500,7 +648,7 @@ describe(
 
       expectRedirectTo(
         response,
-        `${returnUrlFor(CONSIGNEE_HANDSHAKE)}&addressId=${ADDRESS_ID}`
+        `${CONSIGNEE_RETURN_URL}&addressId=${ADDRESS_ID}&landing=select`
       )
       expect(scope.isDone()).toBe(true)
       expect(captured.body.countryCode).toBe('GB')

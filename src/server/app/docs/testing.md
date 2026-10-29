@@ -48,7 +48,8 @@ field labels in page order, read from the English copy), `COUNTRIES`,
 (`pageOf(items, overrides)`, `serveStoredAddress(address)`,
 `serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
 `serveAddressNotFoundForOtherOrganisation(addressId)`,
-`serveAddressCreationCapturingBody()`, which stubs the create call and
+`replyAddressCreated()`, which stubs a successful create call, and
+`serveAddressCreationCapturingBody()`, which stubs it and
 returns the body it received alongside the scope) and checks
 (`expectRedirectTo()`, `expectServerErrorPage()`), which every address
 book test imports instead of keeping a local copy,
@@ -59,10 +60,12 @@ add and edit forms' field widths),
 autocomplete hints, read from `address-form-autocomplete.js`'s
 `AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
 `journey-handshake.js` (`handshakeContextOf(handshake)`, the journey type
-and fulfilment id of a handshake as a handshake context, and
+and fulfilment id of a handshake as a handshake context,
 `JOURNEY_HANDSHAKES_BY_ROLE`, one complete journey
 handshake for each of the place of origin, consignor, consignee, importer and
-place of destination, which the Vitest tests and the fit specs both send),
+place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's
+handshake, and `ANIMALS_BASE_URL`, the animals frontend's base URL the return
+URLs start with; the Vitest tests and the fit specs both send these),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
 notificationReference)`, the Draft tag and notification reference in the
 journey strip, and `JOURNEY_STRIP`, its selector),

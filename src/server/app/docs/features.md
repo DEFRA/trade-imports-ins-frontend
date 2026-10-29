@@ -45,6 +45,15 @@ root:
   `buildEditCountrySelectItems` (the edit form's select, with a
   blank option only when the country it shows is not one the list offers) and
   `countryCodesMatching` (every country code whose name contains the search term).
+- [`journey-registry.js`](../features/address-book/journey-registry.js) —
+  `JOURNEY_TYPES` (the registered journey types), `ADDRESS_LANDING` (select,
+  return and cancel, the page the journey opens on return),
+  `isKnownJourneyType`, `requiresUnitedKingdomAddress` (whether the role's
+  address must be in the United Kingdom), `isConsignmentContact` (whether a
+  handshake is the consignment contact's, so the add page offers the contact's
+  controls rather than a role's), `buildReturnUrl` (the journey's address-return
+  URL, with an optional address id and `landing`) and
+  `CONSIGNMENT_CONTACT_FULFILMENT_ID` (the consignment contact's fulfilment id).
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
@@ -133,6 +142,18 @@ The shape every ins controller takes, citing
   A 400 from the address book re-renders with
   `mapApiErrorsToFormErrors(err.body)`.
 - `export const routes = kit.pageRoutes(...)`.
+
+The add page, [`add/add.controller.js`](../features/address-book/add/add.controller.js),
+adds to that shape for a journey:
+
+- `cancel` is honoured from the address book and from the consignment
+  contact's handshake. `cancelReturnUrl` is the one owner of where Cancel goes.
+- A role's journey cancels by link, with the `cancel` landing.
+- From a journey, the chosen `action` names the landing the address is handed
+  back with.
+- The controller decides whether the page shows the journey's Save and select
+  actions (`journeyActions`) and the cancel label (`cancelLabel`); `add.njk`
+  only renders them.
 
 The view and delete GETs load through `findLiveAddressWithCountryLabel`, and
 the edit GET through `findLiveAddress`. When either finds nothing, the GET

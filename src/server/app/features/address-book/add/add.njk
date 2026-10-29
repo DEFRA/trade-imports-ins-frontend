@@ -25,19 +25,33 @@
     }) }}
 
     <div class="govuk-button-group">
-      {{ govukButton({ text: copy.add.save }) }}
-      {% if handshakeContext %}
+      {% if journeyActions %}
         {{ govukButton({
-          text: copy.add.cancelToJourney,
-          name: "cancel",
-          value: "true",
+          text: copy.add.saveAndSelect,
+          name: "action",
+          value: addressLanding.SELECT
+        }) }}
+        {{ govukButton({
+          text: copy.add.saveAndReturnToAddressPage,
+          name: "action",
+          value: addressLanding.RETURN,
           classes: "govuk-button--secondary"
         }) }}
+      {% else %}
+        {{ govukButton({ text: copy.add.save }) }}
+        {% if handshakeContext %}
+          {{ govukButton({
+            text: copy.add.cancelToJourney,
+            name: "cancel",
+            value: "true",
+            classes: "govuk-button--secondary"
+          }) }}
+        {% endif %}
       {% endif %}
     </div>
 
     {% if cancelHref %}
-      <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ copy.add.cancel }}</a></p>
+      <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ cancelLabel }}</a></p>
     {% endif %}
 
   </form>

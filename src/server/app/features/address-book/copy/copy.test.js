@@ -40,6 +40,25 @@ describe('#copy', () => {
     expect(copy.add.caption).toBe('Add new address')
   })
 
+  it('Should word the journey-mode add actions', () => {
+    expect(copy.add.saveAndSelect).toBe('Save and select')
+    expect(copy.add.saveAndReturnToAddressPage).toBe(
+      'Save and return to address page'
+    )
+    expect(copy.add.cancelToHub).toBe('Cancel and return to hub')
+  })
+
+  it('Should carry Welsh drafts of the journey-mode add actions that differ from the English', () => {
+    for (const key of [
+      'saveAndSelect',
+      'saveAndReturnToAddressPage',
+      'cancelToHub'
+    ]) {
+      expect(cy.add[key]).toEqual(expect.any(String))
+      expect(cy.add[key]).not.toBe(copy.add[key])
+    }
+  })
+
   it('Should carry the Welsh add page caption and title', () => {
     expect(cy.add.caption).toBe('Ychwanegu cyfeiriad newydd')
     expect(cy.add.title).toBe('Ychwanegu manylion cyfeiriad a manylion cyswllt')
