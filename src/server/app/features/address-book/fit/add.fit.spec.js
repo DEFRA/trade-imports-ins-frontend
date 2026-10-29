@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import {
   addValidAddressToFreshOrganisation,
+  expectedAddFormCountryNames,
   expectErrorFocusOn,
   fieldLabels,
   fillValidAddress,
@@ -182,25 +183,28 @@ test.describe('add address reached from a notification journey', () => {
     }
   })
 
-  test('from the place of origin handshake opens the Country select on Select a country and offers France', async ({
-    page
-  }) => {
-    await openFromJourney(
-      page,
-      'stub-org-add-journey-origin',
-      JOURNEY_HANDSHAKES_BY_ROLE.placeOfOrigin
-    )
+  for (const [role, roleName] of [
+    ['placeOfOrigin', 'place of origin'],
+    ['consignor', 'consignor']
+  ]) {
+    test(`from the ${roleName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
+      page
+    }) => {
+      await openFromJourney(
+        page,
+        `stub-org-add-journey-countries-${role}`,
+        JOURNEY_HANDSHAKES_BY_ROLE[role]
+      )
 
-    const country = page.getByLabel('Country')
-    await expect(country).toHaveValue('')
-    await expect(country.getByRole('option').first()).toHaveText(
-      COUNTRY_PLACEHOLDER
-    )
-    await expect(country.getByRole('option', { name: 'France' })).toHaveCount(1)
-    await expect(
-      country.getByRole('option', { name: UNITED_KINGDOM })
-    ).toHaveCount(1)
-  })
+      const country = page.getByLabel('Country')
+      await expect(country).toHaveJSProperty('tagName', 'SELECT')
+      await expect(country).toHaveValue('')
+      await expect(country.getByRole('option')).toHaveText([
+        COUNTRY_PLACEHOLDER,
+        ...expectedAddFormCountryNames
+      ])
+    })
+  }
 
   test('from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations', async ({
     page
@@ -407,13 +411,16 @@ test.describe('cancel', () => {
     await signIn(page, { organisationId: 'stub-org-add-cancel' })
     await page.goto(addressAddPath())
 
-    await page.getByLabel(fieldLabels.name).fill('Should not be saved')
+    await fillValidAddress(page)
 
     await page
       .getByRole('link', { name: 'Cancel and return to address book' })
       .click()
 
     await expect(page).toHaveURL(addressBookPath())
-    await expect(page.getByText('Should not be saved')).toHaveCount(0)
+    await expect(resultsLineOf(page)).toHaveText('Showing 1-1 of 1')
+    await expect(
+      page.getByRole('table').locator('tbody tr td:first-child')
+    ).toHaveText([seedAddress.name])
   })
 })

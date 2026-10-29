@@ -2,10 +2,16 @@ import { expect } from '@playwright/test'
 
 import { copy } from '../copy/copy.en.js'
 import { FIELD_RULES } from '../fields.js'
+import { countries } from '../../../services/_capture/fixtures.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 export const fieldLabels = copy.form.fields
+
+export const expectedAddFormCountryNames = [
+  ...countries.map(({ name }) => name),
+  'United Kingdom'
+].toSorted((left, right) => left.localeCompare(right, 'en'))
 
 export const validAddress = {
   name: 'Highland Livestock Ltd',
