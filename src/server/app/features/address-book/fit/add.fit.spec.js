@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import {
   addValidAddressToFreshOrganisation,
-  expectedAddFormCountryNames,
+  addressFormCountryNames,
   expectErrorFocusOn,
   fieldLabels,
   fillValidAddress,
@@ -15,6 +15,7 @@ import {
   searchAndExpectSingleMatch
 } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { GB_COUNTRY } from '../address-countries.js'
 import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
@@ -22,7 +23,6 @@ import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-f
 import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../../common/test-helpers/journey-handshake.js'
 
 const COUNTRY_PLACEHOLDER = 'Select a country'
-const UNITED_KINGDOM = 'United Kingdom'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -57,7 +57,7 @@ test.describe('add address', () => {
       COUNTRY_PLACEHOLDER
     )
     await expect(
-      country.getByRole('option', { name: UNITED_KINGDOM })
+      country.getByRole('option', { name: GB_COUNTRY.name })
     ).toHaveCount(1)
   })
 
@@ -176,7 +176,7 @@ test.describe('add address reached from a notification journey', () => {
     )
 
     const country = page.getByLabel('Country')
-    await expect(country.getByRole('option')).toHaveText([UNITED_KINGDOM])
+    await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
     await expect(country).toHaveValue('GB')
     for (const label of Object.values(fieldLabels)) {
       await expect(page.getByLabel(label, { exact: true })).toBeVisible()
@@ -201,7 +201,7 @@ test.describe('add address reached from a notification journey', () => {
       await expect(country).toHaveValue('')
       await expect(country.getByRole('option')).toHaveText([
         COUNTRY_PLACEHOLDER,
-        ...expectedAddFormCountryNames
+        ...addressFormCountryNames
       ])
     })
   }
@@ -399,7 +399,7 @@ test.describe('save and confirm', () => {
     await expect(
       table
         .getByRole('row', { name: new RegExp(validAddress.name) })
-        .getByRole('cell', { name: UNITED_KINGDOM, exact: true })
+        .getByRole('cell', { name: GB_COUNTRY.name, exact: true })
     ).toBeVisible()
   })
 })
@@ -420,7 +420,8 @@ test.describe('cancel', () => {
     await expect(page).toHaveURL(addressBookPath())
     await expect(resultsLineOf(page)).toHaveText('Showing 1-1 of 1')
     await expect(
-      page.getByRole('table').locator('tbody tr td:first-child')
-    ).toHaveText([seedAddress.name])
+      page.getByRole('link', { name: `View ${seedAddress.name}` })
+    ).toBeVisible()
+    await expect(page.getByRole('table').getByRole('row')).toHaveCount(2)
   })
 })

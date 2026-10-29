@@ -142,7 +142,7 @@ playwright:install` once (Chromium).
 Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 `signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
-labels, `expectedAddFormCountryNames` (the captured countries fixture's
+labels, `addressFormCountryNames` (the captured countries fixture's
 names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
 `addValidAddressToFreshOrganisation`, `validAddressViewLink`,
 `expectErrorFocusOn`, the two
