@@ -97,6 +97,18 @@ export const INVALID_ADDRESS_PAYLOAD = {
   email: 'bad'
 }
 
+export const serveAddressCreationCapturingBody = () => {
+  const created = 201
+  const captured = {}
+  const scope = addressBookApi()
+    .post(addressesApiPath(), (body) => {
+      captured.body = body
+      return true
+    })
+    .reply(created, { id: ADDRESS_ID, name: STORED_ADDRESS.name })
+  return { scope, captured }
+}
+
 export const pageOf = (items, overrides = {}) => ({
   items,
   page: 1,

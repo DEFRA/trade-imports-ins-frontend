@@ -18,7 +18,10 @@ import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-form-autocomplete.js'
-import { JOURNEY_HANDSHAKE } from '../../../../common/test-helpers/journey-handshake.js'
+import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../../common/test-helpers/journey-handshake.js'
+
+const COUNTRY_PLACEHOLDER = 'Select a country'
+const UNITED_KINGDOM = 'United Kingdom'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -50,10 +53,10 @@ test.describe('add address', () => {
     const country = page.getByLabel('Country')
     await expect(country).toHaveValue('')
     await expect(country.getByRole('option').first()).toHaveText(
-      'Select a country'
+      COUNTRY_PLACEHOLDER
     )
     await expect(
-      country.getByRole('option', { name: 'United Kingdom' })
+      country.getByRole('option', { name: UNITED_KINGDOM })
     ).toHaveCount(1)
   })
 
@@ -86,11 +89,13 @@ test.describe('add address', () => {
 })
 
 test.describe('add address reached from a notification journey', () => {
-  const openFromJourney = async (page, organisationId) => {
+  const openFromJourney = async (
+    page,
+    organisationId,
+    handshake = JOURNEY_HANDSHAKES_BY_ROLE.consignor
+  ) => {
     await signIn(page, { organisationId })
-    await page.goto(
-      `${addressAddPath()}?${new URLSearchParams(JOURNEY_HANDSHAKE)}`
-    )
+    await page.goto(`${addressAddPath()}?${new URLSearchParams(handshake)}`)
   }
 
   test('shows the Draft status and notification reference above the caption, heading, section headings and fields', async ({
@@ -103,7 +108,9 @@ test.describe('add address reached from a notification journey', () => {
     )
     await expect(page.getByText('Draft', { exact: true })).toBeVisible()
     await expect(
-      page.getByText(JOURNEY_HANDSHAKE['notification-id'], { exact: true })
+      page.getByText(JOURNEY_HANDSHAKES_BY_ROLE.consignor['notification-id'], {
+        exact: true
+      })
     ).toBeVisible()
     await expect(
       page.getByText('Add new address', { exact: true })
@@ -156,6 +163,67 @@ test.describe('add address reached from a notification journey', () => {
     await openFromJourney(page, 'stub-org-add-journey-axe')
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address from journey')
+  })
+
+  test('from the consignee handshake offers United Kingdom alone, selected, with every field shown', async ({
+    page
+  }) => {
+    await openFromJourney(
+      page,
+      'stub-org-add-journey-consignee',
+      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+    )
+
+    const country = page.getByLabel('Country')
+    await expect(country.getByRole('option')).toHaveText([UNITED_KINGDOM])
+    await expect(country).toHaveValue('GB')
+    for (const label of Object.values(fieldLabels)) {
+      await expect(page.getByLabel(label, { exact: true })).toBeVisible()
+    }
+  })
+
+  test('from the place of origin handshake opens the Country select on Select a country and offers France', async ({
+    page
+  }) => {
+    await openFromJourney(
+      page,
+      'stub-org-add-journey-origin',
+      JOURNEY_HANDSHAKES_BY_ROLE.placeOfOrigin
+    )
+
+    const country = page.getByLabel('Country')
+    await expect(country).toHaveValue('')
+    await expect(country.getByRole('option').first()).toHaveText(
+      COUNTRY_PLACEHOLDER
+    )
+    await expect(country.getByRole('option', { name: 'France' })).toHaveCount(1)
+    await expect(
+      country.getByRole('option', { name: UNITED_KINGDOM })
+    ).toHaveCount(1)
+  })
+
+  test('from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations', async ({
+    page
+  }) => {
+    await openFromJourney(
+      page,
+      'stub-org-add-journey-consignee-name',
+      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+    )
+
+    await fillValidAddress(page, { name: '' })
+    await submit(page)
+
+    await expectErrorFocusOn(page, {
+      message: 'Enter a name or organisation',
+      label: fieldLabels.name,
+      expectedValue: '',
+      url: (url) => url.pathname === addressAddPath()
+    })
+    await expectNoSeriousOrCriticalViolations(
+      page,
+      'Add address from journey validation error'
+    )
   })
 })
 
@@ -327,7 +395,7 @@ test.describe('save and confirm', () => {
     await expect(
       table
         .getByRole('row', { name: new RegExp(validAddress.name) })
-        .getByRole('cell', { name: 'United Kingdom', exact: true })
+        .getByRole('cell', { name: UNITED_KINGDOM, exact: true })
     ).toBeVisible()
   })
 })

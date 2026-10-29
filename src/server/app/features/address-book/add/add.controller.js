@@ -15,8 +15,8 @@ import { copyFor } from '../../../shared/copy.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
-  buildCountrySelectItems,
-  getAddressFormCountries
+  addFormCountryOffer,
+  formValuesWithRequiredCountry
 } from '../address-countries.js'
 import { addressRules, formValuesOf } from '../fields.js'
 import { setSuccessMessage } from '../success-message.js'
@@ -31,9 +31,6 @@ import { copy as cy } from '../copy/copy.cy.js'
 const logger = createLogger()
 const view = 'address-book/add/add'
 const copy = copyFor({ en, cy })
-
-const countryItemsOf = (countries) =>
-  buildCountrySelectItems(countries, copy.form.countryPlaceholder)
 
 const buildView = (
   toolkit,
@@ -64,9 +61,6 @@ const buildView = (
     })
     .header('Cache-Control', 'no-store')
 
-const loadCountryItems = async () =>
-  countryItemsOf(await getAddressFormCountries())
-
 const redirectAfterAdd = (toolkit, handshakeContext, createdAddress) =>
   handshakeContext
     ? toolkit.redirect(
@@ -82,43 +76,40 @@ const redirectAfterCancel = (toolkit, handshakeContext) =>
 const get = async (request, toolkit) => {
   const handshakeContext = syncHandshakeContext(request)
 
-  const formValues = formValuesOf()
+  const { countryItems } = await addFormCountryOffer({
+    handshakeContext,
+    placeholder: copy.form.countryPlaceholder
+  })
+  const formValues = formValuesWithRequiredCountry(
+    handshakeContext,
+    formValuesOf()
+  )
 
-  try {
-    return buildView(toolkit, {
-      formValues,
-      countryItems: await loadCountryItems(),
-      handshakeContext
-    })
-  } catch (err) {
-    if (Boom.isBoom(err)) {
-      throw err
-    }
-    logger.error({ err }, 'Failed to load address form countries')
-    return buildView(toolkit, {
-      formValues,
-      countryItems: [],
-      recoverableError: true,
-      handshakeContext
-    }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
-  }
+  return buildView(toolkit, { formValues, countryItems, handshakeContext })
 }
 
 const submitAddress = async (
   request,
   toolkit,
-  { handshakeContext, organisationId, formValues }
+  { handshakeContext, organisationId, postedValues }
 ) => {
+  const { countryItems, countryCodes } = await addFormCountryOffer({
+    handshakeContext,
+    placeholder: copy.form.countryPlaceholder
+  })
+  const formValues = formValuesWithRequiredCountry(
+    handshakeContext,
+    postedValues
+  )
   try {
-    const countries = await getAddressFormCountries()
     const { errors, value: validatedAddress } = validate(
-      addressRules(countries.map((country) => country.code)),
+      addressRules(countryCodes),
       formValues
     )
     if (errors) {
       return buildView(toolkit, {
         formValues,
-        countryItems: countryItemsOf(countries),
+        countryItems,
         errors,
         handshakeContext
       }).code(HTTP_STATUS_BAD_REQUEST)
@@ -139,7 +130,7 @@ const submitAddress = async (
       )
       return buildView(toolkit, {
         formValues,
-        countryItems: await loadCountryItems(),
+        countryItems,
         errors: mapApiErrorsToFormErrors(err.body),
         handshakeContext
       }).code(HTTP_STATUS_BAD_REQUEST)
@@ -147,7 +138,7 @@ const submitAddress = async (
     logger.error({ err, organisationId }, 'Failed to create address')
     return buildView(toolkit, {
       formValues,
-      countryItems: await loadCountryItems(),
+      countryItems,
       recoverableError: true,
       handshakeContext
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
@@ -165,7 +156,7 @@ const post = async (request, toolkit) => {
   return submitAddress(request, toolkit, {
     handshakeContext,
     organisationId,
-    formValues: formValuesOf(payload)
+    postedValues: formValuesOf(payload)
   })
 }
 

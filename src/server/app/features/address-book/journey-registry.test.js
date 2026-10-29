@@ -2,17 +2,21 @@ import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
-import { JOURNEY_HANDSHAKE } from '../../../common/test-helpers/journey-handshake.js'
+import {
+  handshakeContextOf,
+  JOURNEY_HANDSHAKES_BY_ROLE
+} from '../../../common/test-helpers/journey-handshake.js'
 import {
   buildReturnUrl,
   isKnownJourneyType,
-  JOURNEY_TYPES
+  JOURNEY_TYPES,
+  requiresUnitedKingdomAddress
 } from './journey-registry.js'
 
 const defaultAnimalsBaseUrl = 'http://localhost:3000'
 const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
-const NOTIFICATION_ID = JOURNEY_HANDSHAKE['notification-id']
-const FULFILMENT_ID = JOURNEY_HANDSHAKE['fulfilment-id']
+const NOTIFICATION_ID = JOURNEY_HANDSHAKES_BY_ROLE.consignor['notification-id']
+const FULFILMENT_ID = JOURNEY_HANDSHAKES_BY_ROLE.consignor['fulfilment-id']
 const RETURN_URL_WITHOUT_ADDRESS = `${defaultAnimalsBaseUrl}/live-animals/notifications/${NOTIFICATION_ID}/address-return?fulfilment-id=${FULFILMENT_ID}`
 const BASE_URL_CONFIG_KEY = 'tradeImportsAnimalsFrontend.baseUrl'
 
@@ -28,6 +32,57 @@ describe('journey-registry', () => {
   test('recognises the live-animals journey type', () => {
     expect(isKnownJourneyType(JOURNEY_TYPES.GBN_AG)).toBe(true)
     expect(isKnownJourneyType(UNREGISTERED_JOURNEY_TYPE)).toBe(false)
+  })
+
+  describe('requiresUnitedKingdomAddress', () => {
+    test.each(['consignee', 'importer', 'placeOfDestination'])(
+      'is true for the %s handshake',
+      (role) => {
+        expect(
+          requiresUnitedKingdomAddress(
+            handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+          )
+        ).toBe(true)
+      }
+    )
+
+    test.each(['placeOfOrigin', 'consignor'])(
+      'is false for the %s handshake',
+      (role) => {
+        expect(
+          requiresUnitedKingdomAddress(
+            handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+          )
+        ).toBe(false)
+      }
+    )
+
+    test('is false for the contact address and for a fulfilment id the registry does not list', () => {
+      const contactAddressFulfilmentId = 'f037e8f9-a0b1-4c26-8d72-fe5f60718293'
+
+      expect(
+        requiresUnitedKingdomAddress({
+          journeyType: JOURNEY_TYPES.GBN_AG,
+          fulfilmentId: contactAddressFulfilmentId
+        })
+      ).toBe(false)
+      expect(
+        requiresUnitedKingdomAddress({
+          journeyType: JOURNEY_TYPES.GBN_AG,
+          fulfilmentId: 'not-a-fulfilment-id'
+        })
+      ).toBe(false)
+    })
+
+    test('is false for a consignee fulfilment id under an unregistered journey type, and for no context', () => {
+      expect(
+        requiresUnitedKingdomAddress({
+          journeyType: UNREGISTERED_JOURNEY_TYPE,
+          fulfilmentId: JOURNEY_HANDSHAKES_BY_ROLE.consignee['fulfilment-id']
+        })
+      ).toBe(false)
+      expect(requiresUnitedKingdomAddress(null)).toBe(false)
+    })
   })
 
   test('buildReturnUrl substitutes opaque ids into the registry template', () => {

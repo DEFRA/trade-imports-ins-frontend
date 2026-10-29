@@ -34,8 +34,12 @@ root:
   validation, so the form refuses what the API would refuse.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
-  `buildCountrySelectItems` (the add form's select, always opening on a blank
-  option), `buildEditCountrySelectItems` (the edit form's select, with a
+  `buildCountrySelectItems` (a select that opens on a blank option),
+  `addFormCountryOffer` (the add form's select items and accepted country codes for a handshake context:
+  United Kingdom alone, selected, accepted as the only country and fixed as the
+  posted country when `journey-registry.js` says the role's address must be in
+  the United Kingdom, else the blank option and every served country),
+  `buildEditCountrySelectItems` (the edit form's select, with a
   blank option only when the country it shows is not one the list offers) and
   `countryCodesMatching` (every country code whose name contains the search term).
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
@@ -187,7 +191,8 @@ dates, times and more. Messages come from the feature's copy
 `validatorDefaults` as a fallback.
 
 Build a service-backed rule (`requiredOneOf('countryCode', codes, …)`)
-inside the POST handler from the countries just fetched. Persist `value`,
+inside the POST handler from the country codes the form offered (the add
+form's `addFormCountryOffer` gives them). Persist `value`,
 never the raw payload — `formValuesOf(payload)` is validated so only the
 nine address fields reach the API.
 [`address-id-params.js`](../features/address-book/address-id-params.js)

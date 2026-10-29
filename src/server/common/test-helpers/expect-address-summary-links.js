@@ -1,3 +1,4 @@
+import { load } from 'cheerio'
 import { expect } from 'vitest'
 
 export const REQUIRED_MESSAGES = {
@@ -7,11 +8,34 @@ export const REQUIRED_MESSAGES = {
   phone: 'Enter a phone number'
 }
 
-// The summary link, not the field or the select's placeholder, carries the message.
+const trimmedTextOf = ($, element) =>
+  $(element).text().trim().replaceAll(/\s+/g, ' ')
+
+const summaryLinksOf = ($) =>
+  $('.govuk-error-summary__list a')
+    .map((_, link) => ({
+      href: $(link).attr('href'),
+      text: trimmedTextOf($, link)
+    }))
+    .get()
+
 export const expectSummaryLinks = (result) => {
+  const summaryLinks = summaryLinksOf(load(result))
+
   for (const [field, message] of Object.entries(REQUIRED_MESSAGES)) {
-    expect(result).toMatch(
-      new RegExp(String.raw`href="#${field}"[^>]*>\s*${message}\s*<`)
-    )
+    expect(summaryLinks).toContainEqual({ href: `#${field}`, text: message })
   }
+}
+
+export const expectSummaryAndFieldErrors = ($, errors) => {
+  const fieldMessages = $('.govuk-error-message')
+    .map((_, message) => trimmedTextOf($, message))
+    .get()
+
+  expect(summaryLinksOf($)).toEqual(
+    errors.map(([field, message]) => ({ href: `#${field}`, text: message }))
+  )
+  expect(fieldMessages).toEqual(
+    errors.map(([, message]) => `Error: ${message}`)
+  )
 }

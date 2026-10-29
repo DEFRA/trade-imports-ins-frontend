@@ -47,7 +47,9 @@ field labels in page order, read from the English copy), `COUNTRIES`,
 `postPage()`, `getPageAsOtherOrganisation()`), address book API stubs
 (`pageOf(items, overrides)`, `serveStoredAddress(address)`,
 `serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
-`serveAddressNotFoundForOtherOrganisation(addressId)`) and checks
+`serveAddressNotFoundForOtherOrganisation(addressId)`,
+`serveAddressCreationCapturingBody()`, which stubs the create call and
+returns the body it received alongside the scope) and checks
 (`expectRedirectTo()`, `expectServerErrorPage()`), which every address
 book test imports instead of keeping a local copy,
 `expect-address-form-widths.js` (`expectAddressFormWidths(result)`, the
@@ -56,12 +58,20 @@ add and edit forms' field widths),
 (`expectAddressFormAutocomplete(result)`, the add and edit forms' browser
 autocomplete hints, read from `address-form-autocomplete.js`'s
 `AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
-`journey-handshake.js` (`JOURNEY_HANDSHAKE`, the one complete journey
-handshake the Vitest tests and the fit specs both send),
+`journey-handshake.js` (`handshakeContextOf(handshake)`, the journey type
+and fulfilment id of a handshake as a handshake context, and
+`JOURNEY_HANDSHAKES_BY_ROLE`, one complete journey
+handshake for each of the place of origin, consignor, consignee, importer and
+place of destination, which the Vitest tests and the fit specs both send),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
 notificationReference)`, the Draft tag and notification reference in the
 journey strip, and `JOURNEY_STRIP`, its selector),
-`expect-address-summary-links.js` (`expectSummaryLinks(result)`),
+`expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`
+and `expectCountryOptionsAfterPlaceholder($, countryNames)`, the add form's
+Country select),
+`expect-address-summary-links.js` (`expectSummaryLinks(result)` and
+`expectSummaryAndFieldErrors($, errors)`, the error summary links and the
+messages beside the fields),
 `open-empty-address-book-with-cookies.js`
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
 opens the address book list with the cookies a POST set so a test can

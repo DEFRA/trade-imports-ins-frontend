@@ -17,6 +17,7 @@ import {
   ORGANISATION_ID_HEADER,
   postPage,
   SELECTED_COUNTRY,
+  serveAddressCreationCapturingBody,
   STORED_ADDRESS,
   VALID_ADDRESS_PAYLOAD
 } from '../../../../common/test-helpers/address-book-requests.js'
@@ -28,8 +29,16 @@ import {
 } from '../../../../common/test-helpers/expect-draft-journey-strip.js'
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
-import { JOURNEY_HANDSHAKE } from '../../../../common/test-helpers/journey-handshake.js'
-import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-summary-links.js'
+import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../../common/test-helpers/journey-handshake.js'
+import {
+  expectCountryOptionsAfterPlaceholder,
+  expectUnitedKingdomAloneSelected
+} from '../../../../common/test-helpers/expect-add-form-country-select.js'
+import {
+  expectSummaryAndFieldErrors,
+  expectSummaryLinks,
+  REQUIRED_MESSAGES
+} from '../../../../common/test-helpers/expect-address-summary-links.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
@@ -42,8 +51,13 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
 const ANIMALS_BASE_URL = 'http://localhost:3000'
-const RETURN_URL = `${ANIMALS_BASE_URL}/live-animals/notifications/${JOURNEY_HANDSHAKE['notification-id']}/address-return?fulfilment-id=${JOURNEY_HANDSHAKE['fulfilment-id']}&handshake-token=${JOURNEY_HANDSHAKE['handshake-token']}`
+const { consignor: CONSIGNOR_HANDSHAKE, consignee: CONSIGNEE_HANDSHAKE } =
+  JOURNEY_HANDSHAKES_BY_ROLE
+const returnUrlFor = (handshake) =>
+  `${ANIMALS_BASE_URL}/live-animals/notifications/${handshake['notification-id']}/address-return?fulfilment-id=${handshake['fulfilment-id']}&handshake-token=${handshake['handshake-token']}`
+const RETURN_URL = returnUrlFor(CONSIGNOR_HANDSHAKE)
 const CAPTION_SELECTOR = '.govuk-caption-l'
+const FORM_LABELS = 'form label'
 const ADD_TITLE = 'Add address and contact details'
 
 const postAdd = (server, sessionId, payload) =>
@@ -94,7 +108,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect($(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
     expect(textsOf($, BACK_LINK)).toEqual(['Back'])
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
-    expect(textsOf($, 'form label')).toEqual(ADDRESS_FORM_LABELS)
+    expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
     expect(textsOf($, '#phone-hint')).toEqual([
       'For international numbers include the country code'
     ])
@@ -208,16 +222,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('POST sends the trimmed form fields and nothing else to the address book', async () => {
-    let posted
-    const scope = addressBookApi()
-      .post(addressesApiPath(), (body) => {
-        posted = body
-        return true
-      })
-      .reply(201, {
-        id: ADDRESS_ID,
-        name: STORED_ADDRESS.name
-      })
+    const { scope, captured } = serveAddressCreationCapturingBody()
 
     const { addressLine2, county, ...requiredFields } = VALID_ADDRESS_PAYLOAD
 
@@ -229,7 +234,11 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(scope.isDone()).toBe(true)
-    expect(posted).toEqual({ ...requiredFields, addressLine2: '', county: '' })
+    expect(captured.body).toEqual({
+      ...requiredFields,
+      addressLine2: '',
+      county: ''
+    })
   })
 
   test('POST with invalid data re-renders form with errors', async () => {
@@ -286,7 +295,7 @@ describe(
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-handshake',
-        JOURNEY_HANDSHAKE
+        CONSIGNOR_HANDSHAKE
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -298,14 +307,13 @@ describe(
       expect(result).toContain('Cancel and return to address page')
       expect(result).toContain('name="cancel"')
       expect(result).not.toContain('Cancel and return to address book')
-      expect(load(result)(SELECTED_COUNTRY)).toHaveLength(0)
     })
 
     test('GET arriving through a journey handshake shows the Draft status and notification reference above the caption and heading, then the section headings, name label and County', async () => {
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-handshake-frame',
-        JOURNEY_HANDSHAKE
+        CONSIGNOR_HANDSHAKE
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -313,7 +321,7 @@ describe(
       expect($('head title').text().trim()).toBe(
         `${ADD_TITLE} - Import notification service - GOV.UK`
       )
-      expectDraftJourneyStrip($, JOURNEY_HANDSHAKE['notification-id'])
+      expectDraftJourneyStrip($, CONSIGNOR_HANDSHAKE['notification-id'])
       expect($(`${JOURNEY_STRIP} .govuk-tag`).hasClass('govuk-tag--blue')).toBe(
         true
       )
@@ -321,14 +329,14 @@ describe(
       expect(textsOf($, CAPTION_SELECTOR)).toEqual(['Add new address'])
       expect(textsOf($, 'h1')).toEqual([ADD_TITLE])
       expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
-      expect(textsOf($, 'form label')).toEqual(ADDRESS_FORM_LABELS)
+      expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
     })
 
     test('GET through a handshake opens the form without a Back link to the address book', async () => {
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-handshake-no-back',
-        JOURNEY_HANDSHAKE
+        CONSIGNOR_HANDSHAKE
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -337,7 +345,7 @@ describe(
 
     test('GET refuses an unrecognised journey type', async () => {
       const { statusCode } = await getAdd(server(), 'add-get-unknown-journey', {
-        ...JOURNEY_HANDSHAKE,
+        ...CONSIGNOR_HANDSHAKE,
         'journey-type': 'not-a-journey'
       })
 
@@ -349,8 +357,8 @@ describe(
         server(),
         'add-get-incomplete-handshake',
         {
-          'journey-type': JOURNEY_HANDSHAKE['journey-type'],
-          'notification-id': JOURNEY_HANDSHAKE['notification-id']
+          'journey-type': CONSIGNOR_HANDSHAKE['journey-type'],
+          'notification-id': CONSIGNOR_HANDSHAKE['notification-id']
         }
       )
 
@@ -364,7 +372,7 @@ describe(
       })
 
       const response = await postAdd(server(), 'add-post-handshake', {
-        ...JOURNEY_HANDSHAKE,
+        ...CONSIGNOR_HANDSHAKE,
         ...VALID_ADDRESS_PAYLOAD
       })
 
@@ -379,7 +387,7 @@ describe(
       expect(load(listResponse.result)(SUCCESS_BANNER)).toHaveLength(0)
     })
 
-    test('POST from a handshake keeps the journey, the Draft status and the notification reference on the form when the API rejects the address', async () => {
+    test('POST from the consignee handshake keeps the journey, the Draft status, the notification reference and United Kingdom alone on the form when the API rejects the address', async () => {
       addressBookApi()
         .post(addressesApiPath())
         .reply(statusCodes.badRequest, {
@@ -392,27 +400,172 @@ describe(
       const { result, statusCode } = await postAdd(
         server(),
         'add-post-handshake-api-400',
-        { ...JOURNEY_HANDSHAKE, ...VALID_ADDRESS_PAYLOAD }
+        { ...CONSIGNEE_HANDSHAKE, ...VALID_ADDRESS_PAYLOAD }
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain(EMAIL_FORMAT_ERROR)
       expect(result).toContain('name="handshake-token"')
       expect(result).toContain('Cancel and return to address page')
-      expectDraftJourneyStrip(
-        load(result),
-        JOURNEY_HANDSHAKE['notification-id']
-      )
+      const $ = load(result)
+      expectDraftJourneyStrip($, CONSIGNEE_HANDSHAKE['notification-id'])
+      expectUnitedKingdomAloneSelected($)
     })
 
     test('Cancel from a handshake returns to the journey without creating an address', async () => {
       expectRedirectTo(
         await postAdd(server(), 'add-post-handshake-cancel', {
           cancel: 'true',
-          ...JOURNEY_HANDSHAKE
+          ...CONSIGNOR_HANDSHAKE
         }),
         RETURN_URL
       )
+    })
+  }
+)
+
+describe(
+  '#addressBookAddController — journey handshake by role',
+  { concurrent: false },
+  () => {
+    const server = startRealModeServerServingCountries(COUNTRIES)
+    const unitedKingdomOnlyRoles = [
+      'consignee',
+      'importer',
+      'placeOfDestination'
+    ]
+    const anyCountryRoles = ['placeOfOrigin', 'consignor']
+
+    const openAddFrom = async (role) => {
+      const { result, statusCode } = await getAdd(
+        server(),
+        `add-get-handshake-${role}`,
+        JOURNEY_HANDSHAKES_BY_ROLE[role]
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+      return load(result)
+    }
+
+    test.each(unitedKingdomOnlyRoles)(
+      'GET from the %s handshake offers United Kingdom alone, selected, with every field shown',
+      async (role) => {
+        const $ = await openAddFrom(role)
+
+        expectUnitedKingdomAloneSelected($)
+        expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+      }
+    )
+
+    test.each(anyCountryRoles)(
+      'GET from the %s handshake opens the Country select on Select a country, offers every served country and shows every field',
+      async (role) => {
+        const $ = await openAddFrom(role)
+
+        expectCountryOptionsAfterPlaceholder($, [
+          'France',
+          'Germany',
+          'Switzerland',
+          'United Kingdom'
+        ])
+        expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+      }
+    )
+
+    test('POST from the consignee handshake shows the recoverable-error banner and United Kingdom alone, selected, when the address book fails', async () => {
+      addressBookApi()
+        .post(addressesApiPath())
+        .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
+
+      const { result, statusCode } = await postAdd(
+        server(),
+        'add-post-handshake-503',
+        { ...CONSIGNEE_HANDSHAKE, ...VALID_ADDRESS_PAYLOAD }
+      )
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain(
+        'Sorry, there is a problem with the service. Try again in a few minutes.'
+      )
+      expectUnitedKingdomAloneSelected(load(result))
+    })
+
+    test('POST from the consignee handshake saves the address as United Kingdom whatever country is posted', async () => {
+      const { scope, captured } = serveAddressCreationCapturingBody()
+
+      const response = await postAdd(server(), 'add-post-consignee-france', {
+        ...CONSIGNEE_HANDSHAKE,
+        ...VALID_ADDRESS_PAYLOAD,
+        countryCode: 'FR'
+      })
+
+      expectRedirectTo(
+        response,
+        `${returnUrlFor(CONSIGNEE_HANDSHAKE)}&addressId=${ADDRESS_ID}`
+      )
+      expect(scope.isDone()).toBe(true)
+      expect(captured.body.countryCode).toBe('GB')
+    })
+
+    test('POST from the consignee handshake with the name, postcode, country and phone blank lists the name, postcode and phone errors only, and keeps United Kingdom selected', async () => {
+      const { result, statusCode } = await postAdd(
+        server(),
+        'add-post-consignee-blanks',
+        {
+          ...CONSIGNEE_HANDSHAKE,
+          ...VALID_ADDRESS_PAYLOAD,
+          name: '',
+          postcode: '',
+          countryCode: '',
+          phone: ''
+        }
+      )
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      const $ = load(result)
+      expectSummaryAndFieldErrors($, [
+        ['name', REQUIRED_MESSAGES.name],
+        ['postcode', REQUIRED_MESSAGES.postcode],
+        ['phone', REQUIRED_MESSAGES.phone]
+      ])
+      expectUnitedKingdomAloneSelected($)
+    })
+
+    test.each([
+      ['no country', ''],
+      ['a country the list does not offer', 'ZZ']
+    ])(
+      'POST from the consignor handshake with %s shows Select a country and saves nothing',
+      async (_name, countryCode) => {
+        const { result, statusCode } = await postAdd(
+          server(),
+          `add-post-consignor-country-${countryCode || 'blank'}`,
+          { ...CONSIGNOR_HANDSHAKE, ...VALID_ADDRESS_PAYLOAD, countryCode }
+        )
+
+        expect(statusCode).toBe(statusCodes.badRequest)
+        expectSummaryAndFieldErrors(load(result), [
+          ['countryCode', REQUIRED_MESSAGES.countryCode]
+        ])
+      }
+    )
+
+    test('POST from the consignor handshake with a 13-character postcode and a badly formed email shows both format errors and saves nothing', async () => {
+      const { result, statusCode } = await postAdd(
+        server(),
+        'add-post-consignor-formats',
+        {
+          ...CONSIGNOR_HANDSHAKE,
+          ...VALID_ADDRESS_PAYLOAD,
+          postcode: 'A'.repeat(13),
+          email: 'not-an-email'
+        }
+      )
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expectSummaryAndFieldErrors(load(result), [
+        ['postcode', 'Postcode must be 12 characters or fewer'],
+        ['email', EMAIL_FORMAT_ERROR]
+      ])
     })
   }
 )
