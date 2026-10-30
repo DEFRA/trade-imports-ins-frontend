@@ -94,13 +94,11 @@ export const INVALID_ADDRESS_PAYLOAD = {
   email: 'bad'
 }
 
-export const serveAddressCreated = (matchBody) => {
-  const created = 201
-  return addressBookApi()
+export const serveAddressCreated = (matchBody) =>
+  addressBookApi()
     .post(addressesApiPath(), matchBody)
     .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
-    .reply(created, { id: ADDRESS_ID, name: STORED_ADDRESS.name })
-}
+    .reply(statusCodes.created, { id: ADDRESS_ID, name: STORED_ADDRESS.name })
 
 export const serveAddressCreationCapturingBody = () => {
   const captured = {}
