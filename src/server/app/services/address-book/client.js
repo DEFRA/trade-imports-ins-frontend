@@ -44,15 +44,16 @@ const throwOnErrorWithValidationDetail = async (response) => {
 
 export const listAddresses = async (
   organisationId,
-  { page = 1, searchTerm, countryCode } = {}
+  { page = 1, pageSize, searchTerm, countryCodes = [] } = {}
 ) => {
   const url = new URL(addressesUrl(organisationId))
   url.searchParams.set('page', String(page))
+  url.searchParams.set('pageSize', String(pageSize))
   if (searchTerm) {
     url.searchParams.set('q', searchTerm)
   }
-  if (countryCode) {
-    url.searchParams.set('countryCode', countryCode)
+  for (const countryCode of countryCodes) {
+    url.searchParams.append('countryCode', countryCode)
   }
 
   const response = await fetch(url.toString(), {

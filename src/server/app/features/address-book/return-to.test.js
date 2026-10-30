@@ -1,7 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../config/config.js'
-import { MALFORMED_ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
+import {
+  ADDRESS_BOOK_PATH,
+  ADDRESS_ID,
+  addressPagePath,
+  deleteAddressPagePath,
+  editAddressPagePath,
+  MALFORMED_ADDRESS_ID
+} from '../../../common/test-helpers/address-book-requests.js'
 import {
   deadLinkDestination,
   editLeaveDestinationOf,
@@ -11,9 +18,7 @@ import {
   pathWithReturn
 } from './return-to.js'
 
-const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 const OTHER_ADDRESS_ID = '111111111111111111111111'
-const ADDRESS_BOOK_PATH = '/address-book'
 const ANIMALS_FRONTEND_ORIGIN = new URL(
   config.get('tradeImportsAnimalsFrontend.baseUrl')
 ).origin
@@ -124,21 +129,15 @@ describe('#returnDestinationOf', () => {
   test('Should give a return that is not one of the address’s own pages', () => {
     expect(returnDestinationOf(ADDRESS_ID, '/')).toBe('/')
     expect(
-      returnDestinationOf(
-        ADDRESS_ID,
-        `${ADDRESS_BOOK_PATH}/${OTHER_ADDRESS_ID}`
-      )
-    ).toBe(`${ADDRESS_BOOK_PATH}/${OTHER_ADDRESS_ID}`)
+      returnDestinationOf(ADDRESS_ID, addressPagePath(OTHER_ADDRESS_ID))
+    ).toBe(addressPagePath(OTHER_ADDRESS_ID))
   })
 
   test.each([
     ['no return', null],
-    ['its view page', `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}`],
-    ['its edit page', `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}/edit`],
-    [
-      'its delete page with a query',
-      `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}/delete?x=1`
-    ]
+    ['its view page', addressPagePath(ADDRESS_ID)],
+    ['its edit page', editAddressPagePath(ADDRESS_ID)],
+    ['its delete page with a query', `${deleteAddressPagePath(ADDRESS_ID)}?x=1`]
   ])('Should give the address book for %s', (_name, honouredReturn) => {
     expect(returnDestinationOf(ADDRESS_ID, honouredReturn)).toBe(
       ADDRESS_BOOK_PATH
@@ -155,14 +154,14 @@ describe('#returnDestinationOf', () => {
 describe('#editLeaveDestinationOf', () => {
   test('Should give the address’s view page when there is no return', () => {
     expect(editLeaveDestinationOf(ADDRESS_ID, null)).toBe(
-      `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}`
+      addressPagePath(ADDRESS_ID)
     )
   })
 
   test.each([
     ['a page of this service', '/'],
     ['an animals frontend URL', LIVE_ANIMALS_URL],
-    ['the address’s own view page', `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}`]
+    ['the address’s own view page', addressPagePath(ADDRESS_ID)]
   ])('Should give %s unchanged', (_name, honouredReturn) => {
     expect(editLeaveDestinationOf(ADDRESS_ID, honouredReturn)).toBe(
       honouredReturn
@@ -178,7 +177,7 @@ describe('#landsOnAddressBook', () => {
     }
   )
 
-  test.each(['/', `${ADDRESS_BOOK_PATH}/${ADDRESS_ID}`, LIVE_ANIMALS_URL])(
+  test.each(['/', addressPagePath(ADDRESS_ID), LIVE_ANIMALS_URL])(
     'Should be false for %s',
     (pathOrUrl) => {
       expect(landsOnAddressBook(pathOrUrl)).toBe(false)

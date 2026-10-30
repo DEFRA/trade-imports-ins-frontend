@@ -1,4 +1,9 @@
 import { statusCodes } from '../constants/status-codes.js'
+import {
+  ADDRESS_BOOK_PATH,
+  addressesApiPath,
+  pageOf
+} from './address-book-requests.js'
 import { addressBookApi } from './real-mode.js'
 import { sessionAuth } from './session-auth.js'
 
@@ -16,18 +21,12 @@ export const openEmptyAddressBookWithCookiesFrom = (
 ) => {
   const { organisationId } = sessionAuth(sessionId).credentials
   addressBookApi()
-    .get(`/organisation/${organisationId}/addresses`)
+    .get(addressesApiPath(organisationId))
     .query(true)
-    .reply(statusCodes.ok, {
-      items: [],
-      page: 1,
-      pageSize: 25,
-      totalItems: 0,
-      totalPages: 0
-    })
+    .reply(statusCodes.ok, pageOf([]))
   return server.inject({
     method: 'GET',
-    url: '/address-book',
+    url: ADDRESS_BOOK_PATH,
     auth: sessionAuth(sessionId),
     headers: { cookie: cookieHeaderOf(postHeaders) }
   })

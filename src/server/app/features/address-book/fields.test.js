@@ -1,12 +1,17 @@
 import { describe, expect, test } from 'vitest'
 
+import {
+  STORED_ADDRESS,
+  VALID_ADDRESS_PAYLOAD
+} from '../../../common/test-helpers/address-book-requests.js'
 import { validate } from '../../lib/validate/index.js'
 import {
   FIELDS,
   FIELD_RULES,
   addressRules,
   formValuesOf,
-  isRequiredField
+  isRequiredField,
+  postalLinesOf
 } from './fields.js'
 import { copy } from './copy/copy.en.js'
 
@@ -17,26 +22,15 @@ const rules = addressRules(COUNTRY_CODES)
 const REQUIRED_FIELDS = FIELDS.filter(isRequiredField)
 const BOUNDED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].maxLength)
 
-const BUSINESS_NAME = 'Highland Livestock Ltd'
-const ADDRESS_LINE_1 = "14 Drover's Way"
-const PHONE = '+44 1463 234567'
-const EMAIL = 'exports@example.com'
-
 const addressWith = (overrides = {}) => ({
-  name: BUSINESS_NAME,
-  addressLine1: ADDRESS_LINE_1,
-  addressLine2: 'Unit 3',
-  townOrCity: 'Inverness',
-  county: 'Highland',
-  postcode: 'IV2 3JH',
-  countryCode: 'GB',
-  phone: PHONE,
-  email: EMAIL,
+  ...VALID_ADDRESS_PAYLOAD,
+  addressLine2: STORED_ADDRESS.addressLine2,
+  county: STORED_ADDRESS.county,
   ...overrides
 })
 
 describe('#addressRules', () => {
-  test('accepts a valid Standard Address Block and hands its values back', () => {
+  test('Should accept a valid Standard Address Block and hand its values back', () => {
     const { errors, value } = validate(rules, addressWith())
 
     expect(errors).toBeNull()
@@ -44,7 +38,7 @@ describe('#addressRules', () => {
   })
 
   test.each(REQUIRED_FIELDS)(
-    'refuses a blank %s with its required message',
+    'Should refuse a blank %s with its required message',
     (field) => {
       expect(validate(rules, addressWith({ [field]: '' })).errors).toEqual({
         [field]: copy.errors[field].required
@@ -52,14 +46,14 @@ describe('#addressRules', () => {
     }
   )
 
-  test('refuses a whitespace-only mandatory field as blank', () => {
+  test('Should refuse a whitespace-only mandatory field as blank', () => {
     expect(validate(rules, addressWith({ name: '   ' })).errors).toEqual({
       name: copy.errors.name.required
     })
   })
 
   test.each(BOUNDED_FIELDS)(
-    'refuses %s over its maximum length with its length message',
+    'Should refuse %s over its maximum length with its length message',
     (field) => {
       const { maxLength } = FIELD_RULES[field]
 
@@ -70,25 +64,25 @@ describe('#addressRules', () => {
     }
   )
 
-  test('refuses a country the reference data does not list as if blank', () => {
+  test('Should refuse a country the reference data does not list as if blank', () => {
     expect(validate(rules, addressWith({ countryCode: 'ZZ' })).errors).toEqual({
       countryCode: copy.errors.countryCode.required
     })
   })
 
-  test('refuses a malformed email address', () => {
+  test('Should refuse a malformed email address', () => {
     expect(
       validate(rules, addressWith({ email: 'not-an-email' })).errors
     ).toEqual({ email: copy.errors.email.format })
   })
 
-  test('accepts a free-string phone number', () => {
+  test('Should accept a free-string phone number', () => {
     expect(
       validate(rules, addressWith({ phone: 'call the office' })).errors
     ).toBeNull()
   })
 
-  test('lists every failing field in the order the form asks', () => {
+  test('Should list every failing field in the order the form asks', () => {
     const { errors } = validate(rules, {
       ...formValuesOf(),
       email: 'bad'
@@ -98,14 +92,14 @@ describe('#addressRules', () => {
     expect(errors.email).toBe(copy.errors.email.format)
   })
 
-  test('hands back trimmed values', () => {
+  test('Should hand back trimmed values', () => {
     const { errors, value } = validate(
       rules,
-      addressWith({ name: '  Highland Livestock Ltd  ' })
+      addressWith({ name: `  ${STORED_ADDRESS.name}  ` })
     )
 
     expect(errors).toBeNull()
-    expect(value.name).toBe(BUSINESS_NAME)
+    expect(value.name).toBe(STORED_ADDRESS.name)
   })
 })
 
@@ -139,7 +133,7 @@ describe('#FIELD_RULES', () => {
 })
 
 describe('#isRequiredField', () => {
-  test('requires every field but the second address line and county', () => {
+  test('Should require every field but the second address line and county', () => {
     expect(FIELDS.filter(isRequiredField)).toEqual([
       'name',
       'addressLine1',
@@ -153,7 +147,7 @@ describe('#isRequiredField', () => {
 })
 
 describe('#formValuesOf', () => {
-  test('builds a blank form in the order the fields are asked', () => {
+  test('Should build a blank form in the order the fields are asked', () => {
     expect(formValuesOf()).toEqual({
       name: '',
       addressLine1: '',
@@ -168,29 +162,54 @@ describe('#formValuesOf', () => {
     expect(Object.keys(formValuesOf())).toEqual(FIELDS)
   })
 
-  test('reads the form fields from a stored address and blanks what is missing', () => {
+  test('Should read the form fields from a stored address and blank what is missing', () => {
     const address = {
-      id: '665f1c2ab3e4d51a2c9d0e77',
-      name: BUSINESS_NAME,
-      addressLine1: ADDRESS_LINE_1,
-      townOrCity: 'Inverness',
-      postcode: 'IV2 3JH',
-      countryCode: 'GB',
-      phone: PHONE,
-      email: EMAIL,
-      deleted: false
+      ...STORED_ADDRESS,
+      addressLine2: null,
+      county: null
     }
 
-    expect(formValuesOf(address)).toEqual({
-      name: BUSINESS_NAME,
-      addressLine1: ADDRESS_LINE_1,
-      addressLine2: '',
-      townOrCity: 'Inverness',
-      county: '',
-      postcode: 'IV2 3JH',
-      countryCode: 'GB',
-      phone: PHONE,
-      email: EMAIL
-    })
+    expect(formValuesOf(address)).toEqual(VALID_ADDRESS_PAYLOAD)
+  })
+})
+
+describe('#postalLinesOf', () => {
+  test('Should give address line 1, address line 2, town or city, county and postcode in that order', () => {
+    expect(
+      postalLinesOf({
+        postcode: STORED_ADDRESS.postcode,
+        county: STORED_ADDRESS.county,
+        townOrCity: STORED_ADDRESS.townOrCity,
+        addressLine2: STORED_ADDRESS.addressLine2,
+        addressLine1: STORED_ADDRESS.addressLine1
+      })
+    ).toEqual([
+      STORED_ADDRESS.addressLine1,
+      STORED_ADDRESS.addressLine2,
+      STORED_ADDRESS.townOrCity,
+      STORED_ADDRESS.county,
+      STORED_ADDRESS.postcode
+    ])
+  })
+
+  test('Should leave out blank and missing lines', () => {
+    expect(
+      postalLinesOf({
+        addressLine1: '1 Road',
+        addressLine2: '  ',
+        townOrCity: 'Town',
+        postcode: 'AB1 2CD'
+      })
+    ).toEqual(['1 Road', 'Town', 'AB1 2CD'])
+  })
+
+  test('Should trim the lines it keeps', () => {
+    expect(
+      postalLinesOf({
+        addressLine1: '  1 Road  ',
+        townOrCity: 'Town',
+        postcode: 'AB1 2CD'
+      })
+    ).toEqual(['1 Road', 'Town', 'AB1 2CD'])
   })
 })

@@ -1,25 +1,18 @@
 import { expect } from '@playwright/test'
 
+import { copy } from '../copy/copy.en.js'
 import { FIELD_RULES } from '../fields.js'
+import { GB_COUNTRY } from '../address-countries.js'
+import { countries } from '../../../services/_capture/fixtures.js'
+import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
+import { signIn } from '../../../../../../fit/sign-in.js'
 
-export const NAME_LABEL = 'Name or organisation'
-const ADDRESS_LINE_1_LABEL = 'Address line 1'
-const TOWN_OR_CITY_LABEL = 'Town or city'
-const POSTCODE_LABEL = 'Postcode or Zip code'
-const PHONE_LABEL = 'Phone number'
-const EMAIL_LABEL = 'Email address'
+export const fieldLabels = copy.form.fields
 
-export const fieldLabels = {
-  name: NAME_LABEL,
-  addressLine1: ADDRESS_LINE_1_LABEL,
-  addressLine2: 'Address line 2 (optional)',
-  townOrCity: TOWN_OR_CITY_LABEL,
-  county: 'County (optional)',
-  postcode: POSTCODE_LABEL,
-  countryCode: 'Country',
-  phone: PHONE_LABEL,
-  email: EMAIL_LABEL
-}
+export const addressFormCountryNames = [
+  ...countries.map(({ name }) => name),
+  GB_COUNTRY.name
+].toSorted((left, right) => left.localeCompare(right, 'en'))
 
 export const validAddress = {
   name: 'Highland Livestock Ltd',
@@ -49,12 +42,21 @@ export async function fillValidAddress(page, overrides = {}) {
   }
 }
 
-export const addValidAddressAndGetViewLink = async (page) => {
-  await page.goto('/address-book/add')
-  await fillValidAddress(page)
+export const addValidAddressToFreshOrganisation = async (
+  page,
+  { organisationPrefix, overrides = {} }
+) => {
+  await signIn(page, {
+    organisationId: `${organisationPrefix}-${crypto.randomUUID()}`
+  })
+  await page.goto(addressAddPath())
+  await fillValidAddress(page, overrides)
   await page.getByRole('button', { name: 'Save and continue' }).click()
-  return page.getByRole('link', { name: `View ${validAddress.name}` })
+  await expect(page).toHaveURL(addressBookPath())
 }
+
+export const validAddressViewLink = (page) =>
+  page.getByRole('link', { name: `View ${validAddress.name}` })
 
 export const errorLink = (page, message) =>
   page.getByRole('alert').getByRole('link', { name: message, exact: true })
@@ -73,61 +75,61 @@ export async function expectErrorFocusOn(
 }
 
 export const requiredValidations = [
-  ['name', NAME_LABEL, 'Enter a name or organisation'],
-  ['addressLine1', ADDRESS_LINE_1_LABEL, 'Enter address line 1'],
-  ['townOrCity', TOWN_OR_CITY_LABEL, 'Enter a town or city'],
-  ['postcode', POSTCODE_LABEL, 'Enter a postcode or Zip code'],
-  ['countryCode', 'Country', 'Select a country'],
-  ['phone', PHONE_LABEL, 'Enter a phone number'],
-  ['email', EMAIL_LABEL, 'Enter an email address']
+  ['name', fieldLabels.name, 'Enter a name or organisation'],
+  ['addressLine1', fieldLabels.addressLine1, 'Enter address line 1'],
+  ['townOrCity', fieldLabels.townOrCity, 'Enter a town or city'],
+  ['postcode', fieldLabels.postcode, 'Enter a postcode or Zip code'],
+  ['countryCode', fieldLabels.countryCode, 'Select a country'],
+  ['phone', fieldLabels.phone, 'Enter a phone number'],
+  ['email', fieldLabels.email, 'Enter an email address']
 ]
 
 export const maxLengthValidations = [
   [
     'name',
-    NAME_LABEL,
+    fieldLabels.name,
     FIELD_RULES.name.maxLength,
     'Name must be 255 characters or fewer'
   ],
   [
     'addressLine1',
-    ADDRESS_LINE_1_LABEL,
+    fieldLabels.addressLine1,
     FIELD_RULES.addressLine1.maxLength,
     'Address line 1 must be 255 characters or fewer'
   ],
   [
     'addressLine2',
-    'Address line 2 (optional)',
+    fieldLabels.addressLine2,
     FIELD_RULES.addressLine2.maxLength,
     'Address line 2 must be 255 characters or fewer'
   ],
   [
     'townOrCity',
-    TOWN_OR_CITY_LABEL,
+    fieldLabels.townOrCity,
     FIELD_RULES.townOrCity.maxLength,
     'Town or city must be 100 characters or fewer'
   ],
   [
     'county',
-    'County (optional)',
+    fieldLabels.county,
     FIELD_RULES.county.maxLength,
     'County must be 100 characters or fewer'
   ],
   [
     'postcode',
-    POSTCODE_LABEL,
+    fieldLabels.postcode,
     FIELD_RULES.postcode.maxLength,
     'Postcode must be 12 characters or fewer'
   ],
   [
     'phone',
-    PHONE_LABEL,
+    fieldLabels.phone,
     FIELD_RULES.phone.maxLength,
     'Telephone number must be 20 characters or fewer'
   ],
   [
     'email',
-    EMAIL_LABEL,
+    fieldLabels.email,
     FIELD_RULES.email.maxLength,
     'Email address must be 254 characters or fewer'
   ]

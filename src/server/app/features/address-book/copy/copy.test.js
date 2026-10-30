@@ -1,15 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
 import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
+import { textOf } from '../../../shared/copy-leaves.test-support.js'
 import { FIELDS, FIELD_RULES, isRequiredField } from '../fields.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
-
-const textOf = (value) => {
-  const sampleArguments = [1, 2, 3]
-
-  return typeof value === 'function' ? value(...sampleArguments) : value
-}
 
 const ADDRESS_NAME = 'Green Farm'
 
@@ -32,12 +27,76 @@ describe('#copy', () => {
     }
   )
 
-  it('Should word the add-details form with its name label, country placeholder and section headings', () => {
+  it('Should word the add-details form with its section headings, country placeholder and cancel link', () => {
     expect(copy.form.addressHeading).toBe('Address')
     expect(copy.form.contactHeading).toBe('Contact details')
-    expect(copy.form.fields.name).toBe('Name or organisation')
     expect(copy.form.countryPlaceholder).toBe('Select a country')
     expect(copy.add.cancel).toBe('Cancel and return to address book')
+  })
+
+  it('Should word the add page title and caption', () => {
+    expect(copy.add.title).toBe('Add address and contact details')
+    expect(copy.add.caption).toBe('Add new address')
+  })
+
+  it('Should word the journey-mode add actions', () => {
+    expect(copy.add.saveAndSelect).toBe('Save and select')
+    expect(copy.add.saveAndReturnToAddressPage).toBe(
+      'Save and return to address page'
+    )
+    expect(copy.add.cancelToHub).toBe('Cancel and return to hub')
+  })
+
+  it('Should word the Welsh add page title, caption and journey-mode actions', () => {
+    const {
+      title,
+      caption,
+      saveAndSelect,
+      saveAndReturnToAddressPage,
+      cancelToHub
+    } = cy.add
+
+    expect({
+      title,
+      caption,
+      saveAndSelect,
+      saveAndReturnToAddressPage,
+      cancelToHub
+    }).toEqual({
+      title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
+      caption: 'Ychwanegu cyfeiriad newydd',
+      saveAndSelect: 'Cadw a dewis',
+      saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
+      cancelToHub: 'Canslo a dychwelyd i’r hyb'
+    })
+  })
+
+  it('Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line', () => {
+    expect(copy.list.intro).toBe(
+      'Manage your addresses for use across all your import notifications'
+    )
+    expect(copy.list.search).toEqual({
+      summary: 'Filter addresses',
+      label: 'Search',
+      hint: 'Search by name, address or country',
+      button: 'Search',
+      clear: 'Clear search'
+    })
+    expect(copy.list.noResults).toBe('Showing 0 of 0')
+  })
+
+  it('Should label the English form fields with the labels the design sets', () => {
+    expect(copy.form.fields).toEqual({
+      name: 'Name or organisation',
+      addressLine1: 'Address line 1',
+      addressLine2: 'Address line 2 (optional)',
+      townOrCity: 'Town or city',
+      county: 'County (optional)',
+      postcode: 'Postcode or Zip code',
+      countryCode: 'Country',
+      phone: 'Phone number',
+      email: 'Email address'
+    })
   })
 
   it.each(LOCALES)(
@@ -69,7 +128,7 @@ describe('#copy', () => {
 
   it('Should name the address in each success banner', () => {
     expect(copy.successBanner.added(ADDRESS_NAME)).toBe(
-      'Green Farm added to your address book'
+      'Green Farm address added to your address book'
     )
     expect(copy.successBanner.updated(ADDRESS_NAME)).toBe(
       'Green Farm address updated'
@@ -93,28 +152,53 @@ describe('#copy', () => {
     expect(copy.delete.cancel).toBe('No, cancel')
   })
 
-  it('Should label the optional county, the postcode and the delete heading, and cap the name at 255 characters', () => {
-    expect(copy.form.fields.county).toBe('County (optional)')
+  it('Should word the delete heading and cap the name at 255 characters', () => {
     expect(copy.delete.title).toBe('Delete this address?')
-    expect(copy.form.fields.postcode).toBe('Postcode or Zip code')
     expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
       'Name must be 255 characters or fewer'
     )
   })
 
-  it('Should name the address in the Welsh deleted banner', () => {
-    const welsh = cy.successBanner.deleted(ADDRESS_NAME)
-
-    expect(welsh).toContain(ADDRESS_NAME)
-    expect(welsh).not.toBe(copy.successBanner.deleted(ADDRESS_NAME))
+  it('Should word the Welsh added, updated, deleted and unnamed deleted banners', () => {
+    expect(cy.successBanner.added(ADDRESS_NAME)).toBe(
+      'Cyfeiriad Green Farm wedi’i ychwanegu at eich llyfr cyfeiriadau'
+    )
+    expect(cy.successBanner.updated(ADDRESS_NAME)).toBe(
+      'Cyfeiriad Green Farm wedi’i ddiweddaru'
+    )
+    expect(cy.successBanner.deleted(ADDRESS_NAME)).toBe(
+      'Cyfeiriad Green Farm wedi’i ddileu'
+    )
+    expect(cy.successBanner.deletedUnnamed).toBe('Cyfeiriad wedi’i ddileu')
   })
 
-  it('Should carry a Welsh edit page title and updated banner that name the address and differ from the English', () => {
-    const welshBanner = cy.successBanner.updated(ADDRESS_NAME)
+  it('Should carry the Welsh edit page title', () => {
+    expect(cy.edit.title).toBe('Golygu manylion cyfeiriad a manylion cyswllt')
+  })
 
-    expect(cy.edit.title).not.toBe(copy.edit.title)
-    expect(welshBanner).toContain(ADDRESS_NAME)
-    expect(welshBanner).not.toBe(copy.successBanner.updated(ADDRESS_NAME))
+  it('Should word the Welsh list title, intro, search, add link, results lines, table headings and View link', () => {
+    expect(
+      leaves(cy.list).map(({ path, value }) => [path, textOf(value)])
+    ).toEqual([
+      ['title', 'Llyfr cyfeiriadau'],
+      [
+        'intro',
+        'Rheoli eich cyfeiriadau i’w defnyddio ar draws eich holl hysbysiadau mewnforio'
+      ],
+      ['search.summary', 'Hidlo cyfeiriadau'],
+      ['search.label', 'Chwilio'],
+      ['search.hint', 'Chwilio yn ôl enw, cyfeiriad neu wlad'],
+      ['search.button', 'Chwilio'],
+      ['search.clear', 'Clirio’r chwiliad'],
+      ['add', 'Ychwanegu cyfeiriad newydd'],
+      ['results', 'Yn dangos 1-2 o 3'],
+      ['noResults', 'Yn dangos 0 o 0'],
+      ['table.name', 'Enw'],
+      ['table.address', 'Cyfeiriad'],
+      ['table.country', 'Gwlad'],
+      ['table.action', 'Cam gweithredu'],
+      ['table.view', 'Gweld']
+    ])
   })
 
   it('Should carry the Welsh for the delete page heading and confirm button', () => {

@@ -22,8 +22,6 @@ const logger = createLogger()
 const view = 'address-book/view/view'
 const copy = copyFor({ en, cy })
 
-const hasText = (value) => Boolean(value?.trim?.())
-
 export const buildRows = (address, countryLabel) => {
   const rowFields = [...ADDRESS_FIELDS, 'email', 'phone']
   return rowFields
@@ -31,7 +29,7 @@ export const buildRows = (address, countryLabel) => {
       field,
       text: addressFieldText(address, countryLabel, field)
     }))
-    .filter(({ field, text }) => isRequiredField(field) || hasText(text))
+    .filter(({ field, text }) => isRequiredField(field) || text)
     .map(({ field, text }) => ({
       key: { text: copy.form.fields[field] },
       value: { text }

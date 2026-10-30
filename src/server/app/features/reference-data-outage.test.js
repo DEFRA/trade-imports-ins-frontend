@@ -1,33 +1,27 @@
 import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { INVALID_ADDRESS_PAYLOAD } from '../../common/test-helpers/address-book-requests.js'
-import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
-import { sessionAuth } from '../../common/test-helpers/session-auth.js'
 import {
-  addressBookApi,
-  referenceDataApi
-} from '../../common/test-helpers/real-mode.js'
+  ADD_ADDRESS_PATH,
+  ADDRESS_BOOK_PATH,
+  ADDRESS_ID,
+  addressPagePath,
+  editAddressPagePath,
+  getPage,
+  INVALID_ADDRESS_PAYLOAD,
+  postPage,
+  serveStoredAddress
+} from '../../common/test-helpers/address-book-requests.js'
+import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
+import { referenceDataApi } from '../../common/test-helpers/real-mode.js'
 import { startRealModeServer } from '../../common/test-helpers/test-server.js'
 
 vi.mock('../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
-const ORG_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
-const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 const ERROR_PAGE_TITLE =
   'Something went wrong - Import notification service - GOV.UK'
-
-const STORED_ADDRESS = {
-  id: ADDRESS_ID,
-  name: 'Highland Livestock Ltd',
-  addressLine1: "14 Drover's Way",
-  townOrCity: 'Inverness',
-  postcode: 'IV2 3JH',
-  countryCode: 'GB',
-  deleted: false
-}
 
 const refuseCountries = () =>
   referenceDataApi()
@@ -48,11 +42,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await server().inject({
-        method: 'GET',
-        url: '/',
-        auth: sessionAuth('outage-dashboard')
-      })
+      await getPage(server(), '/', 'outage-dashboard')
     )
   })
 
@@ -60,11 +50,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await server().inject({
-        method: 'GET',
-        url: '/address-book',
-        auth: sessionAuth('outage-list')
-      })
+      await getPage(server(), ADDRESS_BOOK_PATH, 'outage-list')
     )
   })
 
@@ -72,42 +58,30 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await server().inject({
-        method: 'GET',
-        url: '/address-book/add',
-        auth: sessionAuth('outage-add')
-      })
+      await getPage(server(), ADD_ADDRESS_PATH, 'outage-add')
     )
   })
 
   test('Should serve a stored address as a 503 error page', async () => {
-    addressBookApi()
-      .get(`/organisation/${ORG_ID}/addresses/${ADDRESS_ID}`)
-      .reply(statusCodes.ok, STORED_ADDRESS)
+    serveStoredAddress()
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await server().inject({
-        method: 'GET',
-        url: `/address-book/${ADDRESS_ID}`,
-        auth: sessionAuth('outage-view')
-      })
+      await getPage(server(), addressPagePath(ADDRESS_ID), 'outage-view')
     )
   })
 
   test('Should serve saving an edited address as a 503 error page', async () => {
-    addressBookApi()
-      .get(`/organisation/${ORG_ID}/addresses/${ADDRESS_ID}`)
-      .reply(statusCodes.ok, STORED_ADDRESS)
+    serveStoredAddress()
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await server().inject({
-        method: 'POST',
-        url: `/address-book/${ADDRESS_ID}/edit`,
-        auth: sessionAuth('outage-edit-save'),
-        payload: INVALID_ADDRESS_PAYLOAD
-      })
+      await postPage(
+        server(),
+        editAddressPagePath(ADDRESS_ID),
+        'outage-edit-save',
+        INVALID_ADDRESS_PAYLOAD
+      )
     )
   })
 })

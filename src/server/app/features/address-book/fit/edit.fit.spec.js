@@ -8,36 +8,29 @@ import {
 } from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { expectDashboard } from './dashboard.js'
+import { withReturn } from './return-query.js'
 import {
-  SEED_ADDRESS_ID,
-  SEED_ADDRESS_NAME,
+  seedAddress,
   MALFORMED_ADDRESS_ID,
   UNKNOWN_ADDRESS_ID
 } from './seed-address.js'
+import {
+  addressBookPath,
+  addressEditPath,
+  addressPath,
+  dashboardPath
+} from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
-const EDIT_URL = new RegExp(`/address-book/${SEED_ADDRESS_ID}/edit$`)
-const SEED_ADDRESS_PATH = `/address-book/${SEED_ADDRESS_ID}`
-const RETURN_HOME = '?return=%2F'
-
-const seedValues = {
-  name: SEED_ADDRESS_NAME,
-  addressLine1: '1 Stub Way',
-  addressLine2: '',
-  townOrCity: 'Stubton',
-  county: '',
-  postcode: 'ST1 1UB',
-  countryCode: 'GB',
-  phone: '01234567890',
-  email: 'stub-farm-1@example.com'
-}
+const { id: seedAddressId, ...seedValues } = seedAddress
+const seedEditPath = addressEditPath(seedAddressId)
 
 const uniqueOrganisationId = (purpose) =>
   `stub-org-edit-${purpose}-${crypto.randomUUID()}`
 
-async function openEditForm(page, organisationId, query = '') {
+async function openEditForm(page, organisationId, { returnTo } = {}) {
   await signIn(page, { organisationId })
-  await page.goto(`${SEED_ADDRESS_PATH}/edit${query}`)
+  await page.goto(withReturn(seedEditPath, returnTo))
 }
 
 const save = (page) =>
@@ -71,7 +64,7 @@ test.describe('edit address', () => {
     ).toBeVisible()
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', SEED_ADDRESS_PATH)
+    ).toHaveAttribute('href', addressPath(seedAddressId))
   })
 
   test('asks for the nine address fields in the add form order, Email address before Phone number', async ({
@@ -125,7 +118,7 @@ test.describe('edit address', () => {
       message: 'Enter a name or organisation',
       label: fieldLabels.name,
       expectedValue: '',
-      url: EDIT_URL
+      url: seedEditPath
     })
     await expect(page.getByLabel(fieldLabels.townOrCity)).toHaveValue(
       'Fort William'
@@ -144,7 +137,7 @@ test.describe('edit address', () => {
       message: 'Enter an email address in the correct format',
       label: fieldLabels.email,
       expectedValue: 'not-an-email',
-      url: EDIT_URL
+      url: seedEditPath
     })
   })
 
@@ -173,11 +166,11 @@ test.describe('edit address', () => {
     await setFieldValue(page, 'townOrCity', 'Aboyne')
     await save(page)
 
-    await expect(page).toHaveURL(/\/address-book$/)
+    await expect(page).toHaveURL(addressBookPath())
     await expect(page.getByText(`${newName} address updated`)).toBeVisible()
     await expect(
       page.getByRole('link', { name: `View ${newName}` })
-    ).toHaveAttribute('href', SEED_ADDRESS_PATH)
+    ).toHaveAttribute('href', addressPath(seedAddressId))
   })
 
   test('Cancel opens the address details with the stored name unchanged', async ({
@@ -188,23 +181,27 @@ test.describe('edit address', () => {
     await setFieldValue(page, 'name', 'Should not be saved')
     await cancel(page)
 
-    await expect(page).toHaveURL(new RegExp(`${SEED_ADDRESS_PATH}$`))
+    await expect(page).toHaveURL(addressPath(seedAddressId))
     await expect(
-      page.getByRole('heading', { level: 1, name: SEED_ADDRESS_NAME })
+      page.getByRole('heading', { level: 1, name: seedAddress.name })
     ).toBeVisible()
   })
 
   test.describe('opened from the dashboard', () => {
     test('Back goes to the dashboard', async ({ page }) => {
-      await openEditForm(page, 'stub-org-edit-back-return', RETURN_HOME)
+      await openEditForm(page, 'stub-org-edit-back-return', {
+        returnTo: dashboardPath()
+      })
 
       await expect(
         page.getByRole('link', { name: 'Back', exact: true })
-      ).toHaveAttribute('href', '/')
+      ).toHaveAttribute('href', dashboardPath())
     })
 
     test('Cancel goes to the dashboard', async ({ page }) => {
-      await openEditForm(page, 'stub-org-edit-cancel-return', RETURN_HOME)
+      await openEditForm(page, 'stub-org-edit-cancel-return', {
+        returnTo: dashboardPath()
+      })
 
       await cancel(page)
 
@@ -217,7 +214,7 @@ test.describe('edit address', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-edit-unknown' })
-      await page.goto(`/address-book/${UNKNOWN_ADDRESS_ID}/edit`)
+      await page.goto(addressEditPath(UNKNOWN_ADDRESS_ID))
 
       await expectAddressBookList(page)
     })
@@ -226,7 +223,9 @@ test.describe('edit address', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-edit-unknown-return' })
-      await page.goto(`/address-book/${UNKNOWN_ADDRESS_ID}/edit${RETURN_HOME}`)
+      await page.goto(
+        withReturn(addressEditPath(UNKNOWN_ADDRESS_ID), dashboardPath())
+      )
 
       await expectDashboard(page)
     })
@@ -235,7 +234,7 @@ test.describe('edit address', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-edit-malformed' })
-      await page.goto(`/address-book/${MALFORMED_ADDRESS_ID}/edit`)
+      await page.goto(addressEditPath(MALFORMED_ADDRESS_ID))
 
       await expectAddressBookList(page)
     })

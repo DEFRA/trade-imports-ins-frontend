@@ -22,18 +22,36 @@ root:
 
 - [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
   `FIELDS`, `isRequiredField`, `formValuesOf` and
-  `addressRules(countryCodes)`, plus `ADDRESS_FIELDS` (the address lines in
-  display order) and `addressFieldText`, shared by the view rows and the
-  delete summary. Each field's `required` sets both whether a blank value is
+  `addressRules(countryCodes)`, plus `POSTAL_LINE_FIELDS` (address line 1,
+  address line 2, town or city, county and postcode, in display order),
+  `ADDRESS_FIELDS` (name, the postal-line fields and country) and
+  `addressFieldText` (a field's display text, or null when it is blank or
+  only spaces) with `postalLinesOf` built on the same blank rule. The list
+  reads `postalLinesOf`; the view rows and the delete summary read
+  `ADDRESS_FIELDS` through `addressFieldText`. Each field's `required` sets both whether a blank value is
   refused and whether the view always shows its row. Each field's
   `maxLength` and `required` match the address book API's `AddressRequest`
   validation, so the form refuses what the API would refuse.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
-  `buildCountrySelectItems` (the add form's select, always opening on a blank
-  option), `buildEditCountrySelectItems` (the edit form's select, with a
+  `buildCountrySelectItems` (a select that opens on a blank option),
+  `addFormCountryOffer` (the add form's select items, accepted country codes and form values for a handshake context:
+  United Kingdom alone, selected and accepted as the only country, with the
+  form values' country fixed to `GB`, when `journey-registry.js` says the
+  role's address must be in the United Kingdom, else the blank option, every
+  served country and the form values as given),
+  `buildEditCountrySelectItems` (the edit form's select, with a
   blank option only when the country it shows is not one the list offers) and
-  `countryCodeMatching`.
+  `countryCodesMatching` (every country code whose name contains the search term).
+- [`journey-registry.js`](../features/address-book/journey-registry.js) —
+  `JOURNEY_TYPES` (the registered journey types), `ADDRESS_LANDING` (select,
+  return and cancel, the page the journey opens on return),
+  `isKnownJourneyType`, `requiresUnitedKingdomAddress` (whether the role's
+  address must be in the United Kingdom), `isConsignmentContact` (whether a
+  handshake is the consignment contact's, so the add page offers the contact's
+  controls rather than a role's), `buildReturnUrl` (the journey's address-return
+  URL, with an optional address id and `landing`) and
+  `CONSIGNMENT_CONTACT_FULFILMENT_ID` (the consignment contact's fulfilment id).
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
@@ -60,7 +78,10 @@ root:
   yar-backed, read-once.
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
-specs plus the fixtures `address-form.js`, `axe.js` and `seed-address.js`.
+specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
+`dashboard.js` and `seed-address.js`. `view-model/list.js` owns the list's
+name lines, postal lines and results line, which the list controller builds
+into table cells.
 
 ## Paths
 
@@ -81,10 +102,12 @@ test; [`routes.test.js`](../routes.test.js) pins the exact route list.
 
 [`shared/kit.js`](../shared/kit.js):
 
-- **`base(title, { backLink, recoverableError })`** returns `{ layout,
-pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
-  — a two-thirds column by default; a page that lays out a table overrides
-  `contentColumnClass: kit.surfaceClass('display')`.
+- **`base(title, { backLink, recoverableError, journeyStrip })`** returns
+  `{ layout, pageTitle, backLink, sharedCopy, recoverableError, journeyStrip, contentColumnClass }`.
+  `journeyStrip` is `null` unless a page passes one, and the layout shows the strip above the page content
+  only when it is set. `contentColumnClass` is the two-thirds form column
+  (`SURFACES.form`) by default, and a page that lays out a table overrides
+  it with `kit.surfaceClass('display')`.
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
 'session' }`; the view, edit and delete pages pass
@@ -92,10 +115,13 @@ pageTitle, backLink, sharedCopy, recoverableError, contentColumnClass }`
   returns to an honoured `return`, or to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
+- **`draftJourneyStrip(notificationId)`** returns the strip for a notification
+  in progress: `{ status: { text, classes }, notificationId }`, the status being
+  the shared copy's draft wording in a blue tag.
 - **`requireOrganisationId(request)`** throws `Boom.forbidden` when the
   session carries none.
-- `sharedCopy` is the resolved chrome copy. `fieldError` is exported and
-  unused — templates read the error map directly (see below).
+- `sharedCopy` is the resolved chrome copy. Templates read the error map
+  directly (see below).
 
 ## Controllers
 
@@ -114,6 +140,28 @@ The shape every ins controller takes, citing
   A 400 from the address book re-renders with
   `mapApiErrorsToFormErrors(err.body)`.
 - `export const routes = kit.pageRoutes(...)`.
+
+The add page, [`add/add.controller.js`](../features/address-book/add/add.controller.js),
+adds to that shape for a journey:
+
+- `addModeFor(handshakeContext)` decides the page's mode once, as one of
+  `ADD_MODES`: `ADDRESS_BOOK` (no handshake), `ROLE_HANDSHAKE` (a role's
+  journey) or `CONSIGNMENT_CONTACT` (the consignment contact's journey).
+  `backHrefFor` gives the Back link and the journey strip shows for both
+  handshake modes.
+- `cancelUrlFor(addMode, handshakeContext)` is the one owner of where Cancel
+  goes: the address book, a role's journey with the `cancel` landing, or the
+  consignment contact's journey with no landing.
+- `add.njk` renders Cancel by `addMode` and picks each label: from the address
+  book, a link labelled `copy.add.cancel`; from a role's journey, a link
+  labelled `copy.add.cancelToHub`; from the consignment contact's journey, a
+  `cancel` button labelled `copy.add.cancelAndReturnToAddressPage`. Both links go to
+  `cancelHref`.
+- The POST honours `cancel` for every mode, redirecting to `cancelUrlFor`, and
+  logs the hand-back at info when the page came from a journey.
+- From a role's journey, the chosen `action` (Save and select, or Save and
+  return to the address page) names the landing the address is handed back
+  with; the consignment contact's Save hands it back with the select landing.
 
 The view and delete GETs load through `findLiveAddressWithCountryLabel`, and
 the edit GET through `findLiveAddress`. When either finds nothing, the GET
@@ -141,8 +189,8 @@ may sit at a feature root.
 
 The controller resolves `const copy = copyFor({ en, cy })` from
 [`shared/copy.js`](../shared/copy.js) and passes it to the view. Shared
-chrome copy (`layout`, `unauthorised`, `errorSummary`, `recoverableError`,
-`errorPage`) and `validatorDefaults` live in
+chrome copy (`layout`, `journeyStrip`, `unauthorised`, `errorSummary`,
+`recoverableError`, `errorPage`) and `validatorDefaults` live in
 [`shared/copy.en.js`](../shared/copy.en.js) and `copy.cy.js`, and reach
 every view as `sharedCopy`.
 
@@ -157,8 +205,9 @@ govuk macros, `errorMessage: errors.field and { text: errors.field }`.
 The add and edit forms render their Address and Contact details fields
 through the one `addressFields` macro in
 [`address-fields.njk`](../features/address-book/address-fields.njk), passed
-its copy, form values, country items, errors and name label in a single
-params object.
+its copy, form values, country items and errors in a single params
+object, and it sets each personal-data field's browser `autocomplete`
+hint.
 Input `name`, `id` and the error-map key stay identical so the summary
 link focuses the control. Stay inside the govuk-frontend toolbox.
 
@@ -174,7 +223,8 @@ dates, times and more. Messages come from the feature's copy
 `validatorDefaults` as a fallback.
 
 Build a service-backed rule (`requiredOneOf('countryCode', codes, …)`)
-inside the POST handler from the countries just fetched. Persist `value`,
+inside the POST handler from the country codes the form offered (the add
+form's `addFormCountryOffer` gives them). Persist `value`,
 never the raw payload — `formValuesOf(payload)` is validated so only the
 nine address fields reach the API.
 [`address-id-params.js`](../features/address-book/address-id-params.js)
@@ -183,7 +233,7 @@ stays on Joi directly because Hapi's `validate.params` takes a Joi schema.
 ## Client JavaScript
 
 [`src/client/javascripts/application.js`](../../../client/javascripts/application.js)
-initialises the govuk components and `address-book-success-banner.js`. A
+initialises the govuk components. A
 page needing more adds a named `entry` to `webpack.config.js` and loads it
 with `getAssetPath('<entry>.js')`. Build config is load-bearing.
 

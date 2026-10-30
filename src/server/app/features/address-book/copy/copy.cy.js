@@ -5,17 +5,17 @@ export const copy = {
   list: {
     title: 'Llyfr cyfeiriadau',
     intro:
-      'Rheoli cyfeiriadau a ddefnyddir ar draws gwasanaethau mewnforio ac allforio.',
+      'Rheoli eich cyfeiriadau i’w defnyddio ar draws eich holl hysbysiadau mewnforio',
     search: {
-      label: 'Chwilio cyfeiriadau',
-      hint: 'Chwilio yn ôl enw, tref neu ddinas, cod post neu wlad',
+      summary: 'Hidlo cyfeiriadau',
+      label: 'Chwilio',
+      hint: 'Chwilio yn ôl enw, cyfeiriad neu wlad',
       button: 'Chwilio',
       clear: 'Clirio’r chwiliad'
     },
     add: 'Ychwanegu cyfeiriad newydd',
-    empty: 'Nid oes gennych unrhyw gyfeiriadau eto.',
-    noMatchPrefix: 'Nid oes unrhyw gyfeiriadau yn cyfateb i',
     results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,
+    noResults: 'Yn dangos 0 o 0',
     table: {
       name: 'Enw',
       address: 'Cyfeiriad',
@@ -26,7 +26,8 @@ export const copy = {
   },
   successBanner: {
     title: 'Llwyddiant',
-    added: (name) => `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
+    added: (name) =>
+      `Cyfeiriad ${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
     updated: (name) => `Cyfeiriad ${name} wedi’i ddiweddaru`,
     deleted: (name) => `Cyfeiriad ${name} wedi’i ddileu`,
     deletedUnnamed: 'Cyfeiriad wedi’i ddileu'
@@ -49,10 +50,14 @@ export const copy = {
     countryPlaceholder: SELECT_COUNTRY
   },
   add: {
-    title: 'Ychwanegu manylion cyfeiriad',
+    title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
+    caption: 'Ychwanegu cyfeiriad newydd',
     save: 'Cadw a pharhau',
+    saveAndSelect: 'Cadw a dewis',
+    saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
-    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad'
+    cancelAndReturnToAddressPage: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
+    cancelToHub: 'Canslo a dychwelyd i’r hyb'
   },
   edit: {
     title: 'Golygu manylion cyfeiriad a manylion cyswllt',

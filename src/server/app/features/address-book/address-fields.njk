@@ -21,6 +21,7 @@
     id: "addressLine1",
     name: "addressLine1",
     value: formValues.addressLine1,
+    autocomplete: "address-line1",
     errorMessage: errors.addressLine1 and { text: errors.addressLine1 }
   }) }}
 
@@ -29,6 +30,7 @@
     id: "addressLine2",
     name: "addressLine2",
     value: formValues.addressLine2,
+    autocomplete: "address-line2",
     errorMessage: errors.addressLine2 and { text: errors.addressLine2 }
   }) }}
 
@@ -37,6 +39,7 @@
     id: "townOrCity",
     name: "townOrCity",
     value: formValues.townOrCity,
+    autocomplete: "address-level2",
     classes: "govuk-!-width-one-half",
     errorMessage: errors.townOrCity and { text: errors.townOrCity }
   }) }}
@@ -55,6 +58,7 @@
     id: "postcode",
     name: "postcode",
     value: formValues.postcode,
+    autocomplete: "postal-code",
     classes: "govuk-!-width-one-half",
     errorMessage: errors.postcode and { text: errors.postcode }
   }) }}
@@ -85,6 +89,7 @@
     id: "phone",
     name: "phone",
     value: formValues.phone,
+    autocomplete: "tel",
     classes: "govuk-!-width-two-thirds",
     hint: {
       text: copy.form.phoneHint

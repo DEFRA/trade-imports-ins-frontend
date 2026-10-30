@@ -38,6 +38,7 @@ Convention checks:
 - [`shared/paths.test.js`](../shared/paths.test.js)
 - [`shared/kit.test.js`](../shared/kit.test.js)
 - [`shared/list-page.test.js`](../shared/list-page.test.js)
+- [`shared/escape-html.test.js`](../shared/escape-html.test.js)
 - [`shared/layout.test.js`](../shared/layout.test.js) — service
   navigation, phase banner, back link, banner, title prefix, surfaces,
   assets, footer.
@@ -49,25 +50,78 @@ for the pattern, and the helpers in
 [`common/test-helpers/`](../../common/test-helpers/): `real-mode.js`
 (`runInRealMode()`, `refuseOutboundHttp()`, `addressBookApi()`,
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
-`address-book-requests.js` (`getPage()`, `postPage()`,
-`getPageAsOtherOrganisation()`, `serveAddressBookServerError(path)`,
+`address-book-requests.js`, the one owner of the address book tests'
+set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
+`addressPagePath(addressId)`, `editAddressPagePath(addressId)`,
+`deleteAddressPagePath(addressId)`, `RETURN_HOME`), address book API paths
+(`addressesApiPath(organisationId)`, `addressApiPath(addressId,
+organisationId)`, both defaulting to the session organisation), fixtures
+(`ADDRESS_ID`, `STORED_ADDRESS`, `VALID_ADDRESS_PAYLOAD`,
+`INVALID_ADDRESS_PAYLOAD`, `ADDRESS_FORM_LABELS` (the add and edit forms'
+field labels in page order, written out as literals), `COUNTRIES`,
+`MALFORMED_ADDRESS_ID`,
+`ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,
+`COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()`,
+`postPage()`, `getPageAsOtherOrganisation()`), address book API stubs
+(`pageOf(items, overrides)`, `serveStoredAddress(address)`,
+`serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
 `serveAddressNotFoundForOtherOrganisation(addressId)`,
-`expectRedirectTo()`, `expectServerErrorPage()`, `MALFORMED_ADDRESS_ID`,
-`INVALID_ADDRESS_PAYLOAD`, `ORGANISATION_ID_HEADER`,
-`OTHER_ORGANISATION_ID`),
+`serveAddressCreated(matchBody)`, which stubs a successful create call whose
+body matches `matchBody`, and
+`serveAddressCreationCapturingBody()`, which stubs it and
+returns the body it received alongside the scope) and checks
+(`expectRedirectTo()`, `expectServerErrorPage()`), which every address
+book test imports instead of keeping a local copy,
 `expect-address-form-widths.js` (`expectAddressFormWidths(result)`, the
 add and edit forms' field widths),
-`expect-address-summary-links.js` (`expectSummaryLinks(result)`),
+`expect-address-form-autocomplete.js`
+(`expectAddressFormAutocomplete(result)`, the add and edit forms' browser
+autocomplete hints, read from `address-form-autocomplete.js`'s
+`AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
+`journey-handshake.js` (`handshakeContextOf(handshake)`, the handshake
+context the app builds from a handshake's query or form fields,
+`JOURNEY_HANDSHAKES_BY_ROLE`, one complete journey
+handshake for each of the place of origin, consignor, consignee, importer and
+place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's
+handshake, `ANIMALS_BASE_URL`, the animals frontend's base URL the return
+URLs start with, and `returnUrlFor(handshake, { addressId, landing })`, the
+return URL a test expects for a handshake, built from that handshake's own
+ids and token; the Vitest tests and the fit specs both use these),
+`expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
+notificationId)`, the Draft tag and notification id in the
+journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
+which the fit specs import too),
+`expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`
+and `expectPlaceholderThenCountriesNoneSelected($, countryNames)`, the add form's
+Country select),
+`expect-address-form-errors.js` (`expectSummaryLinks(result)` and
+`expectSummaryAndFieldErrors($, errors)`, the error summary links and the
+messages beside the fields),
+`rendered-text.js` (`textOf($, selectorOrElement)`, `textsOf($, selector)`
+and `normalisedText(text)`, a rendered element's text trimmed with its
+whitespace collapsed to single spaces, which every Vitest test reads text
+through),
 `open-empty-address-book-with-cookies.js`
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
 opens the address book list with the cookies a POST set so a test can
 read the banner),
-`session-auth.js` (`sessionAuth(sessionId, overrides)`),
+`session-auth.js` (`sessionAuth(sessionId, overrides)` and
+`ORGANISATION_ID`, the one test organisation id),
 `mock-oidc-config.js` (`mockOidcConfig`), `mock-auth-config.js`
 (`mockAuthConfig(importOriginal)`), `test-server.js`
 (`startTestServer()`, `stopTestServer(server)`, `startRealModeServer()`,
 `startRealModeServerServingCountries(countries)`, which returns a getter
 for the started server).
+
+[`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
+holds the list's fixtures, nock stubs and Cheerio readers:
+`startServerWithPageReader()`, `stubAddressPage(query, addressPage)`,
+`stubAddressBookUnavailable()`, `contentOf`, `tableHeadingsOf`,
+`resultsLineOf`, `bodyRowCountOf`, `rowCellsOf` and `tagNamesOf`. A list
+controller test calls `const readPage = startServerWithPageReader()`, which
+starts the server serving `COUNTRIES` and returns a page reader, and reads
+pages with `readPage(url, sessionId)`, which wraps `getPage()`,
+loads the HTML into Cheerio and returns `{ $, html, statusCode }`.
 
 Mock at the network boundary: nock answers the HTTP calls the real
 clients make — never `vi.mock` a service barrel, and never mock
@@ -105,8 +159,8 @@ external integration stubbed:
   — sign in, then the dashboard, the address book, add, view and delete,
   then an axe check. It names headings and buttons through the copy
   modules.
-- **`features`** runs `src/server/app/features/**/*.fit.spec.js` — six
-  specs, English literals.
+- **`features`** runs `src/server/app/features/**/*.fit.spec.js` —
+  English literals.
 
 The `webServer` boots `npm run fit:start` with `STUB_MODE=true`, so no
 other service runs. The Playwright default port is 3002, which is also
@@ -117,16 +171,30 @@ playwright:install` once (Chromium).
 Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 `signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
-labels, `validAddress`, `fillValidAddress`, `expectErrorFocusOn`, the two
+`fieldLabels`, `addressFormCountryNames` (the captured countries fixture's
+names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
+`addValidAddressToFreshOrganisation`, `validAddressViewLink`,
+`expectErrorFocusOn`, the two
 validation tables.
+[`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
+`openAddressBookList`, `expectAddressBookList`,
+`expectEmptyAddressBookList`, `searchFieldOf`, `openFilterDisclosure`,
+`expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery`,
+`resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
+[`dashboard.js`](../features/address-book/fit/dashboard.js) —
+`expectDashboard`.
 [`axe.js`](../features/address-book/fit/axe.js) — the address-book group's
 shared axe helper, `expectNoSeriousOrCriticalViolations`.
-[`seed-address.js`](../features/address-book/fit/seed-address.js) — the
-deterministic seed id.
+[`seed-address.js`](../features/address-book/fit/seed-address.js) —
+`seedAddress`, the address the stub seeds for an ordinary organisation,
+its `seedAddressLines`, and the unknown and malformed ids.
+[`return-query.js`](../features/address-book/fit/return-query.js) —
+`withReturn(path, returnTo)`. Page paths come from the app's own
+[`shared/paths.js`](../shared/paths.js), never a literal in a spec.
 
 Every test signs in with its own organisation id, because the
 address-book stub keys its data by organisation; the `-empty` and
-`-paginated` suffixes select those seeds. No sleeps, no page objects, and
+`-paginated` suffixes select those seeds (thirty addresses, four pages of eight). No sleeps, no page objects, and
 `exact: true` on "Back". On failure read
 `test-results/<spec>/error-context.md` and the HTML report in
 `playwright-report/`.

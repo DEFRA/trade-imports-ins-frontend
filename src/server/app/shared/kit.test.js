@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import { statusCodes } from '../../common/constants/status-codes.js'
+import { ORGANISATION_ID } from '../../common/test-helpers/session-auth.js'
 import {
   base,
+  draftJourneyStrip,
   errorSummary,
-  fieldError,
   pageRoutes,
   requireOrganisationId,
   routeOptions,
@@ -12,8 +13,8 @@ import {
   SURFACES
 } from './kit.js'
 
-const ORGANISATION_ID = '5a8d2b19-6f4e-4d21-9c1b-7e3f0a2d5c88'
 const ENTER_A_NAME = 'Enter a name'
+const NOTIFICATION_ID = 'GBN-AG-26-4F7K2P'
 const ADD_PATH = '/address-book/add'
 const EDIT_PATH = '/address-book/{id}/edit'
 
@@ -32,21 +33,28 @@ describe('#base — the chrome every page shares', () => {
       pageTitle: 'Dashboard',
       sharedCopy,
       recoverableError: false,
+      journeyStrip: null,
       contentColumnClass: SURFACES.form
     })
   })
 
   it('Should carry a back link and a recoverable error through', () => {
     expect(
-      base('Add address details', {
+      base('Add address and contact details', {
         backLink: '/address-book',
         recoverableError: true
       })
     ).toMatchObject({
-      pageTitle: 'Add address details',
+      pageTitle: 'Add address and contact details',
       backLink: '/address-book',
       recoverableError: true
     })
+  })
+
+  it('Should carry a journey strip through', () => {
+    const journeyStrip = draftJourneyStrip(NOTIFICATION_ID)
+
+    expect(base('Dashboard', { journeyStrip }).journeyStrip).toBe(journeyStrip)
   })
 })
 
@@ -81,16 +89,12 @@ describe('#errorSummary', () => {
   })
 })
 
-describe('#fieldError', () => {
-  it('Should wrap the field message for the govuk macro', () => {
-    expect(fieldError({ name: ENTER_A_NAME }, 'name')).toEqual({
-      text: ENTER_A_NAME
+describe('#draftJourneyStrip', () => {
+  it('Should give the Draft status with the blue tag class and carry the notification id', () => {
+    expect(draftJourneyStrip(NOTIFICATION_ID)).toEqual({
+      status: { text: 'Draft', classes: 'govuk-tag--blue' },
+      notificationId: NOTIFICATION_ID
     })
-  })
-
-  it('Should be undefined when the field has no error', () => {
-    expect(fieldError({ name: ENTER_A_NAME }, 'email')).toBeUndefined()
-    expect(fieldError(undefined, 'email')).toBeUndefined()
   })
 })
 

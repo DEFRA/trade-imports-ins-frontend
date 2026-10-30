@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { leaves } from './copy-leaves.js'
+import { textOf } from './copy-leaves.test-support.js'
 import { copyFor } from './copy.js'
 import {
   copy as sharedEn,
@@ -9,13 +11,6 @@ import {
   copy as sharedCy,
   validatorDefaults as validatorDefaultsCy
 } from './copy.cy.js'
-
-const leaves = (node, path = []) =>
-  typeof node === 'object' && node !== null
-    ? Object.entries(node).flatMap(([key, value]) =>
-        leaves(value, [...path, key])
-      )
-    : [{ path: path.join('.'), value: node }]
 
 describe('#copyFor', () => {
   it('Should resolve the requested locale', () => {
@@ -88,6 +83,13 @@ describe('layout copy', () => {
   })
 })
 
+describe('journey strip copy', () => {
+  it('Should name the draft status in English and in Welsh', () => {
+    expect(sharedEn.journeyStrip).toEqual({ draft: 'Draft' })
+    expect(sharedCy.journeyStrip).toEqual({ draft: 'Drafft' })
+  })
+})
+
 describe('shared copy module', () => {
   it('Should have a non-empty string at every leaf', () => {
     for (const { path, value } of leaves(sharedEn)) {
@@ -100,11 +102,6 @@ describe('shared copy module', () => {
 })
 
 describe('validator defaults', () => {
-  const SAMPLE_ARGUMENTS = [1, 2]
-
-  const textOf = (value) =>
-    typeof value === 'function' ? value(...SAMPLE_ARGUMENTS) : value
-
   it.each([
     ['en', validatorDefaultsEn],
     ['cy', validatorDefaultsCy]
