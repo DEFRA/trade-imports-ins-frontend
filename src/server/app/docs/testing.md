@@ -73,7 +73,7 @@ journey strip, and `JOURNEY_STRIP`, its selector),
 `expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`
 and `expectPlaceholderThenCountriesNoneSelected($, countryNames)`, the add form's
 Country select),
-`expect-address-summary-links.js` (`expectSummaryLinks(result)` and
+`expect-address-form-errors.js` (`expectSummaryLinks(result)` and
 `expectSummaryAndFieldErrors($, errors)`, the error summary links and the
 messages beside the fields),
 `open-empty-address-book-with-cookies.js`

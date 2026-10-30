@@ -46,7 +46,7 @@ import {
   expectSummaryAndFieldErrors,
   expectSummaryLinks,
   REQUIRED_MESSAGES
-} from '../../../../common/test-helpers/expect-address-summary-links.js'
+} from '../../../../common/test-helpers/expect-address-form-errors.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
