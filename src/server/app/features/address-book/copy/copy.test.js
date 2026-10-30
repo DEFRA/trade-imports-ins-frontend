@@ -48,20 +48,28 @@ describe('#copy', () => {
     expect(copy.add.cancelToHub).toBe('Cancel and return to hub')
   })
 
-  it('Should carry Welsh drafts of the journey-mode add actions that differ from the English', () => {
-    for (const key of [
-      'saveAndSelect',
-      'saveAndReturnToAddressPage',
-      'cancelToHub'
-    ]) {
-      expect(cy.add[key]).toEqual(expect.any(String))
-      expect(cy.add[key]).not.toBe(copy.add[key])
-    }
-  })
+  it('Should word the Welsh add page title, caption and journey-mode actions', () => {
+    const {
+      title,
+      caption,
+      saveAndSelect,
+      saveAndReturnToAddressPage,
+      cancelToHub
+    } = cy.add
 
-  it('Should carry the Welsh add page caption and title', () => {
-    expect(cy.add.caption).toBe('Ychwanegu cyfeiriad newydd')
-    expect(cy.add.title).toBe('Ychwanegu manylion cyfeiriad a manylion cyswllt')
+    expect({
+      title,
+      caption,
+      saveAndSelect,
+      saveAndReturnToAddressPage,
+      cancelToHub
+    }).toEqual({
+      title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
+      caption: 'Ychwanegu cyfeiriad newydd',
+      saveAndSelect: 'Cadw a dewis',
+      saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
+      cancelToHub: 'Canslo a dychwelyd i’r hyb'
+    })
   })
 
   it('Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line', () => {
