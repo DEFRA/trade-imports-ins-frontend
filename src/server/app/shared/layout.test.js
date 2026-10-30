@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { nunjucksConfig } from '../../../config/nunjucks/nunjucks.js'
 import { base, SURFACES, surfaceClass } from './kit.js'
 import { copy as sharedCopy } from './copy.en.js'
+import { textOf, textsOf } from '../../common/test-helpers/rendered-text.js'
 
 const environment = nunjucksConfig.options.compileOptions.environment
 
@@ -44,7 +45,7 @@ describe('service navigation', () => {
     const links = items.find('a')
 
     expect(items).toHaveLength(4)
-    expect(links.map((_, anchor) => $(anchor).text().trim()).get()).toEqual([
+    expect(textsOf($, links)).toEqual([
       serviceNavigation.dashboard,
       serviceNavigation.addressBook,
       serviceNavigation.manageAccount,
@@ -135,7 +136,7 @@ describe('back link', () => {
     const link = $(`a.${BACK_LINK}`)
 
     expect(link).toHaveLength(1)
-    expect(link.text().trim()).toBe(sharedCopy.layout.back)
+    expect(textOf($, link)).toBe(sharedCopy.layout.back)
     expect(link.attr('href')).toBe(ADDRESS_BOOK_URL)
   })
 
@@ -260,9 +261,7 @@ describe('kit surfaces', () => {
 describe('footer', () => {
   it('Should label the three meta links from the shared copy', () => {
     const $ = load(renderLayout(signedIn))
-    const links = $('.govuk-footer__inline-list-item a')
-
-    expect(links.map((_, anchor) => $(anchor).text().trim()).get()).toEqual([
+    expect(textsOf($, '.govuk-footer__inline-list-item a')).toEqual([
       sharedCopy.layout.footer.privacy,
       sharedCopy.layout.footer.cookies,
       sharedCopy.layout.footer.accessibility

@@ -38,6 +38,10 @@ import {
 import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import {
+  textOf,
+  textsOf
+} from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { GB_COUNTRY } from '../address-countries.js'
 
@@ -76,8 +80,8 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('h1').text().trim()).toBe('Edit address and contact details')
-    expect($('head > title').text().replace(/\s+/g, ' ').trim()).toBe(
+    expect(textOf($, 'h1')).toBe('Edit address and contact details')
+    expect(textOf($, 'head > title')).toBe(
       'Edit address and contact details - Import notification service - GOV.UK'
     )
   })
@@ -88,16 +92,8 @@ describe('GET /address-book/{addressId}/edit', () => {
     const { result } = await getEdit(server(), 'edit-get-labels')
 
     const $ = load(result)
-    expect(
-      $('form h2')
-        .map((_, heading) => $(heading).text().trim())
-        .get()
-    ).toEqual(['Address', 'Contact details'])
-    expect(
-      $('form label')
-        .map((_, label) => $(label).text().trim())
-        .get()
-    ).toEqual(ADDRESS_FORM_LABELS)
+    expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
+    expect(textsOf($, 'form label')).toEqual(ADDRESS_FORM_LABELS)
     expect({
       name: $('#name').val(),
       addressLine1: $('#addressLine1').val(),
@@ -144,11 +140,12 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     const $ = load(result)
     expect(countryValuesOf($)).toEqual(['FR', 'DE', 'CH', GB_COUNTRY.code])
-    expect(
-      $(COUNTRY_OPTIONS)
-        .map((_, option) => $(option).text().trim())
-        .get()
-    ).toEqual(['France', 'Germany', 'Switzerland', GB_COUNTRY.name])
+    expect(textsOf($, COUNTRY_OPTIONS)).toEqual([
+      'France',
+      'Germany',
+      'Switzerland',
+      GB_COUNTRY.name
+    ])
     expect($(SELECTED_COUNTRY).attr('value')).toBe('FR')
   })
 
@@ -162,7 +159,7 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     const $ = load(result)
     expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', GB_COUNTRY.code])
-    expect($(COUNTRY_OPTIONS).first().text().trim()).toBe(COUNTRY_PLACEHOLDER)
+    expect(textOf($, $(COUNTRY_OPTIONS).first())).toBe(COUNTRY_PLACEHOLDER)
     expect($(SELECTED_COUNTRY)).toHaveLength(0)
   })
 
@@ -336,7 +333,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(scope.isDone()).toBe(true)
     const $ = load(result)
-    expect($('.govuk-error-summary a[href="#countryCode"]').text().trim()).toBe(
+    expect(textOf($, '.govuk-error-summary a[href="#countryCode"]')).toBe(
       REQUIRED_MESSAGES.countryCode
     )
     expect($('#countryCode-error').text()).toContain(

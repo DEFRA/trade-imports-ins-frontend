@@ -7,6 +7,7 @@ import {
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
   TABLE_HEADINGS,
   bodyRowCountOf,
@@ -43,11 +44,11 @@ describe('#addressBookListController', () => {
     expect(contentOf($).children('h1').text()).toBe('Address book')
     expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
-    expect(rowCellsOf($, 0).eq(2).text().trim()).toBe('United Kingdom')
+    expect(textOf($, rowCellsOf($, 0).eq(2))).toBe('United Kingdom')
     expect(rowCellsOf($, 0).eq(3).html().trim()).toBe(
       '<a class="govuk-link" href="/address-book/1">View<span class="govuk-visually-hidden"> Highland Livestock Ltd</span></a>'
     )
-    expect(rowCellsOf($, 1).eq(2).text().trim()).toBe('France')
+    expect(textOf($, rowCellsOf($, 1).eq(2))).toBe('France')
     expect(rowCellsOf($, 1).eq(3).html().trim()).toBe(
       '<a class="govuk-link" href="/address-book/2">View<span class="govuk-visually-hidden"> Paris Depot</span></a>'
     )
@@ -112,7 +113,7 @@ describe('#addressBookListController', () => {
     expect(lastPage.isDone()).toBe(true)
     expect(resultsLineOf($)).toBe('Showing 9-12 of 12')
     expect(bodyRowCountOf($)).toBe(2)
-    expect($('.govuk-pagination__item--current').text().trim()).toBe('2')
+    expect(textOf($, '.govuk-pagination__item--current')).toBe('2')
   })
 
   test('shows no pagination when the matches of a search fit on one page', async () => {
@@ -144,7 +145,7 @@ describe('#addressBookListController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
     expect(rowCellsOf($, 0).eq(0).html()).toBe('Paris<br> Depot')
-    expect(rowCellsOf($, 0).eq(2).text().trim()).toBe('France')
+    expect(textOf($, rowCellsOf($, 0).eq(2))).toBe('France')
     expect($('input[name="q"]').val()).toBe('fran')
   })
 
@@ -162,7 +163,7 @@ describe('#addressBookListController', () => {
       )
 
       const clearSearch = $('[data-testid="address-book-clear-search"]')
-      expect(clearSearch.text().trim()).toBe('Clear search')
+      expect(textOf($, clearSearch)).toBe('Clear search')
       expect(clearSearch.attr('href')).toBe(ADDRESS_BOOK_PATH)
       expect(
         $('[data-testid="address-book-results-label"]')

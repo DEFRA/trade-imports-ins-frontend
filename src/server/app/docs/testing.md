@@ -79,6 +79,10 @@ Country select),
 `expect-address-form-errors.js` (`expectSummaryLinks(result)` and
 `expectSummaryAndFieldErrors($, errors)`, the error summary links and the
 messages beside the fields),
+`rendered-text.js` (`textOf($, selectorOrElement)`, `textsOf($, selector)`
+and `normalisedText(text)`, a rendered element's text trimmed with its
+whitespace collapsed to single spaces, which every Vitest test reads text
+through),
 `open-empty-address-book-with-cookies.js`
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
 opens the address book list with the cookies a POST set so a test can

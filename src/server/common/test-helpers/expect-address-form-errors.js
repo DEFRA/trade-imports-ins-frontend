@@ -1,6 +1,8 @@
 import { load } from 'cheerio'
 import { expect } from 'vitest'
 
+import { textOf, textsOf } from './rendered-text.js'
+
 export const REQUIRED_MESSAGES = {
   name: 'Enter a name or organisation',
   postcode: 'Enter a postcode or Zip code',
@@ -8,14 +10,11 @@ export const REQUIRED_MESSAGES = {
   phone: 'Enter a phone number'
 }
 
-const trimmedTextOf = ($, element) =>
-  $(element).text().trim().replaceAll(/\s+/g, ' ')
-
 const summaryLinksOf = ($) =>
   $('.govuk-error-summary__list a')
     .map((_, link) => ({
       href: $(link).attr('href'),
-      text: trimmedTextOf($, link)
+      text: textOf($, link)
     }))
     .get()
 
@@ -28,14 +27,10 @@ export const expectSummaryLinks = (result) => {
 }
 
 export const expectSummaryAndFieldErrors = ($, errors) => {
-  const fieldMessages = $('.govuk-error-message')
-    .map((_, message) => trimmedTextOf($, message))
-    .get()
-
   expect(summaryLinksOf($)).toEqual(
     errors.map(([field, message]) => ({ href: `#${field}`, text: message }))
   )
-  expect(fieldMessages).toEqual(
+  expect(textsOf($, '.govuk-error-message')).toEqual(
     errors.map(([, message]) => `Error: ${message}`)
   )
 }

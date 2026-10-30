@@ -5,6 +5,7 @@ import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
   ADDRESS_BOOK_PATH,
   ADDRESS_ID,
@@ -123,12 +124,12 @@ describe('GET /address-book/{addressId}/delete', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('h1').text().trim()).toBe('Delete this address?')
-    expect($('head > title').text().replace(/\s+/g, ' ').trim()).toBe(
+    expect(textOf($, 'h1')).toBe('Delete this address?')
+    expect(textOf($, 'head > title')).toBe(
       'Delete this address? - Import notification service - GOV.UK'
     )
     expect($('.govuk-summary-list__key')).toHaveLength(1)
-    expect($('.govuk-summary-list__key').text().trim()).toBe('Address')
+    expect(textOf($, '.govuk-summary-list__key')).toBe('Address')
     expect($(SUMMARY_VALUE).html().trim()).toBe(
       [
         STORED_ADDRESS.name,
@@ -149,10 +150,10 @@ describe('GET /address-book/{addressId}/delete', () => {
     expect(result).not.toContain('Are you sure you want to delete')
 
     const confirmButton = $('form button')
-    expect(confirmButton.text().trim()).toBe('Yes, delete')
+    expect(textOf($, confirmButton)).toBe('Yes, delete')
     expect(confirmButton.hasClass('govuk-button--warning')).toBe(true)
     const cancelLink = $('.govuk-button-group a.govuk-link')
-    expect(cancelLink.text().trim()).toBe('No, cancel')
+    expect(textOf($, cancelLink)).toBe('No, cancel')
     expect(cancelLink.attr('href')).toBe(addressPagePath(ADDRESS_ID))
     expect($('.govuk-button--secondary')).toHaveLength(0)
   })
@@ -171,7 +172,7 @@ describe('GET /address-book/{addressId}/delete', () => {
     const { result, statusCode } = await getDelete(server(), 'delete-get-blank')
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(load(result)(SUMMARY_VALUE).text().trim()).toBe('Not applicable')
+    expect(textOf(load(result), SUMMARY_VALUE)).toBe('Not applicable')
   })
 
   test('Should escape markup in a stored name and address line', async () => {

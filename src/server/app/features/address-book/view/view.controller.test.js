@@ -27,6 +27,10 @@ import {
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import {
+  textOf,
+  textsOf
+} from '../../../../common/test-helpers/rendered-text.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { buildRows } from './view.controller.js'
@@ -115,14 +119,10 @@ describe('GET /address-book/{addressId}', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
     const $ = load(result)
-    const textsOf = (selector) =>
-      $(selector)
-        .map((_, element) => $(element).text().trim())
-        .get()
-    expect(textsOf('.govuk-summary-list__key')).toEqual(
+    expect(textsOf($, '.govuk-summary-list__key')).toEqual(
       STORED_ADDRESS_ROW_LABELS
     )
-    expect(textsOf('.govuk-summary-list__value')).toEqual(
+    expect(textsOf($, '.govuk-summary-list__value')).toEqual(
       STORED_ADDRESS_ROW_VALUES
     )
   })
@@ -156,9 +156,9 @@ describe('GET /address-book/{addressId}', () => {
       'view-get-title'
     )
 
-    expect(
-      load(result)('head > title').text().replace(/\s+/g, ' ').trim()
-    ).toBe(`${STORED_ADDRESS.name} - Import notification service - GOV.UK`)
+    expect(textOf(load(result), 'head > title')).toBe(
+      `${STORED_ADDRESS.name} - Import notification service - GOV.UK`
+    )
   })
 
   test('Should redirect to the address book when the address is not found', async () => {

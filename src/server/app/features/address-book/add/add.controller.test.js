@@ -50,6 +50,10 @@ import {
 import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import {
+  textOf,
+  textsOf
+} from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { config } from '../../../../../config/config.js'
 
@@ -79,11 +83,6 @@ const getAdd = (server, sessionId, query = {}) =>
   )
 
 const SUCCESS_BANNER = '.govuk-notification-banner--success'
-
-const textsOf = ($, selector) =>
-  $(selector)
-    .map((_, element) => $(element).text().trim())
-    .get()
 
 beforeEach(() => {
   config.set('csrf.enabled', false)
@@ -283,7 +282,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
 const buttonsOf = ($) =>
   $('form button')
     .map((_, button) => ({
-      text: $(button).text().trim(),
+      text: textOf($, button),
       name: $(button).attr('name') ?? null,
       value: $(button).attr('value') ?? null,
       secondary: $(button).hasClass('govuk-button--secondary')
@@ -368,7 +367,7 @@ describe(
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      expect($('head title').text().trim()).toBe(
+      expect(textOf($, 'head title')).toBe(
         `${ADD_TITLE} - Import notification service - GOV.UK`
       )
       expectDraftJourneyStrip($, CONSIGNOR_HANDSHAKE['notification-id'])
@@ -747,7 +746,7 @@ describe(
       const $ = load(result)
       const firstOption = $(COUNTRY_OPTIONS).first()
       expect(firstOption.attr('value')).toBe('')
-      expect(firstOption.text().trim()).toBe(COUNTRY_PLACEHOLDER)
+      expect(textOf($, firstOption)).toBe(COUNTRY_PLACEHOLDER)
       expect($(COUNTRY_OPTIONS).length).toBeGreaterThan(1)
       expect($(SELECTED_COUNTRY)).toHaveLength(0)
     })
