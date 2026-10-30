@@ -11,8 +11,8 @@ import {
   formatDateText,
   formatDisplayCalendarDate,
   parseDateText,
-  startOfDayInZone,
-  startOfUtcDay
+  startOfUtcDay,
+  utcMidnightOfDayInZone
 } from './calendar.js'
 
 const utc = (year, month, day) => new Date(Date.UTC(year, month - 1, day))
@@ -42,16 +42,16 @@ describe('#startOfUtcDay', () => {
   })
 })
 
-describe('#startOfDayInZone', () => {
+describe('#utcMidnightOfDayInZone', () => {
   it('takes the London day, not the UTC one, in the hour they disagree', () => {
     expect(
-      startOfDayInZone(new Date('2026-08-11T23:30:00Z'), 'Europe/London')
+      utcMidnightOfDayInZone(new Date('2026-08-11T23:30:00Z'), 'Europe/London')
     ).toEqual(utc(2026, 8, 12))
   })
 
   it('agrees with the UTC day outside British Summer Time', () => {
     expect(
-      startOfDayInZone(new Date('2026-01-11T23:30:00Z'), 'Europe/London')
+      utcMidnightOfDayInZone(new Date('2026-01-11T23:30:00Z'), 'Europe/London')
     ).toEqual(utc(2026, 1, 11))
   })
 })

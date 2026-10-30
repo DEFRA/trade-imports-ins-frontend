@@ -30,6 +30,6 @@ export {
   formatDisplayCalendarDate,
   isRealDate,
   parseDateText,
-  startOfDayInZone,
-  startOfUtcDay
+  startOfUtcDay,
+  utcMidnightOfDayInZone
 } from './calendar.js'
