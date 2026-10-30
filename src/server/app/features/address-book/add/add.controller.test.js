@@ -331,7 +331,7 @@ describe(
       ).toEqual([['crumb', ''], ...Object.entries(CONSIGNOR_HANDSHAKE)])
     })
 
-    test('GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the contact page', async () => {
+    test('GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the journey return with no address and no landing', async () => {
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-handshake-contact',
@@ -358,7 +358,7 @@ describe(
       expect($(BACK_LINK).attr('href')).toBe(CONTACT_RETURN_URL)
     })
 
-    test('GET arriving through a journey handshake shows the Draft status and notification reference above the caption and heading, then the section headings, name label and County', async () => {
+    test('GET arriving through a journey handshake shows the page title, the blue Draft status and notification reference above the caption and heading, then the section headings and every field label', async () => {
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-handshake-frame',
