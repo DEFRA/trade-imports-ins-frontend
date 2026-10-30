@@ -31,8 +31,10 @@ import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/e
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import {
   ANIMALS_BASE_URL,
+  ANY_COUNTRY_ROLES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
-  JOURNEY_HANDSHAKES_BY_ROLE
+  JOURNEY_HANDSHAKES_BY_ROLE,
+  UNITED_KINGDOM_ROLES
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
@@ -570,13 +572,6 @@ describe(
   { concurrent: false },
   () => {
     const server = startRealModeServerServingCountries(COUNTRIES)
-    const unitedKingdomOnlyRoles = [
-      'consignee',
-      'importer',
-      'placeOfDestination'
-    ]
-    const anyCountryRoles = ['placeOfOrigin', 'consignor']
-
     const openAddFrom = async (role) => {
       const { result, statusCode } = await getAdd(
         server(),
@@ -587,7 +582,7 @@ describe(
       return load(result)
     }
 
-    test.each(unitedKingdomOnlyRoles)(
+    test.each(UNITED_KINGDOM_ROLES)(
       'GET from the %s handshake offers United Kingdom alone, selected, with every field shown',
       async (role) => {
         const $ = await openAddFrom(role)
@@ -597,7 +592,7 @@ describe(
       }
     )
 
-    test.each(anyCountryRoles)(
+    test.each(ANY_COUNTRY_ROLES)(
       'GET from the %s handshake opens the Country select on Select a country, offers every served country and shows every field',
       async (role) => {
         const $ = await openAddFrom(role)

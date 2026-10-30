@@ -5,8 +5,10 @@ import {
   serveCountries
 } from '../../../common/test-helpers/real-mode.js'
 import {
+  ANY_COUNTRY_ROLES,
   handshakeContextOf,
-  JOURNEY_HANDSHAKES_BY_ROLE
+  JOURNEY_HANDSHAKES_BY_ROLE,
+  UNITED_KINGDOM_ROLES
 } from '../../../common/test-helpers/journey-handshake.js'
 import {
   buildCountryItems,
@@ -30,11 +32,10 @@ const GB_AND_FRANCE_ITEMS = [
 ]
 
 const anyCountryContexts = [
-  [
-    'the place of origin',
-    handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE.placeOfOrigin)
-  ],
-  ['the consignor', handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE.consignor)],
+  ...ANY_COUNTRY_ROLES.map((role) => [
+    `the ${role} handshake`,
+    handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+  ]),
   ['no handshake', null]
 ]
 
@@ -91,7 +92,7 @@ describe('#addFormCountryOffer', () => {
 
   const postedValues = { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
 
-  test.each(['consignee', 'importer', 'placeOfDestination'])(
+  test.each(UNITED_KINGDOM_ROLES)(
     'Should offer United Kingdom alone, accept only GB and fix the posted country to GB for the %s',
     async (role) => {
       const { addFormCountryOffer } = await importAddressCountriesInRealMode()

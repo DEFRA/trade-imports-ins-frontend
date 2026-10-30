@@ -3,9 +3,11 @@ import { afterAll, beforeEach, describe, expect, test } from 'vitest'
 import { config } from '../../../../config/config.js'
 import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
 import {
+  ANY_COUNTRY_ROLES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   handshakeContextOf,
-  JOURNEY_HANDSHAKES_BY_ROLE
+  JOURNEY_HANDSHAKES_BY_ROLE,
+  UNITED_KINGDOM_ROLES
 } from '../../../common/test-helpers/journey-handshake.js'
 import {
   ADDRESS_LANDING,
@@ -39,27 +41,21 @@ describe('journey-registry', () => {
   })
 
   describe('requiresUnitedKingdomAddress', () => {
-    test.each(['consignee', 'importer', 'placeOfDestination'])(
-      'is true for the %s handshake',
-      (role) => {
-        expect(
-          requiresUnitedKingdomAddress(
-            handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
-          )
-        ).toBe(true)
-      }
-    )
+    test.each(UNITED_KINGDOM_ROLES)('is true for the %s handshake', (role) => {
+      expect(
+        requiresUnitedKingdomAddress(
+          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+        )
+      ).toBe(true)
+    })
 
-    test.each(['placeOfOrigin', 'consignor'])(
-      'is false for the %s handshake',
-      (role) => {
-        expect(
-          requiresUnitedKingdomAddress(
-            handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
-          )
-        ).toBe(false)
-      }
-    )
+    test.each(ANY_COUNTRY_ROLES)('is false for the %s handshake', (role) => {
+      expect(
+        requiresUnitedKingdomAddress(
+          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+        )
+      ).toBe(false)
+    })
 
     test('is false for the contact address and for a fulfilment id the registry does not list', () => {
       expect(

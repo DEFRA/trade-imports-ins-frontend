@@ -20,6 +20,14 @@ export const JOURNEY_HANDSHAKES_BY_ROLE = Object.freeze({
   )
 })
 
+export const UNITED_KINGDOM_ROLES = Object.freeze([
+  'consignee',
+  'importer',
+  'placeOfDestination'
+])
+
+export const ANY_COUNTRY_ROLES = Object.freeze(['placeOfOrigin', 'consignor'])
+
 export const CONSIGNMENT_CONTACT_HANDSHAKE = handshakeForFulfilmentId(
   CONSIGNMENT_CONTACT_FULFILMENT_ID
 )
