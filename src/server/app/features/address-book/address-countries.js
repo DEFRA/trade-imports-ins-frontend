@@ -36,26 +36,24 @@ export const buildCountrySelectItems = (countries, placeholder) => [
 
 export const addFormCountryOffer = async ({
   handshakeContext,
-  placeholder
+  placeholder,
+  formValues
 }) => {
   if (requiresUnitedKingdomAddress(handshakeContext)) {
     return {
       countryItems: buildCountryItems([GB_COUNTRY]),
-      countryCodes: [GB_COUNTRY.code]
+      countryCodes: [GB_COUNTRY.code],
+      formValues: { ...formValues, countryCode: GB_COUNTRY.code }
     }
   }
 
   const countries = await getAddressFormCountries()
   return {
     countryItems: buildCountrySelectItems(countries, placeholder),
-    countryCodes: countries.map((country) => country.code)
+    countryCodes: countries.map((country) => country.code),
+    formValues
   }
 }
-
-export const formValuesWithRequiredCountry = (handshakeContext, formValues) =>
-  requiresUnitedKingdomAddress(handshakeContext)
-    ? { ...formValues, countryCode: GB_COUNTRY.code }
-    : formValues
 
 export const buildEditCountrySelectItems = (
   countries,

@@ -89,34 +89,39 @@ describe('#getAddressFormCountries', () => {
 describe('#addFormCountryOffer', () => {
   refuseOutboundHttp()
 
+  const postedValues = { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
+
   test.each(['consignee', 'importer', 'placeOfDestination'])(
-    'Should offer United Kingdom alone and accept only GB for the %s',
+    'Should offer United Kingdom alone, accept only GB and fix the posted country to GB for the %s',
     async (role) => {
       const { addFormCountryOffer } = await importAddressCountriesInRealMode()
 
       const offer = await addFormCountryOffer({
         handshakeContext: handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
-        placeholder: COUNTRY_PLACEHOLDER
+        placeholder: COUNTRY_PLACEHOLDER,
+        formValues: postedValues
       })
 
       expect(offer).toEqual({
         countryItems: [
           { value: UNITED_KINGDOM.code, text: UNITED_KINGDOM.name }
         ],
-        countryCodes: ['GB']
+        countryCodes: ['GB'],
+        formValues: { ...postedValues, countryCode: 'GB' }
       })
     }
   )
 
   test.each(anyCountryContexts)(
-    'Should offer the placeholder then every served country for %s',
+    'Should offer the placeholder then every served country and leave the posted country as posted for %s',
     async (_name, handshakeContext) => {
       serveCountries([FRANCE, UNITED_KINGDOM])
       const { addFormCountryOffer } = await importAddressCountriesInRealMode()
 
       const offer = await addFormCountryOffer({
         handshakeContext,
-        placeholder: COUNTRY_PLACEHOLDER
+        placeholder: COUNTRY_PLACEHOLDER,
+        formValues: postedValues
       })
 
       expect(offer).toEqual({
@@ -125,39 +130,9 @@ describe('#addFormCountryOffer', () => {
           { value: FRANCE.code, text: FRANCE.name },
           { value: UNITED_KINGDOM.code, text: UNITED_KINGDOM.name }
         ],
-        countryCodes: ['FR', 'GB']
+        countryCodes: ['FR', 'GB'],
+        formValues: postedValues
       })
-    }
-  )
-})
-
-describe('#formValuesWithRequiredCountry', () => {
-  const postedValues = { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
-
-  test.each(['consignee', 'importer', 'placeOfDestination'])(
-    'Should fix the posted country to GB for the %s',
-    async (role) => {
-      const { formValuesWithRequiredCountry } =
-        await importAddressCountriesInRealMode()
-
-      expect(
-        formValuesWithRequiredCountry(
-          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
-          postedValues
-        )
-      ).toEqual({ ...postedValues, countryCode: 'GB' })
-    }
-  )
-
-  test.each(anyCountryContexts)(
-    'Should leave the posted country as posted for %s',
-    async (_name, handshakeContext) => {
-      const { formValuesWithRequiredCountry } =
-        await importAddressCountriesInRealMode()
-
-      expect(
-        formValuesWithRequiredCountry(handshakeContext, postedValues)
-      ).toEqual(postedValues)
     }
   )
 })

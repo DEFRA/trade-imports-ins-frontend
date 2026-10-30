@@ -14,10 +14,7 @@ import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import {
-  addFormCountryOffer,
-  formValuesWithRequiredCountry
-} from '../address-countries.js'
+import { addFormCountryOffer } from '../address-countries.js'
 import { addressRules, formValuesOf } from '../fields.js'
 import { setSuccessMessage } from '../success-message.js'
 import {
@@ -128,14 +125,11 @@ const redirectAfterCancel = (toolkit, handshakeContext) => {
 const get = async (request, toolkit) => {
   const handshakeContext = syncHandshakeContext(request)
 
-  const { countryItems } = await addFormCountryOffer({
+  const { countryItems, formValues } = await addFormCountryOffer({
     handshakeContext,
-    placeholder: copy.form.countryPlaceholder
+    placeholder: copy.form.countryPlaceholder,
+    formValues: formValuesOf()
   })
-  const formValues = formValuesWithRequiredCountry(
-    handshakeContext,
-    formValuesOf()
-  )
 
   return buildView(toolkit, { formValues, countryItems, handshakeContext })
 }
@@ -145,14 +139,11 @@ const submitAddress = async (
   toolkit,
   { handshakeContext, organisationId, postedValues, landing }
 ) => {
-  const { countryItems, countryCodes } = await addFormCountryOffer({
+  const { countryItems, countryCodes, formValues } = await addFormCountryOffer({
     handshakeContext,
-    placeholder: copy.form.countryPlaceholder
+    placeholder: copy.form.countryPlaceholder,
+    formValues: postedValues
   })
-  const formValues = formValuesWithRequiredCountry(
-    handshakeContext,
-    postedValues
-  )
   try {
     const { errors, value: validatedAddress } = validate(
       addressRules(countryCodes),

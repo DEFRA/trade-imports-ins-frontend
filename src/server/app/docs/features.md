@@ -35,13 +35,11 @@ root:
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems` (a select that opens on a blank option),
-  `addFormCountryOffer` (the add form's select items and accepted country codes for a handshake context:
-  United Kingdom alone, selected and accepted as the only country when
-  `journey-registry.js` says the role's address must be in the United Kingdom,
-  else the blank option and every served country),
-  `formValuesWithRequiredCountry` (the posted values with the country fixed to
-  `GB` when `journey-registry.js` says the role's address must be in the United
-  Kingdom),
+  `addFormCountryOffer` (the add form's select items, accepted country codes and form values for a handshake context:
+  United Kingdom alone, selected and accepted as the only country, with the
+  form values' country fixed to `GB`, when `journey-registry.js` says the
+  role's address must be in the United Kingdom, else the blank option, every
+  served country and the form values as given),
   `buildEditCountrySelectItems` (the edit form's select, with a
   blank option only when the country it shows is not one the list offers) and
   `countryCodesMatching` (every country code whose name contains the search term).
