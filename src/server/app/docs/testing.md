@@ -60,8 +60,8 @@ add and edit forms' field widths),
 (`expectAddressFormAutocomplete(result)`, the add and edit forms' browser
 autocomplete hints, read from `address-form-autocomplete.js`'s
 `AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
-`journey-handshake.js` (`handshakeContextOf(handshake)`, the journey type
-and fulfilment id of a handshake as a handshake context,
+`journey-handshake.js` (`handshakeContextOf(handshake)`, the handshake
+context the app builds from a handshake's query or form fields,
 `JOURNEY_HANDSHAKES_BY_ROLE`, one complete journey
 handshake for each of the place of origin, consignor, consignee, importer and
 place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's

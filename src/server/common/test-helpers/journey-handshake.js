@@ -36,5 +36,7 @@ export const ANIMALS_BASE_URL = 'http://localhost:3000'
 
 export const handshakeContextOf = (handshake) => ({
   journeyType: handshake['journey-type'],
-  fulfilmentId: handshake['fulfilment-id']
+  notificationId: handshake['notification-id'],
+  fulfilmentId: handshake['fulfilment-id'],
+  handshakeToken: handshake['handshake-token']
 })
