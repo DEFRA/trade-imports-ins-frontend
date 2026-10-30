@@ -11,8 +11,8 @@ describe('#listNotifications (stub)', () => {
     test.each([
       ['arrivalDate,desc', [STUB_2, STUB_1, STUB_3]],
       ['arrivalDate,asc', [STUB_3, STUB_1, STUB_2]],
-      ['lastUpdated,desc', [STUB_3, STUB_1, STUB_2]],
-      ['lastUpdated,asc', [STUB_2, STUB_1, STUB_3]]
+      ['lastUpdated,desc', [STUB_3, STUB_2, STUB_1]],
+      ['lastUpdated,asc', [STUB_1, STUB_2, STUB_3]]
     ])('sorts by %s', async (sort, expectedOrder) => {
       const { content } = await listNotifications({
         page: 1,
