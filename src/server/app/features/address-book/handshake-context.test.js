@@ -127,7 +127,7 @@ describe('storeHandshakeContext and loadHandshakeContext', () => {
 })
 
 describe('resolveHandshakeContext', () => {
-  test('prefers handshake fields from the POST payload', () => {
+  test('returns and stores the handshake from the POST payload', () => {
     const request = mockRequest({}, { ...CONSIGNOR_HANDSHAKE, name: 'Farm' })
 
     expect(resolveHandshakeContext(request)).toEqual(validContext)
