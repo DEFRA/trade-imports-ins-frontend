@@ -48,7 +48,8 @@ field labels in page order, read from the English copy), `COUNTRIES`,
 (`pageOf(items, overrides)`, `serveStoredAddress(address)`,
 `serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
 `serveAddressNotFoundForOtherOrganisation(addressId)`,
-`replyAddressCreated()`, which stubs a successful create call, and
+`replyAddressCreated(matchBody)`, which stubs a successful create call whose
+body matches `matchBody`, and
 `serveAddressCreationCapturingBody()`, which stubs it and
 returns the body it received alongside the scope) and checks
 (`expectRedirectTo()`, `expectServerErrorPage()`), which every address
@@ -145,7 +146,7 @@ playwright:install` once (Chromium).
 Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 `signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
-labels, `addressFormCountryNames` (the captured countries fixture's
+`fieldLabels`, `addressFormCountryNames` (the captured countries fixture's
 names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
 `addValidAddressToFreshOrganisation`, `validAddressViewLink`,
 `expectErrorFocusOn`, the two
