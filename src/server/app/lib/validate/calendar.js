@@ -24,7 +24,7 @@ export const startOfUtcDay = (date) =>
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
   )
 
-export const startOfDayInZone = (date, timeZone) => {
+export const utcMidnightOfDayInZone = (date, timeZone) => {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',
