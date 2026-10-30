@@ -90,7 +90,7 @@ describe('#errorSummary', () => {
 })
 
 describe('#draftJourneyStrip', () => {
-  it('Should show the Draft status in a blue tag beside the notification reference', () => {
+  it('Should give the Draft status with the blue tag class and carry the notification reference', () => {
     expect(draftJourneyStrip(NOTIFICATION_REFERENCE)).toEqual({
       status: { text: 'Draft', classes: 'govuk-tag--blue' },
       reference: NOTIFICATION_REFERENCE
