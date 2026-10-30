@@ -144,14 +144,24 @@ The shape every ins controller takes, citing
 The add page, [`add/add.controller.js`](../features/address-book/add/add.controller.js),
 adds to that shape for a journey:
 
-- `cancel` is honoured from the address book and from the consignment
-  contact's handshake. `cancelReturnUrl` is the one owner of where Cancel goes.
-- A role's journey cancels by link, with the `cancel` landing.
-- From a journey, the chosen `action` names the landing the address is handed
-  back with.
-- The controller decides whether the page shows the journey's Save and select
-  actions (`journeyActions`) and the cancel label (`cancelLabel`); `add.njk`
-  only renders them.
+- `addModeFor(handshakeContext)` decides the page's mode once, as one of
+  `ADD_MODES`: `ADDRESS_BOOK` (no handshake), `ROLE_HANDSHAKE` (a role's
+  journey) or `CONSIGNMENT_CONTACT` (the consignment contact's journey).
+  `backHrefFor` gives the Back link and the journey strip shows for both
+  handshake modes.
+- `cancelUrlFor(addMode, handshakeContext)` is the one owner of where Cancel
+  goes: the address book, a role's journey with the `cancel` landing, or the
+  consignment contact's journey with no landing.
+- `add.njk` renders Cancel by `addMode` and picks each label: from the address
+  book, a link labelled `copy.add.cancel`; from a role's journey, a link
+  labelled `copy.add.cancelToHub`; from the consignment contact's journey, a
+  `cancel` button labelled `copy.add.cancelToJourney`. Both links go to
+  `cancelHref`.
+- The POST honours `cancel` for every mode, redirecting to `cancelUrlFor`, and
+  logs the hand-back at info when the page came from a journey.
+- From a role's journey, the chosen `action` (Save and select, or Save and
+  return to the address page) names the landing the address is handed back
+  with; the consignment contact's Save hands it back with the select landing.
 
 The view and delete GETs load through `findLiveAddressWithCountryLabel`, and
 the edit GET through `findLiveAddress`. When either finds nothing, the GET
