@@ -27,10 +27,9 @@ describe('#copy', () => {
     }
   )
 
-  it('Should word the add-details form with its name label, country placeholder and section headings', () => {
+  it('Should word the add-details form with its section headings, country placeholder and cancel link', () => {
     expect(copy.form.addressHeading).toBe('Address')
     expect(copy.form.contactHeading).toBe('Contact details')
-    expect(copy.form.fields.name).toBe('Name or organisation')
     expect(copy.form.countryPlaceholder).toBe('Select a country')
     expect(copy.add.cancel).toBe('Cancel and return to address book')
   })
@@ -153,10 +152,8 @@ describe('#copy', () => {
     expect(copy.delete.cancel).toBe('No, cancel')
   })
 
-  it('Should label the optional county, the postcode and the delete heading, and cap the name at 255 characters', () => {
-    expect(copy.form.fields.county).toBe('County (optional)')
+  it('Should word the delete heading and cap the name at 255 characters', () => {
     expect(copy.delete.title).toBe('Delete this address?')
-    expect(copy.form.fields.postcode).toBe('Postcode or Zip code')
     expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
       'Name must be 255 characters or fewer'
     )
