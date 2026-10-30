@@ -9,7 +9,7 @@ export const expectAddressFormAutocomplete = (result) => {
   for (const [id, autocomplete] of Object.entries(AUTOCOMPLETE_BY_FIELD)) {
     expect($(`#${id}`).attr('autocomplete'), id).toBe(autocomplete)
   }
-  for (const id of ['county', 'countryCode']) {
+  for (const id of ['name', 'county', 'countryCode']) {
     expect($(`#${id}`).attr('autocomplete'), id).toBeUndefined()
   }
 }
