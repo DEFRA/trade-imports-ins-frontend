@@ -56,7 +56,7 @@ export const copy = {
     saveAndSelect: 'Cadw a dewis',
     saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
-    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
+    cancelAndReturnToAddressPage: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
     cancelToHub: 'Canslo a dychwelyd i’r hyb'
   },
   edit: {

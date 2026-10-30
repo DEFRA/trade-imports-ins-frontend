@@ -53,7 +53,7 @@ export const copy = {
     saveAndSelect: 'Save and select',
     saveAndReturnToAddressPage: 'Save and return to address page',
     cancel: 'Cancel and return to address book',
-    cancelToJourney: 'Cancel and return to address page',
+    cancelAndReturnToAddressPage: 'Cancel and return to address page',
     cancelToHub: 'Cancel and return to hub'
   },
   edit: {

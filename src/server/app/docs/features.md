@@ -155,7 +155,7 @@ adds to that shape for a journey:
 - `add.njk` renders Cancel by `addMode` and picks each label: from the address
   book, a link labelled `copy.add.cancel`; from a role's journey, a link
   labelled `copy.add.cancelToHub`; from the consignment contact's journey, a
-  `cancel` button labelled `copy.add.cancelToJourney`. Both links go to
+  `cancel` button labelled `copy.add.cancelAndReturnToAddressPage`. Both links go to
   `cancelHref`.
 - The POST honours `cancel` for every mode, redirecting to `cancelUrlFor`, and
   logs the hand-back at info when the page came from a journey.
