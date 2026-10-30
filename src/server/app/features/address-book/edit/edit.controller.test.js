@@ -31,10 +31,15 @@ import {
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
-import { expectSummaryLinks } from '../../../../common/test-helpers/expect-address-form-errors.js'
+import {
+  expectSummaryLinks,
+  REQUIRED_MESSAGES
+} from '../../../../common/test-helpers/expect-address-form-errors.js'
+import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
+import { GB_COUNTRY } from '../address-countries.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
@@ -42,7 +47,6 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 
 const UPDATED_NAME = 'Updated Farm Ltd'
 const UNOFFERED_COUNTRY_CODE = 'XX'
-const COUNTRY_PLACEHOLDER = 'Select a country'
 const RECOVERABLE_ERROR_MESSAGE =
   'Sorry, there is a problem with the service. Try again in a few minutes.'
 
@@ -139,12 +143,12 @@ describe('GET /address-book/{addressId}/edit', () => {
     const { result } = await getEdit(server(), 'edit-get-country-offered')
 
     const $ = load(result)
-    expect(countryValuesOf($)).toEqual(['FR', 'DE', 'CH', 'GB'])
+    expect(countryValuesOf($)).toEqual(['FR', 'DE', 'CH', GB_COUNTRY.code])
     expect(
       $(COUNTRY_OPTIONS)
         .map((_, option) => $(option).text().trim())
         .get()
-    ).toEqual(['France', 'Germany', 'Switzerland', 'United Kingdom'])
+    ).toEqual(['France', 'Germany', 'Switzerland', GB_COUNTRY.name])
     expect($(SELECTED_COUNTRY).attr('value')).toBe('FR')
   })
 
@@ -157,7 +161,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     const { result } = await getEdit(server(), 'edit-get-country-unoffered')
 
     const $ = load(result)
-    expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', 'GB'])
+    expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', GB_COUNTRY.code])
     expect($(COUNTRY_OPTIONS).first().text().trim()).toBe(COUNTRY_PLACEHOLDER)
     expect($(SELECTED_COUNTRY)).toHaveLength(0)
   })
@@ -333,10 +337,12 @@ describe('POST /address-book/{addressId}/edit', () => {
     expect(scope.isDone()).toBe(true)
     const $ = load(result)
     expect($('.govuk-error-summary a[href="#countryCode"]').text().trim()).toBe(
-      COUNTRY_PLACEHOLDER
+      REQUIRED_MESSAGES.countryCode
     )
-    expect($('#countryCode-error').text()).toContain(COUNTRY_PLACEHOLDER)
-    expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', 'GB'])
+    expect($('#countryCode-error').text()).toContain(
+      REQUIRED_MESSAGES.countryCode
+    )
+    expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', GB_COUNTRY.code])
   })
 
   test('Should redirect to the address book and send nothing when the address is not live', async () => {

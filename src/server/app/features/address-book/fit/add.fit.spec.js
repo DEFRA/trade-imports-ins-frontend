@@ -26,9 +26,8 @@ import {
   returnUrlFor
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
+import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
-
-const COUNTRY_PLACEHOLDER = 'Select a country'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -185,7 +184,7 @@ test.describe('add address reached from a notification journey', () => {
 
     const country = page.getByLabel('Country')
     await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
-    await expect(country).toHaveValue('GB')
+    await expect(country).toHaveValue(GB_COUNTRY.code)
     for (const label of Object.values(fieldLabels)) {
       await expect(page.getByLabel(label, { exact: true })).toBeVisible()
     }

@@ -4,6 +4,7 @@ import {
   refuseOutboundHttp,
   serveCountries
 } from '../../../common/test-helpers/real-mode.js'
+import { COUNTRY_PLACEHOLDER } from '../../../common/test-helpers/country-placeholder.js'
 import {
   ANY_COUNTRY_ROLES,
   handshakeContextOf,
@@ -20,14 +21,12 @@ import {
 } from './address-countries.js'
 
 const originalMode = process.env.STUB_MODE
-const COUNTRY_PLACEHOLDER = 'Select a country'
-const UNITED_KINGDOM = { code: 'GB', name: 'United Kingdom' }
 const FRANCE = { code: 'FR', name: 'France' }
 const UNITED_STATES = { code: 'US', name: 'United States' }
 const UNITED_ARAB_EMIRATES = { code: 'AE', name: 'United Arab Emirates' }
-const GB_AND_FRANCE = [UNITED_KINGDOM, FRANCE]
+const GB_AND_FRANCE = [GB_COUNTRY, FRANCE]
 const GB_AND_FRANCE_ITEMS = [
-  { value: UNITED_KINGDOM.code, text: UNITED_KINGDOM.name },
+  { value: GB_COUNTRY.code, text: GB_COUNTRY.name },
   { value: FRANCE.code, text: FRANCE.name }
 ]
 
@@ -60,7 +59,7 @@ describe('#getAddressFormCountries', () => {
     serveCountries([
       UNITED_STATES,
       FRANCE,
-      { code: 'GB', name: 'United Kingdom duplicate' },
+      { code: GB_COUNTRY.code, name: 'United Kingdom duplicate' },
       UNITED_ARAB_EMIRATES
     ])
     const { getAddressFormCountries } = await importAddressCountriesInRealMode()
@@ -104,11 +103,9 @@ describe('#addFormCountryOffer', () => {
       })
 
       expect(offer).toEqual({
-        countryItems: [
-          { value: UNITED_KINGDOM.code, text: UNITED_KINGDOM.name }
-        ],
-        countryCodes: ['GB'],
-        formValues: { ...postedValues, countryCode: 'GB' }
+        countryItems: [{ value: GB_COUNTRY.code, text: GB_COUNTRY.name }],
+        countryCodes: [GB_COUNTRY.code],
+        formValues: { ...postedValues, countryCode: GB_COUNTRY.code }
       })
     }
   )
@@ -116,7 +113,7 @@ describe('#addFormCountryOffer', () => {
   test.each(anyCountryContexts)(
     'Should offer the placeholder then every served country and leave the posted country as posted for %s',
     async (_name, handshakeContext) => {
-      serveCountries([FRANCE, UNITED_KINGDOM])
+      serveCountries([FRANCE, GB_COUNTRY])
       const { addFormCountryOffer } = await importAddressCountriesInRealMode()
 
       const offer = await addFormCountryOffer({
@@ -129,9 +126,9 @@ describe('#addFormCountryOffer', () => {
         countryItems: [
           { value: '', text: COUNTRY_PLACEHOLDER },
           { value: FRANCE.code, text: FRANCE.name },
-          { value: UNITED_KINGDOM.code, text: UNITED_KINGDOM.name }
+          { value: GB_COUNTRY.code, text: GB_COUNTRY.name }
         ],
-        countryCodes: ['FR', 'GB'],
+        countryCodes: ['FR', GB_COUNTRY.code],
         formValues: postedValues
       })
     }
@@ -185,7 +182,7 @@ describe('#countryCodesMatching', () => {
   test('Should return the alpha-2 code of every country whose name contains the term, ignoring case and surrounding spaces', () => {
     expect(countryCodesMatching(' FRAN ', COUNTRIES)).toEqual(['FR'])
     expect(countryCodesMatching('united', COUNTRIES)).toEqual([
-      'GB',
+      GB_COUNTRY.code,
       'US',
       'AE'
     ])

@@ -36,6 +36,7 @@ import {
   UNITED_KINGDOM_ROLES
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
+import { GB_COUNTRY } from '../address-countries.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
   expectPlaceholderThenCountriesNoneSelected,
@@ -46,6 +47,7 @@ import {
   expectSummaryLinks,
   REQUIRED_MESSAGES
 } from '../../../../common/test-helpers/expect-address-form-errors.js'
+import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
@@ -130,8 +132,8 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     const { result, statusCode } = await getAdd(server(), 'add-get-countries')
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toContain('value="GB"')
-    expect(result).toContain('United Kingdom')
+    expect(result).toContain(`value="${GB_COUNTRY.code}"`)
+    expect(result).toContain(GB_COUNTRY.name)
     expect(result).toContain('value="FR"')
     expect(result).toContain('France')
   })
@@ -609,7 +611,7 @@ describe(
           'France',
           'Germany',
           'Switzerland',
-          'United Kingdom'
+          GB_COUNTRY.name
         ])
         expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
       }
@@ -650,7 +652,7 @@ describe(
         })
       )
       expect(scope.isDone()).toBe(true)
-      expect(captured.body.countryCode).toBe('GB')
+      expect(captured.body.countryCode).toBe(GB_COUNTRY.code)
     })
 
     test('POST from the consignee handshake with the name, postcode, country and phone blank lists the name, postcode and phone errors only, and keeps United Kingdom selected', async () => {
@@ -745,7 +747,7 @@ describe(
       const $ = load(result)
       const firstOption = $(COUNTRY_OPTIONS).first()
       expect(firstOption.attr('value')).toBe('')
-      expect(firstOption.text().trim()).toBe('Select a country')
+      expect(firstOption.text().trim()).toBe(COUNTRY_PLACEHOLDER)
       expect($(COUNTRY_OPTIONS).length).toBeGreaterThan(1)
       expect($(SELECTED_COUNTRY)).toHaveLength(0)
     })
@@ -759,7 +761,7 @@ describe(
         .get()
         .filter(Boolean)
 
-      expect(codes).toEqual(['FR', 'DE', 'CH', 'GB'])
+      expect(codes).toEqual(['FR', 'DE', 'CH', GB_COUNTRY.code])
     })
   }
 )
