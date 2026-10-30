@@ -43,9 +43,9 @@ test.describe('dashboard', () => {
     await expect(page.getByRole('cell', { name: 'DRAFT' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'AMEND' })).toBeVisible()
 
-    // The soft-deleted stub notification must never appear.
+    const softDeletedReference = 'GBN-AG-26-000004'
     await expect(
-      page.getByRole('cell', { name: 'GBN-AG-26-000004', exact: true })
+      page.getByRole('cell', { name: softDeletedReference, exact: true })
     ).toHaveCount(0)
   })
 
