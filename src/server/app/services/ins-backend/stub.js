@@ -47,8 +47,8 @@ const sortComparator = (sort) => {
   const [field, direction] = (sort ?? 'arrivalDate,desc').split(',')
   const sortField = field === 'lastUpdated' ? 'lastUpdated' : 'arrivalDate'
   const multiplier = direction === 'asc' ? 1 : -1
-  return (a, b) =>
-    multiplier * (new Date(a[sortField]) - new Date(b[sortField]))
+  return (left, right) =>
+    multiplier * (new Date(left[sortField]) - new Date(right[sortField]))
 }
 
 export const listNotifications = async ({
@@ -56,10 +56,14 @@ export const listNotifications = async ({
   sort,
   referenceNumber
 } = {}) => {
-  const visible = NOTIFICATIONS.filter((n) => n.status !== DELETED_STATUS)
+  const visible = NOTIFICATIONS.filter(
+    (notification) => notification.status !== DELETED_STATUS
+  )
 
   const matches = referenceNumber
-    ? visible.filter((n) => n.referenceNumber === referenceNumber)
+    ? visible.filter(
+        (notification) => notification.referenceNumber === referenceNumber
+      )
     : visible.slice().sort(sortComparator(sort))
 
   const pageSize = 25
