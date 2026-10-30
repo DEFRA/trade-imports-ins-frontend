@@ -93,12 +93,13 @@ test.describe('dashboard', () => {
       .fill(REFERENCE_NUMBER)
     await page.getByRole('button', { name: 'Search' }).click()
 
-    await expect(
-      page.getByRole('cell', { name: REFERENCE_NUMBER, exact: true })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('cell', { name: 'GBN-AG-26-000002', exact: true })
-    ).toHaveCount(0)
+    const notificationRows = page
+      .getByRole('row')
+      .filter({ has: page.getByRole('cell') })
+    await expect(notificationRows).toHaveCount(1)
+    await expect(notificationRows.getByRole('cell').first()).toHaveText(
+      REFERENCE_NUMBER
+    )
   })
 
   test('no matching notification shows "No notifications found"', async ({
