@@ -35,9 +35,11 @@ describe('journey-registry', () => {
     config.set(BASE_URL_CONFIG_KEY, defaultAnimalsBaseUrl)
   })
 
-  test('recognises the live-animals journey type', () => {
-    expect(isKnownJourneyType(JOURNEY_TYPES.GBN_AG)).toBe(true)
-    expect(isKnownJourneyType(UNREGISTERED_JOURNEY_TYPE)).toBe(false)
+  describe('isKnownJourneyType', () => {
+    test('recognises the live-animals journey type', () => {
+      expect(isKnownJourneyType(JOURNEY_TYPES.GBN_AG)).toBe(true)
+      expect(isKnownJourneyType(UNREGISTERED_JOURNEY_TYPE)).toBe(false)
+    })
   })
 
   describe('requiresUnitedKingdomAddress', () => {
@@ -83,62 +85,6 @@ describe('journey-registry', () => {
     })
   })
 
-  test('buildReturnUrl substitutes opaque ids into the registry template', () => {
-    const url = buildReturnUrl(
-      {
-        journeyType: JOURNEY_TYPES.GBN_AG,
-        notificationId: NOTIFICATION_ID,
-        fulfilmentId: FULFILMENT_ID
-      },
-      { addressId: ADDRESS_ID }
-    )
-
-    expect(url).toBe(`${RETURN_URL_WITHOUT_ADDRESS}&addressId=${ADDRESS_ID}`)
-  })
-
-  test("buildReturnUrl returns under the journey set's base, not the frontend root", () => {
-    const url = new URL(
-      buildReturnUrl({
-        journeyType: JOURNEY_TYPES.GBN_AG,
-        notificationId: NOTIFICATION_ID,
-        fulfilmentId: FULFILMENT_ID
-      })
-    )
-
-    expect(url.pathname.startsWith('/live-animals/')).toBe(true)
-  })
-
-  test.each([ADDRESS_LANDING.SELECT, ADDRESS_LANDING.RETURN])(
-    'buildReturnUrl carries the address id and the %s landing',
-    (landing) => {
-      const url = buildReturnUrl(
-        {
-          journeyType: JOURNEY_TYPES.GBN_AG,
-          notificationId: NOTIFICATION_ID,
-          fulfilmentId: FULFILMENT_ID
-        },
-        { addressId: ADDRESS_ID, landing }
-      )
-
-      expect(url).toBe(
-        `${RETURN_URL_WITHOUT_ADDRESS}&addressId=${ADDRESS_ID}&landing=${landing}`
-      )
-    }
-  )
-
-  test('buildReturnUrl carries the cancel landing and no address id', () => {
-    const url = buildReturnUrl(
-      {
-        journeyType: JOURNEY_TYPES.GBN_AG,
-        notificationId: NOTIFICATION_ID,
-        fulfilmentId: FULFILMENT_ID
-      },
-      { landing: ADDRESS_LANDING.CANCEL }
-    )
-
-    expect(url).toBe(`${RETURN_URL_WITHOUT_ADDRESS}&landing=cancel`)
-  })
-
   describe('isConsignmentContact', () => {
     test('is true for the consignment contact handshake', () => {
       expect(
@@ -164,59 +110,119 @@ describe('journey-registry', () => {
     })
   })
 
-  test('buildReturnUrl carries neither an address id nor a landing when given neither', () => {
-    const url = buildReturnUrl({
-      journeyType: JOURNEY_TYPES.GBN_AG,
-      notificationId: NOTIFICATION_ID,
-      fulfilmentId: FULFILMENT_ID
+  describe('buildReturnUrl', () => {
+    test('substitutes opaque ids into the registry template', () => {
+      const url = buildReturnUrl(
+        {
+          journeyType: JOURNEY_TYPES.GBN_AG,
+          notificationId: NOTIFICATION_ID,
+          fulfilmentId: FULFILMENT_ID
+        },
+        { addressId: ADDRESS_ID }
+      )
+
+      expect(url).toBe(`${RETURN_URL_WITHOUT_ADDRESS}&addressId=${ADDRESS_ID}`)
     })
 
-    expect(url).toBe(RETURN_URL_WITHOUT_ADDRESS)
-  })
+    test("returns under the journey set's base, not the frontend root", () => {
+      const url = new URL(
+        buildReturnUrl({
+          journeyType: JOURNEY_TYPES.GBN_AG,
+          notificationId: NOTIFICATION_ID,
+          fulfilmentId: FULFILMENT_ID
+        })
+      )
 
-  test('buildReturnUrl strips a trailing slash from the animals base URL', () => {
-    config.set(BASE_URL_CONFIG_KEY, 'http://localhost:3000/')
-
-    const url = buildReturnUrl({
-      journeyType: JOURNEY_TYPES.GBN_AG,
-      notificationId: NOTIFICATION_ID,
-      fulfilmentId: FULFILMENT_ID
+      expect(url.pathname.startsWith('/live-animals/')).toBe(true)
     })
 
-    expect(url).toBe(RETURN_URL_WITHOUT_ADDRESS)
-  })
+    test.each([ADDRESS_LANDING.SELECT, ADDRESS_LANDING.RETURN])(
+      'carries the address id and the %s landing',
+      (landing) => {
+        const url = buildReturnUrl(
+          {
+            journeyType: JOURNEY_TYPES.GBN_AG,
+            notificationId: NOTIFICATION_ID,
+            fulfilmentId: FULFILMENT_ID
+          },
+          { addressId: ADDRESS_ID, landing }
+        )
 
-  test('buildReturnUrl URI-encodes opaque ids that contain reserved characters', () => {
-    const notificationId = 'GBN-AG/26?x'
-    const fulfilmentId = '9ad1&b=c/d'
-
-    const url = buildReturnUrl({
-      journeyType: JOURNEY_TYPES.GBN_AG,
-      notificationId,
-      fulfilmentId
-    })
-
-    expect(url).toBe(
-      `http://localhost:3000/live-animals/notifications/${encodeURIComponent(notificationId)}/address-return?fulfilment-id=${encodeURIComponent(fulfilmentId)}`
+        expect(url).toBe(
+          `${RETURN_URL_WITHOUT_ADDRESS}&addressId=${ADDRESS_ID}&landing=${landing}`
+        )
+      }
     )
-  })
 
-  test('buildReturnUrl throws for an unregistered journey type', () => {
-    expect(() =>
-      buildReturnUrl({
-        journeyType: UNREGISTERED_JOURNEY_TYPE,
+    test('carries the cancel landing and no address id', () => {
+      const url = buildReturnUrl(
+        {
+          journeyType: JOURNEY_TYPES.GBN_AG,
+          notificationId: NOTIFICATION_ID,
+          fulfilmentId: FULFILMENT_ID
+        },
+        { landing: ADDRESS_LANDING.CANCEL }
+      )
+
+      expect(url).toBe(`${RETURN_URL_WITHOUT_ADDRESS}&landing=cancel`)
+    })
+
+    test('carries neither an address id nor a landing when given neither', () => {
+      const url = buildReturnUrl({
+        journeyType: JOURNEY_TYPES.GBN_AG,
         notificationId: NOTIFICATION_ID,
         fulfilmentId: FULFILMENT_ID
       })
-    ).toThrow(`Unknown journey type "${UNREGISTERED_JOURNEY_TYPE}"`)
-  })
 
-  test('buildReturnUrl throws when notificationId or fulfilmentId is missing', () => {
-    expect(() =>
-      buildReturnUrl({
+      expect(url).toBe(RETURN_URL_WITHOUT_ADDRESS)
+    })
+
+    test('strips a trailing slash from the animals base URL', () => {
+      config.set(BASE_URL_CONFIG_KEY, 'http://localhost:3000/')
+
+      const url = buildReturnUrl({
         journeyType: JOURNEY_TYPES.GBN_AG,
-        notificationId: NOTIFICATION_ID
+        notificationId: NOTIFICATION_ID,
+        fulfilmentId: FULFILMENT_ID
       })
-    ).toThrow('Handshake context must include notificationId and fulfilmentId')
+
+      expect(url).toBe(RETURN_URL_WITHOUT_ADDRESS)
+    })
+
+    test('URI-encodes opaque ids that contain reserved characters', () => {
+      const notificationId = 'GBN-AG/26?x'
+      const fulfilmentId = '9ad1&b=c/d'
+
+      const url = buildReturnUrl({
+        journeyType: JOURNEY_TYPES.GBN_AG,
+        notificationId,
+        fulfilmentId
+      })
+
+      expect(url).toBe(
+        `http://localhost:3000/live-animals/notifications/${encodeURIComponent(notificationId)}/address-return?fulfilment-id=${encodeURIComponent(fulfilmentId)}`
+      )
+    })
+
+    test('throws for an unregistered journey type', () => {
+      expect(() =>
+        buildReturnUrl({
+          journeyType: UNREGISTERED_JOURNEY_TYPE,
+          notificationId: NOTIFICATION_ID,
+          fulfilmentId: FULFILMENT_ID
+        })
+      ).toThrow(`Unknown journey type "${UNREGISTERED_JOURNEY_TYPE}"`)
+    })
+
+    test('throws when notificationId or fulfilmentId is missing', () => {
+      expect(() =>
+        buildReturnUrl({
+          journeyType: JOURNEY_TYPES.GBN_AG,
+          notificationId: NOTIFICATION_ID
+        })
+      ).toThrow(
+        'Handshake context must include notificationId and fulfilmentId'
+      )
+    })
   })
 })
