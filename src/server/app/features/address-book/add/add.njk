@@ -10,7 +10,7 @@
 
   <form method="post" novalidate>
     <input type="hidden" name="crumb" value="{{ crumb }}" />
-    {% if handshakeContext %}
+    {% if addMode != addModes.ADDRESS_BOOK %}
       <input type="hidden" name="journey-type" value="{{ handshakeContext.journeyType }}" />
       <input type="hidden" name="notification-id" value="{{ handshakeContext.notificationId }}" />
       <input type="hidden" name="fulfilment-id" value="{{ handshakeContext.fulfilmentId }}" />
@@ -24,8 +24,8 @@
       errors: errors
     }) }}
 
-    <div class="govuk-button-group">
-      {% if journeyActions %}
+    {% if addMode == addModes.ROLE_HANDSHAKE %}
+      <div class="govuk-button-group">
         {{ govukButton({
           text: copy.add.saveAndSelect,
           name: "action",
@@ -37,21 +37,23 @@
           value: addressLanding.RETURN,
           classes: "govuk-button--secondary"
         }) }}
-      {% else %}
+      </div>
+      <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ copy.add.cancelToHub }}</a></p>
+    {% elif addMode == addModes.CONSIGNMENT_CONTACT %}
+      <div class="govuk-button-group">
         {{ govukButton({ text: copy.add.save }) }}
-        {% if handshakeContext %}
-          {{ govukButton({
-            text: copy.add.cancelToJourney,
-            name: "cancel",
-            value: "true",
-            classes: "govuk-button--secondary"
-          }) }}
-        {% endif %}
-      {% endif %}
-    </div>
-
-    {% if cancelHref %}
-      <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ cancelLabel }}</a></p>
+        {{ govukButton({
+          text: copy.add.cancelToJourney,
+          name: "cancel",
+          value: "true",
+          classes: "govuk-button--secondary"
+        }) }}
+      </div>
+    {% else %}
+      <div class="govuk-button-group">
+        {{ govukButton({ text: copy.add.save }) }}
+      </div>
+      <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ copy.add.cancel }}</a></p>
     {% endif %}
 
   </form>

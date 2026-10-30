@@ -33,22 +33,38 @@ const logger = createLogger()
 const view = 'address-book/add/add'
 const copy = copyFor({ en, cy })
 
-const backHrefFor = (handshakeContext) =>
-  handshakeContext ? buildReturnUrl(handshakeContext) : addressBookPath()
+const ADD_MODES = Object.freeze({
+  ADDRESS_BOOK: 'address-book',
+  ROLE_HANDSHAKE: 'role-handshake',
+  CONSIGNMENT_CONTACT: 'consignment-contact'
+})
 
-const cancelReturnUrl = (handshakeContext) => {
+const addModeFor = (handshakeContext) => {
   if (!handshakeContext) {
-    return addressBookPath()
+    return ADD_MODES.ADDRESS_BOOK
   }
   return isConsignmentContact(handshakeContext)
-    ? buildReturnUrl(handshakeContext)
-    : buildReturnUrl(handshakeContext, { landing: ADDRESS_LANDING.CANCEL })
+    ? ADD_MODES.CONSIGNMENT_CONTACT
+    : ADD_MODES.ROLE_HANDSHAKE
 }
 
-const cancelHrefFor = (handshakeContext) =>
-  isConsignmentContact(handshakeContext)
-    ? null
-    : cancelReturnUrl(handshakeContext)
+const backHrefFor = (addMode, handshakeContext) =>
+  addMode === ADD_MODES.ADDRESS_BOOK
+    ? addressBookPath()
+    : buildReturnUrl(handshakeContext)
+
+const cancelUrlFor = (addMode, handshakeContext) => {
+  switch (addMode) {
+    case ADD_MODES.ROLE_HANDSHAKE:
+      return buildReturnUrl(handshakeContext, {
+        landing: ADDRESS_LANDING.CANCEL
+      })
+    case ADD_MODES.CONSIGNMENT_CONTACT:
+      return buildReturnUrl(handshakeContext)
+    default:
+      return addressBookPath()
+  }
+}
 
 const landingChosenBy = (payload) =>
   payload.action === ADDRESS_LANDING.RETURN
@@ -64,15 +80,17 @@ const buildView = (
     recoverableError = false,
     handshakeContext = null
   }
-) =>
-  toolkit
+) => {
+  const addMode = addModeFor(handshakeContext)
+  return toolkit
     .view(view, {
       ...kit.base(copy.add.title, {
         recoverableError,
-        backLink: backHrefFor(handshakeContext),
-        journeyStrip: handshakeContext
-          ? kit.draftJourneyStrip(handshakeContext.notificationId)
-          : null
+        backLink: backHrefFor(addMode, handshakeContext),
+        journeyStrip:
+          addMode === ADD_MODES.ADDRESS_BOOK
+            ? null
+            : kit.draftJourneyStrip(handshakeContext.notificationId)
       }),
       copy,
       formValues,
@@ -80,13 +98,13 @@ const buildView = (
       errors,
       errorSummary: kit.errorSummary(errors),
       handshakeContext,
-      journeyActions:
-        Boolean(handshakeContext) && !isConsignmentContact(handshakeContext),
+      addMode,
+      addModes: ADD_MODES,
       addressLanding: ADDRESS_LANDING,
-      cancelHref: cancelHrefFor(handshakeContext),
-      cancelLabel: handshakeContext ? copy.add.cancelToHub : copy.add.cancel
+      cancelHref: cancelUrlFor(addMode, handshakeContext)
     })
     .header('Cache-Control', 'no-store')
+}
 
 const handBackAddress = (
   toolkit,
@@ -109,17 +127,17 @@ const handBackAddress = (
 }
 
 const redirectAfterCancel = (toolkit, handshakeContext) => {
-  if (!handshakeContext) {
-    return toolkit.redirect(addressBookPath())
+  const addMode = addModeFor(handshakeContext)
+  if (addMode !== ADD_MODES.ADDRESS_BOOK) {
+    logger.info(
+      {
+        notificationId: handshakeContext.notificationId,
+        fulfilmentId: handshakeContext.fulfilmentId
+      },
+      'Cancel handed back to the journey'
+    )
   }
-  logger.info(
-    {
-      notificationId: handshakeContext.notificationId,
-      fulfilmentId: handshakeContext.fulfilmentId
-    },
-    'Cancel handed back to the journey'
-  )
-  return toolkit.redirect(cancelReturnUrl(handshakeContext))
+  return toolkit.redirect(cancelUrlFor(addMode, handshakeContext))
 }
 
 const get = async (request, toolkit) => {
@@ -158,7 +176,7 @@ const submitAddress = async (
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
     const createdAddress = await createAddress(organisationId, validatedAddress)
-    if (handshakeContext) {
+    if (addModeFor(handshakeContext) !== ADD_MODES.ADDRESS_BOOK) {
       return handBackAddress(toolkit, handshakeContext, {
         organisationId,
         addressId: createdAddress.id,
