@@ -32,6 +32,7 @@ import {
   ANY_COUNTRY_ROLES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   JOURNEY_HANDSHAKES_BY_ROLE,
+  returnUrlFor,
   UNITED_KINGDOM_ROLES
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
@@ -58,10 +59,6 @@ const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
 const { consignor: CONSIGNOR_HANDSHAKE, consignee: CONSIGNEE_HANDSHAKE } =
   JOURNEY_HANDSHAKES_BY_ROLE
-const NOTIFICATION_RETURN_PATH = `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7K2P/address-return`
-const CONSIGNOR_RETURN_URL = `${NOTIFICATION_RETURN_PATH}?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value`
-const CONSIGNEE_RETURN_URL = `${NOTIFICATION_RETURN_PATH}?fulfilment-id=abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e&handshake-token=handshake-token-value`
-const CONTACT_RETURN_URL = `${NOTIFICATION_RETURN_PATH}?fulfilment-id=f037e8f9-a0b1-4c26-8d72-fe5f60718293&handshake-token=handshake-token-value`
 const HAND_BACK_MESSAGE = 'Address handed back to the journey'
 const CANCEL_HAND_BACK_MESSAGE = 'Cancel handed back to the journey'
 const CAPTION_SELECTOR = '.govuk-caption-l'
@@ -322,7 +319,7 @@ describe(
       ])
       expect(textsOf($, FORM_LINK)).toEqual(['Cancel and return to hub'])
       expect($(FORM_LINK).attr('href')).toBe(
-        `${CONSIGNOR_RETURN_URL}&landing=cancel`
+        returnUrlFor(CONSIGNOR_HANDSHAKE, { landing: ADDRESS_LANDING.CANCEL })
       )
       expect(
         $('form input[type="hidden"]')
@@ -355,7 +352,9 @@ describe(
         }
       ])
       expect($(FORM_LINK)).toHaveLength(0)
-      expect($(BACK_LINK).attr('href')).toBe(CONTACT_RETURN_URL)
+      expect($(BACK_LINK).attr('href')).toBe(
+        returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
+      )
     })
 
     test('GET arriving through a journey handshake shows the page title, the blue Draft status and notification id above the caption and heading, then the section headings and every field label', async () => {
@@ -389,7 +388,9 @@ describe(
       )
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(load(result)(BACK_LINK).attr('href')).toBe(CONSIGNOR_RETURN_URL)
+      expect(load(result)(BACK_LINK).attr('href')).toBe(
+        returnUrlFor(CONSIGNOR_HANDSHAKE)
+      )
     })
   }
 )
@@ -451,7 +452,10 @@ describe(
 
       expectRedirectTo(
         response,
-        `${CONSIGNOR_RETURN_URL}&addressId=${ADDRESS_ID}&landing=select`
+        returnUrlFor(CONSIGNOR_HANDSHAKE, {
+          addressId: ADDRESS_ID,
+          landing: ADDRESS_LANDING.SELECT
+        })
       )
       expect(scope.isDone()).toBe(true)
       expect(loggedWith(HAND_BACK_MESSAGE)).toEqual([
@@ -486,7 +490,10 @@ describe(
 
       expectRedirectTo(
         response,
-        `${CONSIGNOR_RETURN_URL}&addressId=${ADDRESS_ID}&landing=return`
+        returnUrlFor(CONSIGNOR_HANDSHAKE, {
+          addressId: ADDRESS_ID,
+          landing: ADDRESS_LANDING.RETURN
+        })
       )
       expect(scope.isDone()).toBe(true)
     })
@@ -501,7 +508,10 @@ describe(
 
       expectRedirectTo(
         response,
-        `${CONTACT_RETURN_URL}&addressId=${ADDRESS_ID}&landing=select`
+        returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE, {
+          addressId: ADDRESS_ID,
+          landing: ADDRESS_LANDING.SELECT
+        })
       )
     })
 
@@ -540,7 +550,7 @@ describe(
           cancel: 'true',
           ...CONSIGNOR_HANDSHAKE
         }),
-        `${CONSIGNOR_RETURN_URL}&landing=cancel`
+        returnUrlFor(CONSIGNOR_HANDSHAKE, { landing: ADDRESS_LANDING.CANCEL })
       )
     })
 
@@ -550,7 +560,7 @@ describe(
           cancel: 'true',
           ...CONSIGNMENT_CONTACT_HANDSHAKE
         }),
-        CONTACT_RETURN_URL
+        returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
       )
       expect(loggedWith(CANCEL_HAND_BACK_MESSAGE)).toEqual([
         {
@@ -634,7 +644,10 @@ describe(
 
       expectRedirectTo(
         response,
-        `${CONSIGNEE_RETURN_URL}&addressId=${ADDRESS_ID}&landing=select`
+        returnUrlFor(CONSIGNEE_HANDSHAKE, {
+          addressId: ADDRESS_ID,
+          landing: ADDRESS_LANDING.SELECT
+        })
       )
       expect(scope.isDone()).toBe(true)
       expect(captured.body.countryCode).toBe('GB')

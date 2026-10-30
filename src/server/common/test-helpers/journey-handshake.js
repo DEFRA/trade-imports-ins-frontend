@@ -34,6 +34,23 @@ export const CONSIGNMENT_CONTACT_HANDSHAKE = handshakeForFulfilmentId(
 
 export const ANIMALS_BASE_URL = 'http://localhost:3000'
 
+export const returnUrlFor = (handshake, { addressId, landing } = {}) => {
+  const url = new URL(
+    `${ANIMALS_BASE_URL}/live-animals/notifications/${encodeURIComponent(handshake['notification-id'])}/address-return`
+  )
+  url.searchParams.set('fulfilment-id', handshake['fulfilment-id'])
+  if (handshake['handshake-token']) {
+    url.searchParams.set('handshake-token', handshake['handshake-token'])
+  }
+  if (addressId) {
+    url.searchParams.set('addressId', addressId)
+  }
+  if (landing) {
+    url.searchParams.set('landing', landing)
+  }
+  return url.href
+}
+
 export const handshakeContextOf = (handshake) => ({
   journeyType: handshake['journey-type'],
   notificationId: handshake['notification-id'],

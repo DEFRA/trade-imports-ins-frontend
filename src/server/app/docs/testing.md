@@ -65,8 +65,10 @@ context the app builds from a handshake's query or form fields,
 `JOURNEY_HANDSHAKES_BY_ROLE`, one complete journey
 handshake for each of the place of origin, consignor, consignee, importer and
 place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's
-handshake, and `ANIMALS_BASE_URL`, the animals frontend's base URL the return
-URLs start with; the Vitest tests and the fit specs both send these),
+handshake, `ANIMALS_BASE_URL`, the animals frontend's base URL the return
+URLs start with, and `returnUrlFor(handshake, { addressId, landing })`, the
+return URL a test expects for a handshake, built from that handshake's own
+ids and token; the Vitest tests and the fit specs both use these),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
 notificationId)`, the Draft tag and notification id in the
 journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
