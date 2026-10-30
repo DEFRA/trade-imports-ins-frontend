@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test'
 
 import {
-  NAME_LABEL,
   addValidAddressToFreshOrganisation,
+  addressFormCountryNames,
   expectErrorFocusOn,
   fieldLabels,
   fillValidAddress,
@@ -15,9 +15,19 @@ import {
   searchAndExpectSingleMatch
 } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { GB_COUNTRY } from '../address-countries.js'
 import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
+import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-form-autocomplete.js'
+import {
+  CONSIGNMENT_CONTACT_HANDSHAKE,
+  JOURNEY_HANDSHAKES_BY_ROLE,
+  returnUrlFor
+} from '../../../../common/test-helpers/journey-handshake.js'
+import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
+import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
+import { ADDRESS_LANDING } from '../journey-registry.js'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -30,13 +40,15 @@ test.describe('add address', () => {
     await page.goto(addressAddPath())
 
     await expect(
-      page.getByRole('heading', { name: 'Add address details' })
+      page.getByRole('heading', { name: 'Add address and contact details' })
     ).toBeVisible()
-    await expect(page.getByLabel(NAME_LABEL, { exact: true })).toBeVisible()
+    await expect(
+      page.getByLabel(fieldLabels.name, { exact: true })
+    ).toBeVisible()
     for (const [, label] of [
       ...requiredValidations,
-      ['addressLine2', 'Address line 2 (optional)'],
-      ['county', 'County (optional)']
+      ['addressLine2', fieldLabels.addressLine2],
+      ['county', fieldLabels.county]
     ]) {
       await expect(page.getByLabel(label)).toBeVisible()
     }
@@ -47,10 +59,10 @@ test.describe('add address', () => {
     const country = page.getByLabel('Country')
     await expect(country).toHaveValue('')
     await expect(country.getByRole('option').first()).toHaveText(
-      'Select a country'
+      COUNTRY_PLACEHOLDER
     )
     await expect(
-      country.getByRole('option', { name: 'United Kingdom' })
+      country.getByRole('option', { name: GB_COUNTRY.name })
     ).toHaveCount(1)
   })
 
@@ -82,6 +94,193 @@ test.describe('add address', () => {
   })
 })
 
+test.describe('add address reached from a notification journey', () => {
+  const openFromJourney = async (
+    page,
+    organisationId,
+    handshake = JOURNEY_HANDSHAKES_BY_ROLE.consignor
+  ) => {
+    await signIn(page, { organisationId })
+    await page.goto(`${addressAddPath()}?${new URLSearchParams(handshake)}`)
+  }
+
+  test('shows the Draft status and notification id above the caption, heading, section headings and fields', async ({
+    page
+  }) => {
+    await openFromJourney(page, 'stub-org-add-journey')
+
+    await expect(page).toHaveTitle(
+      'Add address and contact details - Import notification service - GOV.UK'
+    )
+    const journeyStrip = page.locator(JOURNEY_STRIP)
+    await expect(journeyStrip.getByText('Draft', { exact: true })).toBeVisible()
+    await expect(
+      journeyStrip.getByText(
+        JOURNEY_HANDSHAKES_BY_ROLE.consignor['notification-id'],
+        { exact: true }
+      )
+    ).toBeVisible()
+    await expect(
+      page.getByText('Add new address', { exact: true })
+    ).toBeVisible()
+    await expect(
+      page.getByRole('heading', {
+        level: 1,
+        name: 'Add address and contact details'
+      })
+    ).toBeVisible()
+    const sectionHeadings = ['Address', 'Contact details'].map((name) =>
+      page.getByRole('heading', { level: 2, name, exact: true })
+    )
+    for (const sectionHeading of sectionHeadings) {
+      await expect(sectionHeading).toBeVisible()
+    }
+    await expect(
+      page.getByLabel(fieldLabels.name, { exact: true })
+    ).toBeVisible()
+    await expect(page.getByLabel(fieldLabels.county)).toBeVisible()
+
+    const strip = await journeyStrip.boundingBox()
+    const belowTheStrip = [
+      page.getByText('Add new address', { exact: true }),
+      page.getByRole('heading', { level: 1 }),
+      ...sectionHeadings,
+      page.getByLabel(fieldLabels.name, { exact: true }),
+      page.getByLabel(fieldLabels.county)
+    ]
+    for (const element of belowTheStrip) {
+      const { y } = await element.boundingBox()
+      expect(y).toBeGreaterThanOrEqual(strip.y + strip.height)
+    }
+  })
+
+  test('gives each personal-data field its browser autocomplete hint', async ({
+    page
+  }) => {
+    await openFromJourney(page, 'stub-org-add-journey-autocomplete')
+
+    for (const [field, autocomplete] of Object.entries(AUTOCOMPLETE_BY_FIELD)) {
+      await expect(page.getByLabel(fieldLabels[field])).toHaveAttribute(
+        'autocomplete',
+        autocomplete
+      )
+    }
+  })
+
+  test('has no serious or critical axe violations', async ({ page }) => {
+    await openFromJourney(page, 'stub-org-add-journey-axe')
+
+    await expectNoSeriousOrCriticalViolations(page, 'Add address from journey')
+  })
+
+  test('from the consignee handshake offers United Kingdom alone, selected, with every field shown', async ({
+    page
+  }) => {
+    await openFromJourney(
+      page,
+      'stub-org-add-journey-consignee',
+      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+    )
+
+    const country = page.getByLabel('Country')
+    await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
+    await expect(country).toHaveValue(GB_COUNTRY.code)
+    for (const label of Object.values(fieldLabels)) {
+      await expect(page.getByLabel(label, { exact: true })).toBeVisible()
+    }
+  })
+
+  for (const [role, roleName] of [
+    ['placeOfOrigin', 'place of origin'],
+    ['consignor', 'consignor']
+  ]) {
+    test(`from the ${roleName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
+      page
+    }) => {
+      await openFromJourney(
+        page,
+        `stub-org-add-journey-countries-${role}`,
+        JOURNEY_HANDSHAKES_BY_ROLE[role]
+      )
+
+      const country = page.getByLabel('Country')
+      await expect(country).toHaveJSProperty('tagName', 'SELECT')
+      await expect(country).toHaveValue('')
+      await expect(country.getByRole('option')).toHaveText([
+        COUNTRY_PLACEHOLDER,
+        ...addressFormCountryNames
+      ])
+    })
+  }
+
+  test('from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations', async ({
+    page
+  }) => {
+    await openFromJourney(
+      page,
+      'stub-org-add-journey-consignee-name',
+      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+    )
+
+    await fillValidAddress(page, { name: '' })
+    await page.getByRole('button', { name: 'Save and select' }).click()
+
+    await expectErrorFocusOn(page, {
+      message: 'Enter a name or organisation',
+      label: fieldLabels.name,
+      expectedValue: '',
+      url: (url) => url.pathname === addressAddPath()
+    })
+    await expectNoSeriousOrCriticalViolations(
+      page,
+      'Add address from journey validation error'
+    )
+  })
+
+  test('from a role handshake offers Back to the journey, Save and select, Save and return to address page and a Cancel and return to hub link', async ({
+    page
+  }) => {
+    await openFromJourney(page, 'stub-org-add-journey-actions')
+
+    await expect(
+      page.getByRole('link', { name: 'Back', exact: true })
+    ).toHaveAttribute(
+      'href',
+      returnUrlFor(JOURNEY_HANDSHAKES_BY_ROLE.consignor)
+    )
+    await expect(page.locator('form button')).toHaveText([
+      'Save and select',
+      'Save and return to address page'
+    ])
+    await expect(
+      page.getByRole('link', { name: 'Cancel and return to hub' })
+    ).toHaveAttribute(
+      'href',
+      returnUrlFor(JOURNEY_HANDSHAKES_BY_ROLE.consignor, {
+        landing: ADDRESS_LANDING.CANCEL
+      })
+    )
+  })
+
+  test('from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page', async ({
+    page
+  }) => {
+    await openFromJourney(
+      page,
+      'stub-org-add-journey-contact',
+      CONSIGNMENT_CONTACT_HANDSHAKE
+    )
+
+    await expect(
+      page.getByRole('link', { name: 'Back', exact: true })
+    ).toHaveAttribute('href', returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE))
+    await expect(page.locator('form button')).toHaveText([
+      'Save and continue',
+      'Cancel and return to address page'
+    ])
+  })
+})
+
 test.describe('add address validation', () => {
   for (const [field, label, error] of requiredValidations) {
     test(`empty ${label} links to and focuses the preserved field`, async ({
@@ -99,7 +298,7 @@ test.describe('add address validation', () => {
         expectedValue: '',
         url: addressAddPath()
       })
-      await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
+      await expect(page.getByLabel(fieldLabels.name)).toHaveValue(
         field === 'name' ? '' : validAddress.name
       )
     })
@@ -122,7 +321,7 @@ test.describe('add address validation', () => {
         expectedValue: value,
         url: addressAddPath()
       })
-      await expect(page.getByLabel(NAME_LABEL)).toHaveValue(
+      await expect(page.getByLabel(fieldLabels.name)).toHaveValue(
         field === 'name' ? value : validAddress.name
       )
     })
@@ -250,7 +449,7 @@ test.describe('save and confirm', () => {
     await expect(
       table
         .getByRole('row', { name: new RegExp(validAddress.name) })
-        .getByRole('cell', { name: 'United Kingdom', exact: true })
+        .getByRole('cell', { name: GB_COUNTRY.name, exact: true })
     ).toBeVisible()
   })
 })
@@ -262,13 +461,17 @@ test.describe('cancel', () => {
     await signIn(page, { organisationId: 'stub-org-add-cancel' })
     await page.goto(addressAddPath())
 
-    await page.getByLabel(NAME_LABEL).fill('Should not be saved')
+    await fillValidAddress(page)
 
     await page
       .getByRole('link', { name: 'Cancel and return to address book' })
       .click()
 
     await expect(page).toHaveURL(addressBookPath())
-    await expect(page.getByText('Should not be saved')).toHaveCount(0)
+    await expect(resultsLineOf(page)).toHaveText('Showing 1-1 of 1')
+    await expect(
+      page.getByRole('link', { name: `View ${seedAddress.name}` })
+    ).toBeVisible()
+    await expect(page.getByRole('table').getByRole('row')).toHaveCount(2)
   })
 })

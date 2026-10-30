@@ -39,6 +39,18 @@ export const COUNTRY_OPTIONS = '#countryCode option'
 
 export const SELECTED_COUNTRY = '#countryCode option[selected]'
 
+export const ADDRESS_FORM_LABELS = [
+  'Name or organisation',
+  'Address line 1',
+  'Address line 2 (optional)',
+  'Town or city',
+  'County (optional)',
+  'Postcode or Zip code',
+  'Country',
+  'Email address',
+  'Phone number'
+]
+
 export const COUNTRIES = [
   { code: 'GB', name: 'United Kingdom' },
   { code: 'FR', name: 'France' },
@@ -80,6 +92,21 @@ export const INVALID_ADDRESS_PAYLOAD = {
   countryCode: '',
   phone: '',
   email: 'bad'
+}
+
+export const serveAddressCreated = (matchBody) =>
+  addressBookApi()
+    .post(addressesApiPath(), matchBody)
+    .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
+    .reply(statusCodes.created, { id: ADDRESS_ID, name: STORED_ADDRESS.name })
+
+export const serveAddressCreationCapturingBody = () => {
+  const captured = {}
+  const scope = serveAddressCreated((body) => {
+    captured.body = body
+    return true
+  })
+  return { scope, captured }
 }
 
 export const pageOf = (items, overrides = {}) => ({

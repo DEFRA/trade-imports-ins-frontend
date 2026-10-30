@@ -7,6 +7,7 @@ import {
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
   NO_RESULTS_LINE,
   TABLE_HEADINGS,
@@ -33,7 +34,7 @@ const linksAfterFilterForm = ($) =>
     .nextAll()
     .find('a')
     .map((_, anchor) => ({
-      text: $(anchor).text().trim(),
+      text: textOf($, anchor),
       href: $(anchor).attr('href')
     }))
     .get()
@@ -60,7 +61,7 @@ describe('#addressBookListLayout', () => {
       'Manage your addresses for use across all your import notifications'
     )
     const addButton = content.children('div').find('a')
-    expect(addButton.text().trim()).toBe('Add a new address')
+    expect(textOf($, addButton)).toBe('Add a new address')
     expect(addButton.attr('href')).toBe(ADD_ADDRESS_PATH)
     const form = content.children('form')
     expect(form.attr('method')).toBe('get')
@@ -68,9 +69,7 @@ describe('#addressBookListLayout', () => {
     expect(tagNamesOf(form.children())).toEqual(['details'])
     const disclosure = form.children('details')
     expect(disclosure.attr('open')).toBeUndefined()
-    expect(disclosure.children('summary').text().trim()).toBe(
-      'Filter addresses'
-    )
+    expect(textOf($, disclosure.children('summary'))).toBe('Filter addresses')
   })
 
   test('holds the Search label, its hint, the input and one icon-only submit button inside the disclosure', async () => {
@@ -84,7 +83,7 @@ describe('#addressBookListLayout', () => {
         .find('label, input, button, .govuk-hint')
         .map((_, element) => ({
           tag: element.tagName,
-          text: $(element).text().trim()
+          text: textOf($, element)
         }))
         .get()
     ).toEqual([

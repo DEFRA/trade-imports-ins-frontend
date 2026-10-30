@@ -4,6 +4,13 @@ import {
   refuseOutboundHttp,
   serveCountries
 } from '../../../common/test-helpers/real-mode.js'
+import { COUNTRY_PLACEHOLDER } from '../../../common/test-helpers/country-placeholder.js'
+import {
+  ANY_COUNTRY_ROLES,
+  handshakeContextOf,
+  JOURNEY_HANDSHAKES_BY_ROLE,
+  UNITED_KINGDOM_ROLES
+} from '../../../common/test-helpers/journey-handshake.js'
 import {
   buildCountryItems,
   buildCountrySelectItems,
@@ -14,15 +21,21 @@ import {
 } from './address-countries.js'
 
 const originalMode = process.env.STUB_MODE
-const COUNTRY_PLACEHOLDER = 'Select a country'
-const UNITED_KINGDOM = { code: 'GB', name: 'United Kingdom' }
 const FRANCE = { code: 'FR', name: 'France' }
 const UNITED_STATES = { code: 'US', name: 'United States' }
 const UNITED_ARAB_EMIRATES = { code: 'AE', name: 'United Arab Emirates' }
-const GB_AND_FRANCE = [UNITED_KINGDOM, FRANCE]
+const GB_AND_FRANCE = [GB_COUNTRY, FRANCE]
 const GB_AND_FRANCE_ITEMS = [
-  { value: UNITED_KINGDOM.code, text: UNITED_KINGDOM.name },
+  { value: GB_COUNTRY.code, text: GB_COUNTRY.name },
   { value: FRANCE.code, text: FRANCE.name }
+]
+
+const anyCountryContexts = [
+  ...ANY_COUNTRY_ROLES.map((role) => [
+    `the ${role} handshake`,
+    handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+  ]),
+  ['no handshake', null]
 ]
 
 const importAddressCountriesInRealMode = async () => {
@@ -31,22 +44,22 @@ const importAddressCountriesInRealMode = async () => {
   return import('./address-countries.js')
 }
 
+afterEach(() => {
+  if (originalMode === undefined) {
+    delete process.env.STUB_MODE
+  } else {
+    process.env.STUB_MODE = originalMode
+  }
+})
+
 describe('#getAddressFormCountries', () => {
   refuseOutboundHttp()
-
-  afterEach(() => {
-    if (originalMode === undefined) {
-      delete process.env.STUB_MODE
-    } else {
-      process.env.STUB_MODE = originalMode
-    }
-  })
 
   test('Should list countries alphabetically with United Kingdom in its place, once', async () => {
     serveCountries([
       UNITED_STATES,
       FRANCE,
-      { code: 'GB', name: 'United Kingdom duplicate' },
+      { code: GB_COUNTRY.code, name: 'United Kingdom duplicate' },
       UNITED_ARAB_EMIRATES
     ])
     const { getAddressFormCountries } = await importAddressCountriesInRealMode()
@@ -71,6 +84,55 @@ describe('#getAddressFormCountries', () => {
       data: { dataset: 'countries' }
     })
   })
+})
+
+describe('#addFormCountryOffer', () => {
+  refuseOutboundHttp()
+
+  const postedValues = { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
+
+  test.each(UNITED_KINGDOM_ROLES)(
+    'Should offer United Kingdom alone, accept only GB and fix the posted country to GB for the %s',
+    async (role) => {
+      const { addFormCountryOffer } = await importAddressCountriesInRealMode()
+
+      const offer = await addFormCountryOffer({
+        handshakeContext: handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
+        placeholder: COUNTRY_PLACEHOLDER,
+        formValues: postedValues
+      })
+
+      expect(offer).toEqual({
+        countryItems: [{ value: GB_COUNTRY.code, text: GB_COUNTRY.name }],
+        countryCodes: [GB_COUNTRY.code],
+        formValues: { ...postedValues, countryCode: GB_COUNTRY.code }
+      })
+    }
+  )
+
+  test.each(anyCountryContexts)(
+    'Should offer the placeholder then every served country and leave the posted country as posted for %s',
+    async (_name, handshakeContext) => {
+      serveCountries([FRANCE, GB_COUNTRY])
+      const { addFormCountryOffer } = await importAddressCountriesInRealMode()
+
+      const offer = await addFormCountryOffer({
+        handshakeContext,
+        placeholder: COUNTRY_PLACEHOLDER,
+        formValues: postedValues
+      })
+
+      expect(offer).toEqual({
+        countryItems: [
+          { value: '', text: COUNTRY_PLACEHOLDER },
+          { value: FRANCE.code, text: FRANCE.name },
+          { value: GB_COUNTRY.code, text: GB_COUNTRY.name }
+        ],
+        countryCodes: ['FR', GB_COUNTRY.code],
+        formValues: postedValues
+      })
+    }
+  )
 })
 
 describe('#buildCountrySelectItems', () => {
@@ -120,7 +182,7 @@ describe('#countryCodesMatching', () => {
   test('Should return the alpha-2 code of every country whose name contains the term, ignoring case and surrounding spaces', () => {
     expect(countryCodesMatching(' FRAN ', COUNTRIES)).toEqual(['FR'])
     expect(countryCodesMatching('united', COUNTRIES)).toEqual([
-      'GB',
+      GB_COUNTRY.code,
       'US',
       'AE'
     ])

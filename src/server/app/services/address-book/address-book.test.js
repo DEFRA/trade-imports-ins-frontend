@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../config/config.js'
+import { statusCodes } from '../../../common/constants/status-codes.js'
 import {
   ADDRESS_ID,
   addressApiPath,
@@ -96,7 +97,10 @@ describe('against the real address book', () => {
       const scope = addressBookApi()
         .post(addressesApiPath(), VALID_ADDRESS_PAYLOAD)
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
-        .reply(201, { id: ADDRESS_ID, ...VALID_ADDRESS_PAYLOAD })
+        .reply(statusCodes.created, {
+          id: ADDRESS_ID,
+          ...VALID_ADDRESS_PAYLOAD
+        })
 
       const createdAddress = await addressBook.createAddress(
         ORGANISATION_ID,

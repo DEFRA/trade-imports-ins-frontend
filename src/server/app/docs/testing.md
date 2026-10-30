@@ -39,18 +39,50 @@ set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
 (`addressesApiPath(organisationId)`, `addressApiPath(addressId,
 organisationId)`, both defaulting to the session organisation), fixtures
 (`ADDRESS_ID`, `STORED_ADDRESS`, `VALID_ADDRESS_PAYLOAD`,
-`INVALID_ADDRESS_PAYLOAD`, `COUNTRIES`, `MALFORMED_ADDRESS_ID`,
+`INVALID_ADDRESS_PAYLOAD`, `ADDRESS_FORM_LABELS` (the add and edit forms'
+field labels in page order, written out as literals), `COUNTRIES`,
+`MALFORMED_ADDRESS_ID`,
 `ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,
 `COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()`,
 `postPage()`, `getPageAsOtherOrganisation()`), address book API stubs
 (`pageOf(items, overrides)`, `serveStoredAddress(address)`,
 `serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
-`serveAddressNotFoundForOtherOrganisation(addressId)`) and checks
+`serveAddressNotFoundForOtherOrganisation(addressId)`,
+`serveAddressCreated(matchBody)`, which stubs a successful create call whose
+body matches `matchBody`, and
+`serveAddressCreationCapturingBody()`, which stubs it and
+returns the body it received alongside the scope) and checks
 (`expectRedirectTo()`, `expectServerErrorPage()`), which every address
 book test imports instead of keeping a local copy,
 `expect-address-form-widths.js` (`expectAddressFormWidths(result)`, the
 add and edit forms' field widths),
-`expect-address-summary-links.js` (`expectSummaryLinks(result)`),
+`expect-address-form-autocomplete.js`
+(`expectAddressFormAutocomplete(result)`, the add and edit forms' browser
+autocomplete hints, read from `address-form-autocomplete.js`'s
+`AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
+`journey-handshake.js` (`handshakeContextOf(handshake)`, the handshake
+context the app builds from a handshake's query or form fields,
+`JOURNEY_HANDSHAKES_BY_ROLE`, one complete journey
+handshake for each of the place of origin, consignor, consignee, importer and
+place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's
+handshake, `ANIMALS_BASE_URL`, the animals frontend's base URL the return
+URLs start with, and `returnUrlFor(handshake, { addressId, landing })`, the
+return URL a test expects for a handshake, built from that handshake's own
+ids and token; the Vitest tests and the fit specs both use these),
+`expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
+notificationId)`, the Draft tag and notification id in the
+journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
+which the fit specs import too),
+`expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`
+and `expectPlaceholderThenCountriesNoneSelected($, countryNames)`, the add form's
+Country select),
+`expect-address-form-errors.js` (`expectSummaryLinks(result)` and
+`expectSummaryAndFieldErrors($, errors)`, the error summary links and the
+messages beside the fields),
+`rendered-text.js` (`textOf($, selectorOrElement)`, `textsOf($, selector)`
+and `normalisedText(text)`, a rendered element's text trimmed with its
+whitespace collapsed to single spaces, which every Vitest test reads text
+through),
 `open-empty-address-book-with-cookies.js`
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
 opens the address book list with the cookies a POST set so a test can
@@ -121,7 +153,8 @@ playwright:install` once (Chromium).
 Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 `signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
-labels, `validAddress`, `fillValidAddress`,
+`fieldLabels`, `addressFormCountryNames` (the captured countries fixture's
+names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
 `addValidAddressToFreshOrganisation`, `validAddressViewLink`,
 `expectErrorFocusOn`, the two
 validation tables.

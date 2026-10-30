@@ -27,12 +27,48 @@ describe('#copy', () => {
     }
   )
 
-  it('Should word the add-details form with its name label, country placeholder and section headings', () => {
+  it('Should word the add-details form with its section headings, country placeholder and cancel link', () => {
     expect(copy.form.addressHeading).toBe('Address')
     expect(copy.form.contactHeading).toBe('Contact details')
-    expect(copy.form.fields.name).toBe('Name or organisation')
     expect(copy.form.countryPlaceholder).toBe('Select a country')
     expect(copy.add.cancel).toBe('Cancel and return to address book')
+  })
+
+  it('Should word the add page title and caption', () => {
+    expect(copy.add.title).toBe('Add address and contact details')
+    expect(copy.add.caption).toBe('Add new address')
+  })
+
+  it('Should word the journey-mode add actions', () => {
+    expect(copy.add.saveAndSelect).toBe('Save and select')
+    expect(copy.add.saveAndReturnToAddressPage).toBe(
+      'Save and return to address page'
+    )
+    expect(copy.add.cancelToHub).toBe('Cancel and return to hub')
+  })
+
+  it('Should word the Welsh add page title, caption and journey-mode actions', () => {
+    const {
+      title,
+      caption,
+      saveAndSelect,
+      saveAndReturnToAddressPage,
+      cancelToHub
+    } = cy.add
+
+    expect({
+      title,
+      caption,
+      saveAndSelect,
+      saveAndReturnToAddressPage,
+      cancelToHub
+    }).toEqual({
+      title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
+      caption: 'Ychwanegu cyfeiriad newydd',
+      saveAndSelect: 'Cadw a dewis',
+      saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
+      cancelToHub: 'Canslo a dychwelyd i’r hyb'
+    })
   })
 
   it('Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line', () => {
@@ -47,6 +83,20 @@ describe('#copy', () => {
       clear: 'Clear search'
     })
     expect(copy.list.noResults).toBe('Showing 0 of 0')
+  })
+
+  it('Should label the English form fields with the labels the design sets', () => {
+    expect(copy.form.fields).toEqual({
+      name: 'Name or organisation',
+      addressLine1: 'Address line 1',
+      addressLine2: 'Address line 2 (optional)',
+      townOrCity: 'Town or city',
+      county: 'County (optional)',
+      postcode: 'Postcode or Zip code',
+      countryCode: 'Country',
+      phone: 'Phone number',
+      email: 'Email address'
+    })
   })
 
   it.each(LOCALES)(
@@ -102,10 +152,8 @@ describe('#copy', () => {
     expect(copy.delete.cancel).toBe('No, cancel')
   })
 
-  it('Should label the optional county, the postcode and the delete heading, and cap the name at 255 characters', () => {
-    expect(copy.form.fields.county).toBe('County (optional)')
+  it('Should word the delete heading and cap the name at 255 characters', () => {
     expect(copy.delete.title).toBe('Delete this address?')
-    expect(copy.form.fields.postcode).toBe('Postcode or Zip code')
     expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
       'Name must be 255 characters or fewer'
     )

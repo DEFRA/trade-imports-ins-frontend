@@ -8,6 +8,10 @@ import {
   STORED_ADDRESS
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
+import {
+  textOf,
+  textsOf
+} from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { LIST_PAGE_SIZE } from './list.controller.js'
 
@@ -58,12 +62,9 @@ export const tagNamesOf = (elements) =>
   elements.map((_, element) => element.tagName).get()
 
 export const resultsLineOf = ($) =>
-  $('[data-testid="address-book-results-label"]').text().trim()
+  textOf($, '[data-testid="address-book-results-label"]')
 
-export const tableHeadingsOf = ($) =>
-  $('thead th')
-    .map((_, heading) => $(heading).text().trim())
-    .get()
+export const tableHeadingsOf = ($) => textsOf($, 'thead th')
 
 export const bodyRowCountOf = ($) => $('tbody tr').length
 

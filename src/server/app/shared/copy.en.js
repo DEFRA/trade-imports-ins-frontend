@@ -22,6 +22,9 @@ export const copy = {
       accessibility: 'Accessibility statement'
     }
   },
+  journeyStrip: {
+    draft: 'Draft'
+  },
   unauthorised: {
     title: 'Unable to sign in',
     heading: 'Sorry, we are unable to sign you in.',

@@ -13,6 +13,7 @@ import {
   searchAndExpectSingleMatch,
   searchFieldOf
 } from './address-book-list.js'
+import { expectDashboard } from './dashboard.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 import { seedAddress, seedAddressLines } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
@@ -41,6 +42,10 @@ test.describe('navigation', () => {
     await expect(
       page.getByRole('heading', { name: 'Address book', exact: true })
     ).toBeVisible()
+
+    await page.getByRole('link', { name: 'Dashboard' }).click()
+
+    await expectDashboard(page)
   })
 })
 
@@ -89,7 +94,7 @@ test.describe('list and pagination', () => {
 
     await expect(page).toHaveURL(addressAddPath())
     await expect(
-      page.getByRole('heading', { name: 'Add address details' })
+      page.getByRole('heading', { name: 'Add address and contact details' })
     ).toBeVisible()
   })
 
