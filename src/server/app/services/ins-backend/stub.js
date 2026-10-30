@@ -1,4 +1,3 @@
-const PAGE_SIZE = 25
 const DELETED_STATUS = 'DELETED'
 
 const NOTIFICATIONS = [
@@ -9,8 +8,8 @@ const NOTIFICATIONS = [
     status: 'SUBMITTED',
     originCountry: 'FR',
     commodity: 'Cattle',
-    arrivalDate: '2026-09-10T00:00:00Z',
-    lastUpdated: '2026-09-05T09:00:00Z'
+    arrivalDate: '2026-09-10',
+    lastUpdated: '2026-09-03T09:00:00Z'
   },
   {
     aggregateId: 'agg-stub-2',
@@ -19,7 +18,7 @@ const NOTIFICATIONS = [
     status: 'DRAFT',
     originCountry: 'IE',
     commodity: null,
-    arrivalDate: '2026-09-12T00:00:00Z',
+    arrivalDate: '2026-09-12',
     lastUpdated: '2026-09-04T11:30:00Z'
   },
   {
@@ -29,7 +28,7 @@ const NOTIFICATIONS = [
     status: 'AMEND',
     originCountry: 'DE',
     commodity: null,
-    arrivalDate: '2026-09-08T00:00:00Z',
+    arrivalDate: '2026-09-08',
     lastUpdated: '2026-09-06T08:15:00Z'
   },
   {
@@ -39,7 +38,7 @@ const NOTIFICATIONS = [
     status: DELETED_STATUS,
     originCountry: 'GB',
     commodity: null,
-    arrivalDate: '2026-09-09T00:00:00Z',
+    arrivalDate: '2026-09-09',
     lastUpdated: '2026-09-06T10:00:00Z'
   }
 ]
@@ -48,8 +47,8 @@ const sortComparator = (sort) => {
   const [field, direction] = (sort ?? 'arrivalDate,desc').split(',')
   const sortField = field === 'lastUpdated' ? 'lastUpdated' : 'arrivalDate'
   const multiplier = direction === 'asc' ? 1 : -1
-  return (a, b) =>
-    multiplier * (new Date(a[sortField]) - new Date(b[sortField]))
+  return (left, right) =>
+    multiplier * (new Date(left[sortField]) - new Date(right[sortField]))
 }
 
 export const listNotifications = async ({
@@ -57,21 +56,26 @@ export const listNotifications = async ({
   sort,
   referenceNumber
 } = {}) => {
-  const visible = NOTIFICATIONS.filter((n) => n.status !== DELETED_STATUS)
+  const visible = NOTIFICATIONS.filter(
+    (notification) => notification.status !== DELETED_STATUS
+  )
 
   const matches = referenceNumber
-    ? visible.filter((n) => n.referenceNumber === referenceNumber)
+    ? visible.filter(
+        (notification) => notification.referenceNumber === referenceNumber
+      )
     : visible.slice().sort(sortComparator(sort))
 
+  const pageSize = 25
   const totalElements = matches.length
-  const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE))
-  const from = (page - 1) * PAGE_SIZE
-  const content = matches.slice(from, from + PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(totalElements / pageSize))
+  const from = (page - 1) * pageSize
+  const content = matches.slice(from, from + pageSize)
 
   return {
     content,
     page,
-    size: PAGE_SIZE,
+    size: pageSize,
     numberOfElements: content.length,
     totalElements,
     totalPages

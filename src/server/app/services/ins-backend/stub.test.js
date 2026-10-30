@@ -11,15 +11,17 @@ describe('#listNotifications (stub)', () => {
     test.each([
       ['arrivalDate,desc', [STUB_2, STUB_1, STUB_3]],
       ['arrivalDate,asc', [STUB_3, STUB_1, STUB_2]],
-      ['lastUpdated,desc', [STUB_3, STUB_1, STUB_2]],
-      ['lastUpdated,asc', [STUB_2, STUB_1, STUB_3]]
+      ['lastUpdated,desc', [STUB_3, STUB_2, STUB_1]],
+      ['lastUpdated,asc', [STUB_1, STUB_2, STUB_3]]
     ])('sorts by %s', async (sort, expectedOrder) => {
       const { content } = await listNotifications({
         page: 1,
         sort
       })
 
-      expect(content.map((n) => n.aggregateId)).toEqual(expectedOrder)
+      expect(content.map((notification) => notification.aggregateId)).toEqual(
+        expectedOrder
+      )
     })
 
     test('falls back to the arrivalDate,desc default when sort is omitted', async () => {
@@ -27,10 +29,27 @@ describe('#listNotifications (stub)', () => {
         page: 1
       })
 
-      expect(content.map((n) => n.aggregateId)).toEqual([
+      expect(content.map((notification) => notification.aggregateId)).toEqual([
         STUB_2,
         STUB_1,
         STUB_3
+      ])
+    })
+  })
+
+  describe('listNotifications date shapes', () => {
+    test('returns arrivalDate as an ISO date and lastUpdated as a UTC instant', async () => {
+      const { content } = await listNotifications({ page: 1 })
+
+      expect(
+        content.map(({ arrivalDate, lastUpdated }) => ({
+          arrivalDate,
+          lastUpdated
+        }))
+      ).toEqual([
+        { arrivalDate: '2026-09-12', lastUpdated: '2026-09-04T11:30:00Z' },
+        { arrivalDate: '2026-09-10', lastUpdated: '2026-09-03T09:00:00Z' },
+        { arrivalDate: '2026-09-08', lastUpdated: '2026-09-06T08:15:00Z' }
       ])
     })
   })
@@ -41,7 +60,9 @@ describe('#listNotifications (stub)', () => {
         page: 1
       })
 
-      expect(result.content.some((n) => n.status === 'DELETED')).toBe(false)
+      expect(
+        result.content.some((notification) => notification.status === 'DELETED')
+      ).toBe(false)
       expect(result.totalElements).toBe(3)
     })
   })

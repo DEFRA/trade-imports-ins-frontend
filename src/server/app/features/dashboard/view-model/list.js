@@ -1,10 +1,10 @@
-import { format, isValid, parseISO } from 'date-fns'
-
 import { SET_BASES } from '../../../../common/constants/journey-set-bases.js'
+import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { buildSetBaseUrl } from '../../../../common/helpers/set-base-url.js'
+import { formatDisplayCalendarDate } from '../../../lib/validate/index.js'
 import { dashboardPath } from '../../../shared/paths.js'
 
-const LIST_DATE_FORMAT = 'd MMM yyyy'
+const logger = createLogger()
 
 export const SORT_OPTIONS = [
   { value: 'arrivalDate,desc', copyKey: 'arrivalNewest' },
@@ -14,17 +14,6 @@ export const SORT_OPTIONS = [
 ]
 
 const DEFAULT_SORT = SORT_OPTIONS[0].value
-
-export function formatDisplayDate(dateOrIsoString) {
-  if (!dateOrIsoString) {
-    return ''
-  }
-  const date =
-    typeof dateOrIsoString === 'string'
-      ? parseISO(dateOrIsoString)
-      : dateOrIsoString
-  return isValid(date) ? format(date, LIST_DATE_FORMAT) : ''
-}
 
 export function buildDashboardQueryString({
   page,
@@ -72,10 +61,21 @@ export function mapNotificationRows(notifications, countryNames = {}) {
       notification.originCountry ??
       '',
     commodity: notification.commodity ?? '',
-    arrivalDate: formatDisplayDate(notification.arrivalDate),
+    arrivalDate: formatArrivalDate(notification),
     href: buildNotificationLink(
       notification.status,
       notification.referenceNumber
     )
   }))
+}
+
+function formatArrivalDate({ referenceNumber, arrivalDate }) {
+  const formatted = formatDisplayCalendarDate(arrivalDate)
+  if (!formatted && arrivalDate != null) {
+    logger.warn(
+      { referenceNumber, arrivalDate },
+      'Arrival date from the backend is not a calendar date, showing it blank'
+    )
+  }
+  return formatted
 }

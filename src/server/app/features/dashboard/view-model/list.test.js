@@ -11,6 +11,9 @@ vi.mock('../../../../../config/config.js', () => ({
       if (key === 'tradeImportsAnimalsFrontend.baseUrl') {
         return configState.animalsBaseUrl
       }
+      if (key === 'log') {
+        return { enabled: true, level: 'info', format: 'ecs', redact: [] }
+      }
       return undefined
     })
   }
@@ -19,8 +22,17 @@ vi.mock('../../../../../config/config.js', () => ({
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const LAST_UPDATED_OLDEST_FIRST = 'lastUpdated,asc'
 
+const logLines = vi.hoisted(() => [])
+
+vi.mock('pino', async (importOriginal) => {
+  const { pino } = await importOriginal()
+  const lineRecorder = { write: (line) => logLines.push(JSON.parse(line)) }
+  return { pino: (options) => pino(options, lineRecorder) }
+})
+
 afterEach(() => {
   configState.animalsBaseUrl = configState.defaultAnimalsBaseUrl
+  logLines.length = 0
 })
 
 const {
@@ -28,7 +40,6 @@ const {
   buildNotificationLink,
   buildStartNewNotificationLink,
   dashboardPageHref,
-  formatDisplayDate,
   mapNotificationRows
 } = await import('./list.js')
 
@@ -121,20 +132,6 @@ describe('#buildStartNewNotificationLink', () => {
   })
 })
 
-describe('#formatDisplayDate', () => {
-  test('formats an ISO string as "d MMM yyyy"', () => {
-    expect(formatDisplayDate('2026-09-10T00:00:00Z')).toBe('10 Sep 2026')
-  })
-
-  test('returns an empty string for a missing value', () => {
-    expect(formatDisplayDate(undefined)).toBe('')
-  })
-
-  test('returns an empty string for an invalid value', () => {
-    expect(formatDisplayDate('not-a-date')).toBe('')
-  })
-})
-
 describe('#mapNotificationRows', () => {
   test('maps backend fields to row view-model, resolving country names and building the link', () => {
     const rows = mapNotificationRows(
@@ -144,7 +141,7 @@ describe('#mapNotificationRows', () => {
           status: 'SUBMITTED',
           originCountry: 'FR',
           commodity: null,
-          arrivalDate: '2026-09-10T00:00:00Z'
+          arrivalDate: '2026-09-10'
         }
       ],
       { FR: 'France' }
@@ -175,5 +172,47 @@ describe('#mapNotificationRows', () => {
     )
 
     expect(row.originCountry).toBe('ZZ')
+  })
+
+  test('shows an unparseable arrival date blank and warns with the reference and raw value', () => {
+    const [row] = mapNotificationRows([
+      {
+        referenceNumber: REFERENCE_NUMBER,
+        status: 'SUBMITTED',
+        arrivalDate: '2026-02-30'
+      }
+    ])
+
+    expect(row.arrivalDate).toBe('')
+    expect(logLines).toEqual([
+      expect.objectContaining({
+        'log.level': 'warn',
+        referenceNumber: REFERENCE_NUMBER,
+        arrivalDate: '2026-02-30',
+        message:
+          'Arrival date from the backend is not a calendar date, showing it blank'
+      })
+    ])
+  })
+
+  test('does not warn for a valid arrival date', () => {
+    mapNotificationRows([
+      {
+        referenceNumber: REFERENCE_NUMBER,
+        status: 'SUBMITTED',
+        arrivalDate: '2026-09-10'
+      }
+    ])
+
+    expect(logLines).toEqual([])
+  })
+
+  test('shows a missing arrival date blank without warning', () => {
+    const [row] = mapNotificationRows([
+      { referenceNumber: REFERENCE_NUMBER, status: 'DRAFT' }
+    ])
+
+    expect(row.arrivalDate).toBe('')
+    expect(logLines).toEqual([])
   })
 })
