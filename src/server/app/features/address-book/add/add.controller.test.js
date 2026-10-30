@@ -23,10 +23,8 @@ import {
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
-import {
-  expectDraftJourneyStrip,
-  JOURNEY_STRIP
-} from '../../../../common/test-helpers/expect-draft-journey-strip.js'
+import { expectDraftJourneyStrip } from '../../../../common/test-helpers/expect-draft-journey-strip.js'
+import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import {

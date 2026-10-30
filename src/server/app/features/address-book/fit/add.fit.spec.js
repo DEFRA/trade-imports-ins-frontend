@@ -25,6 +25,7 @@ import {
   CONSIGNMENT_CONTACT_HANDSHAKE,
   JOURNEY_HANDSHAKES_BY_ROLE
 } from '../../../../common/test-helpers/journey-handshake.js'
+import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 
 const NOTIFICATION_RETURN_PATH = `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-4F7K2P/address-return`
 const CONSIGNOR_RETURN_URL = `${NOTIFICATION_RETURN_PATH}?fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value`
@@ -115,7 +116,7 @@ test.describe('add address reached from a notification journey', () => {
     await expect(page).toHaveTitle(
       'Add address and contact details - Import notification service - GOV.UK'
     )
-    const journeyStrip = page.locator('.app-journey-strip')
+    const journeyStrip = page.locator(JOURNEY_STRIP)
     await expect(journeyStrip.getByText('Draft', { exact: true })).toBeVisible()
     await expect(
       journeyStrip.getByText(

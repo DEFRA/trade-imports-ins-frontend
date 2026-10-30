@@ -69,7 +69,8 @@ handshake, and `ANIMALS_BASE_URL`, the animals frontend's base URL the return
 URLs start with; the Vitest tests and the fit specs both send these),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
 notificationReference)`, the Draft tag and notification reference in the
-journey strip, and `JOURNEY_STRIP`, its selector),
+journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
+which the fit specs import too),
 `expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`
 and `expectPlaceholderThenCountriesNoneSelected($, countryNames)`, the add form's
 Country select),

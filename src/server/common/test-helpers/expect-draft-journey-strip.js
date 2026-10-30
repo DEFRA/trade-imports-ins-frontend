@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
 
-export const JOURNEY_STRIP = '.app-journey-strip'
+import { JOURNEY_STRIP } from './journey-strip.js'
 
 export const expectDraftJourneyStrip = ($, notificationReference) => {
   const stripTexts = (selector) =>
