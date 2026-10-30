@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import Boom from '@hapi/boom'
 
 import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../common/test-helpers/journey-handshake.js'
@@ -35,15 +35,14 @@ const mockRequest = (query = {}, payload = undefined, session = {}) => {
     query,
     payload,
     yar: {
-      get: vi.fn((key) => store[key] ?? null),
-      set: vi.fn((key, value) => {
+      get: (key) => store[key] ?? null,
+      set: (key, value) => {
         store[key] = value
-      }),
-      clear: vi.fn((key) => {
+      },
+      clear: (key) => {
         delete store[key]
-      })
-    },
-    sessionStore: store
+      }
+    }
   }
 }
 
@@ -115,7 +114,6 @@ describe('storeHandshakeContext and loadHandshakeContext', () => {
     const request = mockRequest()
     storeHandshakeContext(request, validContext)
 
-    expect(request.yar.set).toHaveBeenCalledWith(SESSION_KEY, validContext)
     expect(loadHandshakeContext(request)).toEqual(validContext)
   })
 
@@ -124,7 +122,7 @@ describe('storeHandshakeContext and loadHandshakeContext', () => {
     storeHandshakeContext(request, validContext)
     storeHandshakeContext(request, null)
 
-    expect(request.yar.clear).toHaveBeenCalledWith(SESSION_KEY)
+    expect(loadHandshakeContext(request)).toBeNull()
   })
 })
 
@@ -133,7 +131,7 @@ describe('resolveHandshakeContext', () => {
     const request = mockRequest({}, { ...CONSIGNOR_HANDSHAKE, name: 'Farm' })
 
     expect(resolveHandshakeContext(request)).toEqual(validContext)
-    expect(request.yar.set).toHaveBeenCalledWith(SESSION_KEY, validContext)
+    expect(loadHandshakeContext(request)).toEqual(validContext)
   })
 
   test('prefers the POST payload over a different session handshake', () => {
@@ -200,7 +198,7 @@ describe('resolveHandshakeContext', () => {
     )
 
     expect(resolveHandshakeContext(request)).toBeNull()
-    expect(request.yar.clear).toHaveBeenCalledWith(SESSION_KEY)
+    expect(loadHandshakeContext(request)).toBeNull()
   })
 })
 
@@ -209,7 +207,7 @@ describe('syncHandshakeContext', () => {
     const request = mockRequest({ ...CONSIGNOR_HANDSHAKE })
 
     expect(syncHandshakeContext(request)).toEqual(validContext)
-    expect(request.yar.set).toHaveBeenCalledWith(SESSION_KEY, validContext)
+    expect(loadHandshakeContext(request)).toEqual(validContext)
   })
 
   test('clears handshake context when the GET query is absent', () => {
