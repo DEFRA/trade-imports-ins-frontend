@@ -14,7 +14,7 @@ import {
 } from './kit.js'
 
 const ENTER_A_NAME = 'Enter a name'
-const NOTIFICATION_REFERENCE = 'GBN-AG-26-4F7K2P'
+const NOTIFICATION_ID = 'GBN-AG-26-4F7K2P'
 const ADD_PATH = '/address-book/add'
 const EDIT_PATH = '/address-book/{id}/edit'
 
@@ -52,7 +52,7 @@ describe('#base — the chrome every page shares', () => {
   })
 
   it('Should carry a journey strip through', () => {
-    const journeyStrip = draftJourneyStrip(NOTIFICATION_REFERENCE)
+    const journeyStrip = draftJourneyStrip(NOTIFICATION_ID)
 
     expect(base('Dashboard', { journeyStrip }).journeyStrip).toBe(journeyStrip)
   })
@@ -90,10 +90,10 @@ describe('#errorSummary', () => {
 })
 
 describe('#draftJourneyStrip', () => {
-  it('Should give the Draft status with the blue tag class and carry the notification reference', () => {
-    expect(draftJourneyStrip(NOTIFICATION_REFERENCE)).toEqual({
+  it('Should give the Draft status with the blue tag class and carry the notification id', () => {
+    expect(draftJourneyStrip(NOTIFICATION_ID)).toEqual({
       status: { text: 'Draft', classes: 'govuk-tag--blue' },
-      reference: NOTIFICATION_REFERENCE
+      notificationId: NOTIFICATION_ID
     })
   })
 })

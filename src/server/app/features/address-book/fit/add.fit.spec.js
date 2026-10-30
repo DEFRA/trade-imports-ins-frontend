@@ -108,7 +108,7 @@ test.describe('add address reached from a notification journey', () => {
     await page.goto(`${addressAddPath()}?${new URLSearchParams(handshake)}`)
   }
 
-  test('shows the Draft status and notification reference above the caption, heading, section headings and fields', async ({
+  test('shows the Draft status and notification id above the caption, heading, section headings and fields', async ({
     page
   }) => {
     await openFromJourney(page, 'stub-org-add-journey')

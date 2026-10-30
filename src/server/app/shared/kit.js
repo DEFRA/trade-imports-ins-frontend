@@ -42,12 +42,12 @@ export const errorSummary = (
   }
 }
 
-export const draftJourneyStrip = (reference) => ({
+export const draftJourneyStrip = (notificationId) => ({
   status: {
     text: sharedCopy.journeyStrip.draft,
     classes: 'govuk-tag--blue'
   },
-  reference
+  notificationId
 })
 
 export const base = (

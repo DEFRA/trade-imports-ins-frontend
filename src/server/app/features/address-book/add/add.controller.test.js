@@ -358,7 +358,7 @@ describe(
       expect($(BACK_LINK).attr('href')).toBe(CONTACT_RETURN_URL)
     })
 
-    test('GET arriving through a journey handshake shows the page title, the blue Draft status and notification reference above the caption and heading, then the section headings and every field label', async () => {
+    test('GET arriving through a journey handshake shows the page title, the blue Draft status and notification id above the caption and heading, then the section headings and every field label', async () => {
       const { result, statusCode } = await getAdd(
         server(),
         'add-get-handshake-frame',
@@ -505,7 +505,7 @@ describe(
       )
     })
 
-    test('POST from the consignee handshake keeps the journey, the Draft status, the notification reference and United Kingdom alone on the form when the API rejects the address', async () => {
+    test('POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom alone on the form when the API rejects the address', async () => {
       addressBookApi()
         .post(addressesApiPath())
         .reply(statusCodes.badRequest, {

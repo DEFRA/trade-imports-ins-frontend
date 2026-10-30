@@ -115,8 +115,8 @@ test; [`routes.test.js`](../routes.test.js) pins the exact route list.
   returns to an honoured `return`, or to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
-- **`draftJourneyStrip(reference)`** returns the strip for a notification
-  in progress: `{ status: { text, classes }, reference }`, the status being
+- **`draftJourneyStrip(notificationId)`** returns the strip for a notification
+  in progress: `{ status: { text, classes }, notificationId }`, the status being
   the shared copy's draft wording in a blue tag.
 - **`requireOrganisationId(request)`** throws `Boom.forbidden` when the
   session carries none.
