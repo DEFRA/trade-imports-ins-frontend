@@ -115,11 +115,13 @@ test.describe('add address reached from a notification journey', () => {
     await expect(page).toHaveTitle(
       'Add address and contact details - Import notification service - GOV.UK'
     )
-    await expect(page.getByText('Draft', { exact: true })).toBeVisible()
+    const journeyStrip = page.locator('.app-journey-strip')
+    await expect(journeyStrip.getByText('Draft', { exact: true })).toBeVisible()
     await expect(
-      page.getByText(JOURNEY_HANDSHAKES_BY_ROLE.consignor['notification-id'], {
-        exact: true
-      })
+      journeyStrip.getByText(
+        JOURNEY_HANDSHAKES_BY_ROLE.consignor['notification-id'],
+        { exact: true }
+      )
     ).toBeVisible()
     await expect(
       page.getByText('Add new address', { exact: true })
@@ -141,7 +143,7 @@ test.describe('add address reached from a notification journey', () => {
     ).toBeVisible()
     await expect(page.getByLabel(fieldLabels.county)).toBeVisible()
 
-    const strip = await page.locator('.app-journey-strip').boundingBox()
+    const strip = await journeyStrip.boundingBox()
     const belowTheStrip = [
       page.getByText('Add new address', { exact: true }),
       page.getByRole('heading', { level: 1 }),
