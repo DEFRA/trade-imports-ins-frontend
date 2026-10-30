@@ -10,6 +10,6 @@ export const expectAddressFormAutocomplete = (result) => {
     expect($(`#${id}`).attr('autocomplete'), id).toBe(autocomplete)
   }
   for (const id of ['name', 'county', 'countryCode']) {
-    expect($(`#${id}`).attr('autocomplete'), id).toBeUndefined()
+    expect($(`#${id}:not([autocomplete])`), id).toHaveLength(1)
   }
 }
