@@ -9,7 +9,7 @@ const NOTIFICATIONS = [
     originCountry: 'FR',
     commodity: 'Cattle',
     arrivalDate: '2026-09-10',
-    lastUpdated: '2026-09-05T09:00:00Z'
+    lastUpdated: '2026-09-03T09:00:00Z'
   },
   {
     aggregateId: 'agg-stub-2',
