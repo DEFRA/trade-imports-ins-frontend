@@ -40,7 +40,7 @@ set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
 organisationId)`, both defaulting to the session organisation), fixtures
 (`ADDRESS_ID`, `STORED_ADDRESS`, `VALID_ADDRESS_PAYLOAD`,
 `INVALID_ADDRESS_PAYLOAD`, `ADDRESS_FORM_LABELS` (the add and edit forms'
-field labels in page order, read from the English copy), `COUNTRIES`,
+field labels in page order, written out as literals), `COUNTRIES`,
 `MALFORMED_ADDRESS_ID`,
 `ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,
 `COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()`,

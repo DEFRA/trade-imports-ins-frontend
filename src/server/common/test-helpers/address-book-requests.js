@@ -1,6 +1,5 @@
 import { expect } from 'vitest'
 
-import { copy } from '../../app/features/address-book/copy/copy.en.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { addressBookApi } from './real-mode.js'
 import { ORGANISATION_ID, sessionAuth } from './session-auth.js'
@@ -40,18 +39,16 @@ export const COUNTRY_OPTIONS = '#countryCode option'
 
 export const SELECTED_COUNTRY = '#countryCode option[selected]'
 
-const { fields } = copy.form
-
 export const ADDRESS_FORM_LABELS = [
-  fields.name,
-  fields.addressLine1,
-  fields.addressLine2,
-  fields.townOrCity,
-  fields.county,
-  fields.postcode,
-  fields.countryCode,
-  fields.email,
-  fields.phone
+  'Name or organisation',
+  'Address line 1',
+  'Address line 2 (optional)',
+  'Town or city',
+  'County (optional)',
+  'Postcode or Zip code',
+  'Country',
+  'Email address',
+  'Phone number'
 ]
 
 export const COUNTRIES = [
