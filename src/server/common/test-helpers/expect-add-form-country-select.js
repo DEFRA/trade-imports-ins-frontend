@@ -12,7 +12,7 @@ export const expectUnitedKingdomAloneSelected = ($) => {
   expect($(SELECTED_COUNTRY).attr('value')).toBe('GB')
 }
 
-export const expectCountryOptionsAfterPlaceholder = ($, countryNames) => {
+export const expectPlaceholderThenCountriesNoneSelected = ($, countryNames) => {
   expect(countryOptionTexts($)).toEqual(['Select a country', ...countryNames])
   expect($(SELECTED_COUNTRY)).toHaveLength(0)
 }

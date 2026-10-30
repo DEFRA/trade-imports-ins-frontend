@@ -39,7 +39,7 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
-  expectCountryOptionsAfterPlaceholder,
+  expectPlaceholderThenCountriesNoneSelected,
   expectUnitedKingdomAloneSelected
 } from '../../../../common/test-helpers/expect-add-form-country-select.js'
 import {
@@ -597,7 +597,7 @@ describe(
       async (role) => {
         const $ = await openAddFrom(role)
 
-        expectCountryOptionsAfterPlaceholder($, [
+        expectPlaceholderThenCountriesNoneSelected($, [
           'France',
           'Germany',
           'Switzerland',

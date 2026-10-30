@@ -71,7 +71,7 @@ URLs start with; the Vitest tests and the fit specs both send these),
 notificationReference)`, the Draft tag and notification reference in the
 journey strip, and `JOURNEY_STRIP`, its selector),
 `expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`
-and `expectCountryOptionsAfterPlaceholder($, countryNames)`, the add form's
+and `expectPlaceholderThenCountriesNoneSelected($, countryNames)`, the add form's
 Country select),
 `expect-address-summary-links.js` (`expectSummaryLinks(result)` and
 `expectSummaryAndFieldErrors($, errors)`, the error summary links and the
