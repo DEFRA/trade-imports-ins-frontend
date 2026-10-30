@@ -1,3 +1,4 @@
+import { load } from 'cheerio'
 import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../common/constants/status-codes.js'
@@ -184,8 +185,10 @@ describe('#dashboard — search, sort and errors', () => {
       auth: sessionAuth('dashboard-search-match')
     })
 
+    const referenceCell = load(result)('.govuk-table__body td').first()
+
     expect(scope.isDone()).toBe(true)
-    expect(result).toContain(REFERENCE_NUMBER)
+    expect(referenceCell.text().trim()).toBe(REFERENCE_NUMBER)
   })
 
   test('no matching notification shows "No notifications found"', async () => {
