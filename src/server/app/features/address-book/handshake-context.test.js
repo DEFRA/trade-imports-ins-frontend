@@ -12,15 +12,21 @@ import {
 } from './handshake-context.js'
 
 const SESSION_KEY = 'addressBookHandshake'
-const NOTIFICATION_ID = JOURNEY_HANDSHAKES_BY_ROLE.consignor['notification-id']
+const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_ROLE.consignor
+const PADDED_CONSIGNOR_HANDSHAKE = Object.fromEntries(
+  Object.entries(CONSIGNOR_HANDSHAKE).map(([field, value]) => [
+    field,
+    ` ${value} `
+  ])
+)
 const INCOMPLETE_HANDSHAKE_ERROR = 'Incomplete journey handshake'
 const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
 
 const validContext = {
-  journeyType: JOURNEY_HANDSHAKES_BY_ROLE.consignor['journey-type'],
-  notificationId: NOTIFICATION_ID,
-  fulfilmentId: JOURNEY_HANDSHAKES_BY_ROLE.consignor['fulfilment-id'],
-  handshakeToken: JOURNEY_HANDSHAKES_BY_ROLE.consignor['handshake-token']
+  journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
+  notificationId: CONSIGNOR_HANDSHAKE['notification-id'],
+  fulfilmentId: CONSIGNOR_HANDSHAKE['fulfilment-id'],
+  handshakeToken: CONSIGNOR_HANDSHAKE['handshake-token']
 }
 
 const mockRequest = (query = {}, payload = undefined, session = {}) => {
@@ -50,8 +56,8 @@ describe('readHandshakeQuery', () => {
     expect(() =>
       readHandshakeQuery(
         mockRequest({
-          'journey-type': 'gbn-ag',
-          'notification-id': NOTIFICATION_ID
+          'journey-type': CONSIGNOR_HANDSHAKE['journey-type'],
+          'notification-id': CONSIGNOR_HANDSHAKE['notification-id']
         })
       )
     ).toThrow(Boom.badRequest(INCOMPLETE_HANDSHAKE_ERROR))
@@ -61,10 +67,8 @@ describe('readHandshakeQuery', () => {
     expect(() =>
       readHandshakeQuery(
         mockRequest({
-          'journey-type': UNREGISTERED_JOURNEY_TYPE,
-          'notification-id': NOTIFICATION_ID,
-          'fulfilment-id': validContext.fulfilmentId,
-          'handshake-token': validContext.handshakeToken
+          ...CONSIGNOR_HANDSHAKE,
+          'journey-type': UNREGISTERED_JOURNEY_TYPE
         })
       )
     ).toThrow(Boom.notFound())
@@ -72,14 +76,7 @@ describe('readHandshakeQuery', () => {
 
   test('returns trimmed handshake context for a valid query', () => {
     expect(
-      readHandshakeQuery(
-        mockRequest({
-          'journey-type': ' gbn-ag ',
-          'notification-id': ` ${NOTIFICATION_ID} `,
-          'fulfilment-id': ` ${validContext.fulfilmentId} `,
-          'handshake-token': ` ${validContext.handshakeToken} `
-        })
-      )
+      readHandshakeQuery(mockRequest({ ...PADDED_CONSIGNOR_HANDSHAKE }))
     ).toEqual(validContext)
   })
 })
@@ -92,7 +89,7 @@ describe('readHandshakePayload', () => {
   test('throws when the handshake payload is incomplete', () => {
     expect(() =>
       readHandshakePayload({
-        'journey-type': 'gbn-ag'
+        'journey-type': CONSIGNOR_HANDSHAKE['journey-type']
       })
     ).toThrow(Boom.badRequest(INCOMPLETE_HANDSHAKE_ERROR))
   })
@@ -100,23 +97,16 @@ describe('readHandshakePayload', () => {
   test('throws when the journey type is not registered', () => {
     expect(() =>
       readHandshakePayload({
-        'journey-type': UNREGISTERED_JOURNEY_TYPE,
-        'notification-id': NOTIFICATION_ID,
-        'fulfilment-id': validContext.fulfilmentId,
-        'handshake-token': validContext.handshakeToken
+        ...CONSIGNOR_HANDSHAKE,
+        'journey-type': UNREGISTERED_JOURNEY_TYPE
       })
     ).toThrow(Boom.notFound())
   })
 
   test('returns trimmed handshake context for a valid payload', () => {
-    expect(
-      readHandshakePayload({
-        'journey-type': ' gbn-ag ',
-        'notification-id': ` ${NOTIFICATION_ID} `,
-        'fulfilment-id': ` ${validContext.fulfilmentId} `,
-        'handshake-token': ` ${validContext.handshakeToken} `
-      })
-    ).toEqual(validContext)
+    expect(readHandshakePayload({ ...PADDED_CONSIGNOR_HANDSHAKE })).toEqual(
+      validContext
+    )
   })
 })
 
@@ -140,16 +130,7 @@ describe('storeHandshakeContext and loadHandshakeContext', () => {
 
 describe('resolveHandshakeContext', () => {
   test('prefers handshake fields from the POST payload', () => {
-    const request = mockRequest(
-      {},
-      {
-        'journey-type': validContext.journeyType,
-        'notification-id': validContext.notificationId,
-        'fulfilment-id': validContext.fulfilmentId,
-        'handshake-token': validContext.handshakeToken,
-        name: 'Farm'
-      }
-    )
+    const request = mockRequest({}, { ...CONSIGNOR_HANDSHAKE, name: 'Farm' })
 
     expect(resolveHandshakeContext(request)).toEqual(validContext)
     expect(request.yar.set).toHaveBeenCalledWith(SESSION_KEY, validContext)
@@ -157,20 +138,14 @@ describe('resolveHandshakeContext', () => {
 
   test('prefers the POST payload over a different session handshake', () => {
     const sessionContext = {
-      journeyType: 'gbn-ag',
+      journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
       notificationId: 'GBN-AG-26-OLDREF',
       fulfilmentId: '00000000-0000-4000-8000-000000000001',
       handshakeToken: 'old-token'
     }
     const request = mockRequest(
       {},
-      {
-        'journey-type': validContext.journeyType,
-        'notification-id': validContext.notificationId,
-        'fulfilment-id': validContext.fulfilmentId,
-        'handshake-token': validContext.handshakeToken,
-        name: 'Farm'
-      },
+      { ...CONSIGNOR_HANDSHAKE, name: 'Farm' },
       { [SESSION_KEY]: sessionContext }
     )
 
@@ -179,7 +154,10 @@ describe('resolveHandshakeContext', () => {
   })
 
   test('throws when the POST payload handshake is incomplete', () => {
-    const request = mockRequest({}, { 'journey-type': 'gbn-ag', name: 'Farm' })
+    const request = mockRequest(
+      {},
+      { 'journey-type': CONSIGNOR_HANDSHAKE['journey-type'], name: 'Farm' }
+    )
 
     expect(() => resolveHandshakeContext(request)).toThrow(
       Boom.badRequest(INCOMPLETE_HANDSHAKE_ERROR)
@@ -190,10 +168,8 @@ describe('resolveHandshakeContext', () => {
     const request = mockRequest(
       {},
       {
+        ...CONSIGNOR_HANDSHAKE,
         'journey-type': UNREGISTERED_JOURNEY_TYPE,
-        'notification-id': validContext.notificationId,
-        'fulfilment-id': validContext.fulfilmentId,
-        'handshake-token': validContext.handshakeToken,
         name: 'Farm'
       }
     )
@@ -230,12 +206,7 @@ describe('resolveHandshakeContext', () => {
 
 describe('syncHandshakeContext', () => {
   test('stores handshake context from the GET query', () => {
-    const request = mockRequest({
-      'journey-type': validContext.journeyType,
-      'notification-id': validContext.notificationId,
-      'fulfilment-id': validContext.fulfilmentId,
-      'handshake-token': validContext.handshakeToken
-    })
+    const request = mockRequest({ ...CONSIGNOR_HANDSHAKE })
 
     expect(syncHandshakeContext(request)).toEqual(validContext)
     expect(request.yar.set).toHaveBeenCalledWith(SESSION_KEY, validContext)
