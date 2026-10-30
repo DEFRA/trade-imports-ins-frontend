@@ -108,7 +108,7 @@ describe('journey-registry', () => {
     expect(url.pathname.startsWith('/live-animals/')).toBe(true)
   })
 
-  test.each(Object.values(ADDRESS_LANDING))(
+  test.each([ADDRESS_LANDING.SELECT, ADDRESS_LANDING.RETURN])(
     'buildReturnUrl carries the address id and the %s landing',
     (landing) => {
       const url = buildReturnUrl(
@@ -125,6 +125,19 @@ describe('journey-registry', () => {
       )
     }
   )
+
+  test('buildReturnUrl carries the cancel landing and no address id', () => {
+    const url = buildReturnUrl(
+      {
+        journeyType: JOURNEY_TYPES.GBN_AG,
+        notificationId: NOTIFICATION_ID,
+        fulfilmentId: FULFILMENT_ID
+      },
+      { landing: ADDRESS_LANDING.CANCEL }
+    )
+
+    expect(url).toBe(`${RETURN_URL_WITHOUT_ADDRESS}&landing=cancel`)
+  })
 
   describe('isConsignmentContact', () => {
     test('is true for the consignment contact handshake', () => {
