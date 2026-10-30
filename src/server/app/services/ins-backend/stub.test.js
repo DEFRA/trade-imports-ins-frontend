@@ -39,12 +39,16 @@ describe('#listNotifications (stub)', () => {
     test('returns arrivalDate as an ISO date and lastUpdated as a UTC instant', async () => {
       const { content } = await listNotifications({ page: 1 })
 
-      for (const notification of content) {
-        expect(notification.arrivalDate).toMatch(/^\d{4}-\d{2}-\d{2}$/)
-        expect(notification.lastUpdated).toMatch(
-          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/
-        )
-      }
+      expect(
+        content.map(({ arrivalDate, lastUpdated }) => ({
+          arrivalDate,
+          lastUpdated
+        }))
+      ).toEqual([
+        { arrivalDate: '2026-09-12', lastUpdated: '2026-09-04T11:30:00Z' },
+        { arrivalDate: '2026-09-10', lastUpdated: '2026-09-03T09:00:00Z' },
+        { arrivalDate: '2026-09-08', lastUpdated: '2026-09-06T08:15:00Z' }
+      ])
     })
   })
 
