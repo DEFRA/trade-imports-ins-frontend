@@ -61,11 +61,6 @@ export const parseDateText = (raw) => {
 export const formatDateText = (date) =>
   `${date.getUTCDate()}/${date.getUTCMonth() + 1}/${date.getUTCFullYear()}`
 
-/**
- * Renders a `YYYY-MM-DD` calendar date as `d MMM yyyy`.
- * @param {string} [calendarDate] - The date as `YYYY-MM-DD`.
- * @returns {string} e.g. `21 Jul 2026`, or `''` when the value is not a real `YYYY-MM-DD` date.
- */
 export const formatDisplayCalendarDate = (calendarDate) => {
   const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(calendarDate ?? '')
   if (!parts) {
