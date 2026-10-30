@@ -326,16 +326,9 @@ describe(
       )
       expect(
         $('form input[type="hidden"]')
-          .map((_, input) => $(input).attr('name'))
+          .map((_, input) => [[$(input).attr('name'), $(input).attr('value')]])
           .get()
-      ).toEqual([
-        'crumb',
-        'journey-type',
-        'notification-id',
-        'fulfilment-id',
-        'handshake-token'
-      ])
-      expect($('input[name="journey-type"]').attr('value')).toBe('gbn-ag')
+      ).toEqual([['crumb', ''], ...Object.entries(CONSIGNOR_HANDSHAKE)])
     })
 
     test('GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the contact page', async () => {
