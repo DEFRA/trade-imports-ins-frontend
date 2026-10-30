@@ -15,7 +15,7 @@ import {
   getPage,
   INVALID_ADDRESS_PAYLOAD,
   postPage,
-  replyAddressCreated,
+  serveAddressCreated,
   SELECTED_COUNTRY,
   serveAddressCreationCapturingBody,
   STORED_ADDRESS,
@@ -179,7 +179,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('POST shows the address added banner on the address book', async () => {
-    replyAddressCreated()
+    serveAddressCreated()
 
     const { headers } = await postAdd(
       server(),
@@ -443,7 +443,7 @@ describe(
     })
 
     test('POST of Save and select returns to the journey with the new address id and the select landing, logs the hand-back once, and shows no address-book banner', async () => {
-      const scope = replyAddressCreated()
+      const scope = serveAddressCreated()
 
       const response = await postAdd(server(), 'add-post-handshake', {
         ...CONSIGNOR_HANDSHAKE,
@@ -478,7 +478,7 @@ describe(
     })
 
     test('POST of Save and return to address page returns to the journey with the new address id and the return landing', async () => {
-      const scope = replyAddressCreated()
+      const scope = serveAddressCreated()
 
       const response = await postAdd(server(), 'add-post-handshake-return', {
         ...CONSIGNOR_HANDSHAKE,
@@ -494,7 +494,7 @@ describe(
     })
 
     test('POST of the consignment contact Save and continue, which carries no action, returns to the journey with the select landing', async () => {
-      replyAddressCreated()
+      serveAddressCreated()
 
       const response = await postAdd(server(), 'add-post-handshake-contact', {
         ...CONSIGNMENT_CONTACT_HANDSHAKE,

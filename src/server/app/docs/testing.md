@@ -48,7 +48,7 @@ field labels in page order, written out as literals), `COUNTRIES`,
 (`pageOf(items, overrides)`, `serveStoredAddress(address)`,
 `serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
 `serveAddressNotFoundForOtherOrganisation(addressId)`,
-`replyAddressCreated(matchBody)`, which stubs a successful create call whose
+`serveAddressCreated(matchBody)`, which stubs a successful create call whose
 body matches `matchBody`, and
 `serveAddressCreationCapturingBody()`, which stubs it and
 returns the body it received alongside the scope) and checks

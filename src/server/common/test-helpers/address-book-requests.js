@@ -94,7 +94,7 @@ export const INVALID_ADDRESS_PAYLOAD = {
   email: 'bad'
 }
 
-export const replyAddressCreated = (matchBody) => {
+export const serveAddressCreated = (matchBody) => {
   const created = 201
   return addressBookApi()
     .post(addressesApiPath(), matchBody)
@@ -104,7 +104,7 @@ export const replyAddressCreated = (matchBody) => {
 
 export const serveAddressCreationCapturingBody = () => {
   const captured = {}
-  const scope = replyAddressCreated((body) => {
+  const scope = serveAddressCreated((body) => {
     captured.body = body
     return true
   })
