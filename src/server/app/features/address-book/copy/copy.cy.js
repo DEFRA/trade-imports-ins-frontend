@@ -14,15 +14,7 @@ export const copy = {
       clear: 'Clirio’r chwiliad',
       type: {
         label: 'Math',
-        placeholder: 'Dewiswch un',
-        options: {
-          PLACE_OF_ORIGIN: 'Man Tarddiad',
-          CONSIGNOR: 'Anfonwr',
-          CONSIGNEE: 'Derbynnydd',
-          IMPORTER: 'Mewnforiwr',
-          PLACE_OF_DESTINATION: 'Man Cyrchfan',
-          BRANCH_ADDRESS: 'Cyfeiriad Cangen'
-        }
+        placeholder: 'Dewiswch un'
       }
     },
     add: 'Ychwanegu cyfeiriad newydd',
@@ -44,12 +36,21 @@ export const copy = {
       }
     },
     uses: {
-      PLACE_OF_ORIGIN: 'Man tarddiad',
-      CONSIGNOR: 'Anfonwr',
-      CONSIGNEE: 'Derbynnydd',
-      IMPORTER: 'Mewnforiwr',
-      PLACE_OF_DESTINATION: 'Man cyrchfan',
-      BRANCH_ADDRESS: 'Cangen'
+      PLACE_OF_ORIGIN: {
+        columnLabel: 'Man tarddiad',
+        optionLabel: 'Man Tarddiad'
+      },
+      CONSIGNOR: { columnLabel: 'Anfonwr', optionLabel: 'Anfonwr' },
+      CONSIGNEE: { columnLabel: 'Derbynnydd', optionLabel: 'Derbynnydd' },
+      IMPORTER: { columnLabel: 'Mewnforiwr', optionLabel: 'Mewnforiwr' },
+      PLACE_OF_DESTINATION: {
+        columnLabel: 'Man cyrchfan',
+        optionLabel: 'Man Cyrchfan'
+      },
+      BRANCH_ADDRESS: {
+        columnLabel: 'Cangen',
+        optionLabel: 'Cyfeiriad Cangen'
+      }
     },
     table: {
       name: 'Enw',

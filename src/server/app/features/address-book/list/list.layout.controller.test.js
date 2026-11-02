@@ -6,7 +6,10 @@ import {
   ADDRESS_BOOK_PATH,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { textOf } from '../../../../common/test-helpers/rendered-text.js'
+import {
+  textOf,
+  textsOf
+} from '../../../../common/test-helpers/rendered-text.js'
 import {
   NO_RESULTS_LINE,
   TABLE_HEADINGS,
@@ -21,7 +24,8 @@ import {
   stubAddressPage,
   subNavigationOf,
   tableHeadingsOf,
-  tagNamesOf
+  tagNamesOf,
+  typeSelectStateOf
 } from './list.test-support.js'
 
 const linksAfterSubNavigation = ($) =>
@@ -76,20 +80,17 @@ describe('#addressBookListLayout', () => {
 
     const controls = contentOf($).find('form details .govuk-details__text')
     expect(
-      controls
-        .find('label, input, button, select, .govuk-hint')
-        .map((_, element) => ({
-          tag: element.tagName,
-          text: element.tagName === 'select' ? '' : textOf($, element)
-        }))
-        .get()
-    ).toEqual([
-      { tag: 'label', text: 'Search' },
-      { tag: 'div', text: 'Search by name, address or country' },
-      { tag: 'input', text: '' },
-      { tag: 'button', text: 'Search' },
-      { tag: 'label', text: 'Type' },
-      { tag: 'select', text: '' }
+      tagNamesOf(controls.find('label, input, button, select, .govuk-hint'))
+    ).toEqual(['label', 'div', 'input', 'button', 'label', 'select'])
+    expect(textsOf($, controls.find('label'))).toEqual(['Search', 'Type'])
+    expect(textOf($, controls.find('.govuk-hint'))).toBe(
+      'Search by name, address or country'
+    )
+    expect(textOf($, controls.find('button'))).toBe('Search')
+    expect(typeSelectStateOf($).optionTexts).toEqual([
+      'Select one',
+      'Place of Origin',
+      'Consignor'
     ])
     const input = controls.find('input')
     expect(input.attr('name')).toBe('q')

@@ -42,25 +42,29 @@ export const nameLinesOf = (name) => {
 export const resultsLabelOf = (pagination, listCopy) =>
   buildResultsLabel(pagination, listCopy.results) ?? listCopy.noResults
 
-export const useLabelsOf = (uses, labelByUse) =>
-  (uses ?? []).map((use) => labelByUse[use] ?? use).join(', ')
+export const useLabelsOf = (uses, copyByUse) =>
+  (uses ?? []).map((use) => copyByUse[use]?.columnLabel ?? use).join(', ')
 
-export const usesWhoseLabelContains = (searchTerm, labelByUse) => {
+export const usesWhoseLabelContains = (searchTerm, copyByUse) => {
   const term = searchTerm?.trim().toLowerCase()
   if (!term) {
     return []
   }
-  return Object.entries(labelByUse)
-    .filter(([, label]) => label.toLowerCase().includes(term))
+  return Object.entries(copyByUse)
+    .filter(([, { columnLabel, optionLabel }]) =>
+      [columnLabel, optionLabel].some((label) =>
+        label.toLowerCase().includes(term)
+      )
+    )
     .map(([use]) => use)
 }
 
-export const mapAddressRows = (addresses, countries = [], labelByUse = {}) =>
+export const mapAddressRows = (addresses, countries = [], copyByUse = {}) =>
   addresses.map((address) => ({
     id: address.id,
     name: address.name,
     nameLines: nameLinesOf(address.name),
-    useLabels: useLabelsOf(address.uses, labelByUse),
+    useLabels: useLabelsOf(address.uses, copyByUse),
     postalLines: postalLinesOf(address),
     countryLabel: countryLabelOf(countries, address.countryCode)
   }))

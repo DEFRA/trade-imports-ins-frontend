@@ -342,9 +342,7 @@ test.describe('address type tabs without JavaScript', () => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
 
     for (const { label, heading, names } of TABS) {
-      await subNavigationLinkLocatorsOf(page)
-        .getByText(label, { exact: true })
-        .click()
+      await followTab(page, label)
 
       await expectTabsInOrderWithSelected(page, label)
       await expect(panelHeadingLocatorOf(page)).toHaveText(heading)
@@ -509,9 +507,9 @@ test.describe('filter addresses without JavaScript', () => {
   }
 })
 
-const CONSIGNOR_TYPE = { label: 'Consignor', use: 'CONSIGNOR' }
-const CONSIGNEE_TYPE = { label: 'Consignee', use: 'CONSIGNEE' }
-const IMPORTER_TYPE = { label: 'Importer', use: 'IMPORTER' }
+const CONSIGNOR_USE = { label: 'Consignor', value: 'CONSIGNOR' }
+const CONSIGNEE_USE = { label: 'Consignee', value: 'CONSIGNEE' }
+const IMPORTER_USE = { label: 'Importer', value: 'IMPORTER' }
 const SELECT_ONE = 'Select one'
 const ONE_ADDRESS_LINE = 'Showing 1-1 of 1'
 
@@ -527,7 +525,7 @@ test.describe('type filter', () => {
 
       await searchAndExpectMatches(page, '', {
         submitWith,
-        type: CONSIGNOR_TYPE,
+        use: CONSIGNOR_USE,
         resultsLine: ONE_ADDRESS_LINE
       })
 
@@ -535,7 +533,7 @@ test.describe('type filter', () => {
       await expect(page.locator('.govuk-pagination')).toHaveCount(0)
       await expectTabsInOrderWithSelected(page, ORIGIN_TAB.label)
       await openFilterDisclosure(page)
-      await expectTypeChosen(page, CONSIGNOR_TYPE.label)
+      await expectTypeChosen(page, CONSIGNOR_USE.label)
     })
   }
 
@@ -549,7 +547,7 @@ test.describe('type filter', () => {
 
     await searchAndExpectMatches(page, '', {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      type: CONSIGNEE_TYPE,
+      use: CONSIGNEE_USE,
       resultsLine: ONE_ADDRESS_LINE
     })
 
@@ -562,7 +560,7 @@ test.describe('type filter', () => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
     await openFilterDisclosure(page)
 
-    await typeSelectOf(page).selectOption({ label: CONSIGNOR_TYPE.label })
+    await typeSelectOf(page).selectOption({ label: CONSIGNOR_USE.label })
 
     await expect(page).toHaveURL(addressBookPath())
     await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
@@ -578,7 +576,7 @@ test.describe('type filter', () => {
     })
     await searchAndExpectSingleMatch(page, 'Stub', {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      type: IMPORTER_TYPE,
+      use: IMPORTER_USE,
       matchedCellText: TYPED_SEED.importer.name
     })
 
@@ -617,7 +615,7 @@ test.describe('type filter', () => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
     await searchAndExpectQuery(page, '', {
       submitWith: 'button',
-      type: CONSIGNOR_TYPE
+      use: CONSIGNOR_USE
     })
     await openFilterDisclosure(page)
 
@@ -638,7 +636,7 @@ test.describe('type filter without JavaScript', () => {
 
     await searchAndExpectMatches(page, '', {
       submitWith: 'button',
-      type: CONSIGNOR_TYPE,
+      use: CONSIGNOR_USE,
       resultsLine: ONE_ADDRESS_LINE
     })
 

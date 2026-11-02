@@ -9,13 +9,17 @@ import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
   greenFarmAddress,
   highlandAddress,
+  parisDepotAddress,
   resultsLineOf,
+  rowCellsOf,
   startServerWithPageReader,
+  stubAddressBookUnavailable,
   stubAddressPage,
-  typeSelectOf
+  typeSelectStateOf
 } from './list.test-support.js'
 
 const SELECT_ONE = 'Select one'
+const BRANCH_ADDRESS_OPTION = 'Branch Address'
 
 describe('#addressBookListTypeFilter', () => {
   const readPage = startServerWithPageReader()
@@ -29,7 +33,7 @@ describe('#addressBookListTypeFilter', () => {
       ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       [SELECT_ONE, 'Consignee', 'Importer', 'Place of Destination']
     ],
-    [ADDRESS_TYPES.BRANCH, [SELECT_ONE, 'Branch Address']]
+    [ADDRESS_TYPES.BRANCH, [SELECT_ONE, BRANCH_ADDRESS_OPTION]]
   ])(
     'offers the Type select the options of the %s tab only, led by Select one with no value',
     async (addressType, optionTexts) => {
@@ -40,7 +44,7 @@ describe('#addressBookListTypeFilter', () => {
         'list-type-options'
       )
 
-      expect(typeSelectOf($)).toEqual({
+      expect(typeSelectStateOf($)).toEqual({
         label: 'Type',
         optionTexts,
         emptyValueTexts: [SELECT_ONE],
@@ -61,7 +65,7 @@ describe('#addressBookListTypeFilter', () => {
     )
 
     expect(scope.isDone()).toBe(true)
-    expect(typeSelectOf($).selectedTexts).toEqual(['Branch Address'])
+    expect(typeSelectStateOf($).selectedTexts).toEqual([BRANCH_ADDRESS_OPTION])
   })
 
   test.each([
@@ -79,9 +83,46 @@ describe('#addressBookListTypeFilter', () => {
       )
 
       expect(scope.isDone()).toBe(true)
-      expect(typeSelectOf($).selectedTexts).toEqual([])
+      expect(typeSelectStateOf($).selectedTexts).toEqual([])
     }
   )
+
+  test('lists the whole Branch tab with no Type selected for a use the Branch tab does not offer', async () => {
+    const scope = stubAddressPage(
+      { page: '1', addressType: ADDRESS_TYPES.BRANCH },
+      pageOf([highlandAddress])
+    )
+
+    const { $ } = await readPage(
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&use=CONSIGNOR`,
+      'list-use-of-another-tab'
+    )
+
+    expect(scope.isDone()).toBe(true)
+    expect(resultsLineOf($)).toBe('Showing 1-1 of 1')
+    expect(typeSelectStateOf($).selectedTexts).toEqual([])
+  })
+
+  test('offers the Type select of the tab, with the chosen Type selected, on the page shown when the address book cannot be reached', async () => {
+    const scope = stubAddressBookUnavailable({
+      addressType: ADDRESS_TYPES.BRANCH,
+      use: 'BRANCH_ADDRESS'
+    })
+
+    const { $, statusCode } = await readPage(
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&use=BRANCH_ADDRESS`,
+      'list-use-address-book-unavailable'
+    )
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(scope.isDone()).toBe(true)
+    expect(typeSelectStateOf($)).toEqual({
+      label: 'Type',
+      optionTexts: [SELECT_ONE, BRANCH_ADDRESS_OPTION],
+      emptyValueTexts: [SELECT_ONE],
+      selectedTexts: [BRANCH_ADDRESS_OPTION]
+    })
+  })
 
   test('links every page with the selected tab, the search term, the use and the page number only', async () => {
     const scope = stubAddressPage(
@@ -173,6 +214,27 @@ describe('#addressBookListTypeFilter', () => {
       expect(scope.isDone()).toBe(true)
     }
   )
+
+  test('lists the address holding a Branch Address use when the Branch tab is searched for branch address', async () => {
+    const scope = stubAddressPage(
+      {
+        page: '1',
+        q: 'branch address',
+        addressType: ADDRESS_TYPES.BRANCH,
+        searchUse: 'BRANCH_ADDRESS'
+      },
+      pageOf([{ ...parisDepotAddress, uses: ['BRANCH_ADDRESS'] }])
+    )
+
+    const { $ } = await readPage(
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=${encodeURIComponent('branch address')}`,
+      'list-search-branch-address'
+    )
+
+    expect(scope.isDone()).toBe(true)
+    expect(rowCellsOf($, 0).eq(1).text().trim()).toBe('Branch')
+    expect(resultsLineOf($)).toBe('Showing 1-1 of 1')
+  })
 
   test('asks the address book to match every use whose label contains the search term', async () => {
     const scope = stubAddressPage(

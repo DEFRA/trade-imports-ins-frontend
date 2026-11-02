@@ -80,7 +80,7 @@ export const subNavigationLinksOf = ($) =>
     }))
     .get()
 
-export const typeSelectOf = ($) => {
+export const typeSelectStateOf = ($) => {
   const select = $('select[name="use"]')
   const options = select.find('option')
   return {
@@ -128,7 +128,10 @@ export const stubAddressPage = (query, addressPage) =>
     pageSize: LIST_PAGE_SIZE
   })
 
-export const stubAddressBookUnavailable = () =>
-  interceptListRequest({ page: '1' }).reply(statusCodes.serviceUnavailable, {
-    title: 'Service Unavailable'
-  })
+export const stubAddressBookUnavailable = (query = {}) =>
+  interceptListRequest({ page: '1', ...query }).reply(
+    statusCodes.serviceUnavailable,
+    {
+      title: 'Service Unavailable'
+    }
+  )

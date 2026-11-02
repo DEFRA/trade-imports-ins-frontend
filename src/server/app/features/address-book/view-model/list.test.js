@@ -158,9 +158,10 @@ describe('#usesWhoseLabelContains', () => {
     ['consign', ['CONSIGNOR', 'CONSIGNEE']],
     ['  PLACE OF ', ['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION']],
     ['branch', ['BRANCH_ADDRESS']],
+    ['branch address', ['BRANCH_ADDRESS']],
     ['farm', []]
   ])(
-    'Should give the uses whose Type column label contains %j, ignoring case',
+    'Should give the uses whose Type column label or Type option label contains %j, ignoring case',
     (searchTerm, uses) => {
       expect(usesWhoseLabelContains(searchTerm, copy.list.uses)).toEqual(uses)
     }

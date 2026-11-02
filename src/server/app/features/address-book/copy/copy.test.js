@@ -71,7 +71,7 @@ describe('#copy', () => {
     })
   })
 
-  it('Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line', () => {
+  it('Should word the list intro, filter disclosure, search field and hint, Type select and its options, search button, Clear search link and empty results line', () => {
     expect(copy.list.intro).toBe(
       'Manage your addresses for use across all your import notifications'
     )
@@ -83,15 +83,7 @@ describe('#copy', () => {
       clear: 'Clear search',
       type: {
         label: 'Type',
-        placeholder: 'Select one',
-        options: {
-          PLACE_OF_ORIGIN: 'Place of Origin',
-          CONSIGNOR: 'Consignor',
-          CONSIGNEE: 'Consignee',
-          IMPORTER: 'Importer',
-          PLACE_OF_DESTINATION: 'Place of Destination',
-          BRANCH_ADDRESS: 'Branch Address'
-        }
+        placeholder: 'Select one'
       }
     })
     expect(copy.list.noResults).toBe('Showing 0 of 0')
@@ -218,12 +210,6 @@ describe('#copy of the list page', () => {
       ['search.clear', 'Clirio’r chwiliad'],
       ['search.type.label', 'Math'],
       ['search.type.placeholder', 'Dewiswch un'],
-      ['search.type.options.PLACE_OF_ORIGIN', 'Man Tarddiad'],
-      ['search.type.options.CONSIGNOR', 'Anfonwr'],
-      ['search.type.options.CONSIGNEE', 'Derbynnydd'],
-      ['search.type.options.IMPORTER', 'Mewnforiwr'],
-      ['search.type.options.PLACE_OF_DESTINATION', 'Man Cyrchfan'],
-      ['search.type.options.BRANCH_ADDRESS', 'Cyfeiriad Cangen'],
       ['add', 'Ychwanegu cyfeiriad newydd'],
       ['results', 'Yn dangos 1-2 o 3'],
       ['noResults', 'Yn dangos 0 o 0'],
@@ -240,12 +226,18 @@ describe('#copy of the list page', () => {
       ],
       ['tabs.branch.label', 'Cangen'],
       ['tabs.branch.heading', 'Cyfeiriadau cangen'],
-      ['uses.PLACE_OF_ORIGIN', 'Man tarddiad'],
-      ['uses.CONSIGNOR', 'Anfonwr'],
-      ['uses.CONSIGNEE', 'Derbynnydd'],
-      ['uses.IMPORTER', 'Mewnforiwr'],
-      ['uses.PLACE_OF_DESTINATION', 'Man cyrchfan'],
-      ['uses.BRANCH_ADDRESS', 'Cangen'],
+      ['uses.PLACE_OF_ORIGIN.columnLabel', 'Man tarddiad'],
+      ['uses.PLACE_OF_ORIGIN.optionLabel', 'Man Tarddiad'],
+      ['uses.CONSIGNOR.columnLabel', 'Anfonwr'],
+      ['uses.CONSIGNOR.optionLabel', 'Anfonwr'],
+      ['uses.CONSIGNEE.columnLabel', 'Derbynnydd'],
+      ['uses.CONSIGNEE.optionLabel', 'Derbynnydd'],
+      ['uses.IMPORTER.columnLabel', 'Mewnforiwr'],
+      ['uses.IMPORTER.optionLabel', 'Mewnforiwr'],
+      ['uses.PLACE_OF_DESTINATION.columnLabel', 'Man cyrchfan'],
+      ['uses.PLACE_OF_DESTINATION.optionLabel', 'Man Cyrchfan'],
+      ['uses.BRANCH_ADDRESS.columnLabel', 'Cangen'],
+      ['uses.BRANCH_ADDRESS.optionLabel', 'Cyfeiriad Cangen'],
       ['table.name', 'Enw'],
       ['table.type', 'Math'],
       ['table.address', 'Cyfeiriad'],
@@ -269,12 +261,21 @@ describe('#copy of the list page', () => {
     })
     expect(copy.list.table.type).toBe('Type')
     expect(copy.list.uses).toEqual({
-      PLACE_OF_ORIGIN: 'Place of origin',
-      CONSIGNOR: 'Consignor',
-      CONSIGNEE: 'Consignee',
-      IMPORTER: 'Importer',
-      PLACE_OF_DESTINATION: 'Place of destination',
-      BRANCH_ADDRESS: 'Branch'
+      PLACE_OF_ORIGIN: {
+        columnLabel: 'Place of origin',
+        optionLabel: 'Place of Origin'
+      },
+      CONSIGNOR: { columnLabel: 'Consignor', optionLabel: 'Consignor' },
+      CONSIGNEE: { columnLabel: 'Consignee', optionLabel: 'Consignee' },
+      IMPORTER: { columnLabel: 'Importer', optionLabel: 'Importer' },
+      PLACE_OF_DESTINATION: {
+        columnLabel: 'Place of destination',
+        optionLabel: 'Place of Destination'
+      },
+      BRANCH_ADDRESS: {
+        columnLabel: 'Branch',
+        optionLabel: 'Branch Address'
+      }
     })
   })
 })

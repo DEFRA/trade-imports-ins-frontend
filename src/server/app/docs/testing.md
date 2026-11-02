@@ -100,7 +100,7 @@ holds the list's fixtures, nock stubs and Cheerio readers:
 `startServerWithPageReader()`, `stubAddressPage(query, addressPage)` (which
 stubs the Origin and Consignor tab unless the query names another
 `addressType`), `stubAddressBookUnavailable()`, `contentOf`,
-`tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`, `typeSelectOf`
+`tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`, `typeSelectStateOf`
 (the Type select's label, option texts, options with an empty value and chosen
 options), `panelHeadingTextOf`, `resultsLineOf`,
 `bodyRowCountOf`, `rowCellsOf` and `tagNamesOf`. A list
@@ -164,7 +164,10 @@ names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
 `openAddressBookList`, `expectAddressBookList`,
-`expectEmptyAddressBookList`, `searchFieldOf`, `openFilterDisclosure`,
+`expectEmptyAddressBookList`, `searchFieldOf`, `typeSelectOf` (the
+Playwright locator for the Type select; the jsdom and Cheerio reader in
+`list.test-support.js` is `typeSelectStateOf`), `followTab` (follows a
+category tab's link), `openFilterDisclosure`,
 `expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery`,
 `resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
 [`dashboard.js`](../features/address-book/fit/dashboard.js) —

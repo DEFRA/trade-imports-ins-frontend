@@ -12,15 +12,7 @@ export const copy = {
       clear: 'Clear search',
       type: {
         label: 'Type',
-        placeholder: 'Select one',
-        options: {
-          PLACE_OF_ORIGIN: 'Place of Origin',
-          CONSIGNOR: 'Consignor',
-          CONSIGNEE: 'Consignee',
-          IMPORTER: 'Importer',
-          PLACE_OF_DESTINATION: 'Place of Destination',
-          BRANCH_ADDRESS: 'Branch Address'
-        }
+        placeholder: 'Select one'
       }
     },
     add: 'Add a new address',
@@ -42,12 +34,21 @@ export const copy = {
       }
     },
     uses: {
-      PLACE_OF_ORIGIN: 'Place of origin',
-      CONSIGNOR: 'Consignor',
-      CONSIGNEE: 'Consignee',
-      IMPORTER: 'Importer',
-      PLACE_OF_DESTINATION: 'Place of destination',
-      BRANCH_ADDRESS: 'Branch'
+      PLACE_OF_ORIGIN: {
+        columnLabel: 'Place of origin',
+        optionLabel: 'Place of Origin'
+      },
+      CONSIGNOR: { columnLabel: 'Consignor', optionLabel: 'Consignor' },
+      CONSIGNEE: { columnLabel: 'Consignee', optionLabel: 'Consignee' },
+      IMPORTER: { columnLabel: 'Importer', optionLabel: 'Importer' },
+      PLACE_OF_DESTINATION: {
+        columnLabel: 'Place of destination',
+        optionLabel: 'Place of Destination'
+      },
+      BRANCH_ADDRESS: {
+        columnLabel: 'Branch',
+        optionLabel: 'Branch Address'
+      }
     },
     table: {
       name: 'Name',

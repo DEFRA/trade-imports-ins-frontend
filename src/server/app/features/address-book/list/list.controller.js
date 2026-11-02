@@ -72,7 +72,7 @@ const useItemsOf = (selectedTab, selectedUse) => [
   { value: '', text: copy.list.search.type.placeholder },
   ...selectedTab.uses.map((use) => ({
     value: use,
-    text: copy.list.search.type.options[use],
+    text: copy.list.uses[use].optionLabel,
     selected: use === selectedUse
   }))
 ]
@@ -121,7 +121,14 @@ const get = async (request, toolkit) => {
   const searchTerm = request.query.q?.trim() ?? ''
   const selectedTab = resolveTab(request.query.addressType)
   const { addressType } = selectedTab
-  const use = resolveUse(selectedTab, request.query.use)
+  const requestedUse = request.query.use
+  const use = resolveUse(selectedTab, requestedUse)
+  if (requestedUse && !use) {
+    logger.info(
+      { organisationId, addressType, requestedUse },
+      'Address book list ignored a use the tab does not offer'
+    )
+  }
   const successMessage = takeSuccessMessage(request)
 
   try {
