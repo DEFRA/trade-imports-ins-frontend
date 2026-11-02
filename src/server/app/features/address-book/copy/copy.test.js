@@ -80,7 +80,19 @@ describe('#copy', () => {
       label: 'Search',
       hint: 'Search by name, address or country',
       button: 'Search',
-      clear: 'Clear search'
+      clear: 'Clear search',
+      type: {
+        label: 'Type',
+        placeholder: 'Select one',
+        options: {
+          PLACE_OF_ORIGIN: 'Place of Origin',
+          CONSIGNOR: 'Consignor',
+          CONSIGNEE: 'Consignee',
+          IMPORTER: 'Importer',
+          PLACE_OF_DESTINATION: 'Place of Destination',
+          BRANCH_ADDRESS: 'Branch Address'
+        }
+      }
     })
     expect(copy.list.noResults).toBe('Showing 0 of 0')
   })
@@ -204,6 +216,14 @@ describe('#copy of the list page', () => {
       ['search.hint', 'Chwilio yn ôl enw, cyfeiriad neu wlad'],
       ['search.button', 'Chwilio'],
       ['search.clear', 'Clirio’r chwiliad'],
+      ['search.type.label', 'Math'],
+      ['search.type.placeholder', 'Dewiswch un'],
+      ['search.type.options.PLACE_OF_ORIGIN', 'Man Tarddiad'],
+      ['search.type.options.CONSIGNOR', 'Anfonwr'],
+      ['search.type.options.CONSIGNEE', 'Derbynnydd'],
+      ['search.type.options.IMPORTER', 'Mewnforiwr'],
+      ['search.type.options.PLACE_OF_DESTINATION', 'Man Cyrchfan'],
+      ['search.type.options.BRANCH_ADDRESS', 'Cyfeiriad Cangen'],
       ['add', 'Ychwanegu cyfeiriad newydd'],
       ['results', 'Yn dangos 1-2 o 3'],
       ['noResults', 'Yn dangos 0 o 0'],

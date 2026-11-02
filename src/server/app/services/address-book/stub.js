@@ -1,5 +1,5 @@
 import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
-import { ADDRESS_TYPES } from './address-types.js'
+import { ADDRESS_TYPES, USES_BY_ADDRESS_TYPE } from './address-types.js'
 import { TYPED_SEED } from './typed-seed.js'
 
 const OBJECT_ID_LENGTH = 24
@@ -68,22 +68,18 @@ const isListedUnder = (address, addressType) => {
   if (uses.length === 0) {
     return addressType === ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
   }
-  const usesListedByAddressType = {
-    [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
-    [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: [
-      'PLACE_OF_DESTINATION',
-      'CONSIGNEE',
-      'IMPORTER'
-    ],
-    [ADDRESS_TYPES.BRANCH]: ['BRANCH_ADDRESS']
-  }
-  const usesListed = usesListedByAddressType[addressType] ?? []
+  const usesListed = USES_BY_ADDRESS_TYPE[addressType] ?? []
   return uses.some((use) => usesListed.includes(use))
 }
 
-const matchesSearch = (address, { searchTerm, countryCodes = [] }) => {
+const holdsUse = (address, use) => !use || (address.uses ?? []).includes(use)
+
+const matchesSearch = (
+  address,
+  { searchTerm, countryCodes = [], searchUses = [] }
+) => {
   const term = searchTerm?.trim().toLowerCase()
-  if (!term && countryCodes.length === 0) {
+  if (!term && countryCodes.length === 0 && searchUses.length === 0) {
     return true
   }
   const textSearchFields = [
@@ -99,7 +95,11 @@ const matchesSearch = (address, { searchTerm, countryCodes = [] }) => {
     textSearchFields.some((field) =>
       (address[field] ?? '').toLowerCase().includes(term)
     )
-  return textMatches || countryCodes.includes(address.countryCode)
+  return (
+    textMatches ||
+    countryCodes.includes(address.countryCode) ||
+    (address.uses ?? []).some((use) => searchUses.includes(use))
+  )
 }
 
 const pageOfMatches = (matches, { page, pageSize }) => ({
@@ -112,11 +112,12 @@ const pageOfMatches = (matches, { page, pageSize }) => ({
 
 export const listAddresses = async (
   organisationId,
-  { page = 1, pageSize, addressType, ...search } = {}
+  { page = 1, pageSize, addressType, use, ...search } = {}
 ) => {
   const matches = addressesOf(organisationId)
     .filter(isLive)
     .filter((address) => isListedUnder(address, addressType))
+    .filter((address) => holdsUse(address, use))
     .filter((address) => matchesSearch(address, search))
   return pageOfMatches(matches, { page, pageSize })
 }

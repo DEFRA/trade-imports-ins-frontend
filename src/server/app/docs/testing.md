@@ -100,8 +100,9 @@ holds the list's fixtures, nock stubs and Cheerio readers:
 `startServerWithPageReader()`, `stubAddressPage(query, addressPage)` (which
 stubs the Origin and Consignor tab unless the query names another
 `addressType`), `stubAddressBookUnavailable()`, `contentOf`,
-`tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`,
-`panelHeadingTextOf`, `resultsLineOf`,
+`tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`, `typeSelectOf`
+(the Type select's label, option texts, options with an empty value and chosen
+options), `panelHeadingTextOf`, `resultsLineOf`,
 `bodyRowCountOf`, `rowCellsOf` and `tagNamesOf`. A list
 controller test calls `const readPage = startServerWithPageReader()`, which
 starts the server serving `COUNTRIES` and returns a page reader, and reads

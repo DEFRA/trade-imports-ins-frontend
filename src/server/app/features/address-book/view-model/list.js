@@ -6,7 +6,8 @@ import { postalLinesOf } from '../fields.js'
 export const buildAddressBookQueryString = ({
   addressType,
   page,
-  searchTerm
+  searchTerm,
+  use
 } = {}) => {
   const params = new URLSearchParams()
   if (addressType) {
@@ -15,6 +16,9 @@ export const buildAddressBookQueryString = ({
   if (searchTerm) {
     params.set('q', searchTerm)
   }
+  if (use) {
+    params.set('use', use)
+  }
   if (page && page > 1) {
     params.set('page', String(page))
   }
@@ -22,8 +26,11 @@ export const buildAddressBookQueryString = ({
   return query ? `?${query}` : ''
 }
 
-export const addressBookPageHref = (page, { addressType, searchTerm } = {}) =>
-  `${addressBookPath()}${buildAddressBookQueryString({ addressType, searchTerm, page })}`
+export const addressBookPageHref = (
+  page,
+  { addressType, searchTerm, use } = {}
+) =>
+  `${addressBookPath()}${buildAddressBookQueryString({ addressType, searchTerm, use, page })}`
 
 export const nameLinesOf = (name) => {
   const [firstWord, ...otherWords] = (name ?? '').split(/\s+/).filter(Boolean)
@@ -37,6 +44,16 @@ export const resultsLabelOf = (pagination, listCopy) =>
 
 export const useLabelsOf = (uses, labelByUse) =>
   (uses ?? []).map((use) => labelByUse[use] ?? use).join(', ')
+
+export const usesWhoseLabelContains = (searchTerm, labelByUse) => {
+  const term = searchTerm?.trim().toLowerCase()
+  if (!term) {
+    return []
+  }
+  return Object.entries(labelByUse)
+    .filter(([, label]) => label.toLowerCase().includes(term))
+    .map(([use]) => use)
+}
 
 export const mapAddressRows = (addresses, countries = [], labelByUse = {}) =>
   addresses.map((address) => ({

@@ -87,10 +87,21 @@ export const expectFilterDisclosureOpensAndCloses = async (page) => {
   await expect(searchFieldOf(page)).toBeHidden()
 }
 
-const submitSearch = async (page, term, { submitWith }) => {
+export const typeSelectOf = (page) =>
+  page.getByRole('combobox', { name: 'Type', exact: true })
+
+export const followTab = (page, label) =>
+  addressTypesNavOf(page)
+    .getByRole('link', { name: label, exact: true })
+    .click()
+
+const submitSearch = async (page, term, { submitWith, type }) => {
   await openFilterDisclosure(page)
   const searchField = searchFieldOf(page)
   await searchField.fill(term)
+  if (type) {
+    await typeSelectOf(page).selectOption({ label: type.label })
+  }
   if (submitWith === 'enter') {
     await searchField.press('Enter')
   } else {
@@ -101,31 +112,36 @@ const submitSearch = async (page, term, { submitWith }) => {
 export const searchAndExpectQuery = async (
   page,
   term,
-  { submitWith, addressType = DEFAULT_ADDRESS_BOOK_TAB.addressType }
+  { submitWith, addressType = DEFAULT_ADDRESS_BOOK_TAB.addressType, type }
 ) => {
-  await submitSearch(page, term, { submitWith })
-  const submittedQuery = new URLSearchParams({ addressType, q: term })
+  await submitSearch(page, term, { submitWith, type })
+  const submittedQuery = new URLSearchParams({
+    addressType,
+    q: term,
+    use: type?.use ?? ''
+  })
   await expect(page).toHaveURL(`${addressBookPath()}?${submittedQuery}`)
 }
 
 export const searchAndExpectMatches = async (
   page,
   term,
-  { submitWith, resultsLine, addressType }
+  { submitWith, resultsLine, addressType, type }
 ) => {
-  await searchAndExpectQuery(page, term, { submitWith, addressType })
+  await searchAndExpectQuery(page, term, { submitWith, addressType, type })
   await expect(resultsLineOf(page)).toHaveText(resultsLine)
 }
 
 export const searchAndExpectSingleMatch = async (
   page,
   term,
-  { submitWith = 'button', matchedCellText, addressType }
+  { submitWith = 'button', matchedCellText, addressType, type }
 ) => {
   await searchAndExpectMatches(page, term, {
     submitWith,
     resultsLine: 'Showing 1-1 of 1',
-    addressType
+    addressType,
+    type
   })
   await expect(
     page.getByRole('cell', { name: matchedCellText, exact: true })

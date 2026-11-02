@@ -80,6 +80,23 @@ export const subNavigationLinksOf = ($) =>
     }))
     .get()
 
+export const typeSelectOf = ($) => {
+  const select = $('select[name="use"]')
+  const options = select.find('option')
+  return {
+    label: textOf($, $(`label[for="${select.attr('id')}"]`)),
+    optionTexts: options.map((_, option) => textOf($, option)).get(),
+    emptyValueTexts: options
+      .filter((_, option) => $(option).attr('value') === '')
+      .map((_, option) => textOf($, option))
+      .get(),
+    selectedTexts: options
+      .filter((_, option) => $(option).attr('selected') !== undefined)
+      .map((_, option) => textOf($, option))
+      .get()
+  }
+}
+
 export const panelHeadingTextOf = ($) => textOf($, contentOf($).children('h2'))
 
 export const bodyRowCountOf = ($) => $('tbody tr').length

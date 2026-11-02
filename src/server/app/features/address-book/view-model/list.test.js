@@ -8,7 +8,8 @@ import {
   mapAddressRows,
   nameLinesOf,
   resultsLabelOf,
-  useLabelsOf
+  useLabelsOf,
+  usesWhoseLabelContains
 } from './list.js'
 
 describe('#nameLinesOf', () => {
@@ -67,6 +68,17 @@ describe('#buildAddressBookQueryString', () => {
     ).toBe('?addressType=BRANCH&q=green&page=2')
   })
 
+  test('Should carry the use after q and before the page param', () => {
+    expect(
+      buildAddressBookQueryString({
+        addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+        searchTerm: 'green',
+        use: 'CONSIGNOR',
+        page: 2
+      })
+    ).toBe('?addressType=ORIGIN_OR_CONSIGNOR&q=green&use=CONSIGNOR&page=2')
+  })
+
   test('Should carry the address type alone on the first page with no search', () => {
     expect(
       buildAddressBookQueryString({
@@ -99,6 +111,21 @@ describe('#addressBookPageHref', () => {
       '/address-book?addressType=BRANCH&q=green&page=3'
     )
   })
+
+  test('Should link to the address type carrying q, the use and the page', () => {
+    const filters = {
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      searchTerm: 'green',
+      use: 'IMPORTER'
+    }
+
+    expect(addressBookPageHref(1, filters)).toBe(
+      '/address-book?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&use=IMPORTER'
+    )
+    expect(addressBookPageHref(2, filters)).toBe(
+      '/address-book?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&use=IMPORTER&page=2'
+    )
+  })
 })
 
 describe('#useLabelsOf', () => {
@@ -122,6 +149,26 @@ describe('#useLabelsOf', () => {
   test('Should give an empty label for an address with no uses', () => {
     expect(useLabelsOf([], copy.list.uses)).toBe('')
     expect(useLabelsOf(undefined, copy.list.uses)).toBe('')
+  })
+})
+
+describe('#usesWhoseLabelContains', () => {
+  test.each([
+    ['consignor', ['CONSIGNOR']],
+    ['consign', ['CONSIGNOR', 'CONSIGNEE']],
+    ['  PLACE OF ', ['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION']],
+    ['branch', ['BRANCH_ADDRESS']],
+    ['farm', []]
+  ])(
+    'Should give the uses whose Type column label contains %j, ignoring case',
+    (searchTerm, uses) => {
+      expect(usesWhoseLabelContains(searchTerm, copy.list.uses)).toEqual(uses)
+    }
+  )
+
+  test('Should give no uses for a blank or missing term', () => {
+    expect(usesWhoseLabelContains('   ', copy.list.uses)).toEqual([])
+    expect(usesWhoseLabelContains(undefined, copy.list.uses)).toEqual([])
   })
 })
 

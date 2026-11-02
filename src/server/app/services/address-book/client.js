@@ -44,7 +44,15 @@ const throwOnErrorWithValidationDetail = async (response) => {
 
 export const listAddresses = async (
   organisationId,
-  { page = 1, pageSize, searchTerm, countryCodes = [], addressType } = {}
+  {
+    page = 1,
+    pageSize,
+    searchTerm,
+    countryCodes = [],
+    addressType,
+    use,
+    searchUses = []
+  } = {}
 ) => {
   const url = new URL(addressesUrl(organisationId))
   url.searchParams.set('page', String(page))
@@ -52,11 +60,17 @@ export const listAddresses = async (
   if (addressType) {
     url.searchParams.set('addressType', addressType)
   }
+  if (use) {
+    url.searchParams.set('use', use)
+  }
   if (searchTerm) {
     url.searchParams.set('q', searchTerm)
   }
   for (const countryCode of countryCodes) {
     url.searchParams.append('countryCode', countryCode)
+  }
+  for (const searchUse of searchUses) {
+    url.searchParams.append('searchUse', searchUse)
   }
 
   const response = await fetch(url.toString(), {

@@ -11,7 +11,19 @@ export const copy = {
       label: 'Chwilio',
       hint: 'Chwilio yn ôl enw, cyfeiriad neu wlad',
       button: 'Chwilio',
-      clear: 'Clirio’r chwiliad'
+      clear: 'Clirio’r chwiliad',
+      type: {
+        label: 'Math',
+        placeholder: 'Dewiswch un',
+        options: {
+          PLACE_OF_ORIGIN: 'Man Tarddiad',
+          CONSIGNOR: 'Anfonwr',
+          CONSIGNEE: 'Derbynnydd',
+          IMPORTER: 'Mewnforiwr',
+          PLACE_OF_DESTINATION: 'Man Cyrchfan',
+          BRANCH_ADDRESS: 'Cyfeiriad Cangen'
+        }
+      }
     },
     add: 'Ychwanegu cyfeiriad newydd',
     results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,

@@ -9,7 +9,19 @@ export const copy = {
       label: 'Search',
       hint: 'Search by name, address or country',
       button: 'Search',
-      clear: 'Clear search'
+      clear: 'Clear search',
+      type: {
+        label: 'Type',
+        placeholder: 'Select one',
+        options: {
+          PLACE_OF_ORIGIN: 'Place of Origin',
+          CONSIGNOR: 'Consignor',
+          CONSIGNEE: 'Consignee',
+          IMPORTER: 'Importer',
+          PLACE_OF_DESTINATION: 'Place of Destination',
+          BRANCH_ADDRESS: 'Branch Address'
+        }
+      }
     },
     add: 'Add a new address',
     results: (from, to, total) => `Showing ${from}-${to} of ${total}`,

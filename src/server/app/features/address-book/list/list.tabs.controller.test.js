@@ -166,4 +166,22 @@ describe('#addressBookListTabs', () => {
     expect(hiddenInput.attr('name')).toBe('addressType')
     expect(hiddenInput.attr('value')).toBe(ADDRESS_TYPES.BRANCH)
   })
+
+  test('links each tab with the current search and no use or page', async () => {
+    stubAddressPage(
+      { page: '1', q: 'farm', use: 'CONSIGNOR' },
+      pageOf([highlandAddress])
+    )
+
+    const { $ } = await readPage(
+      `${ADDRESS_BOOK_PATH}?q=farm&use=CONSIGNOR&page=1`,
+      'list-tab-links-with-search'
+    )
+
+    expect(subNavigationLinksOf($).map(({ href }) => href)).toEqual([
+      `${ADDRESS_BOOK_PATH}?addressType=ORIGIN_OR_CONSIGNOR&q=farm`,
+      `${ADDRESS_BOOK_PATH}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=farm`,
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=farm`
+    ])
+  })
 })

@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'vitest'
 
 import { ADDRESS_TYPES } from '../../services/address-book/index.js'
-import { ADDRESS_BOOK_TABS, resolveTab } from './address-book-tabs.js'
+import {
+  ADDRESS_BOOK_TABS,
+  resolveTab,
+  resolveUse
+} from './address-book-tabs.js'
 
 const [ORIGIN_TAB, DESTINATION_TAB, BRANCH_TAB] = ADDRESS_BOOK_TABS
 
@@ -33,4 +37,30 @@ describe('address-book-tabs', () => {
       expect(resolveTab(requested)).toBe(ORIGIN_TAB)
     }
   )
+
+  test('offers each tab its own uses in the Type select order', () => {
+    expect(ADDRESS_BOOK_TABS.map((tab) => tab.uses)).toEqual([
+      ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
+      ['CONSIGNEE', 'IMPORTER', 'PLACE_OF_DESTINATION'],
+      ['BRANCH_ADDRESS']
+    ])
+  })
+
+  test.each([
+    [ORIGIN_TAB, 'CONSIGNOR'],
+    [DESTINATION_TAB, 'IMPORTER'],
+    [BRANCH_TAB, 'BRANCH_ADDRESS']
+  ])('honours a use the tab offers', (tab, use) => {
+    expect(resolveUse(tab, use)).toBe(use)
+  })
+
+  test.each([
+    ['no use', ORIGIN_TAB, undefined],
+    ['an empty use', ORIGIN_TAB, ''],
+    ['an unknown use', ORIGIN_TAB, 'TRANSPORTER'],
+    ['a use another tab offers', ORIGIN_TAB, 'IMPORTER'],
+    ['a use in the wrong case', BRANCH_TAB, 'branch_address']
+  ])('honours no use for %s', (_description, tab, requested) => {
+    expect(resolveUse(tab, requested)).toBeUndefined()
+  })
 })

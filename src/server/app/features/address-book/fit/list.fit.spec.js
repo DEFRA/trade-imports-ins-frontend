@@ -16,6 +16,8 @@ import {
   searchAndExpectQuery,
   searchAndExpectSingleMatch,
   searchFieldOf,
+  followTab,
+  typeSelectOf,
   selectedTabOf,
   subNavigationLinkLocatorsOf
 } from './address-book-list.js'
@@ -505,6 +507,143 @@ test.describe('filter addresses without JavaScript', () => {
       })
     })
   }
+})
+
+const CONSIGNOR_TYPE = { label: 'Consignor', use: 'CONSIGNOR' }
+const CONSIGNEE_TYPE = { label: 'Consignee', use: 'CONSIGNEE' }
+const IMPORTER_TYPE = { label: 'Importer', use: 'IMPORTER' }
+const SELECT_ONE = 'Select one'
+const ONE_ADDRESS_LINE = 'Showing 1-1 of 1'
+
+const expectTypeChosen = (page, label) =>
+  expect(typeSelectOf(page).locator('option:checked')).toHaveText(label)
+
+test.describe('type filter', () => {
+  for (const { submitWith, how } of SUBMIT_METHODS) {
+    test(`lists only the addresses of the tab holding the Type, and keeps the tab and the Type chosen, when submitted with ${how}`, async ({
+      page
+    }) => {
+      await openAddressBookList(page, { organisationId: ORG_TYPED })
+
+      await searchAndExpectMatches(page, '', {
+        submitWith,
+        type: CONSIGNOR_TYPE,
+        resultsLine: ONE_ADDRESS_LINE
+      })
+
+      await expectNamesListed(page, [TYPED_SEED.originAndConsignor.name])
+      await expect(page.locator('.govuk-pagination')).toHaveCount(0)
+      await expectTabsInOrderWithSelected(page, ORIGIN_TAB.label)
+      await openFilterDisclosure(page)
+      await expectTypeChosen(page, CONSIGNOR_TYPE.label)
+    })
+  }
+
+  test('lists only the Destination, Consignee and Importer addresses holding the Consignee Type', async ({
+    page
+  }) => {
+    await openAddressBookList(page, {
+      organisationId: ORG_TYPED,
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+    })
+
+    await searchAndExpectMatches(page, '', {
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      type: CONSIGNEE_TYPE,
+      resultsLine: ONE_ADDRESS_LINE
+    })
+
+    await expectNamesListed(page, [TYPED_SEED.mixedOriginAndConsignee.name])
+  })
+
+  test('leaves the URL and the whole tab listed when a Type is chosen and not submitted', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_TYPED })
+    await openFilterDisclosure(page)
+
+    await typeSelectOf(page).selectOption({ label: CONSIGNOR_TYPE.label })
+
+    await expect(page).toHaveURL(addressBookPath())
+    await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
+    await expectNamesListed(page, ORIGIN_TAB.names)
+  })
+
+  test('keeps the search and clears the Type when another tab is followed', async ({
+    page
+  }) => {
+    await openAddressBookList(page, {
+      organisationId: ORG_TYPED,
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+    })
+    await searchAndExpectSingleMatch(page, 'Stub', {
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      type: IMPORTER_TYPE,
+      matchedCellText: TYPED_SEED.importer.name
+    })
+
+    await followTab(page, ORIGIN_TAB.label)
+
+    await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
+    await expectNamesListed(page, ORIGIN_TAB.names)
+    await openFilterDisclosure(page)
+    await expect(searchFieldOf(page)).toHaveValue('Stub')
+    await expectTypeChosen(page, SELECT_ONE)
+  })
+
+  test('finds an address by the label of one of its uses', async ({ page }) => {
+    await openAddressBookList(page, { organisationId: ORG_TYPED })
+
+    await searchAndExpectSingleMatch(page, 'consignor', {
+      matchedCellText: TYPED_SEED.originAndConsignor.name
+    })
+    await expect(
+      page.getByRole('cell', {
+        name: 'Place of origin, Consignor',
+        exact: true
+      })
+    ).toBeVisible()
+    await searchAndExpectMatches(page, 'place of origin', {
+      submitWith: 'button',
+      resultsLine: TWO_ADDRESSES_LINE
+    })
+
+    await expectNamesListed(page, ORIGIN_TAB.names)
+  })
+
+  test('has no serious or critical axe violations with a Type chosen and the disclosure open', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_TYPED })
+    await searchAndExpectQuery(page, '', {
+      submitWith: 'button',
+      type: CONSIGNOR_TYPE
+    })
+    await openFilterDisclosure(page)
+
+    await expectNoSeriousOrCriticalViolations(
+      page,
+      'Address book list with a Type chosen and filter open'
+    )
+  })
+})
+
+test.describe('type filter without JavaScript', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('lists only the addresses of the tab holding the Type when submitted with the Search button', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_TYPED })
+
+    await searchAndExpectMatches(page, '', {
+      submitWith: 'button',
+      type: CONSIGNOR_TYPE,
+      resultsLine: ONE_ADDRESS_LINE
+    })
+
+    await expectNamesListed(page, [TYPED_SEED.originAndConsignor.name])
+  })
 })
 
 test.describe('empty book', () => {

@@ -5,6 +5,7 @@
 {% from "govuk/components/pagination/macro.njk" import govukPagination %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
 {% from "moj/components/sub-navigation/macro.njk" import mojSubNavigation %}
 
 {% block journeyContent %}
@@ -51,6 +52,14 @@
     }) }}
     {{ govukButton({
       html: searchButtonHtml
+    }) }}
+    {{ govukSelect({
+      id: "use",
+      name: "use",
+      label: {
+        text: copy.list.search.type.label
+      },
+      items: useItems
     }) }}
   {% endset %}
 

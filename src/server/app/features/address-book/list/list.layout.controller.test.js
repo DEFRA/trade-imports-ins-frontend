@@ -69,7 +69,7 @@ describe('#addressBookListLayout', () => {
     expect(textOf($, disclosure.children('summary'))).toBe('Filter addresses')
   })
 
-  test('holds the Search label, its hint, the input and one icon-only submit button inside the disclosure', async () => {
+  test('holds the Search controls, then the Type label and select, inside the disclosure', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await readPage(ADDRESS_BOOK_PATH, 'list-search-controls')
@@ -77,21 +77,26 @@ describe('#addressBookListLayout', () => {
     const controls = contentOf($).find('form details .govuk-details__text')
     expect(
       controls
-        .find('label, input, button, .govuk-hint')
+        .find('label, input, button, select, .govuk-hint')
         .map((_, element) => ({
           tag: element.tagName,
-          text: textOf($, element)
+          text: element.tagName === 'select' ? '' : textOf($, element)
         }))
         .get()
     ).toEqual([
       { tag: 'label', text: 'Search' },
       { tag: 'div', text: 'Search by name, address or country' },
       { tag: 'input', text: '' },
-      { tag: 'button', text: 'Search' }
+      { tag: 'button', text: 'Search' },
+      { tag: 'label', text: 'Type' },
+      { tag: 'select', text: '' }
     ])
     const input = controls.find('input')
     expect(input.attr('name')).toBe('q')
-    expect(controls.find('label').attr('for')).toBe(input.attr('id'))
+    expect(controls.find('label').first().attr('for')).toBe(input.attr('id'))
+    const select = controls.find('select')
+    expect(select.attr('name')).toBe('use')
+    expect(controls.find('label').last().attr('for')).toBe(select.attr('id'))
     expect(input.attr('aria-describedby')).toBe(
       controls.find('.govuk-hint').attr('id')
     )

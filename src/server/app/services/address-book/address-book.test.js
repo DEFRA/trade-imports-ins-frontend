@@ -279,10 +279,11 @@ describe('#mapApiErrorsToFormErrors', () => {
 })
 
 describe('the public surface', () => {
-  test('exposes the five address operations, the error mapper, the validation-failure predicate, the address types and the typed seed, nothing else', () => {
+  test('exposes the five address operations, the error mapper, the validation-failure predicate, the address types, the uses each lists and the typed seed, nothing else', () => {
     expect(Object.keys(addressBook).sort()).toEqual([
       'ADDRESS_TYPES',
       'TYPED_SEED',
+      'USES_BY_ADDRESS_TYPE',
       'createAddress',
       'deleteAddress',
       'getAddress',
