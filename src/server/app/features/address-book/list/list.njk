@@ -5,6 +5,7 @@
 {% from "govuk/components/pagination/macro.njk" import govukPagination %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "moj/components/sub-navigation/macro.njk" import mojSubNavigation %}
 
 {% block journeyContent %}
   {% if successMessage %}
@@ -54,6 +55,7 @@
   {% endset %}
 
   <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">
+    <input type="hidden" name="addressType" value="{{ addressType }}">
     {{ govukDetails({
       summaryText: copy.list.search.summary,
       html: searchControlsHtml
@@ -61,19 +63,27 @@
   </form>
 
   {% if listLoaded %}
+    {{ mojSubNavigation({
+      label: copy.list.tabsLabel,
+      items: subNavigationItems
+    }) }}
+
+    <h2 class="govuk-heading-m">{{ panelHeading }}</h2>
+
     <p class="govuk-body govuk-!-margin-bottom-4" data-testid="address-book-results-label">
       {{ resultsLabel }}
     </p>
 
     {% if searchTerm %}
       <p class="govuk-body govuk-!-margin-bottom-4">
-        <a class="govuk-link" href="{{ listHref }}" data-testid="address-book-clear-search">{{ copy.list.search.clear }}</a>
+        <a class="govuk-link" href="{{ clearSearchHref }}" data-testid="address-book-clear-search">{{ copy.list.search.clear }}</a>
       </p>
     {% endif %}
 
     {{ govukTable({
       head: [
         { text: copy.list.table.name },
+        { text: copy.list.table.type },
         { text: copy.list.table.address },
         { text: copy.list.table.country },
         { html: '<span class="govuk-visually-hidden">' + copy.list.table.action + '</span>' }

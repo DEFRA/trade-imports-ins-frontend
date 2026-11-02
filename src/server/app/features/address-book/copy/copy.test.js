@@ -176,7 +176,21 @@ describe('#copy', () => {
     expect(cy.edit.title).toBe('Golygu manylion cyfeiriad a manylion cyswllt')
   })
 
-  it('Should word the Welsh list title, intro, search, add link, results lines, table headings and View link', () => {
+  it('Should carry the Welsh for the delete page heading and confirm button', () => {
+    expect(cy.delete.title).toBe('Dileu’r cyfeiriad hwn?')
+    expect(cy.delete.confirm).toBe('Ie, dileu')
+  })
+
+  it('Should ask for the missing name, postcode, country or phone in its required message', () => {
+    expect(copy.errors.name.required).toBe('Enter a name or organisation')
+    expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
+    expect(copy.errors.countryCode.required).toBe('Select a country')
+    expect(copy.errors.phone.required).toBe('Enter a phone number')
+  })
+})
+
+describe('#copy of the list page', () => {
+  it('Should word the Welsh list title, intro, search, add link, results lines, tabs, use labels, table headings and View link', () => {
     expect(
       leaves(cy.list).map(({ path, value }) => [path, textOf(value)])
     ).toEqual([
@@ -193,7 +207,27 @@ describe('#copy', () => {
       ['add', 'Ychwanegu cyfeiriad newydd'],
       ['results', 'Yn dangos 1-2 o 3'],
       ['noResults', 'Yn dangos 0 o 0'],
+      ['tabsLabel', 'Mathau o gyfeiriad'],
+      ['tabs.originOrConsignor.label', 'Tarddiad ac Anfonwr'],
+      ['tabs.originOrConsignor.heading', 'Cyfeiriadau tarddiad ac anfonwr'],
+      [
+        'tabs.destinationConsigneeOrImporter.label',
+        'Cyrchfan, Derbynnydd a Mewnforiwr'
+      ],
+      [
+        'tabs.destinationConsigneeOrImporter.heading',
+        'Cyfeiriadau cyrchfan, derbynnydd a mewnforiwr'
+      ],
+      ['tabs.branch.label', 'Cangen'],
+      ['tabs.branch.heading', 'Cyfeiriadau cangen'],
+      ['uses.PLACE_OF_ORIGIN', 'Man tarddiad'],
+      ['uses.CONSIGNOR', 'Anfonwr'],
+      ['uses.CONSIGNEE', 'Derbynnydd'],
+      ['uses.IMPORTER', 'Mewnforiwr'],
+      ['uses.PLACE_OF_DESTINATION', 'Man cyrchfan'],
+      ['uses.BRANCH_ADDRESS', 'Cangen'],
       ['table.name', 'Enw'],
+      ['table.type', 'Math'],
       ['table.address', 'Cyfeiriad'],
       ['table.country', 'Gwlad'],
       ['table.action', 'Cam gweithredu'],
@@ -201,15 +235,26 @@ describe('#copy', () => {
     ])
   })
 
-  it('Should carry the Welsh for the delete page heading and confirm button', () => {
-    expect(cy.delete.title).toBe('Dileu’r cyfeiriad hwn?')
-    expect(cy.delete.confirm).toBe('Ie, dileu')
-  })
-
-  it('Should ask for the missing name, postcode, country or phone in its required message', () => {
-    expect(copy.errors.name.required).toBe('Enter a name or organisation')
-    expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
-    expect(copy.errors.countryCode.required).toBe('Select a country')
-    expect(copy.errors.phone.required).toBe('Enter a phone number')
+  it('Should word the tab labels, panel headings, Type heading and use labels', () => {
+    expect(copy.list.tabs).toEqual({
+      originOrConsignor: {
+        label: 'Origin and Consignor',
+        heading: 'Origin and Consignor addresses'
+      },
+      destinationConsigneeOrImporter: {
+        label: 'Destination, Consignee and Importer',
+        heading: 'Destination, Consignee and Importer addresses'
+      },
+      branch: { label: 'Branch', heading: 'Branch addresses' }
+    })
+    expect(copy.list.table.type).toBe('Type')
+    expect(copy.list.uses).toEqual({
+      PLACE_OF_ORIGIN: 'Place of origin',
+      CONSIGNOR: 'Consignor',
+      CONSIGNEE: 'Consignee',
+      IMPORTER: 'Importer',
+      PLACE_OF_DESTINATION: 'Place of destination',
+      BRANCH_ADDRESS: 'Branch'
+    })
   })
 })

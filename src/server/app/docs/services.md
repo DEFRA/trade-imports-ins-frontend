@@ -1,9 +1,12 @@
 # Services
 
-`src/server/app/services/` holds one folder per upstream, each with the
-same three files — **`index.js`** the barrel a feature imports,
-**`client.js`** the HTTP client, **`stub.js`** the in-memory stand-in — and
-nothing imports `client.js` or `stub.js` from outside its folder.
+`src/server/app/services/` holds one folder per upstream. Each holds
+**`index.js`** the barrel a feature imports, **`client.js`** the HTTP client
+and **`stub.js`** the in-memory stand-in, plus any module those share. The
+address book also holds **`address-types.js`** (the address type values) and
+**`typed-seed.js`** (the stub's typed seed addresses), which the barrel
+exports. A feature imports only the barrel, and nothing imports any other file
+from outside its folder.
 
 ## Run mode
 
@@ -22,7 +25,7 @@ starting, and a test can switch modes with `config.set('stubMode', …)`.
 ### address-book
 
 [`index.js`](../services/address-book/index.js) exports `listAddresses(organisationId,
-listQuery)`, where `listQuery` is `{ page, pageSize, searchTerm, countryCodes }`,
+listQuery)`, where `listQuery` is `{ page, pageSize, searchTerm, countryCodes, addressType }`,
 `createAddress(organisationId, address)`, `getAddress(organisationId, addressId)`,
 `updateAddress(organisationId, addressId, address)`,
 `deleteAddress(organisationId, addressId)`, plus `mapApiErrorsToFormErrors(problemBody)`
@@ -39,13 +42,17 @@ and everything else through `throwOnError`.
 
 The [stub](../services/address-book/stub.js) keeps a `Map` per
 organisation, seeded by the id's suffix (`-empty`, `-paginated` for 30
-addresses, otherwise `Stub Farm 1` at `000000000000000000000001`), and
+addresses, `-typed` for five addresses holding uses of all three address
+types, otherwise `Stub Farm 1` at `000000000000000000000001`), and
 mints 24-character hex ids because the `{id}` routes validate an
 ObjectId. It lists newest first, a created address ahead of the seeded
-ones, and at the page size the request gives. An address
-matches when the search term appears in its name, address lines, town,
-county or postcode, or when its country code is one of the request's
-country codes; with neither given, every address is listed. A delete
+ones, and at the page size the request gives. With an `addressType`, it
+first keeps the addresses holding one of that type's uses, an address
+with no uses counting as `ORIGIN_OR_CONSIGNOR`, as the address book does.
+Of those, an address matches when the search term appears in its name,
+address lines, town, county or postcode, or when its country code is one
+of the request's country codes; with neither given, every address left is
+listed. A delete
 marks the address deleted rather than removing it, so `getAddress` still
 returns it.
 

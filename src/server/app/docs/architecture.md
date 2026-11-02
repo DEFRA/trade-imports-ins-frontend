@@ -88,7 +88,8 @@ can flip the mode with `config.set`.
 
 Nunjucks roots are set in
 [`nunjucks.js`](../../../config/nunjucks/nunjucks.js): the govuk-frontend
-dist, `src/server/app` (resolves `shared/layout.njk`,
+dist, the `@ministryofjustice/frontend` package root (the sub navigation
+macro), `src/server/app` (resolves `shared/layout.njk`,
 `shared/error-summary.njk`, `shared/error.njk`, `auth/unauthorised.njk`) and
 `src/server/app/features` (resolves feature views); `src/server/common/components`
 is also listed but does not exist. Vision's `path` is `['server/app',
@@ -111,7 +112,11 @@ Webpack ([`webpack.config.js`](../../../../webpack.config.js)) builds
 govuk-frontend's assets to `/public/assets`, and writes the manifest
 `getAssetPath()` reads. Run `npm run build:frontend` once; `npm run dev`
 watches. A missing webpack entry is a silent 404 — the template renders,
-the bundle does not.
+the bundle does not. `_govuk-frontend.scss` configures GOV.UK Frontend
+through the `@ministryofjustice/frontend` vendor module, because the MoJ
+component stylesheets load that module and Sass refuses to configure a
+module already loaded; `application.scss` then uses the MoJ sub navigation
+stylesheet.
 
 ## Enforced boundaries
 

@@ -133,9 +133,9 @@ page joining a group, a spec in the group's `fit/`.
 `import { signIn } from '<relative>/fit/sign-in.js'`. Every test
 signs in with its own organisation id (`stub-org-<page>-<case>`, with
 `crypto.randomUUID()` when the test writes), because the address-book
-stub keys its data by organisation — the `-empty` and `-paginated`
-suffixes select the empty and 30-record seeds, and anything else gets one
-seed at `SEED_ADDRESS_ID`. Use raw role, label and copy locators, rely on
+stub keys its data by organisation — the `-empty`, `-paginated` and
+`-typed` suffixes select the empty, 30-record and five-typed-record seeds,
+and anything else gets one seed at `SEED_ADDRESS_ID`. Use raw role, label and copy locators, rely on
 auto-waiting, and use no sleeps and no page objects. Use
 `getByRole('link', { name: 'Back', exact: true })` — the phase banner's
 "feedback" link also matches "Back" without `exact`.

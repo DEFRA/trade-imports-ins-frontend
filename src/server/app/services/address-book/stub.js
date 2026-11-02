@@ -1,4 +1,6 @@
 import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
+import { ADDRESS_TYPES } from './address-types.js'
+import { TYPED_SEED } from './typed-seed.js'
 
 const OBJECT_ID_LENGTH = 24
 
@@ -7,7 +9,7 @@ const addressesByOrganisation = new Map()
 const newObjectId = () =>
   crypto.randomUUID().replaceAll('-', '').slice(0, OBJECT_ID_LENGTH)
 
-const buildSeedAddress = (index) => ({
+const buildSeedAddress = (index, details = {}) => ({
   id: String(index).padStart(OBJECT_ID_LENGTH, '0'),
   name: `Stub Farm ${index}`,
   addressLine1: `${index} Stub Way`,
@@ -18,12 +20,21 @@ const buildSeedAddress = (index) => ({
   countryCode: 'GB',
   email: `stub-farm-${index}@example.com`,
   phone: '01234567890',
-  deleted: false
+  deleted: false,
+  ...details
 })
+
+const typedSeedAddresses = () =>
+  Object.values(TYPED_SEED).map((details, index) =>
+    buildSeedAddress(index + 1, details)
+  )
 
 const seedAddressesFor = (organisationId) => {
   if (organisationId.endsWith('-empty')) {
     return []
+  }
+  if (organisationId.endsWith('-typed')) {
+    return typedSeedAddresses()
   }
   if (organisationId.endsWith('-paginated')) {
     const paginatedSeedCount = 30
@@ -48,6 +59,27 @@ const notFound = () =>
   Object.assign(new Error('Not found'), { status: HTTP_STATUS_NOT_FOUND })
 
 const isLive = (address) => !address.deleted
+
+const isListedUnder = (address, addressType) => {
+  if (!addressType) {
+    return true
+  }
+  const uses = address.uses ?? []
+  if (uses.length === 0) {
+    return addressType === ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+  }
+  const usesListedByAddressType = {
+    [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
+    [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: [
+      'PLACE_OF_DESTINATION',
+      'CONSIGNEE',
+      'IMPORTER'
+    ],
+    [ADDRESS_TYPES.BRANCH]: ['BRANCH_ADDRESS']
+  }
+  const usesListed = usesListedByAddressType[addressType] ?? []
+  return uses.some((use) => usesListed.includes(use))
+}
 
 const matchesSearch = (address, { searchTerm, countryCodes = [] }) => {
   const term = searchTerm?.trim().toLowerCase()
@@ -80,10 +112,11 @@ const pageOfMatches = (matches, { page, pageSize }) => ({
 
 export const listAddresses = async (
   organisationId,
-  { page = 1, pageSize, ...search } = {}
+  { page = 1, pageSize, addressType, ...search } = {}
 ) => {
   const matches = addressesOf(organisationId)
     .filter(isLive)
+    .filter((address) => isListedUnder(address, addressType))
     .filter((address) => matchesSearch(address, search))
   return pageOfMatches(matches, { page, pageSize })
 }

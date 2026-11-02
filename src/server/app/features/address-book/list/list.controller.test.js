@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -6,7 +6,7 @@ import {
   ADDRESS_BOOK_PATH,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
   TABLE_HEADINGS,
@@ -25,10 +25,6 @@ import {
   tagNamesOf
 } from './list.test-support.js'
 
-vi.mock('../../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
-
 describe('#addressBookListController', () => {
   const readPage = startServerWithPageReader()
 
@@ -44,12 +40,12 @@ describe('#addressBookListController', () => {
     expect(contentOf($).children('h1').text()).toBe('Address book')
     expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
-    expect(textOf($, rowCellsOf($, 0).eq(2))).toBe('United Kingdom')
-    expect(rowCellsOf($, 0).eq(3).html().trim()).toBe(
+    expect(textOf($, rowCellsOf($, 0).eq(3))).toBe('United Kingdom')
+    expect(rowCellsOf($, 0).eq(4).html().trim()).toBe(
       '<a class="govuk-link" href="/address-book/1">View<span class="govuk-visually-hidden"> Highland Livestock Ltd</span></a>'
     )
-    expect(textOf($, rowCellsOf($, 1).eq(2))).toBe('France')
-    expect(rowCellsOf($, 1).eq(3).html().trim()).toBe(
+    expect(textOf($, rowCellsOf($, 1).eq(3))).toBe('France')
+    expect(rowCellsOf($, 1).eq(4).html().trim()).toBe(
       '<a class="govuk-link" href="/address-book/2">View<span class="govuk-visually-hidden"> Paris Depot</span></a>'
     )
   })
@@ -63,7 +59,7 @@ describe('#addressBookListController', () => {
       )
     )
 
-    const { html, statusCode } = await readPage(
+    const { $, html, statusCode } = await readPage(
       `${ADDRESS_BOOK_PATH}?page=2`,
       'list-page-2'
     )
@@ -71,7 +67,7 @@ describe('#addressBookListController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(html).toContain('govuk-pagination')
     expect(html).toContain('Showing 9-16 of 30')
-    expect(html).toContain('?page=2')
+    expect(textOf($, '.govuk-pagination__item--current')).toBe('2')
   })
 
   test.each(['0', 'abc'])(
@@ -145,7 +141,7 @@ describe('#addressBookListController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
     expect(rowCellsOf($, 0).eq(0).html()).toBe('Paris<br> Depot')
-    expect(textOf($, rowCellsOf($, 0).eq(2))).toBe('France')
+    expect(textOf($, rowCellsOf($, 0).eq(3))).toBe('France')
     expect($('input[name="q"]').val()).toBe('fran')
   })
 
@@ -153,18 +149,23 @@ describe('#addressBookListController', () => {
     ['matches', pageOf([greenFarmAddress])],
     ['no matches', pageOf([])]
   ])(
-    'Should link Clear search to the whole address book under the results line when a search has %s',
+    'Should link Clear search to the whole list of the selected tab under the results line when a search has %s',
     async (_, addressPage) => {
-      stubAddressPage({ page: '1', q: 'green' }, addressPage)
+      stubAddressPage(
+        { page: '1', q: 'green', addressType: ADDRESS_TYPES.BRANCH },
+        addressPage
+      )
 
       const { $ } = await readPage(
-        `${ADDRESS_BOOK_PATH}?q=green`,
+        `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green`,
         'list-clear-search'
       )
 
       const clearSearch = $('[data-testid="address-book-clear-search"]')
       expect(textOf($, clearSearch)).toBe('Clear search')
-      expect(clearSearch.attr('href')).toBe(ADDRESS_BOOK_PATH)
+      expect(clearSearch.attr('href')).toBe(
+        `${ADDRESS_BOOK_PATH}?addressType=BRANCH`
+      )
       expect(
         $('[data-testid="address-book-results-label"]')
           .next()
@@ -173,9 +174,9 @@ describe('#addressBookListController', () => {
     }
   )
 
-  test('links every page with the search term and the page number only', async () => {
+  test('links every page with the selected tab, the search term and the page number only', async () => {
     const scope = stubAddressPage(
-      { page: '2', q: 'green' },
+      { page: '2', q: 'green', addressType: ADDRESS_TYPES.BRANCH },
       pageOf([greenFarmAddress], {
         page: 2,
         totalItems: 30,
@@ -184,7 +185,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=green&countryCode=GB&page=2`,
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&countryCode=GB&page=2`,
       'list-search-page-2'
     )
 
@@ -195,10 +196,10 @@ describe('#addressBookListController', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      `${ADDRESS_BOOK_PATH}?q=green`,
-      `${ADDRESS_BOOK_PATH}?q=green&page=2`,
-      `${ADDRESS_BOOK_PATH}?q=green&page=3`,
-      `${ADDRESS_BOOK_PATH}?q=green&page=4`
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green`,
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&page=2`,
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&page=3`,
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&page=4`
     ])
   })
 

@@ -1,4 +1,5 @@
 import { load } from 'cheerio'
+import { beforeAll } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -7,16 +8,18 @@ import {
   getPage,
   STORED_ADDRESS
 } from '../../../../common/test-helpers/address-book-requests.js'
+import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
   textOf,
   textsOf
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
+import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { LIST_PAGE_SIZE } from './list.controller.js'
 
 export const NO_RESULTS_LINE = 'Showing 0 of 0'
-export const TABLE_HEADINGS = ['Name', 'Address', 'Country', 'Action']
+export const TABLE_HEADINGS = ['Name', 'Type', 'Address', 'Country', 'Action']
 
 export const highlandAddress = {
   id: '1',
@@ -66,12 +69,26 @@ export const resultsLineOf = ($) =>
 
 export const tableHeadingsOf = ($) => textsOf($, 'thead th')
 
+export const subNavigationOf = ($) => $('nav.moj-sub-navigation')
+
+export const subNavigationLinksOf = ($) =>
+  $('nav.moj-sub-navigation a')
+    .map((_, anchor) => ({
+      text: textOf($, anchor),
+      href: $(anchor).attr('href'),
+      current: $(anchor).attr('aria-current') ?? null
+    }))
+    .get()
+
+export const panelHeadingTextOf = ($) => textOf($, contentOf($).children('h2'))
+
 export const bodyRowCountOf = ($) => $('tbody tr').length
 
 export const rowCellsOf = ($, rowIndex) =>
   $('tbody tr').eq(rowIndex).children('td')
 
 export const startServerWithPageReader = () => {
+  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
   return async (url, sessionId) => {
     const { result: html, statusCode } = await getPage(server(), url, sessionId)
@@ -82,7 +99,11 @@ export const startServerWithPageReader = () => {
 const interceptListRequest = (query) =>
   addressBookApi()
     .get(addressesApiPath())
-    .query({ pageSize: String(LIST_PAGE_SIZE), ...query })
+    .query({
+      pageSize: String(LIST_PAGE_SIZE),
+      addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType,
+      ...query
+    })
 
 export const stubAddressPage = (query, addressPage) =>
   interceptListRequest(query).reply(statusCodes.ok, {

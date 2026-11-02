@@ -3,8 +3,15 @@ import { addressBookPath } from '../../../shared/paths.js'
 import { countryLabelOf } from '../address-countries.js'
 import { postalLinesOf } from '../fields.js'
 
-export const buildAddressBookQueryString = ({ page, searchTerm } = {}) => {
+export const buildAddressBookQueryString = ({
+  addressType,
+  page,
+  searchTerm
+} = {}) => {
   const params = new URLSearchParams()
+  if (addressType) {
+    params.set('addressType', addressType)
+  }
   if (searchTerm) {
     params.set('q', searchTerm)
   }
@@ -15,8 +22,8 @@ export const buildAddressBookQueryString = ({ page, searchTerm } = {}) => {
   return query ? `?${query}` : ''
 }
 
-export const addressBookPageHref = (page, { searchTerm } = {}) =>
-  `${addressBookPath()}${buildAddressBookQueryString({ searchTerm, page })}`
+export const addressBookPageHref = (page, { addressType, searchTerm } = {}) =>
+  `${addressBookPath()}${buildAddressBookQueryString({ addressType, searchTerm, page })}`
 
 export const nameLinesOf = (name) => {
   const [firstWord, ...otherWords] = (name ?? '').split(/\s+/).filter(Boolean)
@@ -28,11 +35,15 @@ export const nameLinesOf = (name) => {
 export const resultsLabelOf = (pagination, listCopy) =>
   buildResultsLabel(pagination, listCopy.results) ?? listCopy.noResults
 
-export const mapAddressRows = (addresses, countries = []) =>
+export const useLabelsOf = (uses, labelByUse) =>
+  (uses ?? []).map((use) => labelByUse[use] ?? use).join(', ')
+
+export const mapAddressRows = (addresses, countries = [], labelByUse = {}) =>
   addresses.map((address) => ({
     id: address.id,
     name: address.name,
     nameLines: nameLinesOf(address.name),
+    useLabels: useLabelsOf(address.uses, labelByUse),
     postalLines: postalLinesOf(address),
     countryLabel: countryLabelOf(countries, address.countryCode)
   }))

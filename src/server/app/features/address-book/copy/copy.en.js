@@ -14,8 +14,32 @@ export const copy = {
     add: 'Add a new address',
     results: (from, to, total) => `Showing ${from}-${to} of ${total}`,
     noResults: 'Showing 0 of 0',
+    tabsLabel: 'Address types',
+    tabs: {
+      originOrConsignor: {
+        label: 'Origin and Consignor',
+        heading: 'Origin and Consignor addresses'
+      },
+      destinationConsigneeOrImporter: {
+        label: 'Destination, Consignee and Importer',
+        heading: 'Destination, Consignee and Importer addresses'
+      },
+      branch: {
+        label: 'Branch',
+        heading: 'Branch addresses'
+      }
+    },
+    uses: {
+      PLACE_OF_ORIGIN: 'Place of origin',
+      CONSIGNOR: 'Consignor',
+      CONSIGNEE: 'Consignee',
+      IMPORTER: 'Importer',
+      PLACE_OF_DESTINATION: 'Place of destination',
+      BRANCH_ADDRESS: 'Branch'
+    },
     table: {
       name: 'Name',
+      type: 'Type',
       address: 'Address',
       country: 'Country',
       action: 'Action',

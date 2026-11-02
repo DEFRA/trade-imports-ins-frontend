@@ -1,30 +1,44 @@
-import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
-import { statusCodes } from '../constants/status-codes.js'
-import { mockOidcConfig } from '../test-helpers/mock-oidc-config.js'
+import {
+  createServer as createNetServer,
+  getDefaultAutoSelectFamilyAttemptTimeout
+} from 'node:net'
 
-vi.mock('../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
+import nock from 'nock'
+import { beforeAll, afterAll, afterEach, describe, expect, test } from 'vitest'
 
-vi.mock('../../server.js', async (importOriginal) => {
-  const actual = await importOriginal()
-  return {
-    createServer: vi.fn(async () => {
-      const server = await actual.createServer()
-      server.start = () => server.initialize()
-      return server
-    })
-  }
-})
-
+import { config } from '../../../config/config.js'
+import { answerOidcDiscovery } from '../test-helpers/answer-oidc-discovery.js'
 import { startServer } from './start-server.js'
-import { createServer } from '../../server.js'
+
+const listenOnFreePort = (host) =>
+  new Promise((resolve, reject) => {
+    const occupier = createNetServer()
+    occupier.once('error', reject)
+    occupier.listen(0, host, () => resolve(occupier))
+  })
 
 describe('#startServer', () => {
+  const originalPort = config.get('port')
+
+  beforeAll(() => {
+    nock.disableNetConnect()
+  })
+
+  afterEach(() => {
+    nock.cleanAll()
+    config.set('port', originalPort)
+  })
+
+  afterAll(() => {
+    nock.enableNetConnect()
+  })
+
   describe('When server starts', () => {
     let server
 
     beforeAll(async () => {
+      config.set('port', 0)
+      answerOidcDiscovery()
       server = await startServer()
     })
 
@@ -32,24 +46,27 @@ describe('#startServer', () => {
       await server?.stop({ timeout: 0 })
     })
 
-    test('Should start up server as expected', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/health'
-      })
+    test('listens on a port once started', () => {
+      expect(server.info.started).toBeGreaterThan(0)
+      expect(server.info.port).toBeGreaterThan(0)
+    })
 
-      expect(result).toEqual({ message: 'success' })
-      expect(statusCode).toBe(statusCodes.ok)
+    test('gives each address of a host one second to connect before trying the next', () => {
+      expect(getDefaultAutoSelectFamilyAttemptTimeout()).toBe(1000)
     })
   })
 
   describe('When server start fails', () => {
-    test('Should propagate createServer errors', async () => {
-      vi.mocked(createServer).mockRejectedValueOnce(
-        new Error('Server failed to start')
-      )
+    test('rejects when the port is already in use', async () => {
+      const occupier = await listenOnFreePort(config.get('host'))
+      config.set('port', occupier.address().port)
+      answerOidcDiscovery()
 
-      await expect(startServer()).rejects.toThrow('Server failed to start')
+      try {
+        await expect(startServer()).rejects.toThrow(/EADDRINUSE/)
+      } finally {
+        await new Promise((resolve) => occupier.close(resolve))
+      }
     })
   })
 })

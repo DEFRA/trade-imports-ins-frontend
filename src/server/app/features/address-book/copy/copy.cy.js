@@ -16,8 +16,32 @@ export const copy = {
     add: 'Ychwanegu cyfeiriad newydd',
     results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,
     noResults: 'Yn dangos 0 o 0',
+    tabsLabel: 'Mathau o gyfeiriad',
+    tabs: {
+      originOrConsignor: {
+        label: 'Tarddiad ac Anfonwr',
+        heading: 'Cyfeiriadau tarddiad ac anfonwr'
+      },
+      destinationConsigneeOrImporter: {
+        label: 'Cyrchfan, Derbynnydd a Mewnforiwr',
+        heading: 'Cyfeiriadau cyrchfan, derbynnydd a mewnforiwr'
+      },
+      branch: {
+        label: 'Cangen',
+        heading: 'Cyfeiriadau cangen'
+      }
+    },
+    uses: {
+      PLACE_OF_ORIGIN: 'Man tarddiad',
+      CONSIGNOR: 'Anfonwr',
+      CONSIGNEE: 'Derbynnydd',
+      IMPORTER: 'Mewnforiwr',
+      PLACE_OF_DESTINATION: 'Man cyrchfan',
+      BRANCH_ADDRESS: 'Cangen'
+    },
     table: {
       name: 'Enw',
+      type: 'Math',
       address: 'Cyfeiriad',
       country: 'Gwlad',
       action: 'Cam gweithredu',

@@ -52,6 +52,13 @@ root:
   controls rather than a role's), `buildReturnUrl` (the journey's address-return
   URL, with an optional address id and `landing`) and
   `CONSIGNMENT_CONTACT_FULFILMENT_ID` (the consignment contact's fulfilment id).
+- [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
+  `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address
+  type and the copy key of its label and panel heading),
+  `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and Consignor tab) and `resolveTab`
+  (the tab a requested address type names, the default tab when it is missing
+  or unknown). The address type values (`ADDRESS_TYPES`) belong to
+  `services/address-book`, imported through its barrel.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
@@ -80,8 +87,9 @@ root:
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
 specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
 `dashboard.js` and `seed-address.js`. `view-model/list.js` owns the list's
-name lines, postal lines and results line, which the list controller builds
-into table cells.
+name lines, Type label, postal lines and results line, which the list
+controller builds into table cells, and the list's hrefs, which carry the
+tab, the search and the page.
 
 ## Paths
 

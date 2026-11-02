@@ -3,6 +3,9 @@ import { HTTP_STATUS_BAD_REQUEST } from '../../lib/http-status.js'
 import * as client from './client.js'
 import * as stub from './stub.js'
 
+export { ADDRESS_TYPES } from './address-types.js'
+export { TYPED_SEED } from './typed-seed.js'
+
 const addressBook = () => (isStubMode() ? stub : client)
 
 export const listAddresses = (organisationId, listQuery) =>

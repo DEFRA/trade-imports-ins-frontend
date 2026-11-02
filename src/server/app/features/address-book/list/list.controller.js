@@ -20,6 +20,7 @@ import {
   getAddressFormCountries,
   countryCodesMatching
 } from '../address-countries.js'
+import { ADDRESS_BOOK_TABS, resolveTab } from '../address-book-tabs.js'
 import { linesHtml } from '../lines-html.js'
 import { takeSuccessMessage } from '../success-message.js'
 import {
@@ -42,6 +43,7 @@ const viewLink = (address) =>
 const tableRowsOf = (addresses) =>
   addresses.map((address) => [
     { html: linesHtml(address.nameLines) },
+    { text: address.useLabels },
     { html: linesHtml(address.postalLines, { lineEnding: ',' }) },
     { text: address.countryLabel },
     { html: viewLink(address) }
@@ -53,6 +55,13 @@ const paginationOf = (addressPage) => ({
   totalItems: addressPage.totalItems,
   totalPages: addressPage.totalPages
 })
+
+const subNavigationItemsOf = (selectedTab) =>
+  ADDRESS_BOOK_TABS.map((tab) => ({
+    text: copy.list.tabs[tab.copyKey].label,
+    href: addressBookPageHref(1, { addressType: tab.addressType }),
+    active: tab === selectedTab
+  }))
 
 const buildView = (toolkit, { recoverableError = false, ...model }) =>
   toolkit.view(view, {
@@ -76,7 +85,12 @@ const loadAddressPage = async (organisationId, { page, ...search }) => {
   }
 
   logger.info(
-    { organisationId, requestedPage: page, servedPage },
+    {
+      organisationId,
+      addressType: search.addressType,
+      requestedPage: page,
+      servedPage
+    },
     'Address book page is past the last page, serving the last page'
   )
   return listAddresses(organisationId, {
@@ -90,6 +104,8 @@ const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const page = parsePage(request.query.page)
   const searchTerm = request.query.q?.trim() ?? ''
+  const selectedTab = resolveTab(request.query.addressType)
+  const { addressType } = selectedTab
   const successMessage = takeSuccessMessage(request)
 
   try {
@@ -98,18 +114,27 @@ const get = async (request, toolkit) => {
     const addressPage = await loadAddressPage(organisationId, {
       page,
       searchTerm,
-      countryCodes
+      countryCodes,
+      addressType
     })
     const pagination = paginationOf(addressPage)
-    const addresses = mapAddressRows(addressPage.items ?? [], countries)
+    const addresses = mapAddressRows(
+      addressPage.items ?? [],
+      countries,
+      copy.list.uses
+    )
 
     return buildView(toolkit, {
       listLoaded: true,
+      subNavigationItems: subNavigationItemsOf(selectedTab),
+      panelHeading: copy.list.tabs[selectedTab.copyKey].heading,
+      clearSearchHref: addressBookPageHref(1, { addressType }),
       tableRows: tableRowsOf(addresses),
       resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
-        addressBookPageHref(targetPage, { searchTerm })
+        addressBookPageHref(targetPage, { addressType, searchTerm })
       ),
+      addressType,
       searchTerm,
       successMessage
     })
@@ -117,9 +142,13 @@ const get = async (request, toolkit) => {
     if (Boom.isBoom(err)) {
       throw err
     }
-    logger.error({ err, organisationId }, 'Failed to load address book')
+    logger.error(
+      { err, organisationId, addressType },
+      'Failed to load address book'
+    )
     return buildView(toolkit, {
       listLoaded: false,
+      addressType,
       searchTerm,
       successMessage,
       recoverableError: true

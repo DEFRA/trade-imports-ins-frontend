@@ -1,15 +1,47 @@
 import { expect } from '@playwright/test'
 
+import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
+export const UNKNOWN_ADDRESS_TYPE = 'TRANSPORTER'
+export const NO_RESULTS_LINE = 'Showing 0 of 0'
+
 export const openAddressBookList = async (
   page,
-  { organisationId, pageNumber }
+  { organisationId, pageNumber, addressType }
 ) => {
   await signIn(page, { organisationId })
-  const query = pageNumber === undefined ? '' : `?page=${pageNumber}`
+  const params = new URLSearchParams()
+  if (addressType !== undefined) {
+    params.set('addressType', addressType)
+  }
+  if (pageNumber !== undefined) {
+    params.set('page', String(pageNumber))
+  }
+  const query = params.size ? `?${params}` : ''
   await page.goto(`${addressBookPath()}${query}`)
+}
+
+const addressTypesNavOf = (page) =>
+  page.getByRole('navigation', { name: 'Address types' })
+
+export const subNavigationLinkLocatorsOf = (page) =>
+  addressTypesNavOf(page).getByRole('link')
+
+export const selectedTabOf = (page) =>
+  addressTypesNavOf(page).locator('[aria-current="page"]')
+
+export const panelHeadingLocatorOf = (page) =>
+  page.getByRole('main').getByRole('heading', { level: 2 })
+
+export const namesListedBy = (page) =>
+  page.getByRole('row').locator('td:first-child').allInnerTexts()
+
+export const expectNamesListed = async (page, names) => {
+  expect(await namesListedBy(page)).toEqual(
+    names.map((name) => name.replace(' ', '\n'))
+  )
 }
 
 export const expectAddressBookList = async (page) => {
@@ -23,9 +55,10 @@ export const resultsLineOf = (page) =>
   page.getByTestId('address-book-results-label')
 
 export const expectEmptyAddressBookList = async (page) => {
-  await expect(resultsLineOf(page)).toHaveText('Showing 0 of 0')
+  await expect(resultsLineOf(page)).toHaveText(NO_RESULTS_LINE)
   await expect(page.getByRole('columnheader')).toHaveText([
     'Name',
+    'Type',
     'Address',
     'Country',
     'Action'
@@ -65,29 +98,34 @@ const submitSearch = async (page, term, { submitWith }) => {
   }
 }
 
-export const searchAndExpectQuery = async (page, term, { submitWith }) => {
+export const searchAndExpectQuery = async (
+  page,
+  term,
+  { submitWith, addressType = DEFAULT_ADDRESS_BOOK_TAB.addressType }
+) => {
   await submitSearch(page, term, { submitWith })
-  const submittedQuery = new URLSearchParams({ q: term })
+  const submittedQuery = new URLSearchParams({ addressType, q: term })
   await expect(page).toHaveURL(`${addressBookPath()}?${submittedQuery}`)
 }
 
 export const searchAndExpectMatches = async (
   page,
   term,
-  { submitWith, resultsLine }
+  { submitWith, resultsLine, addressType }
 ) => {
-  await searchAndExpectQuery(page, term, { submitWith })
+  await searchAndExpectQuery(page, term, { submitWith, addressType })
   await expect(resultsLineOf(page)).toHaveText(resultsLine)
 }
 
 export const searchAndExpectSingleMatch = async (
   page,
   term,
-  { submitWith = 'button', matchedCellText }
+  { submitWith = 'button', matchedCellText, addressType }
 ) => {
   await searchAndExpectMatches(page, term, {
     submitWith,
-    resultsLine: 'Showing 1-1 of 1'
+    resultsLine: 'Showing 1-1 of 1',
+    addressType
   })
   await expect(
     page.getByRole('cell', { name: matchedCellText, exact: true })

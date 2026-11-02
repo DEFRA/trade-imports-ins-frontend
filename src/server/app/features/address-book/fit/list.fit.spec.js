@@ -3,19 +3,30 @@ import { test, expect } from '@playwright/test'
 import { addValidAddressToFreshOrganisation } from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import {
+  NO_RESULTS_LINE,
+  UNKNOWN_ADDRESS_TYPE,
   expectEmptyAddressBookList,
+  expectNamesListed,
   openFilterDisclosure,
   expectFilterDisclosureOpensAndCloses,
   openAddressBookList,
+  panelHeadingLocatorOf,
   resultsLineOf,
   searchAndExpectMatches,
   searchAndExpectQuery,
   searchAndExpectSingleMatch,
-  searchFieldOf
+  searchFieldOf,
+  selectedTabOf,
+  subNavigationLinkLocatorsOf
 } from './address-book-list.js'
 import { expectDashboard } from './dashboard.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 import { seedAddress, seedAddressLines } from './seed-address.js'
+import {
+  ADDRESS_TYPES,
+  TYPED_SEED
+} from '../../../services/address-book/index.js'
+import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 
 const ORG_DEFAULT = 'stub-org-1'
@@ -50,24 +61,19 @@ test.describe('navigation', () => {
 })
 
 test.describe('list and pagination', () => {
-  test('renders addresses in a table with Name, Address, Country and Action columns', async ({
+  test('renders addresses in a table with Name, Type, Address, Country and Action columns', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     const table = page.getByRole('table')
-    await expect(
-      table.getByRole('columnheader', { name: 'Name' })
-    ).toBeVisible()
-    await expect(
-      table.getByRole('columnheader', { name: 'Address' })
-    ).toBeVisible()
-    await expect(
-      table.getByRole('columnheader', { name: 'Country' })
-    ).toBeVisible()
-    await expect(
-      table.getByRole('columnheader', { name: 'Action' })
-    ).toBeVisible()
+    await expect(table.getByRole('columnheader')).toHaveText([
+      'Name',
+      'Type',
+      'Address',
+      'Country',
+      'Action'
+    ])
     await expect(
       table.getByRole('cell', { name: seedAddress.name, exact: true })
     ).toBeVisible()
@@ -183,6 +189,168 @@ test.describe('intro and cells', () => {
   })
 })
 
+const ORG_TYPED = 'stub-org-typed'
+
+const TABS = [
+  {
+    label: 'Origin and Consignor',
+    addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+    heading: 'Origin and Consignor addresses',
+    names: [
+      TYPED_SEED.originAndConsignor.name,
+      TYPED_SEED.mixedOriginAndConsignee.name
+    ]
+  },
+  {
+    label: 'Destination, Consignee and Importer',
+    addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+    heading: 'Destination, Consignee and Importer addresses',
+    names: [TYPED_SEED.mixedOriginAndConsignee.name, TYPED_SEED.importer.name]
+  },
+  {
+    label: 'Branch',
+    addressType: ADDRESS_TYPES.BRANCH,
+    heading: 'Branch addresses',
+    names: [TYPED_SEED.branch.name, TYPED_SEED.branchDepot.name]
+  }
+]
+
+const [ORIGIN_TAB, , BRANCH_TAB] = TABS
+
+const expectTabsInOrderWithSelected = async (page, selectedLabel) => {
+  await expect(subNavigationLinkLocatorsOf(page)).toHaveText(
+    TABS.map(({ label }) => label)
+  )
+  await expect(selectedTabOf(page)).toHaveText(selectedLabel)
+}
+
+test.describe('address type tabs', () => {
+  test('shows the three tabs in order with Origin and Consignor selected when no tab is chosen', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_TYPED })
+
+    await expectTabsInOrderWithSelected(page, ORIGIN_TAB.label)
+    await expect(panelHeadingLocatorOf(page)).toHaveText(ORIGIN_TAB.heading)
+  })
+
+  test('shows Origin and Consignor selected when the tab is unknown', async ({
+    page
+  }) => {
+    await openAddressBookList(page, {
+      organisationId: ORG_TYPED,
+      addressType: UNKNOWN_ADDRESS_TYPE
+    })
+
+    await expectTabsInOrderWithSelected(page, ORIGIN_TAB.label)
+  })
+
+  for (const { label, addressType, heading, names } of TABS) {
+    test(`opens the ${label} tab with its own panel heading and exactly its addresses`, async ({
+      page
+    }) => {
+      await openAddressBookList(page, {
+        organisationId: ORG_TYPED,
+        addressType
+      })
+
+      await expectTabsInOrderWithSelected(page, label)
+      await expect(panelHeadingLocatorOf(page)).toHaveText(heading)
+      await expectNamesListed(page, names)
+    })
+  }
+
+  test('shows each address with the labels of its uses in the Type column', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_TYPED })
+
+    await expect(
+      page
+        .getByRole('row', {
+          name: new RegExp(TYPED_SEED.originAndConsignor.name)
+        })
+        .getByRole('cell')
+        .nth(1)
+    ).toHaveText('Place of origin, Consignor')
+    await expect(
+      page
+        .getByRole('row', {
+          name: new RegExp(TYPED_SEED.mixedOriginAndConsignee.name)
+        })
+        .getByRole('cell')
+        .nth(1)
+    ).toHaveText('Place of origin, Consignee')
+  })
+
+  test('lists an address with no uses on the Origin and Consignor tab only', async ({
+    page
+  }) => {
+    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await expect(
+      page.getByRole('cell', { name: seedAddress.name, exact: true })
+    ).toBeVisible()
+
+    for (const addressType of [
+      ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      ADDRESS_TYPES.BRANCH
+    ]) {
+      await openAddressBookList(page, {
+        organisationId: ORG_DEFAULT,
+        addressType
+      })
+
+      await expect(resultsLineOf(page)).toHaveText(NO_RESULTS_LINE)
+    }
+  })
+
+  test('keeps the Branch tab, its heading and only its matches when a search is submitted', async ({
+    page
+  }) => {
+    await openAddressBookList(page, {
+      organisationId: ORG_TYPED,
+      addressType: ADDRESS_TYPES.BRANCH
+    })
+
+    await searchAndExpectSingleMatch(page, 'depot', {
+      addressType: ADDRESS_TYPES.BRANCH,
+      matchedCellText: TYPED_SEED.branchDepot.name
+    })
+
+    await expectTabsInOrderWithSelected(page, BRANCH_TAB.label)
+    await expect(panelHeadingLocatorOf(page)).toHaveText(BRANCH_TAB.heading)
+  })
+
+  test('has no serious or critical axe violations on the Branch tab', async ({
+    page
+  }) => {
+    await openAddressBookList(page, {
+      organisationId: ORG_TYPED,
+      addressType: ADDRESS_TYPES.BRANCH
+    })
+
+    await expectNoSeriousOrCriticalViolations(page, 'Address book Branch tab')
+  })
+})
+
+test.describe('address type tabs without JavaScript', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('loads the tab that is followed', async ({ page }) => {
+    await openAddressBookList(page, { organisationId: ORG_TYPED })
+
+    for (const { label, heading, names } of TABS) {
+      await subNavigationLinkLocatorsOf(page)
+        .getByText(label, { exact: true })
+        .click()
+
+      await expectTabsInOrderWithSelected(page, label)
+      await expect(panelHeadingLocatorOf(page)).toHaveText(heading)
+      await expectNamesListed(page, names)
+    }
+  })
+})
+
 const SUBMIT_METHODS = [
   { submitWith: 'button', how: 'the Search button' },
   { submitWith: 'enter', how: 'Enter in the Search field' }
@@ -233,7 +401,9 @@ test.describe('filter addresses', () => {
     })
     await page.getByRole('link', { name: 'Page 2' }).click()
 
-    await expect(page).toHaveURL(`${addressBookPath()}?q=Farm+1&page=2`)
+    await expect(page).toHaveURL(
+      `${addressBookPath()}?addressType=${DEFAULT_ADDRESS_BOOK_TAB.addressType}&q=Farm+1&page=2`
+    )
     await expect(resultsLineOf(page)).toHaveText('Showing 9-11 of 11')
   })
 
@@ -286,7 +456,7 @@ test.describe('filter addresses', () => {
     await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
   })
 
-  test('Clear search after a search returns to the whole address book with an empty Search field', async ({
+  test('Clear search after a search returns to the whole selected tab with an empty Search field', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
@@ -294,7 +464,9 @@ test.describe('filter addresses', () => {
 
     await page.getByRole('link', { name: 'Clear search' }).click()
 
-    await expect(page).toHaveURL(addressBookPath())
+    await expect(page).toHaveURL(
+      `${addressBookPath()}?addressType=${DEFAULT_ADDRESS_BOOK_TAB.addressType}`
+    )
     await openFilterDisclosure(page)
     await expect(searchFieldOf(page)).toHaveValue('')
   })

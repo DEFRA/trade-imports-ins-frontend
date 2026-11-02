@@ -97,9 +97,12 @@ for the started server).
 
 [`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
 holds the list's fixtures, nock stubs and Cheerio readers:
-`startServerWithPageReader()`, `stubAddressPage(query, addressPage)`,
-`stubAddressBookUnavailable()`, `contentOf`, `tableHeadingsOf`,
-`resultsLineOf`, `bodyRowCountOf`, `rowCellsOf` and `tagNamesOf`. A list
+`startServerWithPageReader()`, `stubAddressPage(query, addressPage)` (which
+stubs the Origin and Consignor tab unless the query names another
+`addressType`), `stubAddressBookUnavailable()`, `contentOf`,
+`tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`,
+`panelHeadingTextOf`, `resultsLineOf`,
+`bodyRowCountOf`, `rowCellsOf` and `tagNamesOf`. A list
 controller test calls `const readPage = startServerWithPageReader()`, which
 starts the server serving `COUNTRIES` and returns a page reader, and reads
 pages with `readPage(url, sessionId)`, which wraps `getPage()`,
@@ -175,8 +178,10 @@ its `seedAddressLines`, and the unknown and malformed ids.
 [`shared/paths.js`](../shared/paths.js), never a literal in a spec.
 
 Every test signs in with its own organisation id, because the
-address-book stub keys its data by organisation; the `-empty` and
-`-paginated` suffixes select those seeds (thirty addresses, four pages of eight). No sleeps, no page objects, and
+address-book stub keys its data by organisation; the `-empty`,
+`-paginated` and `-typed` suffixes select those seeds (thirty addresses,
+four pages of eight; five addresses holding uses of all three address
+types). No sleeps, no page objects, and
 `exact: true` on "Back". On failure read
 `test-results/<spec>/error-context.md` and the HTML report in
 `playwright-report/`.
