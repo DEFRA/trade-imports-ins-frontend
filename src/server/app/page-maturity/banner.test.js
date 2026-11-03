@@ -14,6 +14,10 @@ import { nunjucksConfig } from '../../../config/nunjucks/nunjucks.js'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
+import {
+  normalisedText,
+  textsOf
+} from '../../common/test-helpers/rendered-text.js'
 import { sessionAuth } from '../../common/test-helpers/session-auth.js'
 import {
   insBackendApi,
@@ -54,8 +58,6 @@ const renderLayout = (context = {}) =>
     ...context
   })
 
-const normalised = (text) => text.replaceAll(/\s+/g, ' ').trim()
-
 describe('page maturity banner', () => {
   describe('when the page has no level', () => {
     const $ = load(renderLayout())
@@ -64,7 +66,7 @@ describe('page maturity banner', () => {
     it('Should leave one phase banner with the Alpha tag and the feedback sentence only', () => {
       expect(banner).toHaveLength(1)
       expect(banner.find(TAG)).toHaveLength(1)
-      expect(normalised(banner.text())).toBe(`Alpha ${SERVICE_SENTENCE}`)
+      expect(normalisedText(banner.text())).toBe(`Alpha ${SERVICE_SENTENCE}`)
     })
 
     it('Should add nothing to the layout from the banner snippet', () => {
@@ -81,11 +83,11 @@ describe('page maturity banner', () => {
 
     it('Should add a second phase banner for the level, after the Alpha one', () => {
       expect(banners).toHaveLength(2)
-      expect(normalised(alpha.text())).toBe(`Alpha ${SERVICE_SENTENCE}`)
+      expect(normalisedText(alpha.text())).toBe(`Alpha ${SERVICE_SENTENCE}`)
       expect(levelTag).toHaveLength(1)
       expect(levelTag.hasClass(TAG_CLASSES.detailing)).toBe(true)
       expect(levelTag.hasClass('govuk-phase-banner__content__tag')).toBe(true)
-      expect(normalised(level.text())).toBe(
+      expect(normalisedText(level.text())).toBe(
         `${copy.hiddenPrefix} ${copy.levels.detailing.tag}. ${copy.levels.detailing.text}`
       )
     })
@@ -121,9 +123,9 @@ describe('page maturity banner', () => {
 
     it('Should read the hidden status prefix inside the tag, before the level', () => {
       expect(
-        levelTag.find('.govuk-visually-hidden').first().text().trim()
+        normalisedText(levelTag.find('.govuk-visually-hidden').first().text())
       ).toBe(copy.hiddenPrefix)
-      expect(normalised(levelTag.text())).toBe(
+      expect(normalisedText(levelTag.text())).toBe(
         `${copy.hiddenPrefix} ${copy.levels.detailing.tag}.`
       )
       expect(level.find('.govuk-phase-banner__text').text()).not.toContain(
@@ -132,7 +134,7 @@ describe('page maturity banner', () => {
     })
 
     it('Should keep the service sentence in the Alpha row', () => {
-      expect(normalised(alpha.text())).toContain(SERVICE_SENTENCE)
+      expect(normalisedText(alpha.text())).toContain(SERVICE_SENTENCE)
     })
   })
 
@@ -175,9 +177,7 @@ describe('page maturity banner', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      return load(result)(`${PHASE_BANNER} ${TAG}`)
-        .map((_, tag) => normalised(load(tag).text()))
-        .get()
+      return textsOf(load(result), `${PHASE_BANNER} ${TAG}`)
     }
 
     it('Should show the level tag after Alpha when the switch is on', async () => {
@@ -205,9 +205,7 @@ describe('page maturity banner', () => {
         url: '/no-such-page',
         auth: sessionAuth('maturity-not-found')
       })
-      const tags = load(result)(`${PHASE_BANNER} ${TAG}`)
-        .map((_, tag) => normalised(load(tag).text()))
-        .get()
+      const tags = textsOf(load(result), `${PHASE_BANNER} ${TAG}`)
 
       expect(statusCode).toBe(statusCodes.notFound)
       expect(tags).toEqual(['Alpha'])

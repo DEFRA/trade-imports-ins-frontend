@@ -1,17 +1,19 @@
+const SELECT_COUNTRY = 'Select a country'
+
 export const copy = {
   list: {
     title: 'Address book',
-    intro: 'Manage addresses used across import and export services.',
+    intro: 'Manage your addresses for use across all your import notifications',
     search: {
-      label: 'Search addresses',
-      hint: 'Search by name, town or city, postcode or country',
+      summary: 'Filter addresses',
+      label: 'Search',
+      hint: 'Search by name, address or country',
       button: 'Search',
       clear: 'Clear search'
     },
     add: 'Add a new address',
-    empty: 'You have no addresses yet.',
-    noMatchPrefix: 'No addresses match',
     results: (from, to, total) => `Showing ${from}-${to} of ${total}`,
+    noResults: 'Showing 0 of 0',
     table: {
       name: 'Name',
       address: 'Address',
@@ -22,15 +24,16 @@ export const copy = {
   },
   successBanner: {
     title: 'Success',
-    added: (name) => `${name} added to your address book`,
-    updated: (name) => `${name} updated in your address book`,
-    deleted: (name) => `${name} deleted from your address book`
+    added: (name) => `${name} address added to your address book`,
+    updated: (name) => `${name} address updated`,
+    deleted: (name) => `${name} address deleted`,
+    deletedUnnamed: 'Address deleted'
   },
   form: {
-    addressHeading: 'Enter address details',
-    contactHeading: 'Enter contact details',
+    addressHeading: 'Address',
+    contactHeading: 'Contact details',
     fields: {
-      name: 'Name or organisation name',
+      name: 'Name or organisation',
       addressLine1: 'Address line 1',
       addressLine2: 'Address line 2 (optional)',
       townOrCity: 'Town or city',
@@ -41,34 +44,39 @@ export const copy = {
       email: 'Email address'
     },
     phoneHint: 'For international numbers include the country code',
-    countryPlaceholder: 'Select a country'
+    countryPlaceholder: SELECT_COUNTRY
   },
   add: {
-    title: 'Add address details',
+    title: 'Add address and contact details',
+    caption: 'Add new address',
     save: 'Save and continue',
+    saveAndSelect: 'Save and select',
+    saveAndReturnToAddressPage: 'Save and return to address page',
     cancel: 'Cancel and return to address book',
-    cancelToJourney: 'Cancel and return to address page'
+    cancelAndReturnToAddressPage: 'Cancel and return to address page',
+    cancelToHub: 'Cancel and return to hub'
   },
   edit: {
-    title: 'Edit address details',
+    title: 'Edit address and contact details',
     save: 'Save changes',
     cancel: 'Cancel'
   },
   view: {
     edit: 'Edit',
-    delete: 'Delete',
-    countyRowLabel: 'County'
+    delete: 'Delete'
   },
   delete: {
-    title: 'Delete address',
-    confirmPrefix: 'Are you sure you want to delete',
-    confirmSuffix: 'from your address book?',
-    confirm: 'Yes, delete this address',
-    cancel: 'Cancel'
+    title: 'Delete this address?',
+    summaryAddress: 'Address',
+    confirmation: 'Confirm that you want to delete this address.',
+    warning: 'Deletions are permanent and you cannot undo this.',
+    notApplicable: 'Not applicable',
+    confirm: 'Yes, delete',
+    cancel: 'No, cancel'
   },
   errors: {
     name: {
-      required: 'Enter a name',
+      required: 'Enter a name or organisation',
       maxLength: (max) => `Name must be ${max} characters or fewer`
     },
     addressLine1: {
@@ -86,14 +94,14 @@ export const copy = {
       maxLength: (max) => `County must be ${max} characters or fewer`
     },
     postcode: {
-      required: 'Enter a postcode',
+      required: 'Enter a postcode or Zip code',
       maxLength: (max) => `Postcode must be ${max} characters or fewer`
     },
     countryCode: {
-      required: 'Enter a country'
+      required: SELECT_COUNTRY
     },
     phone: {
-      required: 'Enter a telephone number',
+      required: 'Enter a phone number',
       maxLength: (max) => `Telephone number must be ${max} characters or fewer`
     },
     email: {

@@ -52,7 +52,7 @@ it with `base(sharedCopy.unauthorised.title)`.
 (the spike's own
 [`is-dev-or-local.js`](../features/address-lookup-spike/is-dev-or-local.js),
 reading `cdpEnvironment`) is true, it also registers the temporary
-EUDPA-390 `address-lookup-spike` routes, which sit outside `allRoutes`.
+`address-lookup-spike` routes, which sit outside `allRoutes`.
 
 [`features/index.js`](../features/index.js) imports each feature's
 controller namespace and spreads `routes` into `allRoutes` — nothing else.
@@ -66,7 +66,7 @@ Four directories:
 - `services/` — one folder per upstream: `address-book/`, `countries/`,
   `ins-backend/`, `address-lookup/`, each `index.js` + `client.js` +
   `stub.js`.
-- `shared/` — `kit.js`, `paths.js`, `copy.js`, `copy-leaves.js`,
+- `shared/` — `kit.js`, `paths.js`, `list-page.js`, `escape-html.js`, `copy.js`, `copy-leaves.js`,
   `copy.en.js`, `copy.cy.js`, `layout.njk`, `error.njk`,
   `error-summary.njk`.
 - `lib/` — `http-client.js`, `http-status.js`, `validate/`.

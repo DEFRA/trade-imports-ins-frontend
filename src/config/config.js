@@ -24,9 +24,6 @@ convict.addFormats(convictFormatWithValidator)
 
 const STRICT_BOOLEAN = 'strict-boolean'
 
-// convict's built-in Boolean format coerces any string other than exactly
-// 'false' to true (e.g. a typo like 'flase' silently enables the flag), so
-// every env-backed boolean uses this stricter format instead.
 convict.addFormat({
   name: STRICT_BOOLEAN,
   validate(val) {
@@ -153,8 +150,6 @@ export const config = convict({
       name: {
         doc: 'server side session cache name',
         format: String,
-        // localhost cookies are host-scoped (not port-scoped) — keep INS distinct
-        // from animals-frontend when both run on localhost during development.
         default: isDevelopment ? 'ins-session' : 'session',
         env: 'SESSION_CACHE_NAME'
       },
@@ -266,7 +261,7 @@ export const config = convict({
     }
   },
   cdpEnvironment: {
-    doc: "The CDP-injected environment name, or 'local' when it is unset (matches trade-imports-ins-backend's own ENVIRONMENT gate). EUDPA-390: the address lookup spike page is registered only for dev/local — see router.js.",
+    doc: "The CDP-injected environment name, or 'local' when it is unset",
     format: [
       'dev',
       'test',

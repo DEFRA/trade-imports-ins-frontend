@@ -14,7 +14,3 @@ createAll(ErrorSummary)
 createAll(Radios)
 createAll(ServiceNavigation)
 createAll(SkipLink)
-
-import { initAddressBookSuccessBanner } from './address-book-success-banner.js'
-
-initAddressBookSuccessBanner()

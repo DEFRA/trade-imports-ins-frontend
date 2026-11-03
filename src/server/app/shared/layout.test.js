@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { nunjucksConfig } from '../../../config/nunjucks/nunjucks.js'
 import { base, SURFACES, surfaceClass } from './kit.js'
 import { copy as sharedCopy } from './copy.en.js'
+import { textOf, textsOf } from '../../common/test-helpers/rendered-text.js'
 
 const environment = nunjucksConfig.options.compileOptions.environment
 
@@ -38,13 +39,13 @@ const renderLayout = (userSession, context = {}) =>
 const pageTitleOf = (html) => load(html)('head > title').text()
 
 describe('service navigation', () => {
-  it('Should offer the four Design release 1 items on a signed-in page', () => {
+  it('Should offer dashboard, address book, manage account and sign out links on a signed-in page', () => {
     const $ = load(renderLayout(signedIn))
     const items = $('.govuk-service-navigation__item')
     const links = items.find('a')
 
     expect(items).toHaveLength(4)
-    expect(links.map((_, anchor) => $(anchor).text().trim()).get()).toEqual([
+    expect(textsOf($, links)).toEqual([
       serviceNavigation.dashboard,
       serviceNavigation.addressBook,
       serviceNavigation.manageAccount,
@@ -85,7 +86,7 @@ describe('service navigation', () => {
     expect(html).not.toContain('aria-current')
   })
 
-  it('Should not show the signed-in user anywhere, as Design release 1 does not', () => {
+  it("Should not show the signed-in user's name or email", () => {
     const html = renderLayout(signedIn)
 
     expect(html).not.toContain('Sam Example')
@@ -135,7 +136,7 @@ describe('back link', () => {
     const link = $(`a.${BACK_LINK}`)
 
     expect(link).toHaveLength(1)
-    expect(link.text().trim()).toBe(sharedCopy.layout.back)
+    expect(textOf($, link)).toBe(sharedCopy.layout.back)
     expect(link.attr('href')).toBe(ADDRESS_BOOK_URL)
   })
 
@@ -145,7 +146,7 @@ describe('back link', () => {
 })
 
 describe('breadcrumbs', () => {
-  it('Should render no breadcrumb trail, as Design release 1 has none', () => {
+  it('Should render no breadcrumb trail beside a back link', () => {
     const html = renderLayout(signedIn, { backLink: ADDRESS_BOOK_URL })
 
     expect(html).not.toContain(BREADCRUMBS)
@@ -260,9 +261,7 @@ describe('kit surfaces', () => {
 describe('footer', () => {
   it('Should label the three meta links from the shared copy', () => {
     const $ = load(renderLayout(signedIn))
-    const links = $('.govuk-footer__inline-list-item a')
-
-    expect(links.map((_, anchor) => $(anchor).text().trim()).get()).toEqual([
+    expect(textsOf($, '.govuk-footer__inline-list-item a')).toEqual([
       sharedCopy.layout.footer.privacy,
       sharedCopy.layout.footer.cookies,
       sharedCopy.layout.footer.accessibility

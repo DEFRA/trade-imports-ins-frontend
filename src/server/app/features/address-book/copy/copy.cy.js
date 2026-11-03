@@ -1,19 +1,21 @@
 // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
+const SELECT_COUNTRY = 'Dewiswch wlad'
+
 export const copy = {
   list: {
     title: 'Llyfr cyfeiriadau',
     intro:
-      'Rheoli cyfeiriadau a ddefnyddir ar draws gwasanaethau mewnforio ac allforio.',
+      'Rheoli eich cyfeiriadau i’w defnyddio ar draws eich holl hysbysiadau mewnforio',
     search: {
-      label: 'Chwilio cyfeiriadau',
-      hint: 'Chwilio yn ôl enw, tref neu ddinas, cod post neu wlad',
+      summary: 'Hidlo cyfeiriadau',
+      label: 'Chwilio',
+      hint: 'Chwilio yn ôl enw, cyfeiriad neu wlad',
       button: 'Chwilio',
       clear: 'Clirio’r chwiliad'
     },
     add: 'Ychwanegu cyfeiriad newydd',
-    empty: 'Nid oes gennych unrhyw gyfeiriadau eto.',
-    noMatchPrefix: 'Nid oes unrhyw gyfeiriadau yn cyfateb i',
     results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,
+    noResults: 'Yn dangos 0 o 0',
     table: {
       name: 'Enw',
       address: 'Cyfeiriad',
@@ -24,15 +26,17 @@ export const copy = {
   },
   successBanner: {
     title: 'Llwyddiant',
-    added: (name) => `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
-    updated: (name) => `${name} wedi’i ddiweddaru yn eich llyfr cyfeiriadau`,
-    deleted: (name) => `${name} wedi’i ddileu o’ch llyfr cyfeiriadau`
+    added: (name) =>
+      `Cyfeiriad ${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
+    updated: (name) => `Cyfeiriad ${name} wedi’i ddiweddaru`,
+    deleted: (name) => `Cyfeiriad ${name} wedi’i ddileu`,
+    deletedUnnamed: 'Cyfeiriad wedi’i ddileu'
   },
   form: {
-    addressHeading: 'Rhowch fanylion y cyfeiriad',
-    contactHeading: 'Rhowch fanylion cyswllt',
+    addressHeading: 'Cyfeiriad',
+    contactHeading: 'Manylion cyswllt',
     fields: {
-      name: 'Enw neu enw’r sefydliad',
+      name: 'Enw neu sefydliad',
       addressLine1: 'Llinell gyfeiriad 1',
       addressLine2: 'Llinell gyfeiriad 2 (dewisol)',
       townOrCity: 'Tref neu ddinas',
@@ -43,34 +47,39 @@ export const copy = {
       email: 'Cyfeiriad e-bost'
     },
     phoneHint: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad',
-    countryPlaceholder: 'Dewiswch wlad'
+    countryPlaceholder: SELECT_COUNTRY
   },
   add: {
-    title: 'Ychwanegu manylion cyfeiriad',
+    title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
+    caption: 'Ychwanegu cyfeiriad newydd',
     save: 'Cadw a pharhau',
+    saveAndSelect: 'Cadw a dewis',
+    saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
     cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
-    cancelToJourney: 'Canslo a dychwelyd i’r dudalen gyfeiriad'
+    cancelAndReturnToAddressPage: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
+    cancelToHub: 'Canslo a dychwelyd i’r hyb'
   },
   edit: {
-    title: 'Golygu manylion cyfeiriad',
+    title: 'Golygu manylion cyfeiriad a manylion cyswllt',
     save: 'Cadw’r newidiadau',
     cancel: 'Canslo'
   },
   view: {
     edit: 'Golygu',
-    delete: 'Dileu',
-    countyRowLabel: 'Sir'
+    delete: 'Dileu'
   },
   delete: {
-    title: 'Dileu cyfeiriad',
-    confirmPrefix: 'Ydych chi’n siŵr eich bod am ddileu',
-    confirmSuffix: 'o’ch llyfr cyfeiriadau?',
-    confirm: 'Ie, dileu’r cyfeiriad hwn',
-    cancel: 'Canslo'
+    title: 'Dileu’r cyfeiriad hwn?',
+    summaryAddress: 'Cyfeiriad',
+    confirmation: 'Cadarnhewch eich bod am ddileu’r cyfeiriad hwn.',
+    warning: 'Mae dileadau’n barhaol ac ni allwch ddadwneud hyn.',
+    notApplicable: 'Amherthnasol',
+    confirm: 'Ie, dileu',
+    cancel: 'Na, canslo'
   },
   errors: {
     name: {
-      required: 'Rhowch enw',
+      required: 'Rhowch enw neu sefydliad',
       maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`
     },
     addressLine1: {
@@ -88,11 +97,11 @@ export const copy = {
       maxLength: (max) => `Rhaid i’r sir fod yn ${max} nod neu lai`
     },
     postcode: {
-      required: 'Rhowch god post',
+      required: 'Rhowch god post neu god zip',
       maxLength: (max) => `Rhaid i’r cod post fod yn ${max} nod neu lai`
     },
     countryCode: {
-      required: 'Rhowch wlad'
+      required: SELECT_COUNTRY
     },
     phone: {
       required: 'Rhowch rif ffôn',

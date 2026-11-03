@@ -1,10 +1,13 @@
 import Boom from '@hapi/boom'
 
 import { getCountries } from '../../services/countries/index.js'
+import { requiresUnitedKingdomAddress } from './journey-registry.js'
 
 const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }
 
-export async function getAddressFormCountries() {
+const byName = (left, right) => left.name.localeCompare(right.name, 'en')
+
+export const getAddressFormCountries = async () => {
   const countries = await getCountries()
 
   if (!countries?.length) {
@@ -13,41 +16,70 @@ export async function getAddressFormCountries() {
     })
   }
 
-  const withoutGb = countries.filter((country) => country.code !== 'GB')
+  const withoutGb = countries.filter(
+    (country) => country.code !== GB_COUNTRY.code
+  )
 
-  return [GB_COUNTRY, ...withoutGb]
+  return [GB_COUNTRY, ...withoutGb].toSorted(byName)
 }
 
-export function buildCountryItems(countries) {
-  return countries.map((country) => ({
+export const buildCountryItems = (countries) =>
+  countries.map((country) => ({
     value: country.code,
     text: country.name
   }))
-}
 
-export function buildCountrySelectItems(countries, placeholder) {
-  return [{ value: '', text: placeholder }, ...buildCountryItems(countries)]
-}
+export const buildCountrySelectItems = (countries, placeholder) => [
+  { value: '', text: placeholder },
+  ...buildCountryItems(countries)
+]
 
-/**
- * Resolves a search term to an ISO alpha-2 country code when it matches an MDM country name
- * (cv-048 FE-resolve). Comparison is case-insensitive on the full trimmed term.
- *
- * @param {string|undefined} q the user's search term
- * @param {{ code: string, name: string }[]} countries the MDM country list
- * @returns {string|undefined} the alpha-2 code when matched, otherwise undefined
- */
-export function resolveCountryCodeFromSearchTerm(q, countries) {
-  const term = q?.trim()
-  if (!term) {
-    return undefined
+export const addFormCountryOffer = async ({
+  handshakeContext,
+  placeholder,
+  formValues
+}) => {
+  if (requiresUnitedKingdomAddress(handshakeContext)) {
+    return {
+      countryItems: buildCountryItems([GB_COUNTRY]),
+      countryCodes: [GB_COUNTRY.code],
+      formValues: { ...formValues, countryCode: GB_COUNTRY.code }
+    }
   }
 
-  const normalized = term.toLowerCase()
-  const match = countries.find(
-    (country) => country.name.toLowerCase() === normalized
+  const countries = await getAddressFormCountries()
+  return {
+    countryItems: buildCountrySelectItems(countries, placeholder),
+    countryCodes: countries.map((country) => country.code),
+    formValues
+  }
+}
+
+export const buildEditCountrySelectItems = (
+  countries,
+  shownCountryCode,
+  placeholder
+) => {
+  const isOffered = countries.some(
+    (country) => country.code === shownCountryCode
   )
-  return match?.code
+  return isOffered
+    ? buildCountryItems(countries)
+    : buildCountrySelectItems(countries, placeholder)
+}
+
+export const countryLabelOf = (countries, countryCode) =>
+  countries.find((country) => country.code === countryCode)?.name ?? countryCode
+
+export const countryCodesMatching = (searchTerm, countries) => {
+  const term = searchTerm?.trim().toLowerCase()
+  if (!term) {
+    return []
+  }
+
+  return countries
+    .filter((country) => country.name.toLowerCase().includes(term))
+    .map((country) => country.code)
 }
 
 export { GB_COUNTRY }

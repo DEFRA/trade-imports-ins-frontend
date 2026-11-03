@@ -76,20 +76,25 @@ export const requiredMaxText = (name, max, messages) =>
       })
   )
 
+const cappedEmail = (text, max, messages) =>
+  text
+    .max(max)
+    .email({ tlds: { allow: false } })
+    .messages({
+      'string.max': messages.maxLength ?? defaults.maxLength(max),
+      'string.email': messages.format
+    })
+
+export const maxEmail = (name, max, messages) =>
+  single(name, cappedEmail(Joi.string().trim().allow(''), max, messages))
+
 export const requiredEmail = (name, max, messages) =>
   single(
     name,
-    Joi.string()
-      .trim()
-      .required()
-      .max(max)
-      .email({ tlds: { allow: false } })
-      .messages({
-        'string.empty': messages.required,
-        'any.required': messages.required,
-        'string.max': messages.maxLength ?? defaults.maxLength(max),
-        'string.email': messages.format
-      })
+    cappedEmail(Joi.string().trim().required(), max, messages).messages({
+      'string.empty': messages.required,
+      'any.required': messages.required
+    })
   )
 
 export const pattern = (name, regex, message) =>

@@ -123,7 +123,7 @@ npm run test:watch              # Vitest in watch mode, no build, no coverage
 npm run test:fit                # both Playwright projects, stub-backed, port 3002
 npm run test:fit:smoke          # the one whole-service smoke spec under fit/
 PORT=3052 npm run test:fit:features   # the co-located feature specs
-npm run lint                    # JS, stylesheet and dependency-cruiser
+npm run lint                    # JS, Nunjucks comments, stylesheet and dependency-cruiser
 npm run format
 npm run build:frontend          # one webpack build into .public/
 npm run fit:start:workspace     # the workspace-backed start, see below
@@ -139,6 +139,23 @@ server runs — stays stub-backed and needs no stack.
 `npm run lint:arch` runs Dependency Cruiser over `src/server/app` and
 enforces the four rules in `.dependency-cruiser.cjs` — see
 [Enforced boundaries](src/server/app/docs/architecture.md#enforced-boundaries).
+
+`eslint.config.js` ignores everything in `.gitignore` globally, because
+neostandard 0.14 applies its own `ignores` only to its own layers.
+
+## Configuration
+
+Every boolean read from the environment uses the `strict-boolean` format
+in `src/config/config.js`. Convict's built-in Boolean format turns any
+string other than `'false'` into true, so a typo such as `flase` would
+switch a flag on.
+
+In development the session cache is named `ins-session`. Cookies on
+localhost are scoped by host, not port, so this keeps the INS session
+apart from the animals frontend's when both run locally.
+
+`cdpEnvironment` defaults to `local` when CDP sets no environment, as
+`trade-imports-ins-backend` does.
 
 ## AUTHENTICATION (trade-imports-defra-id-stub)
 

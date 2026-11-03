@@ -23,6 +23,9 @@ export const copy = {
       accessibility: 'Datganiad hygyrchedd'
     }
   },
+  journeyStrip: {
+    draft: 'Drafft'
+  },
   unauthorised: {
     title: 'Methu mewngofnodi',
     heading: "Mae'n ddrwg gennym, ni allwn eich mewngofnodi.",

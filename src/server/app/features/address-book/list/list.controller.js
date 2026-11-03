@@ -1,7 +1,15 @@
+import Boom from '@hapi/boom'
+
 import { listAddresses } from '../../../services/address-book/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
+import { escapeHtml } from '../../../shared/escape-html.js'
+import {
+  buildPaginationLinks,
+  clampPage,
+  parsePage
+} from '../../../shared/list-page.js'
 import {
   addressAddPath,
   addressBookPath,
@@ -10,55 +18,44 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
   getAddressFormCountries,
-  resolveCountryCodeFromSearchTerm
+  countryCodesMatching
 } from '../address-countries.js'
-import { takeSuccessBanner } from '../success-banner.js'
+import { linesHtml } from '../lines-html.js'
+import { takeSuccessMessage } from '../success-message.js'
 import {
-  buildPaginationLinks,
-  buildResultsLabel,
-  mapAddressRows
+  addressBookPageHref,
+  mapAddressRows,
+  resultsLabelOf
 } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
+export const LIST_PAGE_SIZE = 8
+
 const logger = createLogger()
 const view = 'address-book/list/list'
 const copy = copyFor({ en, cy })
-
-const parsePage = (queryPage) => {
-  const page = Number.parseInt(queryPage, 10)
-  return Number.isNaN(page) || page < 1 ? 1 : page
-}
-
-const escapeHtml = (value) =>
-  String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('"', '&quot;')
 
 const viewLink = (address) =>
   `<a class="govuk-link" href="${addressPath(address.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
 
 const tableRowsOf = (addresses) =>
   addresses.map((address) => [
-    { text: address.name },
-    { text: address.addressLine },
-    { text: address.countryName },
+    { html: linesHtml(address.nameLines) },
+    { html: linesHtml(address.postalLines, { lineEnding: ',' }) },
+    { text: address.countryLabel },
     { html: viewLink(address) }
   ])
 
-const countryNamesOf = (countries) =>
-  Object.fromEntries(countries.map((country) => [country.code, country.name]))
-
-const paginationOf = (response) => ({
-  page: response.page,
-  pageSize: response.pageSize,
-  totalItems: response.totalItems,
-  totalPages: response.totalPages
+const paginationOf = (addressPage) => ({
+  page: addressPage.page,
+  pageSize: addressPage.pageSize,
+  totalItems: addressPage.totalItems,
+  totalPages: addressPage.totalPages
 })
 
-const buildView = (h, { recoverableError = false, ...model }) =>
-  h.view(view, {
+const buildView = (toolkit, { recoverableError = false, ...model }) =>
+  toolkit.view(view, {
     ...kit.base(copy.list.title, { recoverableError }),
     contentColumnClass: kit.surfaceClass('display'),
     copy,
@@ -67,50 +64,64 @@ const buildView = (h, { recoverableError = false, ...model }) =>
     ...model
   })
 
-const get = async (request, h) => {
-  const orgId = kit.requireOrganisationId(request)
+const loadAddressPage = async (organisationId, { page, ...search }) => {
+  const requestedAddressPage = await listAddresses(organisationId, {
+    page,
+    pageSize: LIST_PAGE_SIZE,
+    ...search
+  })
+  const servedPage = clampPage(page, requestedAddressPage.totalPages)
+  if (servedPage === page) {
+    return requestedAddressPage
+  }
+
+  logger.info(
+    { organisationId, requestedPage: page, servedPage },
+    'Address book page is past the last page, serving the last page'
+  )
+  return listAddresses(organisationId, {
+    page: servedPage,
+    pageSize: LIST_PAGE_SIZE,
+    ...search
+  })
+}
+
+const get = async (request, toolkit) => {
+  const organisationId = kit.requireOrganisationId(request)
   const page = parsePage(request.query.page)
-  const q = request.query.q?.trim() ?? ''
-  const hasSearch = Boolean(q)
-  const successBanner = takeSuccessBanner(request)
+  const searchTerm = request.query.q?.trim() ?? ''
+  const successMessage = takeSuccessMessage(request)
 
   try {
     const countries = await getAddressFormCountries()
-    const countryCode =
-      request.query.countryCode?.trim() ||
-      resolveCountryCodeFromSearchTerm(q, countries)
-    const search = { q: hasSearch ? q : undefined, countryCode }
-    const response = await listAddresses(orgId, { page, ...search })
-    const pagination = paginationOf(response)
-    const addresses = mapAddressRows(
-      response.items ?? [],
-      countryNamesOf(countries)
-    )
+    const countryCodes = countryCodesMatching(searchTerm, countries)
+    const addressPage = await loadAddressPage(organisationId, {
+      page,
+      searchTerm,
+      countryCodes
+    })
+    const pagination = paginationOf(addressPage)
+    const addresses = mapAddressRows(addressPage.items ?? [], countries)
 
-    return buildView(h, {
+    return buildView(toolkit, {
+      listLoaded: true,
       tableRows: tableRowsOf(addresses),
-      resultsLabel: buildResultsLabel(pagination, copy.list.results),
-      pagination: buildPaginationLinks(pagination, search),
-      q,
-      hasSearch,
-      isEmpty: response.totalItems === 0 && !hasSearch,
-      noSearchResults: response.totalItems === 0 && hasSearch,
-      successBanner
+      resultsLabel: resultsLabelOf(pagination, copy.list),
+      pagination: buildPaginationLinks(pagination, (targetPage) =>
+        addressBookPageHref(targetPage, { searchTerm })
+      ),
+      searchTerm,
+      successMessage
     })
   } catch (err) {
-    if (err.isBoom) {
+    if (Boom.isBoom(err)) {
       throw err
     }
-    logger.error({ err, orgId }, 'Failed to load address book')
-    return buildView(h, {
-      tableRows: [],
-      resultsLabel: null,
-      pagination: null,
-      q,
-      hasSearch,
-      isEmpty: false,
-      noSearchResults: false,
-      successBanner,
+    logger.error({ err, organisationId }, 'Failed to load address book')
+    return buildView(toolkit, {
+      listLoaded: false,
+      searchTerm,
+      successMessage,
       recoverableError: true
     }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }

@@ -1,12 +1,12 @@
+import { buildResultsLabel } from '../../../shared/list-page.js'
 import { addressBookPath } from '../../../shared/paths.js'
+import { countryLabelOf } from '../address-countries.js'
+import { postalLinesOf } from '../fields.js'
 
-export const buildAddressBookQueryString = ({ page, q, countryCode } = {}) => {
+export const buildAddressBookQueryString = ({ page, searchTerm } = {}) => {
   const params = new URLSearchParams()
-  if (q) {
-    params.set('q', q)
-  }
-  if (countryCode) {
-    params.set('countryCode', countryCode)
+  if (searchTerm) {
+    params.set('q', searchTerm)
   }
   if (page && page > 1) {
     params.set('page', String(page))
@@ -15,57 +15,24 @@ export const buildAddressBookQueryString = ({ page, q, countryCode } = {}) => {
   return query ? `?${query}` : ''
 }
 
-const clampPage = (page, totalPages) =>
-  Math.min(Math.max(page, 1), Math.max(totalPages, 1))
+export const addressBookPageHref = (page, { searchTerm } = {}) =>
+  `${addressBookPath()}${buildAddressBookQueryString({ searchTerm, page })}`
 
-export const buildResultsLabel = (
-  { page, pageSize, totalItems, totalPages },
-  format
-) => {
-  if (totalItems < 1) {
-    return null
-  }
-  const currentPage = clampPage(page, totalPages)
-  const from = (currentPage - 1) * pageSize + 1
-  const to = Math.min(currentPage * pageSize, totalItems)
-  return format(from, to, totalItems)
+export const nameLinesOf = (name) => {
+  const [firstWord, ...otherWords] = (name ?? '').split(/\s+/).filter(Boolean)
+  return otherWords.length
+    ? [firstWord, otherWords.join(' ')]
+    : [firstWord].filter(Boolean)
 }
 
-const pageHrefFor = (search) => (page) =>
-  `${addressBookPath()}${buildAddressBookQueryString({ ...search, page })}`
+export const resultsLabelOf = (pagination, listCopy) =>
+  buildResultsLabel(pagination, listCopy.results) ?? listCopy.noResults
 
-export const buildPaginationLinks = (
-  { page, totalPages },
-  { q, countryCode } = {}
-) => {
-  if (totalPages <= 1) {
-    return null
-  }
-  const currentPage = clampPage(page, totalPages)
-  const hrefOf = pageHrefFor({ q, countryCode })
-  return {
-    ...(currentPage > 1 && { previous: { href: hrefOf(currentPage - 1) } }),
-    ...(currentPage < totalPages && {
-      next: { href: hrefOf(currentPage + 1) }
-    }),
-    items: Array.from({ length: totalPages }, (_, index) => ({
-      number: String(index + 1),
-      href: hrefOf(index + 1),
-      current: index + 1 === currentPage
-    }))
-  }
-}
-
-export const buildAddressLine = (address) =>
-  [address.addressLine1, address.townOrCity, address.postcode]
-    .filter(Boolean)
-    .join(', ')
-
-export const mapAddressRows = (items, countryNames = {}) =>
-  items.map((address) => ({
+export const mapAddressRows = (addresses, countries = []) =>
+  addresses.map((address) => ({
     id: address.id,
     name: address.name,
-    addressLine: buildAddressLine(address),
-    countryCode: address.countryCode,
-    countryName: countryNames[address.countryCode] ?? address.countryCode
+    nameLines: nameLinesOf(address.name),
+    postalLines: postalLinesOf(address),
+    countryLabel: countryLabelOf(countries, address.countryCode)
   }))

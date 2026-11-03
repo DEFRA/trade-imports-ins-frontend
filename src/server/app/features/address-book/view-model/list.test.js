@@ -1,139 +1,97 @@
 import { describe, expect, test } from 'vitest'
 
-import {
-  buildAddressBookQueryString,
-  buildAddressLine,
-  buildPaginationLinks,
-  buildResultsLabel,
-  mapAddressRows
-} from './list.js'
 import { copy } from '../copy/copy.en.js'
+import {
+  addressBookPageHref,
+  buildAddressBookQueryString,
+  mapAddressRows,
+  nameLinesOf,
+  resultsLabelOf
+} from './list.js'
 
-const twoPages = { page: 2, pageSize: 25, totalItems: 30, totalPages: 2 }
+describe('#nameLinesOf', () => {
+  test('Should give the first word then the rest, single-spaced, for a name of several words', () => {
+    expect(nameLinesOf('Green Valley   Farm')).toEqual(['Green', 'Valley Farm'])
+  })
 
-describe('#buildAddressLine', () => {
-  test('composes addressLine1, townOrCity and postcode', () => {
-    expect(
-      buildAddressLine({
-        addressLine1: "14 Drover's Way",
-        townOrCity: 'Inverness',
-        postcode: 'IV2 3JH'
-      })
-    ).toBe("14 Drover's Way, Inverness, IV2 3JH")
+  test('Should give one line for a one-word name', () => {
+    expect(nameLinesOf('  Farm ')).toEqual(['Farm'])
+  })
+
+  test('Should give no lines for a blank name', () => {
+    expect(nameLinesOf('   ')).toEqual([])
   })
 })
 
-describe('#buildResultsLabel', () => {
-  test('formats the current page range', () => {
+describe('#resultsLabelOf', () => {
+  test('Should give the range label for a page with results', () => {
     expect(
-      buildResultsLabel(
-        { page: 1, pageSize: 8, totalItems: 24, totalPages: 3 },
-        copy.list.results
+      resultsLabelOf(
+        { page: 1, pageSize: 25, totalItems: 1, totalPages: 1 },
+        copy.list
       )
-    ).toBe('Showing 1-8 of 24')
-    expect(buildResultsLabel(twoPages, copy.list.results)).toBe(
-      'Showing 26-30 of 30'
-    )
+    ).toBe('Showing 1-1 of 1')
   })
 
-  test('returns null when there are no results', () => {
+  test('Should give Showing 0 of 0 for a page with no results', () => {
     expect(
-      buildResultsLabel(
+      resultsLabelOf(
         { page: 1, pageSize: 25, totalItems: 0, totalPages: 0 },
-        copy.list.results
+        copy.list
       )
-    ).toBeNull()
+    ).toBe('Showing 0 of 0')
   })
 })
 
 describe('#buildAddressBookQueryString', () => {
-  test('omits page size param', () => {
+  test('Should add the page param only after the first page', () => {
     expect(buildAddressBookQueryString({ page: 2 })).toBe('?page=2')
     expect(buildAddressBookQueryString({ page: 1 })).toBe('')
   })
 
-  test('preserves search terms', () => {
-    expect(
-      buildAddressBookQueryString({ q: 'green', countryCode: 'GB', page: 2 })
-    ).toBe('?q=green&countryCode=GB&page=2')
+  test('Should carry q before the page param', () => {
+    expect(buildAddressBookQueryString({ searchTerm: 'green', page: 2 })).toBe(
+      '?q=green&page=2'
+    )
   })
 })
 
-describe('#buildPaginationLinks', () => {
-  test('returns numbered pages from API metadata', () => {
-    const pagination = buildPaginationLinks(twoPages)
+describe('#addressBookPageHref', () => {
+  test('Should link to the address book carrying q, adding page only after the first page', () => {
+    const search = { searchTerm: 'green' }
 
-    expect(pagination.items).toHaveLength(2)
-    expect(pagination.items[1].current).toBe(true)
-    expect(pagination.previous.href).toBe('/address-book')
-    expect(pagination.next).toBeUndefined()
+    expect(addressBookPageHref(1, search)).toBe('/address-book?q=green')
+    expect(addressBookPageHref(2, search)).toBe('/address-book?q=green&page=2')
   })
 
-  test('preserves active search terms', () => {
-    const pagination = buildPaginationLinks(twoPages, {
-      q: 'green',
-      countryCode: 'GB'
-    })
-
-    expect(pagination.previous.href).toBe(
-      '/address-book?q=green&countryCode=GB'
-    )
-    expect(pagination.items[1].href).toBe(
-      '/address-book?q=green&countryCode=GB&page=2'
-    )
-  })
-
-  test('returns null for a single page', () => {
-    expect(
-      buildPaginationLinks({
-        page: 1,
-        pageSize: 25,
-        totalItems: 3,
-        totalPages: 1
-      })
-    ).toBeNull()
-  })
-
-  test('omits previous on the first page and next on the last page', () => {
-    const first = buildPaginationLinks({ ...twoPages, page: 1 })
-
-    expect(first.previous).toBeUndefined()
-    expect(first.next.href).toBe('/address-book?page=2')
-    expect(buildPaginationLinks(twoPages).next).toBeUndefined()
-  })
-
-  test('clamps a page past the end to the last page', () => {
-    const pagination = buildPaginationLinks({ ...twoPages, page: 5 })
-
-    expect(pagination.items[1].current).toBe(true)
-    expect(pagination.previous.href).toBe('/address-book')
-    expect(pagination.next).toBeUndefined()
+  test('Should link to /address-book with no query for the first page and no search', () => {
+    expect(addressBookPageHref(1)).toBe('/address-book')
   })
 })
 
 describe('#mapAddressRows', () => {
-  test('maps list rows with country names', () => {
+  test('Should map each address to a row with its name lines, postal lines and country label', () => {
     expect(
       mapAddressRows(
         [
           {
             id: '1',
-            name: 'Farm',
+            name: 'Green Farm',
             addressLine1: '1 Road',
             townOrCity: 'Town',
             postcode: 'AB1 2CD',
             countryCode: 'GB'
           }
         ],
-        { GB: 'United Kingdom' }
+        [{ code: 'GB', name: 'United Kingdom' }]
       )
     ).toEqual([
       {
         id: '1',
-        name: 'Farm',
-        addressLine: '1 Road, Town, AB1 2CD',
-        countryCode: 'GB',
-        countryName: 'United Kingdom'
+        name: 'Green Farm',
+        nameLines: ['Green', 'Farm'],
+        postalLines: ['1 Road', 'Town', 'AB1 2CD'],
+        countryLabel: 'United Kingdom'
       }
     ])
   })

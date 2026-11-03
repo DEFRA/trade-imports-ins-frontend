@@ -82,7 +82,7 @@
       {% if journeyStrip %}
         <div class="app-journey-strip govuk-!-margin-bottom-4">
           {{ govukTag({ text: journeyStrip.status.text, classes: journeyStrip.status.classes }) }}
-          <span class="govuk-body govuk-!-font-weight-bold">{{ journeyStrip.reference }}</span>
+          <span class="govuk-body govuk-!-font-weight-bold">{{ journeyStrip.notificationId }}</span>
         </div>
       {% endif %}
       {% block journeyContent %}{% endblock %}

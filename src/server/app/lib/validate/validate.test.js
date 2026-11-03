@@ -6,6 +6,7 @@ import {
   dateText,
   dateTextInRange,
   integerInRange,
+  maxEmail,
   maxText,
   oneOf,
   postcode,
@@ -41,6 +42,11 @@ const FLIP_FIELD_MAX_LENGTH_MESSAGE = 'Code must be 5 characters or less'
 const COUNT_REQUIRED_MESSAGE = 'Enter the number of items'
 const COUNT_WHOLE_NUMBER_MESSAGE = 'Enter a whole number greater than 0'
 const NOT_A_DATE = 'not a date'
+const EMAIL_REQUIRED_MESSAGE = 'Enter an email address'
+const EMAIL_FORMAT_MESSAGE = 'Enter an email address in the correct format'
+const EMAIL_MAX_LENGTH_MESSAGE = 'Email address must be 20 characters or fewer'
+const EMAIL_MAX_LENGTH = 20
+const EMAIL_ADDRESS = 'alex@example.com'
 const BLOCKS_BLANK_WHITESPACE_AND_MISSING =
   'Should block blank, whitespace-only and missing values with the required message'
 
@@ -107,7 +113,11 @@ describe('optional validators save blank (the mandate split)', () => {
     ['phone', ukPhone('phone')],
     ['year', integerInRange('year', { min: 1900, max: 2100 })],
     ['country', oneOf('country', ['england', 'wales'])],
-    ['description', maxText('description', 200)]
+    ['description', maxText('description', 200)],
+    [
+      'email',
+      maxEmail('email', EMAIL_MAX_LENGTH, { format: EMAIL_FORMAT_MESSAGE })
+    ]
   ])('Should pass %s when blank', (field, schema) => {
     expect(run(schema, { [field]: '' }).errors).toBeNull()
   })
@@ -326,11 +336,6 @@ describe('#requiredMaxText — save-blocking text with a length cap', () => {
 })
 
 describe('#requiredEmail — save-blocking email address with a length cap', () => {
-  const EMAIL_REQUIRED_MESSAGE = 'Enter an email address'
-  const EMAIL_FORMAT_MESSAGE = 'Enter an email address in the correct format'
-  const EMAIL_MAX_LENGTH_MESSAGE =
-    'Email address must be 20 characters or fewer'
-  const EMAIL_MAX_LENGTH = 20
   const schema = requiredEmail('email', EMAIL_MAX_LENGTH, {
     required: EMAIL_REQUIRED_MESSAGE,
     maxLength: EMAIL_MAX_LENGTH_MESSAGE,
@@ -338,9 +343,9 @@ describe('#requiredEmail — save-blocking email address with a length cap', () 
   })
 
   it('Should accept an address and hand back the trimmed value', () => {
-    const { errors, value } = run(schema, { email: '  alex@example.com  ' })
+    const { errors, value } = run(schema, { email: `  ${EMAIL_ADDRESS}  ` })
     expect(errors).toBeNull()
-    expect(value.email).toBe('alex@example.com')
+    expect(value.email).toBe(EMAIL_ADDRESS)
   })
 
   it(BLOCKS_BLANK_WHITESPACE_AND_MISSING, () => {
@@ -378,6 +383,31 @@ describe('#requiredEmail — save-blocking email address with a length cap', () 
       run(withoutLengthMessage, { email: 'A'.repeat(EMAIL_MAX_LENGTH + 1) })
         .errors
     ).toEqual({ email: validatorDefaults.maxLength(EMAIL_MAX_LENGTH) })
+  })
+})
+
+describe('#maxEmail — optional email address with a length cap', () => {
+  const schema = maxEmail('email', EMAIL_MAX_LENGTH, {
+    maxLength: EMAIL_MAX_LENGTH_MESSAGE,
+    format: EMAIL_FORMAT_MESSAGE
+  })
+
+  it('Should accept an address and hand back the trimmed value', () => {
+    const { errors, value } = run(schema, { email: `  ${EMAIL_ADDRESS}  ` })
+    expect(errors).toBeNull()
+    expect(value.email).toBe(EMAIL_ADDRESS)
+  })
+
+  it('Should reject a malformed address with the format message', () => {
+    expect(run(schema, { email: 'not-an-email' }).errors).toEqual({
+      email: EMAIL_FORMAT_MESSAGE
+    })
+  })
+
+  it('Should reject an over-long address with the length message', () => {
+    expect(
+      run(schema, { email: 'A'.repeat(EMAIL_MAX_LENGTH + 1) }).errors
+    ).toEqual({ email: EMAIL_MAX_LENGTH_MESSAGE })
   })
 })
 

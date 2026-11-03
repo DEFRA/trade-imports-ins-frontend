@@ -6,6 +6,7 @@ export {
   optionalText,
   maxText,
   requiredMaxText,
+  maxEmail,
   requiredEmail,
   pattern,
   postcode,
