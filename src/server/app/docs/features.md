@@ -33,18 +33,20 @@ root:
   `maxLength` and `required` match the address book API's `AddressRequest`
   validation, so the form refuses what the API would refuse. The same file owns
   the uses question's rules: `postedUsesOf` (the posted `uses` as a list),
-  `keepUsesOfferedBy` (the posted uses the chosen address type offers, in the
-  order it offers them) and `usesErrorsOf` (the required-use error when none is
+  `keepUsesOfferedBy` (the posted uses the chosen address type offers, kept in
+  `USES_BY_ADDRESS_TYPE`'s order, which is not the order the question shows them) and `usesErrorsOf` (the required-use error when none is
   kept), and `storedTypeAndUsesOf`, the address type and uses an edited
   address carries back to the API unchanged.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems` (a select that opens on a blank option),
-  `addFormCountryOffer` (the add form's select items, accepted country codes and form values for a handshake context:
+  `addFormCountryOffer` (the add form's select items, accepted country codes and form values, for a handshake context
+  and the chosen address type:
   United Kingdom alone, selected and accepted as the only country, with the
-  form values' country fixed to `GB`, when `journey-registry.js` says the
-  role's address must be in the United Kingdom, else the blank option, every
-  served country and the form values as given),
+  form values' country fixed to `GB`, when the handshake's party must be in the
+  United Kingdom according to `journey-registry.js` or, with no handshake, when
+  `addressTypeRequiresUnitedKingdom` holds the chosen type, else the blank
+  option, every served country and the form values as given),
   `buildEditCountrySelectItems` (the edit form's select, with a
   blank option only when the country it shows is not one the list offers) and
   `countryCodesMatching` (every country code whose name contains the search term).
@@ -52,8 +54,9 @@ root:
   `JOURNEY_TYPES` (the registered journey types), `ADDRESS_LANDING` (select,
   return and cancel, the page the journey opens on return),
   `isKnownJourneyType`, `requiresUnitedKingdomAddress`
-  (whether the role's address must be in the United Kingdom: its use belongs to
-  the Destination, Consignee or Importer type), `addressTypeAndUsesOfParty`
+  (whether the role's address must be in the United Kingdom: the address type
+  of its use is one `addressTypeRequiresUnitedKingdom` holds, and the party is
+  not the consignment contact), `addressTypeAndUsesOfParty`
   (the address type and the one use a journey-mode save carries, or nothing for
   a fulfilment id the map does not list), `isConsignmentContact` (whether a
   handshake is the consignment contact's, so the add page offers the contact's
@@ -99,9 +102,11 @@ root:
   yar-backed, read-once.
 - [`add-in-progress.js`](../features/address-book/add-in-progress.js) —
   yar-backed state of the add in progress: `storeChosenAddressType` keeps
-  the address type chosen on the type page, `chosenAddressType` reads it back
-  (only a value in `ADDRESS_TYPES`, else nothing) and `clearAddInProgress`
-  removes it.
+  the address type chosen on the type page and any entry already kept,
+  `chosenAddressType` reads the type back (only a value in `ADDRESS_TYPES`,
+  else nothing), `keepEnteredAddress` and `keptEnteredAddress` keep and read
+  the field values and `tickedUses` posted with the add form, and `clearAddInProgress`
+  removes everything, on a new add and on a save.
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with six
 specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
@@ -183,12 +188,20 @@ adds to that shape for a journey:
   address type chosen on the type page, else the one guard,
   `redirectIfNoAddressTypeChosen`, logs and redirects to the type page; a
   handshake opens the form directly. Back goes to the type page. The form
-  opens with United Kingdom selected, and a successful save clears the add in
-  progress.
+  opens with the entry kept from an earlier POST (its field values and ticked
+  uses) or, with none, United Kingdom selected; the POST keeps what was posted
+  before any check, so a refused save and a Back to the type page leave the
+  entry for the form to reopen with. A successful save clears the add in
+  progress. A type that must be in the United Kingdom (Destination, Consignee
+  or Importer, and Branch) shows United Kingdom alone, whatever was kept or
+  posted, and a save whose posted country was replaced with United Kingdom is logged once at info.
 - In `ADDRESS_BOOK` mode after the contact fields the form shows the uses question: a visible
   section break, then checkboxes named `uses` (the first option's id is `uses`,
-  so the error summary link focuses it) offering the chosen type's uses from
-  `USES_BY_ADDRESS_TYPE`, labelled from `copy.uses`. The POST checks the
+  so the error summary link focuses it) under the legend `copy.uses` holds for
+  the chosen type, offering the chosen type's uses from
+  `USES_BY_ADDRESS_TYPE`, labelled from `copy.uses`. `useItemsOf` owns the
+  order they show in: the uses `address-types.js` marks as place uses first,
+  the rest in `USES_BY_ADDRESS_TYPE`'s order. The POST checks the
   uses only once the address and contact fields pass; it keeps the posted uses
   the chosen type offers (logging any it discards at info), re-renders with
   the required-use error when none is kept, and otherwise saves the validated

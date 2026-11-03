@@ -15,7 +15,10 @@ import {
   addValidAddressToFreshOrganisation,
   chooseAddressType,
   fieldLabels,
-  openAddForm
+  malformedEmail,
+  openAddForm,
+  refuseSaveThenReopenAddForm,
+  validAddress
 } from './address-form.js'
 import { openAddressBookList } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
@@ -181,8 +184,64 @@ test.describe('choose an address type', () => {
   })
 })
 
+const USE_TO_TICK_BY_ADDRESS_TYPE = {
+  [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: 'PLACE_OF_ORIGIN',
+  [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: 'CONSIGNEE',
+  [ADDRESS_TYPES.BRANCH]: 'BRANCH_ADDRESS'
+}
+
+const expectEnteredAddressKept = async (page, use) => {
+  const entered = { ...validAddress, email: malformedEmail }
+  for (const [field, value] of Object.entries(entered)) {
+    await expect(page.getByLabel(fieldLabels[field])).toHaveValue(value)
+  }
+  await expect(
+    page.getByRole('checkbox', {
+      name: copy.uses.options[use].label,
+      exact: true
+    })
+  ).toBeChecked()
+}
+
+const expectRefusedEntryKeptOnReturn = async (
+  page,
+  addressType,
+  organisationId
+) => {
+  const use = USE_TO_TICK_BY_ADDRESS_TYPE[addressType]
+  await signIn(page, { organisationId })
+
+  await refuseSaveThenReopenAddForm(page, { addressType, use })
+
+  await expectEnteredAddressKept(page, use)
+}
+
+test.describe('going back from the address form to choose an address type', () => {
+  for (const addressType of Object.keys(USE_TO_TICK_BY_ADDRESS_TYPE)) {
+    test(`after a refused save of ${typeCopy.options[addressType].label}, choosing it again shows the address, the contact details and the ticked use entered`, async ({
+      page
+    }) => {
+      await expectRefusedEntryKeptOnReturn(
+        page,
+        addressType,
+        `stub-org-type-kept-${addressType}`
+      )
+    })
+  }
+})
+
 test.describe('choose an address type without JavaScript', () => {
   test.use({ javaScriptEnabled: false })
+
+  test('after a refused save of Branch, choosing it again shows the address, the contact details and the ticked use entered', async ({
+    page
+  }) => {
+    await expectRefusedEntryKeptOnReturn(
+      page,
+      ADDRESS_TYPES.BRANCH,
+      'stub-org-type-kept-no-js'
+    )
+  })
 
   test('refuses Continue with nothing chosen, then opens the address form and Back shows the type chosen', async ({
     page

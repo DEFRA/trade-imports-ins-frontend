@@ -5,8 +5,10 @@ import * as stub from './stub.js'
 
 export {
   ADDRESS_TYPES,
+  PLACE_USES,
   USES_BY_ADDRESS_TYPE,
-  addressTypeOfUse
+  addressTypeOfUse,
+  addressTypeRequiresUnitedKingdom
 } from './address-types.js'
 export { TYPED_SEED } from './typed-seed.js'
 

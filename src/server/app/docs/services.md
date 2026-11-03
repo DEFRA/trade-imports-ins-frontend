@@ -5,7 +5,9 @@
 and **`stub.js`** the in-memory stand-in, plus any module those share. The
 address book also holds **`address-types.js`** (the address type values, the
 uses each address type lists, in the order the Type select offers them, and
-`addressTypeOfUse`, the address type that lists a use) and
+`addressTypeOfUse`, the address type that lists a use,
+`addressTypeRequiresUnitedKingdom`, whether an address type must be in the
+United Kingdom, and `PLACE_USES`, the uses that name a place) and
 **`typed-seed.js`** (the stub's typed seed addresses), which the barrel
 exports. A feature imports only the barrel, and nothing imports any other file
 from outside its folder.

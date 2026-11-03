@@ -5,8 +5,10 @@ import {
   serveCountries
 } from '../../../common/test-helpers/real-mode.js'
 import { COUNTRY_PLACEHOLDER } from '../../../common/test-helpers/country-placeholder.js'
+import { ADDRESS_TYPES } from '../../services/address-book/index.js'
 import {
   ANY_COUNTRY_ROLES,
+  CONSIGNMENT_CONTACT_HANDSHAKE,
   handshakeContextOf,
   JOURNEY_HANDSHAKES_BY_ROLE,
   UNITED_KINGDOM_ROLES
@@ -35,6 +37,10 @@ const anyCountryContexts = [
     `the ${role} handshake`,
     handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
   ]),
+  [
+    'the consignment contact handshake',
+    handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE)
+  ],
   ['no handshake', null]
 ]
 
@@ -91,13 +97,26 @@ describe('#addFormCountryOffer', () => {
 
   const postedValues = { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
 
-  test.each(UNITED_KINGDOM_ROLES)(
-    'Should offer United Kingdom alone, accept only GB and fix the posted country to GB for the %s',
-    async (role) => {
+  test.each([
+    ...UNITED_KINGDOM_ROLES.map((role) => [
+      `the ${role} handshake`,
+      handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
+      undefined
+    ]),
+    [
+      'no handshake and Destination, Consignee or Importer chosen',
+      null,
+      ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+    ],
+    ['no handshake and Branch chosen', null, ADDRESS_TYPES.BRANCH]
+  ])(
+    'Should offer United Kingdom alone, accept only GB and fix the posted country to GB for %s',
+    async (_name, handshakeContext, addressType) => {
       const { addFormCountryOffer } = await importAddressCountriesInRealMode()
 
       const offer = await addFormCountryOffer({
-        handshakeContext: handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
+        handshakeContext,
+        addressType,
         placeholder: COUNTRY_PLACEHOLDER,
         formValues: postedValues
       })
@@ -109,6 +128,42 @@ describe('#addFormCountryOffer', () => {
       })
     }
   )
+
+  test('Should offer the placeholder then every served country with no handshake and Origin or Consignor chosen', async () => {
+    serveCountries([FRANCE, GB_COUNTRY])
+    const { addFormCountryOffer } = await importAddressCountriesInRealMode()
+
+    const offer = await addFormCountryOffer({
+      handshakeContext: null,
+      addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+      placeholder: COUNTRY_PLACEHOLDER,
+      formValues: postedValues
+    })
+
+    expect(offer.countryItems).toEqual([
+      { value: '', text: COUNTRY_PLACEHOLDER },
+      { value: FRANCE.code, text: FRANCE.name },
+      { value: GB_COUNTRY.code, text: GB_COUNTRY.name }
+    ])
+    expect(offer.formValues).toEqual(postedValues)
+  })
+
+  test('Should let the consignor handshake decide over a chosen type that must be in the United Kingdom', async () => {
+    serveCountries([FRANCE, GB_COUNTRY])
+    const { addFormCountryOffer } = await importAddressCountriesInRealMode()
+
+    const offer = await addFormCountryOffer({
+      handshakeContext: handshakeContextOf(
+        JOURNEY_HANDSHAKES_BY_ROLE.consignor
+      ),
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      placeholder: COUNTRY_PLACEHOLDER,
+      formValues: postedValues
+    })
+
+    expect(offer.countryCodes).toEqual(['FR', GB_COUNTRY.code])
+    expect(offer.formValues).toEqual(postedValues)
+  })
 
   test.each(anyCountryContexts)(
     'Should offer the placeholder then every served country and leave the posted country as posted for %s',

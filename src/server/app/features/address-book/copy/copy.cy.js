@@ -1,6 +1,7 @@
 // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
 const SELECT_COUNTRY = 'Dewiswch wlad'
 const ADD_NEW_ADDRESS = 'Ychwanegu cyfeiriad newydd'
+const ADDRESS_TYPE = 'Math o gyfeiriad'
 
 export const copy = {
   list: {
@@ -104,7 +105,11 @@ export const copy = {
     continue: 'Parhau'
   },
   uses: {
-    legend: 'Ar gyfer beth y gellir defnyddio’r cyfeiriad hwn?',
+    legendByAddressType: {
+      ORIGIN_OR_CONSIGNOR: 'Ar gyfer beth y gellir defnyddio’r cyfeiriad hwn?',
+      DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE,
+      BRANCH: ADDRESS_TYPE
+    },
     hint: 'Dewiswch ble y gellir defnyddio’r cyfeiriad hwn',
     options: {
       PLACE_OF_ORIGIN: { label: 'Man tarddiad' },

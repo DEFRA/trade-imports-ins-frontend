@@ -8,7 +8,7 @@ import {
   ADDRESS_BOOK_PATH,
   ADDRESS_TYPE_PATH,
   BACK_LINK,
-  chooseAddressTypeForCookie,
+  cookieAfterChoosingAddressType,
   cookieHeaderOf,
   expectRedirectTo,
   getPage,
@@ -137,7 +137,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
   )
 
   test('GET of the start address with a type already chosen shows none chosen', async () => {
-    const cookie = await chooseAddressTypeForCookie(server(), 'type-start')
+    const cookie = await cookieAfterChoosingAddressType(server(), 'type-start')
 
     const { result } = await getPage(
       server(),

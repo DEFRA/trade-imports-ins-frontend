@@ -11,6 +11,18 @@ import { signIn } from '../../../../../../fit/sign-in.js'
 
 export const fieldLabels = copy.form.fields
 
+export const fieldLabelsInFormOrder = [
+  fieldLabels.name,
+  fieldLabels.addressLine1,
+  fieldLabels.addressLine2,
+  fieldLabels.townOrCity,
+  fieldLabels.county,
+  fieldLabels.postcode,
+  fieldLabels.countryCode,
+  fieldLabels.email,
+  fieldLabels.phone
+]
+
 export const addressFormCountryNames = [
   ...countries.map(({ name }) => name),
   GB_COUNTRY.name
@@ -77,22 +89,44 @@ export const tickUses = async (page, uses) => {
   }
 }
 
+export const malformedEmail = 'not-an-email'
+
+export const refuseSaveThenReopenAddForm = async (
+  page,
+  { addressType, use }
+) => {
+  await openAddForm(page, addressType)
+  await fillValidAddress(page, { email: malformedEmail })
+  await tickUses(page, [use])
+  await page.getByRole('button', { name: 'Save and continue' }).click()
+  await expect(page.getByRole('alert')).toBeVisible()
+  await page.getByRole('link', { name: 'Back', exact: true }).click()
+  await expect(page).toHaveURL(addressTypePath())
+  await chooseAddressType(page, addressType)
+  await expect(page).toHaveURL(addressAddPath())
+}
+
 export const originOrConsignorListUrl = addressBookPageHref(1, {
   addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
 })
 
 export const addValidAddressToFreshOrganisation = async (
   page,
-  { organisationPrefix, overrides = {} }
+  {
+    organisationPrefix,
+    overrides = {},
+    addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+    uses = ['PLACE_OF_ORIGIN']
+  }
 ) => {
   await signIn(page, {
     organisationId: `${organisationPrefix}-${crypto.randomUUID()}`
   })
-  await openAddForm(page)
+  await openAddForm(page, addressType)
   await fillValidAddress(page, overrides)
-  await tickUses(page, ['PLACE_OF_ORIGIN'])
+  await tickUses(page, uses)
   await page.getByRole('button', { name: 'Save and continue' }).click()
-  await expect(page).toHaveURL(originOrConsignorListUrl)
+  await expect(page).toHaveURL(addressBookPageHref(1, { addressType }))
 }
 
 export const validAddressViewLink = (page) =>

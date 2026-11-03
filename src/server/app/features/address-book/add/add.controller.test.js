@@ -7,10 +7,11 @@ import {
   ADDRESS_BOOK_PATH,
   ADDRESS_FORM_LABELS,
   ADDRESS_ID,
+  ADDRESS_TYPE_START_PATH,
   BACK_LINK,
   addressesApiPath,
   ADDRESS_TYPE_PATH,
-  chooseAddressTypeForCookie,
+  cookieAfterChoosingAddressType,
   cookieHeaderOf,
   COUNTRIES,
   COUNTRY_OPTIONS,
@@ -40,6 +41,7 @@ import {
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
 import {
+  addressTypeRequiresUnitedKingdom,
   ADDRESS_TYPES,
   USES_BY_ADDRESS_TYPE
 } from '../../../services/address-book/index.js'
@@ -97,11 +99,9 @@ const getAdd = (server, sessionId, query, cookie) =>
   )
 
 const getAddWithTypeChosen = async (server, sessionId, addressType) => {
-  const cookie = await chooseAddressTypeForCookie(
-    server,
-    sessionId,
+  const cookie = await cookieAfterChoosingAddressType(server, sessionId, {
     addressType
-  )
+  })
   return getAdd(server, sessionId, undefined, cookie)
 }
 
@@ -111,11 +111,9 @@ const postAddWithTypeChosen = async (
   payload,
   addressType
 ) => {
-  const cookie = await chooseAddressTypeForCookie(
-    server,
-    sessionId,
+  const cookie = await cookieAfterChoosingAddressType(server, sessionId, {
     addressType
-  )
+  })
   return postPage(server, ADD_ADDRESS_PATH, sessionId, payload, cookie)
 }
 
@@ -123,9 +121,31 @@ const ORIGIN_OR_CONSIGNOR_LIST_PATH = `${ADDRESS_BOOK_PATH}?addressType=${ADDRES
 const ERROR_SUMMARY_LINKS = '.govuk-error-summary a'
 const USES_ERROR = 'Select what this address can be used for'
 const USES_LEGEND = 'What can this address be used for?'
+const ADDRESS_TYPE_LEGEND = 'Address type'
+const UNITED_KINGDOM_ADDRESS_TYPES = Object.values(ADDRESS_TYPES).filter(
+  addressTypeRequiresUnitedKingdom
+)
 const USES_HINT = 'Select where this address can be used'
 
 const SUCCESS_BANNER = '.govuk-notification-banner--success'
+
+const expectNamePostcodeAndPhoneErrorsOnly = ($) => {
+  expectSummaryAndFieldErrors($, [
+    ['name', REQUIRED_MESSAGES.name],
+    ['postcode', REQUIRED_MESSAGES.postcode],
+    ['phone', REQUIRED_MESSAGES.phone]
+  ])
+  expectUnitedKingdomAloneSelected($)
+}
+
+const ORIGIN_USE_LABELS = ['Place of origin', 'Consignor']
+const VALIDATION_PROBLEM_TYPE =
+  'https://api.cdp.defra.cloud/problems/validation-error'
+
+const tickedUsesOf = ($) =>
+  $('input[name="uses"]:checked')
+    .map((_, input) => $(input).attr('value'))
+    .get()
 
 beforeEach(() => {
   config.set('csrf.enabled', false)
@@ -166,8 +186,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
     expect(textsOf($, FORM_LABELS)).toEqual([
       ...ADDRESS_FORM_LABELS,
-      'Place of origin',
-      'Consignor'
+      ...ORIGIN_USE_LABELS
     ])
     expect(textsOf($, '#phone-hint')).toEqual([
       'For international numbers include the country code'
@@ -197,7 +216,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     const scope = addressBookApi()
       .post(addressesApiPath())
       .reply(400, {
-        type: 'https://api.cdp.defra.cloud/problems/validation-error',
+        type: VALIDATION_PROBLEM_TYPE,
         errors: {
           email: [EMAIL_FORMAT_ERROR]
         }
@@ -385,7 +404,7 @@ describe(
     test('GET after a successful save redirects to the address type page', async () => {
       serveAddressCreated()
       const sessionId = 'add-get-after-save'
-      const cookie = await chooseAddressTypeForCookie(server(), sessionId)
+      const cookie = await cookieAfterChoosingAddressType(server(), sessionId)
       const saved = await postPage(
         server(),
         ADD_ADDRESS_PATH,
@@ -417,11 +436,6 @@ describe(
     const FIRST_USE_OF = (addressType) => USES_BY_ADDRESS_TYPE[addressType][0]
     const USE_CHECKBOXES = 'input[name="uses"]'
 
-    const tickedUsesOf = ($) =>
-      $(`${USE_CHECKBOXES}:checked`)
-        .map((_, input) => $(input).attr('value'))
-        .get()
-
     test('GET after Origin or Consignor is chosen shows a section break after the contact fields, then the uses question with Place of origin and Consignor unticked and without hints', async () => {
       const { result, statusCode } = await getAddWithTypeChosen(
         server(),
@@ -437,18 +451,34 @@ describe(
         textsOf($, 'hr.govuk-section-break--visible + .govuk-form-group legend')
       ).toEqual([USES_LEGEND])
       expect(textsOf($, '#uses-hint')).toEqual([USES_HINT])
-      expect(textsOf($, '.govuk-checkboxes__label')).toEqual([
-        'Place of origin',
-        'Consignor'
-      ])
+      expect(textsOf($, '.govuk-checkboxes__label')).toEqual(ORIGIN_USE_LABELS)
       expect($('.govuk-checkboxes__hint')).toHaveLength(0)
       expect(tickedUsesOf($)).toEqual([])
       expect($(USE_CHECKBOXES).first().attr('id')).toBe('uses')
     })
 
-    test.each(Object.entries(USES_BY_ADDRESS_TYPE))(
-      'GET after %s is chosen offers exactly the uses that type holds, in order',
-      async (addressType, uses) => {
+    test.each([
+      [
+        ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+        USES_LEGEND,
+        ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
+        ORIGIN_USE_LABELS
+      ],
+      [
+        ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+        ADDRESS_TYPE_LEGEND,
+        ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
+        ['Place of destination', 'Consignee', 'Importer']
+      ],
+      [
+        ADDRESS_TYPES.BRANCH,
+        ADDRESS_TYPE_LEGEND,
+        ['BRANCH_ADDRESS'],
+        ['Branch address']
+      ]
+    ])(
+      'GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the uses that type holds, the place uses first',
+      async (addressType, legend, values, labels) => {
         const { result } = await getAddWithTypeChosen(
           server(),
           `add-get-uses-${addressType}`,
@@ -457,29 +487,46 @@ describe(
 
         const $ = load(result)
         expect(
+          textsOf(
+            $,
+            'hr.govuk-section-break--visible + .govuk-form-group legend'
+          )
+        ).toEqual([legend])
+        expect(textsOf($, '#uses-hint')).toEqual([USES_HINT])
+        expect(
           $(USE_CHECKBOXES)
             .map((_, input) => $(input).attr('value'))
             .get()
-        ).toEqual(uses)
+        ).toEqual(values)
+        expect(textsOf($, '.govuk-checkboxes__label')).toEqual(labels)
+        expect($('.govuk-checkboxes__hint')).toHaveLength(0)
+        expect(tickedUsesOf($)).toEqual([])
+        expect([...values].sort()).toEqual(
+          [...USES_BY_ADDRESS_TYPE[addressType]].sort()
+        )
       }
     )
 
-    test('POST with valid fields and no use ticked shows the uses error inline and as the summary link to the first option, and sends nothing', async () => {
-      const { uses: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
+    test.each(Object.values(ADDRESS_TYPES))(
+      'POST after %s is chosen with valid fields and no use ticked shows the uses error inline and as the summary link to the first option, and sends nothing',
+      async (addressType) => {
+        const { uses: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
 
-      const { result, statusCode } = await postAddWithTypeChosen(
-        server(),
-        'add-post-no-use',
-        fieldsOnly
-      )
+        const { result, statusCode } = await postAddWithTypeChosen(
+          server(),
+          `add-post-no-use-${addressType}`,
+          fieldsOnly,
+          addressType
+        )
 
-      expect(statusCode).toBe(statusCodes.badRequest)
-      const $ = load(result)
-      expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([USES_ERROR])
-      expect($(ERROR_SUMMARY_LINKS).attr('href')).toBe('#uses')
-      expect(textsOf($, '#uses-error')).toEqual([`Error: ${USES_ERROR}`])
-      expect($(USE_CHECKBOXES).first().attr('id')).toBe('uses')
-    })
+        expect(statusCode).toBe(statusCodes.badRequest)
+        const $ = load(result)
+        expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([USES_ERROR])
+        expect($(ERROR_SUMMARY_LINKS).attr('href')).toBe('#uses')
+        expect(textsOf($, '#uses-error')).toEqual([`Error: ${USES_ERROR}`])
+        expect($(USE_CHECKBOXES).first().attr('id')).toBe('uses')
+      }
+    )
 
     test('POST with an invalid field and no use ticked shows only the field error', async () => {
       const { uses: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
@@ -575,6 +622,354 @@ describe(
         })
       }
     )
+  }
+)
+
+describe(
+  '#addressBookAddController — types that must be in the United Kingdom',
+  { concurrent: false },
+  () => {
+    const server = startRealModeServerServingCountries(COUNTRIES)
+
+    test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
+      'GET after %s is chosen offers United Kingdom alone, selected',
+      async (addressType) => {
+        const { result } = await getAddWithTypeChosen(
+          server(),
+          `add-get-uk-alone-${addressType}`,
+          addressType
+        )
+
+        expectUnitedKingdomAloneSelected(load(result))
+      }
+    )
+
+    test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
+      'POST after %s is chosen with France posted saves United Kingdom',
+      async (addressType) => {
+        const { scope, captured } = serveAddressCreationCapturingBody()
+
+        await postAddWithTypeChosen(
+          server(),
+          `add-post-uk-only-${addressType}`,
+          {
+            ...VALID_ADDRESS_PAYLOAD,
+            countryCode: 'FR',
+            uses: USES_BY_ADDRESS_TYPE[addressType][0]
+          },
+          addressType
+        )
+
+        expect(scope.isDone()).toBe(true)
+        expect(captured.body.countryCode).toBe(GB_COUNTRY.code)
+      }
+    )
+
+    test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
+      'POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only',
+      async (addressType) => {
+        const { result, statusCode } = await postAddWithTypeChosen(
+          server(),
+          `add-post-uk-only-blanks-${addressType}`,
+          {
+            ...VALID_ADDRESS_PAYLOAD,
+            name: '',
+            postcode: '',
+            phone: '',
+            countryCode: 'FR'
+          },
+          addressType
+        )
+
+        expect(statusCode).toBe(statusCodes.badRequest)
+        expectNamePostcodeAndPhoneErrorsOnly(load(result))
+      }
+    )
+  }
+)
+
+describe(
+  '#addressBookAddController — replaced country log',
+  { concurrent: false },
+  () => {
+    const server = startRealModeServerServingCountries(COUNTRIES)
+    const loggedWith = captureInfoLogs()
+    const REPLACED_MESSAGE =
+      'Posted country was replaced with the country the address must be in'
+
+    test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
+      'POST after %s is chosen with France posted logs the replaced country once, with the stored address id',
+      async (addressType) => {
+        serveAddressCreated()
+
+        await postAddWithTypeChosen(
+          server(),
+          `add-log-replaced-${addressType}`,
+          {
+            ...VALID_ADDRESS_PAYLOAD,
+            countryCode: 'FR',
+            uses: USES_BY_ADDRESS_TYPE[addressType][0]
+          },
+          addressType
+        )
+
+        expect(loggedWith(REPLACED_MESSAGE)).toEqual([
+          {
+            fields: {
+              organisationId: ORGANISATION_ID,
+              addressId: ADDRESS_ID,
+              addressType,
+              postedCountryCode: 'FR'
+            },
+            message: REPLACED_MESSAGE
+          }
+        ])
+      }
+    )
+
+    test('POST after Destination is chosen with the United Kingdom posted logs nothing, and Origin or Consignor saves France as posted', async () => {
+      const destination = serveAddressCreationCapturingBody()
+      await postAddWithTypeChosen(
+        server(),
+        'add-log-not-replaced-gb',
+        {
+          ...VALID_ADDRESS_PAYLOAD,
+          uses: 'CONSIGNEE'
+        },
+        ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+      )
+      const origin = serveAddressCreationCapturingBody()
+      await postAddWithTypeChosen(server(), 'add-log-not-replaced-origin', {
+        ...VALID_ADDRESS_PAYLOAD,
+        countryCode: 'FR'
+      })
+
+      expect(destination.scope.isDone()).toBe(true)
+      expect(origin.captured.body.countryCode).toBe('FR')
+      expect(loggedWith(REPLACED_MESSAGE)).toEqual([])
+    })
+
+    test('POST from the consignee handshake with France posted logs the replaced country with the notification and fulfilment ids', async () => {
+      serveAddressCreated()
+
+      await postAdd(server(), 'add-log-replaced-consignee', {
+        ...CONSIGNEE_HANDSHAKE,
+        ...VALID_ADDRESS_PAYLOAD,
+        countryCode: 'FR'
+      })
+
+      expect(loggedWith(REPLACED_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            addressId: ADDRESS_ID,
+            notificationId: CONSIGNEE_HANDSHAKE['notification-id'],
+            fulfilmentId: CONSIGNEE_HANDSHAKE['fulfilment-id'],
+            postedCountryCode: 'FR'
+          },
+          message: REPLACED_MESSAGE
+        }
+      ])
+    })
+
+    test('POST with France posted that is refused for a field error, a missing use or the address book logs nothing and shows each refusal', async () => {
+      const destination = ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+      const france = { ...VALID_ADDRESS_PAYLOAD, countryCode: 'FR' }
+      const { uses: _noUse, ...franceWithoutUse } = france
+
+      const fieldError = await postAddWithTypeChosen(
+        server(),
+        'add-log-refused-field',
+        { ...france, name: '' },
+        destination
+      )
+      const usesError = await postAddWithTypeChosen(
+        server(),
+        'add-log-refused-uses',
+        franceWithoutUse,
+        destination
+      )
+      addressBookApi()
+        .post(addressesApiPath())
+        .reply(statusCodes.badRequest, {
+          type: VALIDATION_PROBLEM_TYPE,
+          errors: { email: [EMAIL_FORMAT_ERROR] }
+        })
+      const refusedByAddressBook = await postAddWithTypeChosen(
+        server(),
+        'add-log-refused-address-book',
+        { ...france, uses: 'CONSIGNEE' },
+        destination
+      )
+
+      expect(textsOf(load(fieldError.result), ERROR_SUMMARY_LINKS)).toEqual([
+        REQUIRED_MESSAGES.name
+      ])
+      expect(textsOf(load(usesError.result), ERROR_SUMMARY_LINKS)).toEqual([
+        USES_ERROR
+      ])
+      expect(
+        textsOf(load(refusedByAddressBook.result), ERROR_SUMMARY_LINKS)
+      ).toEqual([EMAIL_FORMAT_ERROR])
+      expect(loggedWith(REPLACED_MESSAGE)).toEqual([])
+    })
+  }
+)
+
+describe(
+  '#addressBookAddController — add in progress',
+  { concurrent: false },
+  () => {
+    const server = startRealModeServerServingCountries(COUNTRIES)
+    const ENTERED_FIELDS = {
+      ...VALID_ADDRESS_FIELDS,
+      addressLine2: 'Unit 2',
+      county: 'Highland',
+      email: 'not-an-email'
+    }
+    const TEXT_FIELDS = [
+      'name',
+      'addressLine1',
+      'addressLine2',
+      'townOrCity',
+      'county',
+      'postcode',
+      'phone',
+      'email'
+    ]
+
+    const enteredValuesOf = ($) =>
+      Object.fromEntries(
+        TEXT_FIELDS.map((field) => [field, $(`#${field}`).val()])
+      )
+
+    const postRefusedAddFor = async (sessionId, addressType, use) => {
+      const typeCookie = await cookieAfterChoosingAddressType(
+        server(),
+        sessionId,
+        { addressType }
+      )
+      const refused = await postPage(
+        server(),
+        ADD_ADDRESS_PATH,
+        sessionId,
+        { ...ENTERED_FIELDS, uses: use },
+        typeCookie
+      )
+      expect(refused.statusCode).toBe(statusCodes.badRequest)
+      return cookieHeaderOf(refused.headers) || typeCookie
+    }
+
+    const openAddAfterChoosing = async (sessionId, addressType, cookie) =>
+      getAdd(
+        server(),
+        sessionId,
+        undefined,
+        await cookieAfterChoosingAddressType(server(), sessionId, {
+          addressType,
+          cookie
+        })
+      )
+
+    test.each([
+      [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, 'PLACE_OF_ORIGIN'],
+      [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, 'CONSIGNEE'],
+      [ADDRESS_TYPES.BRANCH, 'BRANCH_ADDRESS']
+    ])(
+      'GET after a refused save of %s and choosing it again shows every field entered and the ticked use %s',
+      async (addressType, use) => {
+        const sessionId = `add-kept-${addressType}`
+        const cookie = await postRefusedAddFor(sessionId, addressType, use)
+
+        const { result } = await openAddAfterChoosing(
+          sessionId,
+          addressType,
+          cookie
+        )
+
+        const $ = load(result)
+        expect(enteredValuesOf($)).toEqual(
+          Object.fromEntries(
+            TEXT_FIELDS.map((field) => [field, ENTERED_FIELDS[field]])
+          )
+        )
+        expect(tickedUsesOf($)).toEqual([use])
+      }
+    )
+
+    test('GET after a refused save and choosing another type keeps the fields and shows no tick for a use the type does not offer', async () => {
+      const sessionId = 'add-kept-other-type'
+      const cookie = await postRefusedAddFor(
+        sessionId,
+        ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+        'PLACE_OF_ORIGIN'
+      )
+
+      const { result } = await openAddAfterChoosing(
+        sessionId,
+        ADDRESS_TYPES.BRANCH,
+        cookie
+      )
+
+      const $ = load(result)
+      expect($('#name').val()).toBe(ENTERED_FIELDS.name)
+      expect(tickedUsesOf($)).toEqual([])
+    })
+
+    test('GET after starting a new address opens empty text fields with United Kingdom selected', async () => {
+      const sessionId = 'add-kept-cleared-by-start'
+      const cookie = await postRefusedAddFor(
+        sessionId,
+        ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+        'PLACE_OF_ORIGIN'
+      )
+      const started = await getPage(
+        server(),
+        ADDRESS_TYPE_START_PATH,
+        sessionId,
+        cookie
+      )
+
+      const { result } = await openAddAfterChoosing(
+        sessionId,
+        ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+        cookieHeaderOf(started.headers) || cookie
+      )
+
+      const $ = load(result)
+      expect(enteredValuesOf($)).toEqual(
+        Object.fromEntries(TEXT_FIELDS.map((field) => [field, '']))
+      )
+      expectPlaceholderFirstWithUnitedKingdomSelected($, SERVED_COUNTRY_NAMES)
+      expect(tickedUsesOf($)).toEqual([])
+    })
+
+    test('GET after a refused save, a successful save and choosing a type again opens empty text fields', async () => {
+      const sessionId = 'add-kept-cleared-by-save'
+      const cookie = await postRefusedAddFor(
+        sessionId,
+        ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+        'PLACE_OF_ORIGIN'
+      )
+      serveAddressCreated()
+      const saved = await postPage(
+        server(),
+        ADD_ADDRESS_PATH,
+        sessionId,
+        VALID_ADDRESS_PAYLOAD,
+        cookie
+      )
+
+      const { result } = await openAddAfterChoosing(
+        sessionId,
+        ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+        cookieHeaderOf(saved.headers) || cookie
+      )
+
+      expect(enteredValuesOf(load(result))).toEqual(
+        Object.fromEntries(TEXT_FIELDS.map((field) => [field, '']))
+      )
+    })
   }
 )
 
@@ -873,7 +1268,7 @@ describe(
       addressBookApi()
         .post(addressesApiPath())
         .reply(statusCodes.badRequest, {
-          type: 'https://api.cdp.defra.cloud/problems/validation-error',
+          type: VALIDATION_PROBLEM_TYPE,
           errors: {
             email: [EMAIL_FORMAT_ERROR]
           }
@@ -1017,13 +1412,7 @@ describe(
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
-      const $ = load(result)
-      expectSummaryAndFieldErrors($, [
-        ['name', REQUIRED_MESSAGES.name],
-        ['postcode', REQUIRED_MESSAGES.postcode],
-        ['phone', REQUIRED_MESSAGES.phone]
-      ])
-      expectUnitedKingdomAloneSelected($)
+      expectNamePostcodeAndPhoneErrorsOnly(load(result))
     })
 
     test.each([

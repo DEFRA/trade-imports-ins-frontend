@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test'
 import { expectAddressBookList } from './address-book-list.js'
 import {
   fieldLabels,
+  fieldLabelsInFormOrder,
   expectErrorFocusOn,
   setFieldValue
 } from './address-form.js'
@@ -72,17 +73,7 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-field-order')
 
-    await expect(page.locator('form label')).toHaveText([
-      fieldLabels.name,
-      fieldLabels.addressLine1,
-      fieldLabels.addressLine2,
-      fieldLabels.townOrCity,
-      fieldLabels.county,
-      fieldLabels.postcode,
-      fieldLabels.countryCode,
-      fieldLabels.email,
-      fieldLabels.phone
-    ])
+    await expect(page.locator('form label')).toHaveText(fieldLabelsInFormOrder)
   })
 
   test('lists the countries alphabetically with no blank option and the stored country selected', async ({

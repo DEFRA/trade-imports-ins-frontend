@@ -45,8 +45,8 @@ field labels in page order, written out as literals), `COUNTRIES`,
 `MALFORMED_ADDRESS_ID`,
 `ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,
 `COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()` and
-`postPage()`, which take an optional session cookie, `chooseAddressTypeForCookie()`,
-which posts a type through the real type page and returns the session cookie
+`postPage()`, which take an optional session cookie, `cookieAfterChoosingAddressType()`,
+which posts a type through the real type page, on an existing session cookie when given one, and returns the session cookie
 the add form's GET needs, `cookieHeaderOf()`, which turns a response's
 `set-cookie` headers into a request cookie, and `getPageAsOtherOrganisation()`), address book API stubs
 (`pageOf(items, overrides)`, `serveStoredAddress(address)`,
@@ -165,12 +165,15 @@ playwright:install` once (Chromium).
 Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 `signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
-`fieldLabels`, `addressFormCountryNames` (the captured countries fixture's
+`fieldLabels`, `fieldLabelsInFormOrder` (the nine labels in page order), `addressFormCountryNames` (the captured countries fixture's
 names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
 `chooseAddressType` (chooses a type on the 'Choose an address type' page and
 continues), `openAddForm` (opens the address form through the type page with
 a type chosen), `addValidAddressToFreshOrganisation` (signs in to a fresh
-organisation, goes through the type page, then saves a valid address),
+organisation, goes through the type page, then saves a valid address of the
+given type with the uses the caller passes, Origin or Consignor with Place of
+origin by default, and lands on that type's list), `refuseSaveThenReopenAddForm`
+(saves a form with a malformed email, follows Back and chooses the type again), `malformedEmail` (an email value the form refuses as malformed),
 `validAddressViewLink`,
 `expectErrorFocusOn`, the two
 validation tables.

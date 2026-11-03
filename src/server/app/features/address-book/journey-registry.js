@@ -1,8 +1,8 @@
 import { SET_BASES } from '../../../common/constants/journey-set-bases.js'
 import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
 import {
-  ADDRESS_TYPES,
-  addressTypeOfUse
+  addressTypeOfUse,
+  addressTypeRequiresUnitedKingdom
 } from '../../services/address-book/index.js'
 
 export const JOURNEY_TYPES = Object.freeze({
@@ -50,15 +50,6 @@ const useOfParty = (context) => {
     : undefined
 }
 
-export const requiresUnitedKingdomAddress = (context) =>
-  addressTypeOfUse(useOfParty(context)) ===
-  ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
-
-export const addressTypeAndUsesOfParty = (context) => {
-  const use = useOfParty(context)
-  return use ? { addressType: addressTypeOfUse(use), uses: [use] } : {}
-}
-
 export const isConsignmentContact = (context) => {
   const contactFulfilmentId =
     registry[context?.journeyType]?.consignmentContactFulfilmentId
@@ -66,6 +57,15 @@ export const isConsignmentContact = (context) => {
     contactFulfilmentId !== undefined &&
     contactFulfilmentId === context?.fulfilmentId
   )
+}
+
+export const requiresUnitedKingdomAddress = (context) =>
+  !isConsignmentContact(context) &&
+  addressTypeRequiresUnitedKingdom(addressTypeOfUse(useOfParty(context)))
+
+export const addressTypeAndUsesOfParty = (context) => {
+  const use = useOfParty(context)
+  return use ? { addressType: addressTypeOfUse(use), uses: [use] } : {}
 }
 
 const assertHandshakeIds = (context) => {

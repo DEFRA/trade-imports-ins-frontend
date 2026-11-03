@@ -233,10 +233,16 @@ describe('#postedUsesOf', () => {
 })
 
 describe('#keepUsesOfferedBy', () => {
-  test('Should keep the posted uses the address type offers, in the order it offers them', () => {
+  test('Should keep the posted uses the address type offers, in USES_BY_ADDRESS_TYPE order', () => {
     expect(
       keepUsesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'PLACE_OF_ORIGIN'])
     ).toEqual(['PLACE_OF_ORIGIN', 'CONSIGNOR'])
+    expect(
+      keepUsesOfferedBy('DESTINATION_CONSIGNEE_OR_IMPORTER', [
+        'PLACE_OF_DESTINATION',
+        'CONSIGNEE'
+      ])
+    ).toEqual(['CONSIGNEE', 'PLACE_OF_DESTINATION'])
   })
 
   test('Should drop a posted use the address type does not offer', () => {

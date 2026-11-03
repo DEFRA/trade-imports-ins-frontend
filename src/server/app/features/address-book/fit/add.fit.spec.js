@@ -7,6 +7,7 @@ import {
   expectErrorFocusOn,
   openAddForm,
   fieldLabels,
+  fieldLabelsInFormOrder,
   fillValidAddress,
   maxLengthValidations,
   originOrConsignorListUrl,
@@ -22,6 +23,7 @@ import {
 import { copy } from '../copy/copy.en.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { GB_COUNTRY } from '../address-countries.js'
+import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { seedAddress } from './seed-address.js'
 import {
   addressAddPath,
@@ -41,6 +43,13 @@ import { ADDRESS_LANDING } from '../journey-registry.js'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
+
+const LATE_ALPHABETICAL_NAME = 'Zetland Livestock Ltd'
+
+const usesGroupOf = (page, addressType) =>
+  page.getByRole('group', {
+    name: copy.uses.legendByAddressType[addressType]
+  })
 
 test.describe('add address', () => {
   test('renders every field, hints and populated country options', async ({
@@ -106,8 +115,6 @@ test.describe('add address', () => {
 
 test.describe('add address uses question', () => {
   const organisationPrefix = 'stub-org-add-uses'
-  const usesGroupOf = (page) =>
-    page.getByRole('group', { name: copy.uses.legend })
 
   test('follows the contact fields with a section break, the legend, the hint and Place of origin then Consignor, unticked', async ({
     page
@@ -116,7 +123,7 @@ test.describe('add address uses question', () => {
     await openAddForm(page)
 
     await expect(page.locator('hr.govuk-section-break--visible')).toHaveCount(1)
-    const usesGroup = usesGroupOf(page)
+    const usesGroup = usesGroupOf(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
     await expect(usesGroup).toBeVisible()
     await expect(usesGroup).toContainText(copy.uses.hint)
     const options = usesGroup.getByRole('checkbox')
@@ -141,7 +148,9 @@ test.describe('add address uses question', () => {
 
     await expect(page).toHaveTitle(/^Error: /)
     await expect(page.getByRole('alert')).toContainText('There is a problem')
-    await expect(usesGroupOf(page)).toContainText(copy.errors.uses.required)
+    await expect(
+      usesGroupOf(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
+    ).toContainText(copy.errors.uses.required)
     await errorLink(page, copy.errors.uses.required).click()
     await expect(
       page.getByRole('checkbox', {
@@ -157,14 +166,14 @@ test.describe('add address uses question', () => {
   }) => {
     await addValidAddressToFreshOrganisation(page, {
       organisationPrefix,
-      overrides: { name: 'Zetland Livestock Ltd' }
+      overrides: { name: LATE_ALPHABETICAL_NAME }
     })
 
     await expect(selectedTabOf(page)).toHaveText(
       copy.list.tabs.originOrConsignor.label
     )
     await expect(page.getByRole('link', { name: /^View / }).first()).toHaveText(
-      'View Zetland Livestock Ltd'
+      `View ${LATE_ALPHABETICAL_NAME}`
     )
   })
 
@@ -200,6 +209,97 @@ test.describe('add address uses question without JavaScript', () => {
     await expect(
       page.getByRole('link', { name: `View ${validAddress.name}` })
     ).toBeVisible()
+  })
+})
+
+test.describe('add address of a type that must be in the United Kingdom', () => {
+  const organisationPrefix = 'stub-org-add-uk-only'
+
+  for (const { addressType, offeredUses, tab } of [
+    {
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      offeredUses: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
+      tab: copy.list.tabs.destinationConsigneeOrImporter.label
+    },
+    {
+      addressType: ADDRESS_TYPES.BRANCH,
+      offeredUses: ['BRANCH_ADDRESS'],
+      tab: copy.list.tabs.branch.label
+    }
+  ]) {
+    const typeLabel = copy.addressType.options[addressType].label
+
+    test(`${typeLabel} opens with the address and contact fields, a section break, then the uses question, and United Kingdom alone selected`, async ({
+      page
+    }) => {
+      await signIn(page, { organisationId: `${organisationPrefix}-render` })
+      await openAddForm(page, addressType)
+
+      await expect(
+        page.locator('label.govuk-label:not(.govuk-checkboxes__label)')
+      ).toHaveText(fieldLabelsInFormOrder)
+      await expect(page.locator('hr.govuk-section-break--visible')).toHaveCount(
+        1
+      )
+      const usesGroup = usesGroupOf(page, addressType)
+      await expect(usesGroup).toBeVisible()
+      await expect(usesGroup).toContainText(copy.uses.hint)
+      await expect(usesGroup.locator('label')).toHaveText(
+        offeredUses.map((use) => copy.uses.options[use].label)
+      )
+      await expect(
+        usesGroup.getByRole('checkbox', { checked: true })
+      ).toHaveCount(0)
+      const country = page.getByLabel(fieldLabels.countryCode)
+      await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
+      await expect(country).toHaveValue(GB_COUNTRY.code)
+    })
+
+    test(`${typeLabel} saved with every offered use ticked lands on its tab with the new address first`, async ({
+      page
+    }) => {
+      await addValidAddressToFreshOrganisation(page, {
+        organisationPrefix,
+        overrides: { name: LATE_ALPHABETICAL_NAME },
+        addressType,
+        uses: offeredUses
+      })
+
+      await expect(selectedTabOf(page)).toHaveText(tab)
+      await expect(
+        page.getByRole('link', { name: /^View / }).first()
+      ).toHaveText(`View ${LATE_ALPHABETICAL_NAME}`)
+    })
+
+    test(`${typeLabel} saved with no use shows the uses error, whose summary link focuses the first option`, async ({
+      page
+    }) => {
+      await signIn(page, { organisationId: `${organisationPrefix}-no-use` })
+      await openAddForm(page, addressType)
+
+      await fillValidAddress(page)
+      await submit(page)
+
+      await expect(usesGroupOf(page, addressType)).toContainText(
+        copy.errors.uses.required
+      )
+      await errorLink(page, copy.errors.uses.required).click()
+      await expect(
+        page.getByRole('checkbox', {
+          name: copy.uses.options[offeredUses[0]].label,
+          exact: true
+        })
+      ).toBeFocused()
+    })
+  }
+
+  test('Destination, Consignee or Importer form has no serious or critical axe violations', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: `${organisationPrefix}-axe` })
+    await openAddForm(page, ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER)
+
+    await expectNoSeriousOrCriticalViolations(page, 'Add Destination address')
   })
 })
 
@@ -490,7 +590,7 @@ test.describe('save and confirm', () => {
   test('lists the saved address first, ahead of the seeded address, with a View link to its own details page', async ({
     page
   }) => {
-    const nameAfterSeedAlphabetically = 'Zetland Livestock Ltd'
+    const nameAfterSeedAlphabetically = LATE_ALPHABETICAL_NAME
     await addValidAddressToFreshOrganisation(page, {
       organisationPrefix,
       overrides: { name: nameAfterSeedAlphabetically }

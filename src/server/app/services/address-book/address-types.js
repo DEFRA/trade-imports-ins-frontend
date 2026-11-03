@@ -21,3 +21,16 @@ export const addressTypeOfUse = (use) =>
   Object.values(ADDRESS_TYPES).find((addressType) =>
     USES_BY_ADDRESS_TYPE[addressType].includes(use)
   )
+
+export const PLACE_USES = Object.freeze([
+  'PLACE_OF_ORIGIN',
+  'PLACE_OF_DESTINATION'
+])
+
+const UNITED_KINGDOM_ADDRESS_TYPES = Object.freeze([
+  ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+  ADDRESS_TYPES.BRANCH
+])
+
+export const addressTypeRequiresUnitedKingdom = (addressType) =>
+  UNITED_KINGDOM_ADDRESS_TYPES.includes(addressType)

@@ -60,13 +60,16 @@ describe('journey-registry', () => {
       ).toBe(false)
     })
 
-    test('is false for the contact address and for a fulfilment id the registry does not list', () => {
+    test('is false for the consignment contact, which is saved as a Branch address', () => {
       expect(
         requiresUnitedKingdomAddress({
           journeyType: JOURNEY_TYPES.GBN_AG,
           fulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID
         })
       ).toBe(false)
+    })
+
+    test('is false for a fulfilment id the registry does not list', () => {
       expect(
         requiresUnitedKingdomAddress({
           journeyType: JOURNEY_TYPES.GBN_AG,

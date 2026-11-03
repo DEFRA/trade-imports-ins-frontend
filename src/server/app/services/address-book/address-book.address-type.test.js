@@ -12,8 +12,10 @@ import {
 import { ORGANISATION_ID } from '../../../common/test-helpers/session-auth.js'
 import {
   ADDRESS_TYPES,
+  PLACE_USES,
   USES_BY_ADDRESS_TYPE,
-  addressTypeOfUse
+  addressTypeOfUse,
+  addressTypeRequiresUnitedKingdom
 } from './address-types.js'
 import * as addressBook from './index.js'
 import { TYPED_SEED } from './typed-seed.js'
@@ -89,6 +91,33 @@ describe('the address type that holds a use', () => {
 
   test('Should give no type for a use no type holds', () => {
     expect(addressTypeOfUse('TRANSPORTER')).toBeUndefined()
+  })
+})
+
+describe('the address types that must be in the United Kingdom', () => {
+  test.each([
+    [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, false],
+    [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, true],
+    [ADDRESS_TYPES.BRANCH, true]
+  ])('Should answer for %s: %s', (addressType, requiresUnitedKingdom) => {
+    expect(addressTypeRequiresUnitedKingdom(addressType)).toBe(
+      requiresUnitedKingdom
+    )
+  })
+
+  test('Should answer false for a missing or unknown type', () => {
+    expect(addressTypeRequiresUnitedKingdom(undefined)).toBe(false)
+    expect(addressTypeRequiresUnitedKingdom('TRANSPORTER')).toBe(false)
+  })
+})
+
+describe('the place uses', () => {
+  test.each([
+    ['PLACE_OF_ORIGIN', ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR],
+    ['PLACE_OF_DESTINATION', ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
+  ])('Should hold %s, a use the type %s lists', (use, addressType) => {
+    expect(PLACE_USES).toContain(use)
+    expect(addressTypeOfUse(use)).toBe(addressType)
   })
 })
 

@@ -39,9 +39,13 @@ describe('#copy', () => {
     expect(copy.add.caption).toBe('Add new address')
   })
 
-  it('Should word the uses question with its legend, hint, one label per use and error', () => {
+  it('Should word the uses question with its legend per address type, hint, one label per use and error', () => {
     expect(copy.uses).toEqual({
-      legend: 'What can this address be used for?',
+      legendByAddressType: {
+        ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
+        DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',
+        BRANCH: 'Address type'
+      },
       hint: 'Select where this address can be used',
       options: {
         PLACE_OF_ORIGIN: { label: 'Place of origin' },

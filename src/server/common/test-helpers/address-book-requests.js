@@ -157,15 +157,19 @@ export const postPage = (server, url, sessionId, payload, cookie) =>
     headers: cookieHeaders(cookie)
   })
 
-export const chooseAddressTypeForCookie = async (
+export const cookieAfterChoosingAddressType = async (
   server,
   sessionId,
-  addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+  { addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, cookie } = {}
 ) => {
-  const { headers } = await postPage(server, ADDRESS_TYPE_PATH, sessionId, {
-    addressType
-  })
-  return cookieHeaderOf(headers)
+  const { headers } = await postPage(
+    server,
+    ADDRESS_TYPE_PATH,
+    sessionId,
+    { addressType },
+    cookie
+  )
+  return cookieHeaderOf(headers) || cookie
 }
 
 export const getPageAsOtherOrganisation = (server, url, sessionId) =>

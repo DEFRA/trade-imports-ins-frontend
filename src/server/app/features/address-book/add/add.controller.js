@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import {
+  PLACE_USES,
   USES_BY_ADDRESS_TYPE,
   createAddress,
   isValidationFailure,
@@ -19,7 +20,12 @@ import {
   addressTypePath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { clearAddInProgress, chosenAddressType } from '../add-in-progress.js'
+import {
+  chosenAddressType,
+  clearAddInProgress,
+  keepEnteredAddress,
+  keptEnteredAddress
+} from '../add-in-progress.js'
 import { addFormCountryOffer, GB_COUNTRY } from '../address-countries.js'
 import {
   addressRules,
@@ -67,10 +73,28 @@ const backHrefFor = (addMode, handshakeContext) =>
     ? addressTypePath()
     : buildReturnUrl(handshakeContext)
 
-const openingFormValuesFor = (addMode) =>
-  formValuesOf(
-    addMode === ADD_MODES.ADDRESS_BOOK ? { countryCode: GB_COUNTRY.code } : {}
-  )
+const openingEntryFor = (request, addMode) => {
+  if (addMode !== ADD_MODES.ADDRESS_BOOK) {
+    return { formValues: formValuesOf(), tickedUses: [] }
+  }
+  const { formValues, tickedUses } = keptEnteredAddress(request)
+  return {
+    formValues: formValues ?? formValuesOf({ countryCode: GB_COUNTRY.code }),
+    tickedUses
+  }
+}
+
+const keepAddressBookEntry = (
+  request,
+  { handshakeContext, addressType, postedValues, postedUses }
+) => {
+  if (addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK) {
+    keepEnteredAddress(request, {
+      formValues: postedValues,
+      tickedUses: keepUsesOfferedBy(addressType, postedUses)
+    })
+  }
+}
 
 const cancelUrlFor = (addMode, handshakeContext) => {
   switch (addMode) {
@@ -90,8 +114,13 @@ const landingChosenBy = (payload) =>
     ? ADDRESS_LANDING.RETURN
     : ADDRESS_LANDING.SELECT
 
+const placeUsesFirst = (uses) => [
+  ...uses.filter((use) => PLACE_USES.includes(use)),
+  ...uses.filter((use) => !PLACE_USES.includes(use))
+]
+
 const useItemsOf = (addressType, tickedUses) =>
-  USES_BY_ADDRESS_TYPE[addressType].map((use) => ({
+  placeUsesFirst(USES_BY_ADDRESS_TYPE[addressType]).map((use) => ({
     value: use,
     text: copy.uses.options[use].label,
     checked: tickedUses.includes(use)
@@ -106,7 +135,7 @@ const buildView = (
     recoverableError = false,
     handshakeContext = null,
     addressType,
-    postedUses = []
+    tickedUses = []
   }
 ) => {
   const addMode = addModeFor(handshakeContext)
@@ -125,8 +154,9 @@ const buildView = (
       countryItems,
       useItems:
         addMode === ADD_MODES.ADDRESS_BOOK
-          ? useItemsOf(addressType, postedUses)
+          ? useItemsOf(addressType, tickedUses)
           : [],
+      usesLegend: copy.uses.legendByAddressType[addressType],
       errors,
       errorSummary: kit.errorSummary(errors),
       handshakeContext,
@@ -199,18 +229,51 @@ const get = async (request, toolkit) => {
     return redirectToTypePage
   }
 
+  const addressType = chosenAddressType(request)
+  const { formValues: openingFormValues, tickedUses } = openingEntryFor(
+    request,
+    addMode
+  )
   const { countryItems, formValues } = await addFormCountryOffer({
     handshakeContext,
+    addressType,
     placeholder: copy.form.countryPlaceholder,
-    formValues: openingFormValuesFor(addMode)
+    formValues: openingFormValues
   })
 
   return buildView(toolkit, {
     formValues,
     countryItems,
     handshakeContext,
-    addressType: chosenAddressType(request)
+    addressType,
+    tickedUses
   })
+}
+
+const logReplacedCountry = ({
+  handshakeContext,
+  organisationId,
+  addressId,
+  addressType,
+  postedCountryCode,
+  storedCountryCode
+}) => {
+  if (
+    String(postedCountryCode).trim() === '' ||
+    postedCountryCode === storedCountryCode
+  ) {
+    return
+  }
+  const addedFrom = handshakeContext
+    ? {
+        notificationId: handshakeContext.notificationId,
+        fulfilmentId: handshakeContext.fulfilmentId
+      }
+    : { addressType }
+  logger.info(
+    { organisationId, addressId, ...addedFrom, postedCountryCode },
+    'Posted country was replaced with the country the address must be in'
+  )
 }
 
 const logDiscardedUses = ({
@@ -263,6 +326,7 @@ const submitAddress = async (
 ) => {
   const { countryItems, countryCodes, formValues } = await addFormCountryOffer({
     handshakeContext,
+    addressType,
     placeholder: copy.form.countryPlaceholder,
     formValues: postedValues
   })
@@ -272,7 +336,7 @@ const submitAddress = async (
       countryItems,
       handshakeContext,
       addressType,
-      postedUses,
+      tickedUses: postedUses,
       ...model
     })
   try {
@@ -305,6 +369,14 @@ const submitAddress = async (
       ...validatedAddress,
       ...typeAndUses
     })
+    logReplacedCountry({
+      handshakeContext,
+      organisationId,
+      addressId: createdAddress.id,
+      addressType,
+      postedCountryCode: postedValues.countryCode,
+      storedCountryCode: formValues.countryCode
+    })
     if (!isAddressBookAdd) {
       return handBackAddress(toolkit, handshakeContext, {
         organisationId,
@@ -335,13 +407,22 @@ const post = async (request, toolkit) => {
     return redirectToTypePage
   }
   const organisationId = kit.requireOrganisationId(request)
+  const postedValues = formValuesOf(payload)
+  const postedUses = postedUsesOf(payload)
+  const addressType = chosenAddressType(request)
+  keepAddressBookEntry(request, {
+    handshakeContext,
+    addressType,
+    postedValues,
+    postedUses
+  })
 
   return submitAddress(request, toolkit, {
     handshakeContext,
     organisationId,
-    postedValues: formValuesOf(payload),
-    postedUses: postedUsesOf(payload),
-    addressType: chosenAddressType(request),
+    postedValues,
+    postedUses,
+    addressType,
     landing: landingChosenBy(payload)
   })
 }

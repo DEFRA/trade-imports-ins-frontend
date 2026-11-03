@@ -1,5 +1,6 @@
 const SELECT_COUNTRY = 'Select a country'
 const ADD_NEW_ADDRESS = 'Add a new address'
+const ADDRESS_TYPE = 'Address type'
 
 export const copy = {
   list: {
@@ -101,7 +102,11 @@ export const copy = {
     continue: 'Continue'
   },
   uses: {
-    legend: 'What can this address be used for?',
+    legendByAddressType: {
+      ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
+      DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE,
+      BRANCH: ADDRESS_TYPE
+    },
     hint: 'Select where this address can be used',
     options: {
       PLACE_OF_ORIGIN: { label: 'Place of origin' },
