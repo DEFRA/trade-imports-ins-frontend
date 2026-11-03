@@ -296,7 +296,27 @@ const usesErrorsAfterLoggingDiscards = (postedAndKeptUses) => {
   return usesErrorsOf(postedAndKeptUses.keptUses)
 }
 
-const typeAndUsesToSave =(handshakeContext, { addressType, postedUses }) =>
+const rerenderIfUsesInvalid = ({
+  isAddressBookAdd,
+  organisationId,
+  addressType,
+  postedUses,
+  keptUses,
+  rerender
+}) => {
+  if (!isAddressBookAdd) {
+    return undefined
+  }
+  const errors = usesErrorsAfterLoggingDiscards({
+    organisationId,
+    addressType,
+    postedUses,
+    keptUses
+  })
+  return errors ? rerender({ errors }).code(HTTP_STATUS_BAD_REQUEST) : undefined
+}
+
+const typeAndUsesToSave = (handshakeContext, { addressType, postedUses }) =>
   addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK
     ? { addressType, uses: keepUsesOfferedBy(addressType, postedUses) }
     : addressTypeAndUsesOfParty(handshakeContext)
@@ -311,7 +331,7 @@ const finishAddressBookAdd = (
   return toolkit.redirect(addressBookPageHref(1, { addressType }))
 }
 
-const rerenderAfterCreateFailure =(err, { organisationId, rerender }) => {
+const rerenderAfterCreateFailure = (err, { organisationId, rerender }) => {
   if (Boom.isBoom(err)) {
     throw err
   }
@@ -368,16 +388,16 @@ const submitAddress = async (
       addressType,
       postedUses
     })
-    const usesErrors = isAddressBookAdd
-      ? usesErrorsAfterLoggingDiscards({
-          organisationId,
-          addressType,
-          postedUses,
-          keptUses: typeAndUses.uses
-        })
-      : undefined
-    if (usesErrors) {
-      return rerender({ errors: usesErrors }).code(HTTP_STATUS_BAD_REQUEST)
+    const usesRefusal = rerenderIfUsesInvalid({
+      isAddressBookAdd,
+      organisationId,
+      addressType,
+      postedUses,
+      keptUses: typeAndUses.uses,
+      rerender
+    })
+    if (usesRefusal) {
+      return usesRefusal
     }
     const createdAddress = await createAddress(organisationId, {
       ...validatedAddress,
