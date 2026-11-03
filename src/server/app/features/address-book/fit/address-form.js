@@ -5,11 +5,8 @@ import { FIELD_RULES } from '../fields.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { countries } from '../../../services/_capture/fixtures.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
-import {
-  addressAddPath,
-  addressBookPath,
-  addressTypePath
-} from '../../../shared/paths.js'
+import { addressAddPath, addressTypePath } from '../../../shared/paths.js'
+import { addressBookPageHref } from '../view-model/list.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 export const fieldLabels = copy.form.fields
@@ -69,6 +66,21 @@ export const openAddForm = async (
   await expect(page).toHaveURL(addressAddPath())
 }
 
+export const tickUses = async (page, uses) => {
+  for (const use of uses) {
+    await page
+      .getByRole('checkbox', {
+        name: copy.uses.options[use].label,
+        exact: true
+      })
+      .check()
+  }
+}
+
+export const originOrConsignorListUrl = addressBookPageHref(1, {
+  addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+})
+
 export const addValidAddressToFreshOrganisation = async (
   page,
   { organisationPrefix, overrides = {} }
@@ -78,8 +90,9 @@ export const addValidAddressToFreshOrganisation = async (
   })
   await openAddForm(page)
   await fillValidAddress(page, overrides)
+  await tickUses(page, ['PLACE_OF_ORIGIN'])
   await page.getByRole('button', { name: 'Save and continue' }).click()
-  await expect(page).toHaveURL(addressBookPath())
+  await expect(page).toHaveURL(originOrConsignorListUrl)
 }
 
 export const validAddressViewLink = (page) =>

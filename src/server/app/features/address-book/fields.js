@@ -7,6 +7,7 @@ import {
   requiredMaxText,
   requiredOneOf
 } from '../../lib/validate/index.js'
+import { USES_BY_ADDRESS_TYPE } from '../../services/address-book/index.js'
 import { copyFor } from '../../shared/copy.js'
 import { copy as en } from './copy/copy.en.js'
 import { copy as cy } from './copy/copy.cy.js'
@@ -50,7 +51,20 @@ export const postalLinesOf = (address) =>
 export const formValuesOf = (address = {}) =>
   Object.fromEntries(FIELDS.map((field) => [field, address[field] ?? '']))
 
+export const storedTypeAndUsesOf = ({ addressType, uses }) => ({
+  addressType,
+  uses
+})
+
+export const postedUsesOf = (payload) => [payload.uses ?? []].flat()
+
+export const keepUsesOfferedBy = (addressType, postedUses) =>
+  USES_BY_ADDRESS_TYPE[addressType].filter((use) => postedUses.includes(use))
+
 const { errors } = copyFor({ en, cy })
+
+export const usesErrorsOf = (keptUses) =>
+  keptUses.length > 0 ? null : { uses: errors.uses.required }
 
 const maxLengthOf = (field) => FIELD_RULES[field].maxLength
 

@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import {
+  USES_BY_ADDRESS_TYPE,
   createAddress,
   isValidationFailure,
   mapApiErrorsToFormErrors
@@ -20,7 +21,13 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { clearAddInProgress, chosenAddressType } from '../add-in-progress.js'
 import { addFormCountryOffer, GB_COUNTRY } from '../address-countries.js'
-import { addressRules, formValuesOf } from '../fields.js'
+import {
+  addressRules,
+  formValuesOf,
+  keepUsesOfferedBy,
+  postedUsesOf,
+  usesErrorsOf
+} from '../fields.js'
 import { setSuccessMessage } from '../success-message.js'
 import {
   resolveHandshakeContext,
@@ -28,9 +35,11 @@ import {
 } from '../handshake-context.js'
 import {
   ADDRESS_LANDING,
+  addressTypeAndUsesOfParty,
   buildReturnUrl,
   isConsignmentContact
 } from '../journey-registry.js'
+import { addressBookPageHref } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
 
@@ -81,6 +90,13 @@ const landingChosenBy = (payload) =>
     ? ADDRESS_LANDING.RETURN
     : ADDRESS_LANDING.SELECT
 
+const useItemsOf = (addressType, tickedUses) =>
+  USES_BY_ADDRESS_TYPE[addressType].map((use) => ({
+    value: use,
+    text: copy.uses.options[use].label,
+    checked: tickedUses.includes(use)
+  }))
+
 const buildView = (
   toolkit,
   {
@@ -88,7 +104,9 @@ const buildView = (
     countryItems,
     errors = {},
     recoverableError = false,
-    handshakeContext = null
+    handshakeContext = null,
+    addressType,
+    postedUses = []
   }
 ) => {
   const addMode = addModeFor(handshakeContext)
@@ -105,6 +123,10 @@ const buildView = (
       copy,
       formValues,
       countryItems,
+      useItems:
+        addMode === ADD_MODES.ADDRESS_BOOK
+          ? useItemsOf(addressType, postedUses)
+          : [],
       errors,
       errorSummary: kit.errorSummary(errors),
       handshakeContext,
@@ -150,19 +172,31 @@ const redirectAfterCancel = (toolkit, handshakeContext) => {
   return toolkit.redirect(cancelUrlFor(addMode, handshakeContext))
 }
 
+const redirectIfNoAddressTypeChosen = (request, toolkit, addMode) => {
+  if (addMode !== ADD_MODES.ADDRESS_BOOK || chosenAddressType(request)) {
+    return undefined
+  }
+  logger.info(
+    {
+      organisationId: kit.requireOrganisationId(request),
+      path: request.path
+    },
+    'No address type chosen, sending the user to choose one'
+  )
+  return toolkit.redirect(addressTypePath())
+}
+
 const get = async (request, toolkit) => {
   const handshakeContext = syncHandshakeContext(request)
   const addMode = addModeFor(handshakeContext)
 
-  if (addMode === ADD_MODES.ADDRESS_BOOK && !chosenAddressType(request)) {
-    logger.info(
-      {
-        organisationId: kit.requireOrganisationId(request),
-        path: request.path
-      },
-      'No address type chosen, sending the user to choose one'
-    )
-    return toolkit.redirect(addressTypePath())
+  const redirectToTypePage = redirectIfNoAddressTypeChosen(
+    request,
+    toolkit,
+    addMode
+  )
+  if (redirectToTypePage) {
+    return redirectToTypePage
   }
 
   const { countryItems, formValues } = await addFormCountryOffer({
@@ -171,34 +205,91 @@ const get = async (request, toolkit) => {
     formValues: openingFormValuesFor(addMode)
   })
 
-  return buildView(toolkit, { formValues, countryItems, handshakeContext })
+  return buildView(toolkit, {
+    formValues,
+    countryItems,
+    handshakeContext,
+    addressType: chosenAddressType(request)
+  })
 }
+
+const logDiscardedUses = ({
+  organisationId,
+  addressType,
+  postedUses,
+  keptUses
+}) => {
+  const discardedUses = postedUses.filter((use) => !keptUses.includes(use))
+  if (discardedUses.length > 0) {
+    logger.info(
+      { organisationId, addressType, discardedUses },
+      'Posted uses the chosen address type does not offer were not saved'
+    )
+  }
+}
+
+const typeAndUsesToSave = (handshakeContext, { addressType, postedUses }) =>
+  addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK
+    ? { addressType, uses: keepUsesOfferedBy(addressType, postedUses) }
+    : addressTypeAndUsesOfParty(handshakeContext)
 
 const submitAddress = async (
   request,
   toolkit,
-  { handshakeContext, organisationId, postedValues, landing }
+  {
+    handshakeContext,
+    organisationId,
+    postedValues,
+    postedUses,
+    addressType,
+    landing
+  }
 ) => {
   const { countryItems, countryCodes, formValues } = await addFormCountryOffer({
     handshakeContext,
     placeholder: copy.form.countryPlaceholder,
     formValues: postedValues
   })
+  const rerender = (model) =>
+    buildView(toolkit, {
+      formValues,
+      countryItems,
+      handshakeContext,
+      addressType,
+      postedUses,
+      ...model
+    })
   try {
     const { errors, value: validatedAddress } = validate(
       addressRules(countryCodes),
       formValues
     )
     if (errors) {
-      return buildView(toolkit, {
-        formValues,
-        countryItems,
-        errors,
-        handshakeContext
-      }).code(HTTP_STATUS_BAD_REQUEST)
+      return rerender({ errors }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    const createdAddress = await createAddress(organisationId, validatedAddress)
-    if (addModeFor(handshakeContext) !== ADD_MODES.ADDRESS_BOOK) {
+    const isAddressBookAdd =
+      addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK
+    const typeAndUses = typeAndUsesToSave(handshakeContext, {
+      addressType,
+      postedUses
+    })
+    if (isAddressBookAdd) {
+      logDiscardedUses({
+        organisationId,
+        addressType,
+        postedUses,
+        keptUses: typeAndUses.uses
+      })
+      const usesErrors = usesErrorsOf(typeAndUses.uses)
+      if (usesErrors) {
+        return rerender({ errors: usesErrors }).code(HTTP_STATUS_BAD_REQUEST)
+      }
+    }
+    const createdAddress = await createAddress(organisationId, {
+      ...validatedAddress,
+      ...typeAndUses
+    })
+    if (!isAddressBookAdd) {
       return handBackAddress(toolkit, handshakeContext, {
         organisationId,
         addressId: createdAddress.id,
@@ -207,7 +298,7 @@ const submitAddress = async (
     }
     clearAddInProgress(request)
     setSuccessMessage(request, copy.successBanner.added(createdAddress.name))
-    return toolkit.redirect(addressBookPath())
+    return toolkit.redirect(addressBookPageHref(1, { addressType }))
   } catch (err) {
     if (Boom.isBoom(err)) {
       throw err
@@ -217,20 +308,14 @@ const submitAddress = async (
         { err, organisationId },
         'Address book refused the new address'
       )
-      return buildView(toolkit, {
-        formValues,
-        countryItems,
-        errors: mapApiErrorsToFormErrors(err.body),
-        handshakeContext
-      }).code(HTTP_STATUS_BAD_REQUEST)
+      return rerender({ errors: mapApiErrorsToFormErrors(err.body) }).code(
+        HTTP_STATUS_BAD_REQUEST
+      )
     }
     logger.error({ err, organisationId }, 'Failed to create address')
-    return buildView(toolkit, {
-      formValues,
-      countryItems,
-      recoverableError: true,
-      handshakeContext
-    }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+    return rerender({ recoverableError: true }).code(
+      HTTP_STATUS_INTERNAL_SERVER_ERROR
+    )
   }
 }
 
@@ -240,12 +325,22 @@ const post = async (request, toolkit) => {
   if (payload.cancel) {
     return redirectAfterCancel(toolkit, handshakeContext)
   }
+  const redirectToTypePage = redirectIfNoAddressTypeChosen(
+    request,
+    toolkit,
+    addModeFor(handshakeContext)
+  )
+  if (redirectToTypePage) {
+    return redirectToTypePage
+  }
   const organisationId = kit.requireOrganisationId(request)
 
   return submitAddress(request, toolkit, {
     handshakeContext,
     organisationId,
     postedValues: formValuesOf(payload),
+    postedUses: postedUsesOf(payload),
+    addressType: chosenAddressType(request),
     landing: landingChosenBy(payload)
   })
 }

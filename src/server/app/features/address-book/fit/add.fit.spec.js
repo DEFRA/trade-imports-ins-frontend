@@ -3,18 +3,23 @@ import { test, expect } from '@playwright/test'
 import {
   addValidAddressToFreshOrganisation,
   addressFormCountryNames,
+  errorLink,
   expectErrorFocusOn,
   openAddForm,
   fieldLabels,
   fillValidAddress,
   maxLengthValidations,
+  originOrConsignorListUrl,
   requiredValidations,
+  tickUses,
   validAddress
 } from './address-form.js'
 import {
   resultsLineOf,
-  searchAndExpectSingleMatch
+  searchAndExpectSingleMatch,
+  selectedTabOf
 } from './address-book-list.js'
+import { copy } from '../copy/copy.en.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { seedAddress } from './seed-address.js'
@@ -96,6 +101,105 @@ test.describe('add address', () => {
     await openAddForm(page)
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address')
+  })
+})
+
+test.describe('add address uses question', () => {
+  const organisationPrefix = 'stub-org-add-uses'
+  const usesGroupOf = (page) =>
+    page.getByRole('group', { name: copy.uses.legend })
+
+  test('follows the contact fields with a section break, the legend, the hint and Place of origin then Consignor, unticked', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: `${organisationPrefix}-render` })
+    await openAddForm(page)
+
+    await expect(page.locator('hr.govuk-section-break--visible')).toHaveCount(1)
+    const usesGroup = usesGroupOf(page)
+    await expect(usesGroup).toBeVisible()
+    await expect(usesGroup).toContainText(copy.uses.hint)
+    const options = usesGroup.getByRole('checkbox')
+    await expect(options).toHaveCount(2)
+    await expect(usesGroup.locator('label')).toHaveText([
+      copy.uses.options.PLACE_OF_ORIGIN.label,
+      copy.uses.options.CONSIGNOR.label
+    ])
+    await expect(
+      usesGroup.getByRole('checkbox', { checked: true })
+    ).toHaveCount(0)
+  })
+
+  test('saving valid fields with no use shows the uses error, whose summary link focuses Place of origin, and the error page has no serious or critical axe violations', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: `${organisationPrefix}-error` })
+    await openAddForm(page)
+
+    await fillValidAddress(page)
+    await submit(page)
+
+    await expect(page).toHaveTitle(/^Error: /)
+    await expect(page.getByRole('alert')).toContainText('There is a problem')
+    await expect(usesGroupOf(page)).toContainText(copy.errors.uses.required)
+    await errorLink(page, copy.errors.uses.required).click()
+    await expect(
+      page.getByRole('checkbox', {
+        name: copy.uses.options.PLACE_OF_ORIGIN.label,
+        exact: true
+      })
+    ).toBeFocused()
+    await expectNoSeriousOrCriticalViolations(page, 'Add address uses error')
+  })
+
+  test('saving with Place of origin ticked lands on the Origin and Consignor list with the new address first', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix,
+      overrides: { name: 'Zetland Livestock Ltd' }
+    })
+
+    await expect(selectedTabOf(page)).toHaveText(
+      copy.list.tabs.originOrConsignor.label
+    )
+    await expect(page.getByRole('link', { name: /^View / }).first()).toHaveText(
+      'View Zetland Livestock Ltd'
+    )
+  })
+
+  test('finds an address saved with Consignor ticked by searching Consignor', async ({
+    page
+  }) => {
+    await signIn(page, { organisationId: `${organisationPrefix}-search` })
+    await openAddForm(page)
+    await fillValidAddress(page)
+    await tickUses(page, ['CONSIGNOR'])
+    await submit(page)
+    await expect(page).toHaveURL(originOrConsignorListUrl)
+
+    await searchAndExpectSingleMatch(page, 'Consignor', {
+      matchedCellText: validAddress.name
+    })
+  })
+})
+
+test.describe('add address uses question without JavaScript', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('saves with a use ticked and lands on the Origin and Consignor list with the address listed', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix: 'stub-org-add-uses-no-js'
+    })
+
+    await expect(selectedTabOf(page)).toHaveText(
+      copy.list.tabs.originOrConsignor.label
+    )
+    await expect(
+      page.getByRole('link', { name: `View ${validAddress.name}` })
+    ).toBeVisible()
   })
 })
 

@@ -23,7 +23,9 @@ through the app's own address type page and add page, named
 `Lighthouse seed address`. A run that finds it already in the book reuses it
 rather than adding another. The add page sends a user with no address type
 chosen to the type page, so the seed walk and the sign-in set-up each choose a
-type on the type page before they open the add form.
+type on the type page before they open the add form. The seed walk ticks
+Place of origin, as the add page requires a use, and expects the save to land
+on the Origin and Consignor tab of the list.
 
 `scripts/lighthouse/audit-targets.js` (with `audit-targets.test.js`) holds
 the derivation and two maps, both empty today: `SKIPPED`, for a GET route

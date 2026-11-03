@@ -31,7 +31,12 @@ root:
   `ADDRESS_FIELDS` through `addressFieldText`. Each field's `required` sets both whether a blank value is
   refused and whether the view always shows its row. Each field's
   `maxLength` and `required` match the address book API's `AddressRequest`
-  validation, so the form refuses what the API would refuse.
+  validation, so the form refuses what the API would refuse. The same file owns
+  the uses question's rules: `postedUsesOf` (the posted `uses` as a list),
+  `keepUsesOfferedBy` (the posted uses the chosen address type offers, in the
+  order it offers them) and `usesErrorsOf` (the required-use error when none is
+  kept), and `storedTypeAndUsesOf`, the address type and uses an edited
+  address carries back to the API unchanged.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems` (a select that opens on a blank option),
@@ -46,12 +51,19 @@ root:
 - [`journey-registry.js`](../features/address-book/journey-registry.js) —
   `JOURNEY_TYPES` (the registered journey types), `ADDRESS_LANDING` (select,
   return and cancel, the page the journey opens on return),
-  `isKnownJourneyType`, `requiresUnitedKingdomAddress` (whether the role's
-  address must be in the United Kingdom), `isConsignmentContact` (whether a
+  `isKnownJourneyType`, `requiresUnitedKingdomAddress`
+  (whether the role's address must be in the United Kingdom: its use belongs to
+  the Destination, Consignee or Importer type), `addressTypeAndUsesOfParty`
+  (the address type and the one use a journey-mode save carries, or nothing for
+  a fulfilment id the map does not list), `isConsignmentContact` (whether a
   handshake is the consignment contact's, so the add page offers the contact's
   controls rather than a role's), `buildReturnUrl` (the journey's address-return
   URL, with an optional address id and `landing`) and
   `CONSIGNMENT_CONTACT_FULFILMENT_ID` (the consignment contact's fulfilment id).
+  The `gbn-ag` registry entry's `useByPartyFulfilmentId` map is the one map
+  from each party's fulfilment id, the five roles and the consignment contact,
+  to the one use that party's address is saved with; `addressTypeAndUsesOfParty`
+  and `requiresUnitedKingdomAddress` read it.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
   `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address
   type, the uses its Type select offers in order, and the copy key of its label
@@ -167,11 +179,23 @@ adds to that shape for a journey:
   journey) or `CONSIGNMENT_CONTACT` (the consignment contact's journey).
   `backHrefFor` gives the Back link and the journey strip shows for both
   handshake modes.
-- From the address book (`ADDRESS_BOOK` mode) the GET needs an address type
-  chosen on the type page, else it logs and redirects to the type page; a
+- From the address book (`ADDRESS_BOOK` mode) the GET and the POST need an
+  address type chosen on the type page, else the one guard,
+  `redirectIfNoAddressTypeChosen`, logs and redirects to the type page; a
   handshake opens the form directly. Back goes to the type page. The form
   opens with United Kingdom selected, and a successful save clears the add in
   progress.
+- In `ADDRESS_BOOK` mode after the contact fields the form shows the uses question: a visible
+  section break, then checkboxes named `uses` (the first option's id is `uses`,
+  so the error summary link focuses it) offering the chosen type's uses from
+  `USES_BY_ADDRESS_TYPE`, labelled from `copy.uses`. The POST checks the
+  uses only once the address and contact fields pass; it keeps the posted uses
+  the chosen type offers (logging any it discards at info), re-renders with
+  the required-use error when none is kept, and otherwise saves the validated
+  fields with the chosen address type and the kept uses and redirects to the
+  address book list on that type's tab. In the handshake modes the form has no
+  uses question and the save carries `addressTypeAndUsesOfParty`'s type and
+  use.
 - `cancelUrlFor(addMode, handshakeContext)` is the one owner of where Cancel
   goes: the address book, a role's journey with the `cancel` landing, or the
   consignment contact's journey with no landing.
@@ -195,7 +219,9 @@ or the delete POST throws `boomFor(err, () => logger.error(...))`.
 
 The edit POST reads `findLiveAddress` before it validates, and redirects a
 not-live address the same way, sending nothing. It does the same for a 404
-from `updateAddress`. It rethrows a Boom untouched, so reference data with no
+from `updateAddress`. It saves the validated fields
+with the stored address's address type and uses, because the address book
+replaces the whole record; the edit page shows neither. It rethrows a Boom untouched, so reference data with no
 countries still serves the 503 page, and re-renders every other failure,
 including a failed live read, as the POST shape above describes.
 
@@ -249,7 +275,9 @@ Build a service-backed rule (`requiredOneOf('countryCode', codes, …)`)
 inside the POST handler from the country codes the form offered (the add
 form's `addFormCountryOffer` gives them). Persist `value`,
 never the raw payload — `formValuesOf(payload)` is validated so only the
-nine address fields reach the API.
+nine address fields reach the API, together with the address type and the
+uses kept for it (the chosen type and the kept uses on an add, the stored
+address's type and uses on an edit).
 [`address-id-params.js`](../features/address-book/address-id-params.js)
 stays on Joi directly because Hapi's `validate.params` takes a Joi schema.
 

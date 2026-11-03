@@ -100,6 +100,18 @@ export const copy = {
     },
     continue: 'Continue'
   },
+  uses: {
+    legend: 'What can this address be used for?',
+    hint: 'Select where this address can be used',
+    options: {
+      PLACE_OF_ORIGIN: { label: 'Place of origin' },
+      CONSIGNOR: { label: 'Consignor' },
+      CONSIGNEE: { label: 'Consignee' },
+      IMPORTER: { label: 'Importer' },
+      PLACE_OF_DESTINATION: { label: 'Place of destination' },
+      BRANCH_ADDRESS: { label: 'Branch address' }
+    }
+  },
   add: {
     title: 'Add address and contact details',
     caption: 'Add new address',
@@ -131,6 +143,9 @@ export const copy = {
   errors: {
     addressType: {
       required: 'Select an address type'
+    },
+    uses: {
+      required: 'Select what this address can be used for'
     },
     name: {
       required: 'Enter a name or organisation',

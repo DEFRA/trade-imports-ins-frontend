@@ -21,6 +21,7 @@ import {
   serveAddressCreated,
   serveAddressCreationCapturingBody,
   STORED_ADDRESS,
+  VALID_ADDRESS_FIELDS,
   VALID_ADDRESS_PAYLOAD
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
@@ -38,6 +39,10 @@ import {
   UNITED_KINGDOM_ROLES
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
+import {
+  ADDRESS_TYPES,
+  USES_BY_ADDRESS_TYPE
+} from '../../../services/address-book/index.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
@@ -91,10 +96,34 @@ const getAdd = (server, sessionId, query, cookie) =>
     cookie
   )
 
-const getAddWithTypeChosen = async (server, sessionId) => {
-  const cookie = await chooseAddressTypeForCookie(server, sessionId)
+const getAddWithTypeChosen = async (server, sessionId, addressType) => {
+  const cookie = await chooseAddressTypeForCookie(
+    server,
+    sessionId,
+    addressType
+  )
   return getAdd(server, sessionId, undefined, cookie)
 }
+
+const postAddWithTypeChosen = async (
+  server,
+  sessionId,
+  payload,
+  addressType
+) => {
+  const cookie = await chooseAddressTypeForCookie(
+    server,
+    sessionId,
+    addressType
+  )
+  return postPage(server, ADD_ADDRESS_PATH, sessionId, payload, cookie)
+}
+
+const ORIGIN_OR_CONSIGNOR_LIST_PATH = `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR}`
+const ERROR_SUMMARY_LINKS = '.govuk-error-summary a'
+const USES_ERROR = 'Select what this address can be used for'
+const USES_LEGEND = 'What can this address be used for?'
+const USES_HINT = 'Select where this address can be used'
 
 const SUCCESS_BANNER = '.govuk-notification-banner--success'
 
@@ -135,7 +164,11 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect($(BACK_LINK).attr('href')).toBe(ADDRESS_TYPE_PATH)
     expect(textsOf($, BACK_LINK)).toEqual(['Back'])
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
-    expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+    expect(textsOf($, FORM_LABELS)).toEqual([
+      ...ADDRESS_FORM_LABELS,
+      'Place of origin',
+      'Consignor'
+    ])
     expect(textsOf($, '#phone-hint')).toEqual([
       'For international numbers include the country code'
     ])
@@ -170,7 +203,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
         }
       })
 
-    const { result, statusCode, headers } = await postAdd(
+    const { result, statusCode, headers } = await postAddWithTypeChosen(
       server(),
       'add-post-api-400',
       VALID_ADDRESS_PAYLOAD
@@ -182,25 +215,25 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(headers['cache-control']).toBe('no-store')
   })
 
-  test('POST sends the address to the address book for the organisation and redirects to the address book', async () => {
+  test('POST sends the address to the address book for the organisation and redirects to the list of the chosen address type', async () => {
     const { scope, captured } = serveAddressCreationCapturingBody()
 
-    const response = await postAdd(
+    const response = await postAddWithTypeChosen(
       server(),
       'add-post-success',
       VALID_ADDRESS_PAYLOAD
     )
 
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, ORIGIN_OR_CONSIGNOR_LIST_PATH)
     expect(scope.isDone()).toBe(true)
-    expect(captured.body).toMatchObject(VALID_ADDRESS_PAYLOAD)
+    expect(captured.body).toMatchObject(VALID_ADDRESS_FIELDS)
     expect(response.headers['cache-control']).not.toBe('no-store')
   })
 
   test('POST shows the address added banner on the address book', async () => {
     serveAddressCreated()
 
-    const { headers } = await postAdd(
+    const { headers } = await postAddWithTypeChosen(
       server(),
       'add-post-banner',
       VALID_ADDRESS_PAYLOAD
@@ -223,7 +256,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
       .post(addressesApiPath())
       .reply(503, { title: 'Service Unavailable' })
 
-    const { result, statusCode, headers } = await postAdd(
+    const { result, statusCode, headers } = await postAddWithTypeChosen(
       server(),
       'add-post-500',
       VALID_ADDRESS_PAYLOAD
@@ -238,28 +271,35 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(headers['cache-control']).toBe('no-store')
   })
 
-  test('POST sends the trimmed form fields and nothing else to the address book', async () => {
+  test('POST sends the trimmed form fields, the chosen address type and the ticked uses, and nothing else, to the address book', async () => {
     const { scope, captured } = serveAddressCreationCapturingBody()
 
-    const { addressLine2, county, ...requiredFields } = VALID_ADDRESS_PAYLOAD
+    const { addressLine2, county, ...requiredFields } = VALID_ADDRESS_FIELDS
 
-    const { statusCode } = await postAdd(server(), 'add-post-trimmed', {
-      ...requiredFields,
-      name: `  ${STORED_ADDRESS.name}  `,
-      crumb: 'not-for-the-api'
-    })
+    const { statusCode } = await postAddWithTypeChosen(
+      server(),
+      'add-post-trimmed',
+      {
+        ...requiredFields,
+        name: `  ${STORED_ADDRESS.name}  `,
+        uses: 'PLACE_OF_ORIGIN',
+        crumb: 'not-for-the-api'
+      }
+    )
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(scope.isDone()).toBe(true)
     expect(captured.body).toEqual({
       ...requiredFields,
       addressLine2: '',
-      county: ''
+      county: '',
+      addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+      uses: ['PLACE_OF_ORIGIN']
     })
   })
 
   test('POST with invalid data re-renders form with errors', async () => {
-    const { result, statusCode, headers } = await postAdd(
+    const { result, statusCode, headers } = await postAddWithTypeChosen(
       server(),
       'add-post-invalid',
       INVALID_ADDRESS_PAYLOAD
@@ -279,7 +319,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('POST with a country the reference data does not list shows the select-a-country error', async () => {
-    const { result, statusCode } = await postAdd(
+    const { result, statusCode } = await postAddWithTypeChosen(
       server(),
       'add-post-unlisted-country',
       {
@@ -323,6 +363,25 @@ describe(
       ])
     })
 
+    test('POST with valid fields and no address type chosen redirects to the address type page, logs it once and sends the address book nothing', async () => {
+      const createScope = serveAddressCreated()
+
+      const response = await postAdd(
+        server(),
+        'add-post-no-type',
+        VALID_ADDRESS_PAYLOAD
+      )
+
+      expectRedirectTo(response, ADDRESS_TYPE_PATH)
+      expect(createScope.isDone()).toBe(false)
+      expect(loggedWith(NO_TYPE_MESSAGE)).toEqual([
+        {
+          fields: { organisationId: ORGANISATION_ID, path: ADD_ADDRESS_PATH },
+          message: NO_TYPE_MESSAGE
+        }
+      ])
+    })
+
     test('GET after a successful save redirects to the address type page', async () => {
       serveAddressCreated()
       const sessionId = 'add-get-after-save'
@@ -344,6 +403,249 @@ describe(
 
       expectRedirectTo(response, ADDRESS_TYPE_PATH)
     })
+  }
+)
+
+describe(
+  '#addressBookAddController — uses question',
+  { concurrent: false },
+  () => {
+    const server = startRealModeServerServingCountries(COUNTRIES)
+    const loggedWith = captureInfoLogs()
+    const DISCARDED_MESSAGE =
+      'Posted uses the chosen address type does not offer were not saved'
+    const FIRST_USE_OF = (addressType) => USES_BY_ADDRESS_TYPE[addressType][0]
+    const USE_CHECKBOXES = 'input[name="uses"]'
+
+    const tickedUsesOf = ($) =>
+      $(`${USE_CHECKBOXES}:checked`)
+        .map((_, input) => $(input).attr('value'))
+        .get()
+
+    test('GET after Origin or Consignor is chosen shows a section break after the contact fields, then the uses question with Place of origin and Consignor unticked and without hints', async () => {
+      const { result, statusCode } = await getAddWithTypeChosen(
+        server(),
+        'add-get-uses'
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect(result.indexOf('id="phone"')).toBeLessThan(
+        result.indexOf('govuk-section-break--visible')
+      )
+      expect(
+        textsOf($, 'hr.govuk-section-break--visible + .govuk-form-group legend')
+      ).toEqual([USES_LEGEND])
+      expect(textsOf($, '#uses-hint')).toEqual([USES_HINT])
+      expect(textsOf($, '.govuk-checkboxes__label')).toEqual([
+        'Place of origin',
+        'Consignor'
+      ])
+      expect($('.govuk-checkboxes__hint')).toHaveLength(0)
+      expect(tickedUsesOf($)).toEqual([])
+      expect($(USE_CHECKBOXES).first().attr('id')).toBe('uses')
+    })
+
+    test.each(Object.entries(USES_BY_ADDRESS_TYPE))(
+      'GET after %s is chosen offers exactly the uses that type holds, in order',
+      async (addressType, uses) => {
+        const { result } = await getAddWithTypeChosen(
+          server(),
+          `add-get-uses-${addressType}`,
+          addressType
+        )
+
+        const $ = load(result)
+        expect(
+          $(USE_CHECKBOXES)
+            .map((_, input) => $(input).attr('value'))
+            .get()
+        ).toEqual(uses)
+      }
+    )
+
+    test('POST with valid fields and no use ticked shows the uses error inline and as the summary link to the first option, and sends nothing', async () => {
+      const { uses: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
+
+      const { result, statusCode } = await postAddWithTypeChosen(
+        server(),
+        'add-post-no-use',
+        fieldsOnly
+      )
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      const $ = load(result)
+      expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([USES_ERROR])
+      expect($(ERROR_SUMMARY_LINKS).attr('href')).toBe('#uses')
+      expect(textsOf($, '#uses-error')).toEqual([`Error: ${USES_ERROR}`])
+      expect($(USE_CHECKBOXES).first().attr('id')).toBe('uses')
+    })
+
+    test('POST with an invalid field and no use ticked shows only the field error', async () => {
+      const { uses: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
+
+      const { result, statusCode } = await postAddWithTypeChosen(
+        server(),
+        'add-post-invalid-no-use',
+        { ...fieldsOnly, name: '' }
+      )
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      const $ = load(result)
+      expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([REQUIRED_MESSAGES.name])
+      expect($('#uses-error')).toHaveLength(0)
+    })
+
+    test('POST with an invalid field keeps the ticks the user made', async () => {
+      const { result, statusCode } = await postAddWithTypeChosen(
+        server(),
+        'add-post-invalid-keeps-ticks',
+        {
+          ...VALID_ADDRESS_PAYLOAD,
+          name: '',
+          uses: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
+        }
+      )
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(tickedUsesOf(load(result))).toEqual([
+        'PLACE_OF_ORIGIN',
+        'CONSIGNOR'
+      ])
+    })
+
+    test('POST with Consignor ticked and a use the type does not offer saves only Consignor, logs the discarded use and lands on the Origin and Consignor list', async () => {
+      const { scope, captured } = serveAddressCreationCapturingBody()
+
+      const response = await postAddWithTypeChosen(
+        server(),
+        'add-post-foreign-use',
+        { ...VALID_ADDRESS_PAYLOAD, uses: ['CONSIGNOR', 'IMPORTER'] }
+      )
+
+      expectRedirectTo(response, ORIGIN_OR_CONSIGNOR_LIST_PATH)
+      expect(scope.isDone()).toBe(true)
+      expect(captured.body).toMatchObject({
+        addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+        uses: ['CONSIGNOR']
+      })
+      expect(loggedWith(DISCARDED_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+            discardedUses: ['IMPORTER']
+          },
+          message: DISCARDED_MESSAGE
+        }
+      ])
+    })
+
+    test('POST with only a use the type does not offer shows the uses error', async () => {
+      const { result, statusCode } = await postAddWithTypeChosen(
+        server(),
+        'add-post-only-foreign-use',
+        { ...VALID_ADDRESS_PAYLOAD, uses: 'IMPORTER' }
+      )
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(textsOf(load(result), ERROR_SUMMARY_LINKS)).toEqual([USES_ERROR])
+    })
+
+    test.each(Object.values(ADDRESS_TYPES))(
+      'POST after %s is chosen saves that type with the ticked use and lands on that type of the list',
+      async (addressType) => {
+        const { scope, captured } = serveAddressCreationCapturingBody()
+
+        const response = await postAddWithTypeChosen(
+          server(),
+          `add-post-uses-${addressType}`,
+          { ...VALID_ADDRESS_PAYLOAD, uses: FIRST_USE_OF(addressType) },
+          addressType
+        )
+
+        expectRedirectTo(
+          response,
+          `${ADDRESS_BOOK_PATH}?addressType=${addressType}`
+        )
+        expect(scope.isDone()).toBe(true)
+        expect(captured.body).toMatchObject({
+          addressType,
+          uses: [FIRST_USE_OF(addressType)]
+        })
+      }
+    )
+  }
+)
+
+describe(
+  '#addressBookAddController — journey handshake type and use',
+  { concurrent: false },
+  () => {
+    const server = startRealModeServerServingCountries(COUNTRIES)
+
+    test.each([
+      ['placeOfOrigin', ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, 'PLACE_OF_ORIGIN'],
+      ['consignor', ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, 'CONSIGNOR'],
+      [
+        'consignee',
+        ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+        'CONSIGNEE'
+      ],
+      ['importer', ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, 'IMPORTER'],
+      [
+        'placeOfDestination',
+        ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+        'PLACE_OF_DESTINATION'
+      ]
+    ])(
+      'POST from the %s handshake saves the address with its type and exactly its one use, whatever uses are posted',
+      async (role, addressType, use) => {
+        const { scope, captured } = serveAddressCreationCapturingBody()
+
+        await postAdd(server(), `add-post-handshake-type-${role}`, {
+          ...JOURNEY_HANDSHAKES_BY_ROLE[role],
+          ...VALID_ADDRESS_FIELDS,
+          uses: ['BRANCH_ADDRESS']
+        })
+
+        expect(scope.isDone()).toBe(true)
+        expect(captured.body).toMatchObject({ addressType, uses: [use] })
+      }
+    )
+
+    test('POST from the consignment contact handshake saves the address as a Branch address', async () => {
+      const { scope, captured } = serveAddressCreationCapturingBody()
+
+      await postAdd(server(), 'add-post-handshake-type-contact', {
+        ...CONSIGNMENT_CONTACT_HANDSHAKE,
+        ...VALID_ADDRESS_FIELDS
+      })
+
+      expect(scope.isDone()).toBe(true)
+      expect(captured.body).toMatchObject({
+        addressType: ADDRESS_TYPES.BRANCH,
+        uses: ['BRANCH_ADDRESS']
+      })
+    })
+
+    test.each([
+      ['a role', CONSIGNOR_HANDSHAKE],
+      ['the consignment contact', CONSIGNMENT_CONTACT_HANDSHAKE]
+    ])(
+      'GET from %s handshake shows no uses question',
+      async (_name, handshake) => {
+        const { result } = await getAdd(
+          server(),
+          'add-get-handshake-no-uses',
+          handshake
+        )
+
+        const $ = load(result)
+        expect(textsOf($, 'form legend')).toEqual([])
+        expect($('input[name="uses"]')).toHaveLength(0)
+      }
+    )
   }
 )
 

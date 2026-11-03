@@ -16,3 +16,8 @@ export const USES_BY_ADDRESS_TYPE = Object.freeze({
   ]),
   [ADDRESS_TYPES.BRANCH]: Object.freeze(['BRANCH_ADDRESS'])
 })
+
+export const addressTypeOfUse = (use) =>
+  Object.values(ADDRESS_TYPES).find((addressType) =>
+    USES_BY_ADDRESS_TYPE[addressType].includes(use)
+  )

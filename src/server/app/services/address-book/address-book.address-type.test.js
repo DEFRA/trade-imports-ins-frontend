@@ -10,7 +10,11 @@ import {
   runInRealMode
 } from '../../../common/test-helpers/real-mode.js'
 import { ORGANISATION_ID } from '../../../common/test-helpers/session-auth.js'
-import { ADDRESS_TYPES, USES_BY_ADDRESS_TYPE } from './address-types.js'
+import {
+  ADDRESS_TYPES,
+  USES_BY_ADDRESS_TYPE,
+  addressTypeOfUse
+} from './address-types.js'
 import * as addressBook from './index.js'
 import { TYPED_SEED } from './typed-seed.js'
 
@@ -71,6 +75,20 @@ describe('the uses each address type lists', () => {
       ],
       BRANCH: ['BRANCH_ADDRESS']
     })
+  })
+})
+
+describe('the address type that holds a use', () => {
+  test.each(
+    Object.entries(USES_BY_ADDRESS_TYPE).flatMap(([addressType, uses]) =>
+      uses.map((use) => [use, addressType])
+    )
+  )('Should give the type %s is listed under', (use, addressType) => {
+    expect(addressTypeOfUse(use)).toBe(addressType)
+  })
+
+  test('Should give no type for a use no type holds', () => {
+    expect(addressTypeOfUse('TRANSPORTER')).toBeUndefined()
   })
 })
 

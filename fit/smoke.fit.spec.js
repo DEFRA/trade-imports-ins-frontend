@@ -5,6 +5,8 @@ import { expectNoSeriousOrCriticalViolations } from '../src/server/app/features/
 import {
   chooseAddressType,
   fillValidAddress,
+  originOrConsignorListUrl,
+  tickUses,
   validAddress
 } from '../src/server/app/features/address-book/fit/address-form.js'
 import { copy as sharedCopy } from '../src/server/app/shared/copy.en.js'
@@ -37,8 +39,9 @@ test('a trader signs in, sees the dashboard, and adds, views and deletes an addr
   await chooseAddressType(page)
   await expect(page).toHaveURL(/\/address-book\/add$/)
   await fillValidAddress(page)
+  await tickUses(page, ['PLACE_OF_ORIGIN'])
   await page.getByRole('button', { name: addressBookCopy.add.save }).click()
-  await expect(page).toHaveURL(/\/address-book$/)
+  await expect(page).toHaveURL(originOrConsignorListUrl)
   await expect(
     page.getByText(addressBookCopy.successBanner.added(validAddress.name))
   ).toBeVisible()

@@ -75,10 +75,12 @@ export const STORED_ADDRESS = {
   countryCode: 'GB',
   phone: '+44 1463 234567',
   email: 'exports@example.com',
+  addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+  uses: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
   deleted: false
 }
 
-export const VALID_ADDRESS_PAYLOAD = {
+export const VALID_ADDRESS_FIELDS = {
   name: STORED_ADDRESS.name,
   addressLine1: STORED_ADDRESS.addressLine1,
   addressLine2: '',
@@ -88,6 +90,11 @@ export const VALID_ADDRESS_PAYLOAD = {
   countryCode: STORED_ADDRESS.countryCode,
   phone: STORED_ADDRESS.phone,
   email: STORED_ADDRESS.email
+}
+
+export const VALID_ADDRESS_PAYLOAD = {
+  ...VALID_ADDRESS_FIELDS,
+  uses: 'PLACE_OF_ORIGIN'
 }
 
 export const INVALID_ADDRESS_PAYLOAD = {

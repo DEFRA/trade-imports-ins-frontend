@@ -103,6 +103,18 @@ export const copy = {
     },
     continue: 'Parhau'
   },
+  uses: {
+    legend: 'Ar gyfer beth y gellir defnyddio’r cyfeiriad hwn?',
+    hint: 'Dewiswch ble y gellir defnyddio’r cyfeiriad hwn',
+    options: {
+      PLACE_OF_ORIGIN: { label: 'Man tarddiad' },
+      CONSIGNOR: { label: 'Anfonwr' },
+      CONSIGNEE: { label: 'Derbynnydd' },
+      IMPORTER: { label: 'Mewnforiwr' },
+      PLACE_OF_DESTINATION: { label: 'Man cyrchfan' },
+      BRANCH_ADDRESS: { label: 'Cyfeiriad cangen' }
+    }
+  },
   add: {
     title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
     caption: ADD_NEW_ADDRESS,
@@ -134,6 +146,9 @@ export const copy = {
   errors: {
     addressType: {
       required: 'Dewiswch fath o gyfeiriad'
+    },
+    uses: {
+      required: 'Dewiswch ar gyfer beth y gellir defnyddio’r cyfeiriad hwn'
     },
     name: {
       required: 'Rhowch enw neu sefydliad',

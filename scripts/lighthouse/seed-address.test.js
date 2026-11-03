@@ -21,6 +21,8 @@ const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 const STUB_ADDRESS_ID = '000000000000000000000001'
 const CRUMB = 'crumb-token'
 const CRUMB_COOKIE = 'crumb=cookie-crumb; Path=/'
+const ORIGIN_AND_CONSIGNOR_LANDING =
+  '/address-book?addressType=ORIGIN_OR_CONSIGNOR'
 const SEARCH = { q: SEED_ADDRESS.name }
 const HTTP_OK = 200
 const HTTP_FOUND = 302
@@ -111,9 +113,13 @@ describe('#seedAddress', () => {
     const created = app()
       .get('/address-book/add')
       .reply(HTTP_OK, page('<form></form>'), { 'set-cookie': [CRUMB_COOKIE] })
-      .post('/address-book/add', { crumb: CRUMB, ...SEED_ADDRESS })
+      .post('/address-book/add', {
+        crumb: CRUMB,
+        ...SEED_ADDRESS,
+        uses: 'PLACE_OF_ORIGIN'
+      })
       .matchHeader('cookie', /crumb=cookie-crumb/)
-      .reply(HTTP_FOUND, '', { location: '/address-book' })
+      .reply(HTTP_FOUND, '', { location: ORIGIN_AND_CONSIGNOR_LANDING })
     listing(
       viewLink(STUB_ADDRESS_ID, 'Stub Farm 1'),
       viewLink(ADDRESS_ID, SEED_ADDRESS.name)
@@ -150,7 +156,7 @@ describe('#seedAddress', () => {
       .get('/address-book/add')
       .reply(HTTP_OK, page('<form></form>'))
       .post('/address-book/add')
-      .reply(HTTP_FOUND, '', { location: '/address-book' })
+      .reply(HTTP_FOUND, '', { location: ORIGIN_AND_CONSIGNOR_LANDING })
     listing()
 
     await expect(seedAddress(createPageClient(ORIGIN))).rejects.toThrow(

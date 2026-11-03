@@ -1,4 +1,5 @@
 import { ADDRESS_TYPES } from '../../src/server/app/services/address-book/address-types.js'
+import { addressBookPageHref } from '../../src/server/app/features/address-book/view-model/list.js'
 import {
   addressAddPath,
   addressBookPath,
@@ -67,8 +68,15 @@ export const createSeedAddress = async (client) => {
   if (form.status !== HTTP_OK) {
     throw new Error(`The add address page did not render (${form.status})`)
   }
-  const posted = await client.submit(addressAddPath(), SEED_ADDRESS, form.crumb)
-  if (posted.status !== HTTP_FOUND || posted.location !== addressBookPath()) {
+  const posted = await client.submit(
+    addressAddPath(),
+    { ...SEED_ADDRESS, uses: 'PLACE_OF_ORIGIN' },
+    form.crumb
+  )
+  const savedAddressLanding = addressBookPageHref(1, {
+    addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+  })
+  if (posted.status !== HTTP_FOUND || posted.location !== savedAddressLanding) {
     throw new Error(
       `The add address page rejected the seed address (${posted.status}) — its ` +
         'fields have moved on from what this seed sends'

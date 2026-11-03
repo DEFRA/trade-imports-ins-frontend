@@ -38,8 +38,9 @@ set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
 `deleteAddressPagePath(addressId)`, `RETURN_HOME`), address book API paths
 (`addressesApiPath(organisationId)`, `addressApiPath(addressId,
 organisationId)`, both defaulting to the session organisation), fixtures
-(`ADDRESS_ID`, `STORED_ADDRESS`, `VALID_ADDRESS_PAYLOAD`,
-`INVALID_ADDRESS_PAYLOAD`, `ADDRESS_FORM_LABELS` (the add and edit forms'
+(`ADDRESS_ID`, `STORED_ADDRESS` (with an address type and two uses),
+`VALID_ADDRESS_FIELDS` (the nine address fields), `VALID_ADDRESS_PAYLOAD` (the
+fields with Place of origin ticked), `INVALID_ADDRESS_PAYLOAD`, `ADDRESS_FORM_LABELS` (the add and edit forms'
 field labels in page order, written out as literals), `COUNTRIES`,
 `MALFORMED_ADDRESS_ID`,
 `ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,

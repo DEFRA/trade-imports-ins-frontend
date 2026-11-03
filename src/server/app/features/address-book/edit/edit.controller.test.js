@@ -26,7 +26,7 @@ import {
   serveAddressNotFoundForOtherOrganisation,
   serveStoredAddress,
   STORED_ADDRESS,
-  VALID_ADDRESS_PAYLOAD
+  VALID_ADDRESS_FIELDS
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
@@ -94,6 +94,9 @@ describe('GET /address-book/{addressId}/edit', () => {
     const $ = load(result)
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
     expect(textsOf($, 'form label')).toEqual(ADDRESS_FORM_LABELS)
+    expect(
+      $('form input[type="checkbox"], form input[type="radio"]')
+    ).toHaveLength(0)
     expect({
       name: $('#name').val(),
       addressLine1: $('#addressLine1').val(),
@@ -258,7 +261,7 @@ describe('GET /address-book/{addressId}/edit', () => {
 describe('POST /address-book/{addressId}/edit', () => {
   const server = startRealModeServerServingCountries(COUNTRIES)
 
-  test('Should send the whole edited address to the address book and redirect to the address book', async () => {
+  test('Should send the edited fields with the stored address type and uses, ignoring any posted uses, and redirect to the address book', async () => {
     serveStoredAddress()
     let sent
     const scope = addressBookApi()
@@ -269,13 +272,19 @@ describe('POST /address-book/{addressId}/edit', () => {
       .reply(200, { ...STORED_ADDRESS, name: UPDATED_NAME })
 
     const response = await postEdit(server(), 'edit-post-success', {
-      ...VALID_ADDRESS_PAYLOAD,
-      name: UPDATED_NAME
+      ...VALID_ADDRESS_FIELDS,
+      name: UPDATED_NAME,
+      uses: 'IMPORTER'
     })
 
     expectRedirectTo(response, ADDRESS_BOOK_PATH)
     expect(scope.isDone()).toBe(true)
-    expect(sent).toEqual({ ...VALID_ADDRESS_PAYLOAD, name: UPDATED_NAME })
+    expect(sent).toEqual({
+      ...VALID_ADDRESS_FIELDS,
+      name: UPDATED_NAME,
+      addressType: STORED_ADDRESS.addressType,
+      uses: STORED_ADDRESS.uses
+    })
   })
 
   test('Should show the address book banner naming the address as the address book returns it', async () => {
@@ -285,7 +294,7 @@ describe('POST /address-book/{addressId}/edit', () => {
       .reply(200, { ...STORED_ADDRESS, name: 'GREEN VALLEY FARM' })
 
     const { headers } = await postEdit(server(), 'edit-post-banner', {
-      ...VALID_ADDRESS_PAYLOAD,
+      ...VALID_ADDRESS_FIELDS,
       name: 'green valley farm'
     })
 
@@ -327,7 +336,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     const { result, statusCode } = await postEdit(
       server(),
       'edit-post-country-unoffered',
-      { ...VALID_ADDRESS_PAYLOAD, countryCode: UNOFFERED_COUNTRY_CODE }
+      { ...VALID_ADDRESS_FIELDS, countryCode: UNOFFERED_COUNTRY_CODE }
     )
 
     expect(statusCode).toBe(statusCodes.badRequest)
@@ -346,7 +355,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await postEdit(server(), 'edit-post-not-live', VALID_ADDRESS_PAYLOAD),
+      await postEdit(server(), 'edit-post-not-live', VALID_ADDRESS_FIELDS),
       ADDRESS_BOOK_PATH
     )
   })
@@ -358,7 +367,7 @@ describe('POST /address-book/{addressId}/edit', () => {
       await postEdit(
         server(),
         'edit-post-not-live-return',
-        VALID_ADDRESS_PAYLOAD,
+        VALID_ADDRESS_FIELDS,
         RETURN_HOME
       ),
       '/'
@@ -372,7 +381,7 @@ describe('POST /address-book/{addressId}/edit', () => {
       .reply(404, { message: 'Not found' })
 
     expectRedirectTo(
-      await postEdit(server(), 'edit-post-update-404', VALID_ADDRESS_PAYLOAD),
+      await postEdit(server(), 'edit-post-update-404', VALID_ADDRESS_FIELDS),
       ADDRESS_BOOK_PATH
     )
   })
@@ -384,7 +393,7 @@ describe('POST /address-book/{addressId}/edit', () => {
       .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
 
     const { result, statusCode } = await postEdit(server(), 'edit-post-500', {
-      ...VALID_ADDRESS_PAYLOAD,
+      ...VALID_ADDRESS_FIELDS,
       name: UPDATED_NAME
     })
 
@@ -400,7 +409,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     const { result, statusCode } = await postEdit(
       server(),
       'edit-post-live-read-500',
-      VALID_ADDRESS_PAYLOAD
+      VALID_ADDRESS_FIELDS
     )
 
     expect(statusCode).toBe(statusCodes.internalServerError)

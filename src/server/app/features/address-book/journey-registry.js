@@ -1,5 +1,9 @@
 import { SET_BASES } from '../../../common/constants/journey-set-bases.js'
 import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
+import {
+  ADDRESS_TYPES,
+  addressTypeOfUse
+} from '../../services/address-book/index.js'
 
 export const JOURNEY_TYPES = Object.freeze({
   GBN_AG: 'gbn-ag'
@@ -23,10 +27,13 @@ const registry = Object.freeze({
     setBase: SET_BASES.LIVE_ANIMALS,
     returnPathTemplate: RETURN_PATH_TEMPLATE,
     consignmentContactFulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID,
-    unitedKingdomFulfilmentIds: Object.freeze({
-      consignee: 'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e',
-      importer: 'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f',
-      placeOfDestination: 'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60'
+    useByPartyFulfilmentId: Object.freeze({
+      '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c': 'PLACE_OF_ORIGIN',
+      '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d': 'CONSIGNOR',
+      'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e': 'CONSIGNEE',
+      'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f': 'IMPORTER',
+      'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': 'PLACE_OF_DESTINATION',
+      [CONSIGNMENT_CONTACT_FULFILMENT_ID]: 'BRANCH_ADDRESS'
     })
   }
 })
@@ -34,10 +41,23 @@ const registry = Object.freeze({
 export const isKnownJourneyType = (journeyType) =>
   Object.hasOwn(registry, journeyType)
 
+const useOfParty = (context) => {
+  const useByFulfilmentId =
+    registry[context?.journeyType]?.useByPartyFulfilmentId
+  return useByFulfilmentId &&
+    Object.hasOwn(useByFulfilmentId, context.fulfilmentId)
+    ? useByFulfilmentId[context.fulfilmentId]
+    : undefined
+}
+
 export const requiresUnitedKingdomAddress = (context) =>
-  Object.values(
-    registry[context?.journeyType]?.unitedKingdomFulfilmentIds ?? {}
-  ).includes(context?.fulfilmentId)
+  addressTypeOfUse(useOfParty(context)) ===
+  ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+
+export const addressTypeAndUsesOfParty = (context) => {
+  const use = useOfParty(context)
+  return use ? { addressType: addressTypeOfUse(use), uses: [use] } : {}
+}
 
 export const isConsignmentContact = (context) => {
   const contactFulfilmentId =

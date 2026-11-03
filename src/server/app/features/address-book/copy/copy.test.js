@@ -39,6 +39,24 @@ describe('#copy', () => {
     expect(copy.add.caption).toBe('Add new address')
   })
 
+  it('Should word the uses question with its legend, hint, one label per use and error', () => {
+    expect(copy.uses).toEqual({
+      legend: 'What can this address be used for?',
+      hint: 'Select where this address can be used',
+      options: {
+        PLACE_OF_ORIGIN: { label: 'Place of origin' },
+        CONSIGNOR: { label: 'Consignor' },
+        CONSIGNEE: { label: 'Consignee' },
+        IMPORTER: { label: 'Importer' },
+        PLACE_OF_DESTINATION: { label: 'Place of destination' },
+        BRANCH_ADDRESS: { label: 'Branch address' }
+      }
+    })
+    expect(copy.errors.uses.required).toBe(
+      'Select what this address can be used for'
+    )
+  })
+
   it('Should word the journey-mode add actions', () => {
     expect(copy.add.saveAndSelect).toBe('Save and select')
     expect(copy.add.saveAndReturnToAddressPage).toBe(

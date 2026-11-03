@@ -3,8 +3,9 @@
 `src/server/app/services/` holds one folder per upstream. Each holds
 **`index.js`** the barrel a feature imports, **`client.js`** the HTTP client
 and **`stub.js`** the in-memory stand-in, plus any module those share. The
-address book also holds **`address-types.js`** (the address type values and the
-uses each address type lists, in the order the Type select offers them) and
+address book also holds **`address-types.js`** (the address type values, the
+uses each address type lists, in the order the Type select offers them, and
+`addressTypeOfUse`, the address type that lists a use) and
 **`typed-seed.js`** (the stub's typed seed addresses), which the barrel
 exports. A feature imports only the barrel, and nothing imports any other file
 from outside its folder.

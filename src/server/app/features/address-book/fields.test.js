@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import {
   STORED_ADDRESS,
-  VALID_ADDRESS_PAYLOAD
+  VALID_ADDRESS_FIELDS
 } from '../../../common/test-helpers/address-book-requests.js'
 import { validate } from '../../lib/validate/index.js'
 import {
@@ -11,7 +11,11 @@ import {
   addressRules,
   formValuesOf,
   isRequiredField,
-  postalLinesOf
+  keepUsesOfferedBy,
+  postalLinesOf,
+  postedUsesOf,
+  storedTypeAndUsesOf,
+  usesErrorsOf
 } from './fields.js'
 import { copy } from './copy/copy.en.js'
 
@@ -23,7 +27,7 @@ const REQUIRED_FIELDS = FIELDS.filter(isRequiredField)
 const BOUNDED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].maxLength)
 
 const addressWith = (overrides = {}) => ({
-  ...VALID_ADDRESS_PAYLOAD,
+  ...VALID_ADDRESS_FIELDS,
   addressLine2: STORED_ADDRESS.addressLine2,
   county: STORED_ADDRESS.county,
   ...overrides
@@ -169,7 +173,7 @@ describe('#formValuesOf', () => {
       county: null
     }
 
-    expect(formValuesOf(address)).toEqual(VALID_ADDRESS_PAYLOAD)
+    expect(formValuesOf(address)).toEqual(VALID_ADDRESS_FIELDS)
   })
 })
 
@@ -211,5 +215,53 @@ describe('#postalLinesOf', () => {
         postcode: 'AB1 2CD'
       })
     ).toEqual(['1 Road', 'Town', 'AB1 2CD'])
+  })
+})
+
+describe('#postedUsesOf', () => {
+  test.each([
+    ['nothing posted', {}, []],
+    ['one value', { uses: 'CONSIGNOR' }, ['CONSIGNOR']],
+    [
+      'many values',
+      { uses: ['PLACE_OF_ORIGIN', 'CONSIGNOR'] },
+      ['PLACE_OF_ORIGIN', 'CONSIGNOR']
+    ]
+  ])('Should give a list for %s', (_name, payload, expected) => {
+    expect(postedUsesOf(payload)).toEqual(expected)
+  })
+})
+
+describe('#keepUsesOfferedBy', () => {
+  test('Should keep the posted uses the address type offers, in the order it offers them', () => {
+    expect(
+      keepUsesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'PLACE_OF_ORIGIN'])
+    ).toEqual(['PLACE_OF_ORIGIN', 'CONSIGNOR'])
+  })
+
+  test('Should drop a posted use the address type does not offer', () => {
+    expect(
+      keepUsesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'IMPORTER'])
+    ).toEqual(['CONSIGNOR'])
+    expect(keepUsesOfferedBy('BRANCH', ['CONSIGNOR'])).toEqual([])
+  })
+})
+
+describe('#usesErrorsOf', () => {
+  test('Should give the uses error when no use is kept', () => {
+    expect(usesErrorsOf([])).toEqual({ uses: copy.errors.uses.required })
+  })
+
+  test('Should give no errors when a use is kept', () => {
+    expect(usesErrorsOf(['CONSIGNOR'])).toBeNull()
+  })
+})
+
+describe('#storedTypeAndUsesOf', () => {
+  test('Should give the address type and every use a stored address holds, and nothing else', () => {
+    expect(storedTypeAndUsesOf(STORED_ADDRESS)).toEqual({
+      addressType: 'ORIGIN_OR_CONSIGNOR',
+      uses: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
+    })
   })
 })
