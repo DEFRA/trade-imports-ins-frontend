@@ -233,6 +233,22 @@ const typeAndUsesToSave = (handshakeContext, { addressType, postedUses }) =>
     ? { addressType, uses: keepUsesOfferedBy(addressType, postedUses) }
     : addressTypeAndUsesOfParty(handshakeContext)
 
+const rerenderAfterCreateFailure = (err, { organisationId, rerender }) => {
+  if (Boom.isBoom(err)) {
+    throw err
+  }
+  if (isValidationFailure(err)) {
+    logger.warn({ err, organisationId }, 'Address book refused the new address')
+    return rerender({ errors: mapApiErrorsToFormErrors(err.body) }).code(
+      HTTP_STATUS_BAD_REQUEST
+    )
+  }
+  logger.error({ err, organisationId }, 'Failed to create address')
+  return rerender({ recoverableError: true }).code(
+    HTTP_STATUS_INTERNAL_SERVER_ERROR
+  )
+}
+
 const submitAddress = async (
   request,
   toolkit,
@@ -300,22 +316,7 @@ const submitAddress = async (
     setSuccessMessage(request, copy.successBanner.added(createdAddress.name))
     return toolkit.redirect(addressBookPageHref(1, { addressType }))
   } catch (err) {
-    if (Boom.isBoom(err)) {
-      throw err
-    }
-    if (isValidationFailure(err)) {
-      logger.warn(
-        { err, organisationId },
-        'Address book refused the new address'
-      )
-      return rerender({ errors: mapApiErrorsToFormErrors(err.body) }).code(
-        HTTP_STATUS_BAD_REQUEST
-      )
-    }
-    logger.error({ err, organisationId }, 'Failed to create address')
-    return rerender({ recoverableError: true }).code(
-      HTTP_STATUS_INTERNAL_SERVER_ERROR
-    )
+    return rerenderAfterCreateFailure(err, { organisationId, rerender })
   }
 }
 
