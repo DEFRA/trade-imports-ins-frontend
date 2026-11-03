@@ -291,12 +291,27 @@ const logDiscardedUses = ({
   }
 }
 
-const typeAndUsesToSave = (handshakeContext, { addressType, postedUses }) =>
+const usesErrorsAfterLoggingDiscards = (postedAndKeptUses) => {
+  logDiscardedUses(postedAndKeptUses)
+  return usesErrorsOf(postedAndKeptUses.keptUses)
+}
+
+const typeAndUsesToSave =(handshakeContext, { addressType, postedUses }) =>
   addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK
     ? { addressType, uses: keepUsesOfferedBy(addressType, postedUses) }
     : addressTypeAndUsesOfParty(handshakeContext)
 
-const rerenderAfterCreateFailure = (err, { organisationId, rerender }) => {
+const finishAddressBookAdd = (
+  request,
+  toolkit,
+  { createdAddress, addressType }
+) => {
+  clearAddInProgress(request)
+  setSuccessMessage(request, copy.successBanner.added(createdAddress.name))
+  return toolkit.redirect(addressBookPageHref(1, { addressType }))
+}
+
+const rerenderAfterCreateFailure =(err, { organisationId, rerender }) => {
   if (Boom.isBoom(err)) {
     throw err
   }
@@ -353,17 +368,16 @@ const submitAddress = async (
       addressType,
       postedUses
     })
-    if (isAddressBookAdd) {
-      logDiscardedUses({
-        organisationId,
-        addressType,
-        postedUses,
-        keptUses: typeAndUses.uses
-      })
-      const usesErrors = usesErrorsOf(typeAndUses.uses)
-      if (usesErrors) {
-        return rerender({ errors: usesErrors }).code(HTTP_STATUS_BAD_REQUEST)
-      }
+    const usesErrors = isAddressBookAdd
+      ? usesErrorsAfterLoggingDiscards({
+          organisationId,
+          addressType,
+          postedUses,
+          keptUses: typeAndUses.uses
+        })
+      : undefined
+    if (usesErrors) {
+      return rerender({ errors: usesErrors }).code(HTTP_STATUS_BAD_REQUEST)
     }
     const createdAddress = await createAddress(organisationId, {
       ...validatedAddress,
@@ -377,16 +391,13 @@ const submitAddress = async (
       postedCountryCode: postedValues.countryCode,
       storedCountryCode: formValues.countryCode
     })
-    if (!isAddressBookAdd) {
-      return handBackAddress(toolkit, handshakeContext, {
-        organisationId,
-        addressId: createdAddress.id,
-        landing
-      })
-    }
-    clearAddInProgress(request)
-    setSuccessMessage(request, copy.successBanner.added(createdAddress.name))
-    return toolkit.redirect(addressBookPageHref(1, { addressType }))
+    return isAddressBookAdd
+      ? finishAddressBookAdd(request, toolkit, { createdAddress, addressType })
+      : handBackAddress(toolkit, handshakeContext, {
+          organisationId,
+          addressId: createdAddress.id,
+          landing
+        })
   } catch (err) {
     return rerenderAfterCreateFailure(err, { organisationId, rerender })
   }
