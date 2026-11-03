@@ -5,6 +5,7 @@ import {
   ADD_ADDRESS_PATH,
   ADDRESS_BOOK_PATH,
   ADDRESS_ID,
+  chooseAddressTypeForCookie,
   addressPagePath,
   editAddressPagePath,
   getPage,
@@ -56,9 +57,10 @@ describe('#referenceDataOutage', () => {
 
   test('Should serve the add address form as a 503 error page', async () => {
     refuseCountries()
+    const cookie = await chooseAddressTypeForCookie(server(), 'outage-add')
 
     expectServiceUnavailablePage(
-      await getPage(server(), ADD_ADDRESS_PATH, 'outage-add')
+      await getPage(server(), ADD_ADDRESS_PATH, 'outage-add', cookie)
     )
   })
 

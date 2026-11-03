@@ -16,7 +16,7 @@ below.
 `dashboard.fit.spec.js` beside the controller.
 
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
-`add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
+`address-type/`, `add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
 `<page>.njk` and `<page>.controller.test.js`. Group-wide modules sit at the
 root:
 
@@ -85,10 +85,15 @@ root:
   `Boom.internal()`.
 - [`success-message.js`](../features/address-book/success-message.js) —
   yar-backed, read-once.
+- [`add-in-progress.js`](../features/address-book/add-in-progress.js) —
+  yar-backed state of the add in progress: `storeChosenAddressType` keeps
+  the address type chosen on the type page, `chosenAddressType` reads it back
+  (only a value in `ADDRESS_TYPES`, else nothing) and `clearAddInProgress`
+  removes it.
 
-Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
+Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with six
 specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
-`dashboard.js` and `seed-address.js`. `view-model/list.js` owns the list's
+`dashboard.js`, `return-query.js` and `seed-address.js`. `view-model/list.js` owns the list's
 name lines, Type label, postal lines and results line, which the list
 controller builds into table cells, the uses whose Type label contains the
 search term (`usesWhoseLabelContains`, which the search also matches), and the
@@ -101,8 +106,9 @@ link carries the tab and the current search only.
 URL, with one exception: the temporary `address-lookup-spike` feature
 keeps its own `'/address-lookup-spike'` literal in its controller (see
 below). Each public URL has a builder (`dashboardPath()`, `addressBookPath()`,
-`addressAddPath()`, `addressPath(id)`, `addressEditPath(id)`,
-`addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin
+`addressAddPath()`, `addressTypePath()`, `addressTypeStartPath()` (the
+type page with the marker that starts a new add), `addressPath(id)`,
+`addressEditPath(id)`, `addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin
 carrying the Hapi `{id}` placeholder. Ids are `encodeURIComponent`ed.
 Controllers pass a `*RoutePath()` to `kit.pageRoutes` and put every href
 the template needs into the view model (`listHref`, `addHref`, `editHref`,
@@ -161,6 +167,11 @@ adds to that shape for a journey:
   journey) or `CONSIGNMENT_CONTACT` (the consignment contact's journey).
   `backHrefFor` gives the Back link and the journey strip shows for both
   handshake modes.
+- From the address book (`ADDRESS_BOOK` mode) the GET needs an address type
+  chosen on the type page, else it logs and redirects to the type page; a
+  handshake opens the form directly. Back goes to the type page. The form
+  opens with United Kingdom selected, and a successful save clears the add in
+  progress.
 - `cancelUrlFor(addMode, handshakeContext)` is the one owner of where Cancel
   goes: the address book, a role's journey with the `cancel` landing, or the
   consignment contact's journey with no landing.

@@ -29,7 +29,7 @@ import {
   TYPED_SEED
 } from '../../../services/address-book/index.js'
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
-import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
+import { addressBookPath, addressTypeStartPath } from '../../../shared/paths.js'
 
 const ORG_DEFAULT = 'stub-org-1'
 const ORG_EMPTY = 'stub-org-empty'
@@ -93,16 +93,16 @@ test.describe('list and pagination', () => {
     ).toBeVisible()
   })
 
-  test('clicking Add a new address navigates to the add form', async ({
+  test('clicking Add a new address opens Choose an address type', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     await page.getByRole('button', { name: ADD_NEW_ADDRESS }).click()
 
-    await expect(page).toHaveURL(addressAddPath())
+    await expect(page).toHaveURL(addressTypeStartPath())
     await expect(
-      page.getByRole('heading', { name: 'Add address and contact details' })
+      page.getByRole('heading', { name: 'Choose an address type' })
     ).toBeVisible()
   })
 

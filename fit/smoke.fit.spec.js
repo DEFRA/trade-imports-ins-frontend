@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 import { signIn } from './sign-in.js'
 import { expectNoSeriousOrCriticalViolations } from '../src/server/app/features/address-book/fit/axe.js'
 import {
+  chooseAddressType,
   fillValidAddress,
   validAddress
 } from '../src/server/app/features/address-book/fit/address-form.js'
@@ -33,6 +34,7 @@ test('a trader signs in, sees the dashboard, and adds, views and deletes an addr
   ).toBeVisible()
 
   await page.getByRole('button', { name: addressBookCopy.list.add }).click()
+  await chooseAddressType(page)
   await expect(page).toHaveURL(/\/address-book\/add$/)
   await fillValidAddress(page)
   await page.getByRole('button', { name: addressBookCopy.add.save }).click()

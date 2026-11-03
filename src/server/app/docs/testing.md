@@ -34,7 +34,7 @@ for the pattern, and the helpers in
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
 `address-book-requests.js`, the one owner of the address book tests'
 set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
-`addressPagePath(addressId)`, `editAddressPagePath(addressId)`,
+`ADDRESS_TYPE_PATH`, `ADDRESS_TYPE_START_PATH`, `addressPagePath(addressId)`, `editAddressPagePath(addressId)`,
 `deleteAddressPagePath(addressId)`, `RETURN_HOME`), address book API paths
 (`addressesApiPath(organisationId)`, `addressApiPath(addressId,
 organisationId)`, both defaulting to the session organisation), fixtures
@@ -43,8 +43,11 @@ organisationId)`, both defaulting to the session organisation), fixtures
 field labels in page order, written out as literals), `COUNTRIES`,
 `MALFORMED_ADDRESS_ID`,
 `ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,
-`COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()`,
-`postPage()`, `getPageAsOtherOrganisation()`), address book API stubs
+`COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()` and
+`postPage()`, which take an optional session cookie, `chooseAddressTypeForCookie()`,
+which posts a type through the real type page and returns the session cookie
+the add form's GET needs, `cookieHeaderOf()`, which turns a response's
+`set-cookie` headers into a request cookie, and `getPageAsOtherOrganisation()`), address book API stubs
 (`pageOf(items, overrides)`, `serveStoredAddress(address)`,
 `serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
 `serveAddressNotFoundForOtherOrganisation(addressId)`,
@@ -73,8 +76,9 @@ ids and token; the Vitest tests and the fit specs both use these),
 notificationId)`, the Draft tag and notification id in the
 journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
 which the fit specs import too),
-`expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`
-and `expectPlaceholderThenCountriesNoneSelected($, countryNames)`, the add form's
+`expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`,
+`expectPlaceholderThenCountriesNoneSelected($, countryNames)` and
+`expectPlaceholderFirstWithUnitedKingdomSelected($, countryNames)`, the add form's
 Country select),
 `expect-address-form-errors.js` (`expectSummaryLinks(result)` and
 `expectSummaryAndFieldErrors($, errors)`, the error summary links and the
@@ -83,6 +87,9 @@ messages beside the fields),
 and `normalisedText(text)`, a rendered element's text trimmed with its
 whitespace collapsed to single spaces, which every Vitest test reads text
 through),
+`capture-info-logs.js` (`captureInfoLogs()`, which records the logger's
+info entries for a describe block and returns a function that reads those
+logged with a message),
 `open-empty-address-book-with-cookies.js`
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
 opens the address book list with the cookies a POST set so a test can
@@ -159,7 +166,11 @@ Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 [`address-form.js`](../features/address-book/fit/address-form.js) —
 `fieldLabels`, `addressFormCountryNames` (the captured countries fixture's
 names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
-`addValidAddressToFreshOrganisation`, `validAddressViewLink`,
+`chooseAddressType` (chooses a type on the 'Choose an address type' page and
+continues), `openAddForm` (opens the address form through the type page with
+a type chosen), `addValidAddressToFreshOrganisation` (signs in to a fresh
+organisation, goes through the type page, then saves a valid address),
+`validAddressViewLink`,
 `expectErrorFocusOn`, the two
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —

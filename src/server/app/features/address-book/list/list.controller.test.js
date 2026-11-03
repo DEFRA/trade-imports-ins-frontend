@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADD_ADDRESS_PATH,
+  ADDRESS_TYPE_START_PATH,
   ADDRESS_BOOK_PATH,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
@@ -229,7 +229,7 @@ describe('#addressBookListController', () => {
       'Manage your addresses for use across all your import notifications'
     )
     expect(contentOf($).children('p').next('div').find('a').attr('href')).toBe(
-      ADD_ADDRESS_PATH
+      ADDRESS_TYPE_START_PATH
     )
     expect(contentOf($).children('form').find('input[name="q"]')).toHaveLength(
       1

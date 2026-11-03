@@ -9,9 +9,12 @@ import {
   addressEditRoutePath,
   addressPath,
   addressRoutePath,
+  addressTypePath,
+  addressTypeStartPath,
   dashboardPath,
   inAddressBookSection,
-  inDashboardSection
+  inDashboardSection,
+  isAddressTypeStart
 } from './paths.js'
 
 const ADDRESS_ID = '000000000000000000000001'
@@ -22,6 +25,8 @@ describe('public paths', () => {
       dashboardPath(),
       addressBookPath(),
       addressAddPath(),
+      addressTypePath(),
+      addressTypeStartPath(),
       addressPath(ADDRESS_ID),
       addressEditPath(ADDRESS_ID),
       addressDeletePath(ADDRESS_ID)
@@ -29,6 +34,8 @@ describe('public paths', () => {
       '/',
       '/address-book',
       '/address-book/add',
+      '/address-book/add/address-type',
+      '/address-book/add/address-type?start=true',
       '/address-book/000000000000000000000001',
       '/address-book/000000000000000000000001/edit',
       '/address-book/000000000000000000000001/delete'
@@ -45,6 +52,14 @@ describe('public paths', () => {
       '/address-book/{id}/edit',
       '/address-book/{id}/delete'
     ])
+  })
+
+  it('Should read the start marker only when it is true', () => {
+    expect([
+      isAddressTypeStart({ start: 'true' }),
+      isAddressTypeStart({}),
+      isAddressTypeStart({ start: 'false' })
+    ]).toEqual([true, false, false])
   })
 
   it('Should encode an address id so it cannot rewrite the path', () => {

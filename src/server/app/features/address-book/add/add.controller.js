@@ -12,9 +12,14 @@ import {
 import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
-import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
+import {
+  addressAddPath,
+  addressBookPath,
+  addressTypePath
+} from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { addFormCountryOffer } from '../address-countries.js'
+import { clearAddInProgress, chosenAddressType } from '../add-in-progress.js'
+import { addFormCountryOffer, GB_COUNTRY } from '../address-countries.js'
 import { addressRules, formValuesOf } from '../fields.js'
 import { setSuccessMessage } from '../success-message.js'
 import {
@@ -50,8 +55,13 @@ const addModeFor = (handshakeContext) => {
 
 const backHrefFor = (addMode, handshakeContext) =>
   addMode === ADD_MODES.ADDRESS_BOOK
-    ? addressBookPath()
+    ? addressTypePath()
     : buildReturnUrl(handshakeContext)
+
+const openingFormValuesFor = (addMode) =>
+  formValuesOf(
+    addMode === ADD_MODES.ADDRESS_BOOK ? { countryCode: GB_COUNTRY.code } : {}
+  )
 
 const cancelUrlFor = (addMode, handshakeContext) => {
   switch (addMode) {
@@ -142,11 +152,23 @@ const redirectAfterCancel = (toolkit, handshakeContext) => {
 
 const get = async (request, toolkit) => {
   const handshakeContext = syncHandshakeContext(request)
+  const addMode = addModeFor(handshakeContext)
+
+  if (addMode === ADD_MODES.ADDRESS_BOOK && !chosenAddressType(request)) {
+    logger.info(
+      {
+        organisationId: kit.requireOrganisationId(request),
+        path: request.path
+      },
+      'No address type chosen, sending the user to choose one'
+    )
+    return toolkit.redirect(addressTypePath())
+  }
 
   const { countryItems, formValues } = await addFormCountryOffer({
     handshakeContext,
     placeholder: copy.form.countryPlaceholder,
-    formValues: formValuesOf()
+    formValues: openingFormValuesFor(addMode)
   })
 
   return buildView(toolkit, { formValues, countryItems, handshakeContext })
@@ -183,6 +205,7 @@ const submitAddress = async (
         landing
       })
     }
+    clearAddInProgress(request)
     setSuccessMessage(request, copy.successBanner.added(createdAddress.name))
     return toolkit.redirect(addressBookPath())
   } catch (err) {

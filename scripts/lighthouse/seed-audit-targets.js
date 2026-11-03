@@ -7,7 +7,7 @@ import puppeteer from 'puppeteer'
 import signIn from '../../tests/lighthouse/auth-setup.cjs'
 import { auditUrls, reportNames, TARGETS_FILE } from './audit-targets.js'
 import { createPageClient } from './page-client.js'
-import { seedAddress } from './seed-address.js'
+import { chooseAddressType, seedAddress } from './seed-address.js'
 
 const HTTP_OK = 200
 
@@ -50,8 +50,12 @@ const write = (payload) => {
   writeFileSync(TARGETS_FILE, `${JSON.stringify(payload, null, 2)}\n`)
 }
 
+const chooseAddressTypeSoTheAddFormRenders = (client) =>
+  chooseAddressType(client)
+
 const client = createPageClient(origin, await signedInCookies())
 const addressId = await seedAddress(client)
+await chooseAddressTypeSoTheAddFormRenders(client)
 const urls = auditUrls(origin, addressId)
 await assertUrlsRenderTheirOwnPage(urls, client)
 write({ origin, addressId, urls, reports: reportNames(origin, addressId) })

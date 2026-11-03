@@ -1,6 +1,8 @@
+import { ADDRESS_TYPES } from '../../src/server/app/services/address-book/address-types.js'
 import {
   addressAddPath,
-  addressBookPath
+  addressBookPath,
+  addressTypePath
 } from '../../src/server/app/shared/paths.js'
 
 const HTTP_OK = 200
@@ -42,7 +44,25 @@ export const findSeedAddressId = async (client) => {
   return href ? addressIdIn(href) : null
 }
 
+export const chooseAddressType = async (client) => {
+  const typePage = await client.document(addressTypePath())
+  if (typePage.status !== HTTP_OK) {
+    throw new Error(`The address type page did not render (${typePage.status})`)
+  }
+  const posted = await client.submit(
+    addressTypePath(),
+    { addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR },
+    typePage.crumb
+  )
+  if (posted.status !== HTTP_FOUND || posted.location !== addressAddPath()) {
+    throw new Error(
+      `The address type page did not move on to the add form (${posted.status})`
+    )
+  }
+}
+
 export const createSeedAddress = async (client) => {
+  await chooseAddressType(client)
   const form = await client.document(addressAddPath())
   if (form.status !== HTTP_OK) {
     throw new Error(`The add address page did not render (${form.status})`)

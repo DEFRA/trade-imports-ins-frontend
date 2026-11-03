@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADD_ADDRESS_PATH,
+  ADDRESS_TYPE_START_PATH,
   ADDRESS_BOOK_PATH,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
@@ -63,7 +63,7 @@ describe('#addressBookListLayout', () => {
     )
     const addButton = content.children('div').find('a')
     expect(textOf($, addButton)).toBe('Add a new address')
-    expect(addButton.attr('href')).toBe(ADD_ADDRESS_PATH)
+    expect(addButton.attr('href')).toBe(ADDRESS_TYPE_START_PATH)
     const form = content.children('form')
     expect(form.attr('method')).toBe('get')
     expect(form.attr('action')).toBe(ADDRESS_BOOK_PATH)
@@ -118,7 +118,7 @@ describe('#addressBookListLayout', () => {
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
     expect(contentOf($).children('div').find('a').attr('href')).toBe(
-      ADD_ADDRESS_PATH
+      ADDRESS_TYPE_START_PATH
     )
   })
 

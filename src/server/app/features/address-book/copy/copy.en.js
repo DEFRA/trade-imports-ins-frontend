@@ -1,4 +1,5 @@
 const SELECT_COUNTRY = 'Select a country'
+const ADD_NEW_ADDRESS = 'Add a new address'
 
 export const copy = {
   list: {
@@ -15,7 +16,7 @@ export const copy = {
         placeholder: 'Select one'
       }
     },
-    add: 'Add a new address',
+    add: ADD_NEW_ADDRESS,
     results: (from, to, total) => `Showing ${from}-${to} of ${total}`,
     noResults: 'Showing 0 of 0',
     tabsLabel: 'Address types',
@@ -83,6 +84,22 @@ export const copy = {
     phoneHint: 'For international numbers include the country code',
     countryPlaceholder: SELECT_COUNTRY
   },
+  addressType: {
+    caption: ADD_NEW_ADDRESS,
+    title: 'Choose an address type',
+    options: {
+      ORIGIN_OR_CONSIGNOR: {
+        label: 'Origin or Consignor',
+        hint: 'Place of origin, Consignor'
+      },
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
+        label: 'Destination, Consignee or Importer',
+        hint: 'Place of destination, Consignee, Importer'
+      },
+      BRANCH: { label: 'Branch', hint: 'Branch address' }
+    },
+    continue: 'Continue'
+  },
   add: {
     title: 'Add address and contact details',
     caption: 'Add new address',
@@ -112,6 +129,9 @@ export const copy = {
     cancel: 'No, cancel'
   },
   errors: {
+    addressType: {
+      required: 'Select an address type'
+    },
     name: {
       required: 'Enter a name or organisation',
       maxLength: (max) => `Name must be ${max} characters or fewer`

@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -9,6 +9,9 @@ import {
   ADDRESS_ID,
   BACK_LINK,
   addressesApiPath,
+  ADDRESS_TYPE_PATH,
+  chooseAddressTypeForCookie,
+  cookieHeaderOf,
   COUNTRIES,
   COUNTRY_OPTIONS,
   expectRedirectTo,
@@ -16,7 +19,6 @@ import {
   INVALID_ADDRESS_PAYLOAD,
   postPage,
   serveAddressCreated,
-  SELECTED_COUNTRY,
   serveAddressCreationCapturingBody,
   STORED_ADDRESS,
   VALID_ADDRESS_PAYLOAD
@@ -35,10 +37,11 @@ import {
   returnUrlFor,
   UNITED_KINGDOM_ROLES
 } from '../../../../common/test-helpers/journey-handshake.js'
-import { createLogger } from '../../../../common/helpers/logging/logger.js'
+import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
+  expectPlaceholderFirstWithUnitedKingdomSelected,
   expectPlaceholderThenCountriesNoneSelected,
   expectUnitedKingdomAloneSelected
 } from '../../../../common/test-helpers/expect-add-form-country-select.js'
@@ -47,7 +50,6 @@ import {
   expectSummaryLinks,
   REQUIRED_MESSAGES
 } from '../../../../common/test-helpers/expect-address-form-errors.js'
-import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
@@ -61,6 +63,12 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
 }))
 
+const SERVED_COUNTRY_NAMES = [
+  'France',
+  'Germany',
+  'Switzerland',
+  GB_COUNTRY.name
+]
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
 const { consignor: CONSIGNOR_HANDSHAKE, consignee: CONSIGNEE_HANDSHAKE } =
@@ -75,12 +83,18 @@ const ADD_TITLE = 'Add address and contact details'
 const postAdd = (server, sessionId, payload) =>
   postPage(server, ADD_ADDRESS_PATH, sessionId, payload)
 
-const getAdd = (server, sessionId, query = {}) =>
+const getAdd = (server, sessionId, query, cookie) =>
   getPage(
     server,
     `${ADD_ADDRESS_PATH}?${new URLSearchParams(query)}`,
-    sessionId
+    sessionId,
+    cookie
   )
+
+const getAddWithTypeChosen = async (server, sessionId) => {
+  const cookie = await chooseAddressTypeForCookie(server, sessionId)
+  return getAdd(server, sessionId, undefined, cookie)
+}
 
 const SUCCESS_BANNER = '.govuk-notification-banner--success'
 
@@ -93,17 +107,23 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('GET sets Cache-Control: no-store', async () => {
-    const { headers, statusCode } = await getAdd(server(), 'add-get-cache')
+    const { headers, statusCode } = await getAddWithTypeChosen(
+      server(),
+      'add-get-cache'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(headers['cache-control']).toBe('no-store')
   })
 
-  test('GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book', async () => {
+  test('GET renders the add address and contact details page with its caption, no status tag, Back linking to the address type page and Cancel linking to the address book', async () => {
     const saveAndContinue = 'Save and continue'
     const cancelToAddressBook = 'Cancel and return to address book'
 
-    const { result, statusCode } = await getAdd(server(), 'add-get')
+    const { result, statusCode } = await getAddWithTypeChosen(
+      server(),
+      'add-get'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
@@ -112,7 +132,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect($(CAPTION_SELECTOR).next().is('h1')).toBe(true)
     expect($(JOURNEY_STRIP)).toHaveLength(0)
     expect($('main .govuk-tag')).toHaveLength(0)
-    expect($(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect($(BACK_LINK).attr('href')).toBe(ADDRESS_TYPE_PATH)
     expect(textsOf($, BACK_LINK)).toEqual(['Back'])
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
     expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
@@ -128,7 +148,10 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('GET renders country select options from reference data', async () => {
-    const { result, statusCode } = await getAdd(server(), 'add-get-countries')
+    const { result, statusCode } = await getAddWithTypeChosen(
+      server(),
+      'add-get-countries'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain(`value="${GB_COUNTRY.code}"`)
@@ -279,6 +302,51 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 })
 
+describe(
+  '#addressBookAddController — address type guard',
+  { concurrent: false },
+  () => {
+    const server = startRealModeServerServingCountries(COUNTRIES)
+    const NO_TYPE_MESSAGE =
+      'No address type chosen, sending the user to choose one'
+    const loggedWith = captureInfoLogs()
+
+    test('GET with no address type chosen redirects to the address type page and logs it once', async () => {
+      const response = await getAdd(server(), 'add-get-no-type')
+
+      expectRedirectTo(response, ADDRESS_TYPE_PATH)
+      expect(loggedWith(NO_TYPE_MESSAGE)).toEqual([
+        {
+          fields: { organisationId: ORGANISATION_ID, path: ADD_ADDRESS_PATH },
+          message: NO_TYPE_MESSAGE
+        }
+      ])
+    })
+
+    test('GET after a successful save redirects to the address type page', async () => {
+      serveAddressCreated()
+      const sessionId = 'add-get-after-save'
+      const cookie = await chooseAddressTypeForCookie(server(), sessionId)
+      const saved = await postPage(
+        server(),
+        ADD_ADDRESS_PATH,
+        sessionId,
+        VALID_ADDRESS_PAYLOAD,
+        cookie
+      )
+
+      const response = await getAdd(
+        server(),
+        sessionId,
+        {},
+        cookieHeaderOf(saved.headers)
+      )
+
+      expectRedirectTo(response, ADDRESS_TYPE_PATH)
+    })
+  }
+)
+
 const buttonsOf = ($) =>
   $('form button')
     .map((_, button) => ({
@@ -401,24 +469,7 @@ describe(
   { concurrent: false },
   () => {
     const server = startRealModeServerServingCountries(COUNTRIES)
-    const loggedEntries = []
-    let infoSpy
-
-    beforeEach(() => {
-      loggedEntries.length = 0
-      infoSpy = vi
-        .spyOn(createLogger(), 'info')
-        .mockImplementation((fields, message) => {
-          loggedEntries.push({ fields, message })
-        })
-    })
-
-    afterEach(() => {
-      infoSpy.mockRestore()
-    })
-
-    const loggedWith = (message) =>
-      loggedEntries.filter((entry) => entry.message === message)
+    const loggedWith = captureInfoLogs()
 
     test('GET refuses an unrecognised journey type', async () => {
       const { statusCode } = await getAdd(server(), 'add-get-unknown-journey', {
@@ -606,12 +657,7 @@ describe(
       async (role) => {
         const $ = await openAddFrom(role)
 
-        expectPlaceholderThenCountriesNoneSelected($, [
-          'France',
-          'Germany',
-          'Switzerland',
-          GB_COUNTRY.name
-        ])
+        expectPlaceholderThenCountriesNoneSelected($, SERVED_COUNTRY_NAMES)
         expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
       }
     )
@@ -725,34 +771,34 @@ describe(
     const server = startRealModeServerServingCountries(COUNTRIES)
 
     test('GET renders name, address lines and email full width, town, county, postcode and country at one half, and phone at two thirds', async () => {
-      const { result } = await getAdd(server(), 'add-get-widths')
+      const { result } = await getAddWithTypeChosen(server(), 'add-get-widths')
 
       expectAddressFormWidths(result)
     })
 
     test('GET gives each personal-data field its browser autocomplete hint and none to County or Country', async () => {
-      const { result } = await getAdd(server(), 'add-get-autocomplete')
+      const { result } = await getAddWithTypeChosen(
+        server(),
+        'add-get-autocomplete'
+      )
 
       expectAddressFormAutocomplete(result)
     })
 
-    test('GET opens the Country select on its blank first option, Select a country, with nothing selected', async () => {
-      const { result, statusCode } = await getAdd(
+    test('GET opens the Country select on its blank first option, Select a country, with United Kingdom selected', async () => {
+      const { result, statusCode } = await getAddWithTypeChosen(
         server(),
         'add-get-select-one'
       )
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      const firstOption = $(COUNTRY_OPTIONS).first()
-      expect(firstOption.attr('value')).toBe('')
-      expect(textOf($, firstOption)).toBe(COUNTRY_PLACEHOLDER)
-      expect($(COUNTRY_OPTIONS).length).toBeGreaterThan(1)
-      expect($(SELECTED_COUNTRY)).toHaveLength(0)
+      expect($(COUNTRY_OPTIONS).first().attr('value')).toBe('')
+      expectPlaceholderFirstWithUnitedKingdomSelected($, SERVED_COUNTRY_NAMES)
     })
 
     test('GET lists the countries by name, not by code, with United Kingdom in its place', async () => {
-      const { result } = await getAdd(server(), 'add-get-order')
+      const { result } = await getAddWithTypeChosen(server(), 'add-get-order')
 
       const $ = load(result)
       const codes = $(COUNTRY_OPTIONS)

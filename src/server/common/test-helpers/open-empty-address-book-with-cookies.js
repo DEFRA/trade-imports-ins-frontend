@@ -2,17 +2,11 @@ import { statusCodes } from '../constants/status-codes.js'
 import {
   ADDRESS_BOOK_PATH,
   addressesApiPath,
+  cookieHeaderOf,
   pageOf
 } from './address-book-requests.js'
 import { addressBookApi } from './real-mode.js'
 import { sessionAuth } from './session-auth.js'
-
-const cookieHeaderOf = (headers) =>
-  [headers['set-cookie']]
-    .flat()
-    .filter(Boolean)
-    .map((cookie) => cookie.split(';')[0])
-    .join('; ')
 
 export const openEmptyAddressBookWithCookiesFrom = (
   server,

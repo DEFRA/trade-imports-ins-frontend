@@ -4,7 +4,12 @@ import { copy } from '../copy/copy.en.js'
 import { FIELD_RULES } from '../fields.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { countries } from '../../../services/_capture/fixtures.js'
-import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
+import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
+import {
+  addressAddPath,
+  addressBookPath,
+  addressTypePath
+} from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 
 export const fieldLabels = copy.form.fields
@@ -42,6 +47,28 @@ export async function fillValidAddress(page, overrides = {}) {
   }
 }
 
+export const chooseAddressType = async (
+  page,
+  addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+) => {
+  await page
+    .getByRole('radio', {
+      name: copy.addressType.options[addressType].label,
+      exact: true
+    })
+    .check()
+  await page.getByRole('button', { name: copy.addressType.continue }).click()
+}
+
+export const openAddForm = async (
+  page,
+  addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+) => {
+  await page.goto(addressTypePath())
+  await chooseAddressType(page, addressType)
+  await expect(page).toHaveURL(addressAddPath())
+}
+
 export const addValidAddressToFreshOrganisation = async (
   page,
   { organisationPrefix, overrides = {} }
@@ -49,7 +76,7 @@ export const addValidAddressToFreshOrganisation = async (
   await signIn(page, {
     organisationId: `${organisationPrefix}-${crypto.randomUUID()}`
   })
-  await page.goto(addressAddPath())
+  await openAddForm(page)
   await fillValidAddress(page, overrides)
   await page.getByRole('button', { name: 'Save and continue' }).click()
   await expect(page).toHaveURL(addressBookPath())

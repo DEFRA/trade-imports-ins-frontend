@@ -4,6 +4,7 @@ import {
   addValidAddressToFreshOrganisation,
   addressFormCountryNames,
   expectErrorFocusOn,
+  openAddForm,
   fieldLabels,
   fillValidAddress,
   maxLengthValidations,
@@ -17,7 +18,11 @@ import {
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { seedAddress } from './seed-address.js'
-import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
+import {
+  addressAddPath,
+  addressBookPath,
+  addressTypePath
+} from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-form-autocomplete.js'
 import {
@@ -37,7 +42,7 @@ test.describe('add address', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-render' })
-    await page.goto(addressAddPath())
+    await openAddForm(page)
 
     await expect(
       page.getByRole('heading', { name: 'Add address and contact details' })
@@ -57,7 +62,7 @@ test.describe('add address', () => {
     ).toBeVisible()
 
     const country = page.getByLabel('Country')
-    await expect(country).toHaveValue('')
+    await expect(country).toHaveValue(GB_COUNTRY.code)
     await expect(country.getByRole('option').first()).toHaveText(
       COUNTRY_PLACEHOLDER
     )
@@ -66,18 +71,18 @@ test.describe('add address', () => {
     ).toHaveCount(1)
   })
 
-  test('has a Back link to the address book', async ({ page }) => {
+  test('has a Back link to Choose an address type', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-back' })
-    await page.goto(addressAddPath())
+    await openAddForm(page)
 
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', addressBookPath())
+    ).toHaveAttribute('href', addressTypePath())
   })
 
   test('groups fields under Address and Contact details', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-sections' })
-    await page.goto(addressAddPath())
+    await openAddForm(page)
 
     for (const name of ['Address', 'Contact details']) {
       await expect(
@@ -88,7 +93,7 @@ test.describe('add address', () => {
 
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-axe' })
-    await page.goto(addressAddPath())
+    await openAddForm(page)
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address')
   })
@@ -287,7 +292,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-required' })
-      await page.goto(addressAddPath())
+      await openAddForm(page)
 
       await fillValidAddress(page, { [field]: '' })
       await submit(page)
@@ -309,7 +314,7 @@ test.describe('add address validation', () => {
       page
     }) => {
       await signIn(page, { organisationId: 'stub-org-add-maxlength' })
-      await page.goto(addressAddPath())
+      await openAddForm(page)
 
       const value = 'A'.repeat(maxLength + 1)
       await fillValidAddress(page, { [field]: value })
@@ -329,7 +334,7 @@ test.describe('add address validation', () => {
 
   test('rejects a malformed email address', async ({ page }) => {
     await signIn(page, { organisationId: 'stub-org-add-email' })
-    await page.goto(addressAddPath())
+    await openAddForm(page)
 
     await fillValidAddress(page, { email: 'not-an-email' })
     await submit(page)
@@ -346,7 +351,7 @@ test.describe('add address validation', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-validation-axe' })
-    await page.goto(addressAddPath())
+    await openAddForm(page)
 
     await fillValidAddress(page, { name: '' })
     await submit(page)
@@ -459,7 +464,7 @@ test.describe('cancel', () => {
     page
   }) => {
     await signIn(page, { organisationId: 'stub-org-add-cancel' })
-    await page.goto(addressAddPath())
+    await openAddForm(page)
 
     await fillValidAddress(page)
 

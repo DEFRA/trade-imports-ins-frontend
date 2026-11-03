@@ -1,5 +1,6 @@
 // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
 const SELECT_COUNTRY = 'Dewiswch wlad'
+const ADD_NEW_ADDRESS = 'Ychwanegu cyfeiriad newydd'
 
 export const copy = {
   list: {
@@ -17,7 +18,7 @@ export const copy = {
         placeholder: 'Dewiswch un'
       }
     },
-    add: 'Ychwanegu cyfeiriad newydd',
+    add: ADD_NEW_ADDRESS,
     results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,
     noResults: 'Yn dangos 0 o 0',
     tabsLabel: 'Mathau o gyfeiriad',
@@ -86,9 +87,25 @@ export const copy = {
     phoneHint: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad',
     countryPlaceholder: SELECT_COUNTRY
   },
+  addressType: {
+    caption: ADD_NEW_ADDRESS,
+    title: 'Dewiswch fath o gyfeiriad',
+    options: {
+      ORIGIN_OR_CONSIGNOR: {
+        label: 'Tarddiad neu Anfonwr',
+        hint: 'Man tarddiad, Anfonwr'
+      },
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
+        label: 'Cyrchfan, Derbynnydd neu Fewnforiwr',
+        hint: 'Man cyrchfan, Derbynnydd, Mewnforiwr'
+      },
+      BRANCH: { label: 'Cangen', hint: 'Cyfeiriad cangen' }
+    },
+    continue: 'Parhau'
+  },
   add: {
     title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
-    caption: 'Ychwanegu cyfeiriad newydd',
+    caption: ADD_NEW_ADDRESS,
     save: 'Cadw a pharhau',
     saveAndSelect: 'Cadw a dewis',
     saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
@@ -115,6 +132,9 @@ export const copy = {
     cancel: 'Na, canslo'
   },
   errors: {
+    addressType: {
+      required: 'Dewiswch fath o gyfeiriad'
+    },
     name: {
       required: 'Rhowch enw neu sefydliad',
       maxLength: (max) => `Rhaid i’r enw fod yn ${max} nod neu lai`

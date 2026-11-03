@@ -10,6 +10,7 @@ import { refuseOutboundHttp } from '../../src/server/common/test-helpers/real-mo
 import { createPageClient } from './page-client.js'
 import {
   addressIdIn,
+  chooseAddressType,
   findSeedAddressId,
   SEED_ADDRESS,
   seedAddress
@@ -24,6 +25,7 @@ const SEARCH = { q: SEED_ADDRESS.name }
 const HTTP_OK = 200
 const HTTP_FOUND = 302
 const HTTP_BAD_REQUEST = 400
+const HTTP_SERVER_ERROR = 500
 
 const page = (body) =>
   `<html><head><meta name="csrf-token" content="${CRUMB}"></head><body><h1>Page</h1>${body}</body></html>`
@@ -39,6 +41,16 @@ const listPage = (...links) =>
   )
 
 const app = () => nock(ORIGIN)
+
+const serveTypeStep = () =>
+  app()
+    .get('/address-book/add/address-type')
+    .reply(HTTP_OK, page('<form></form>'))
+    .post('/address-book/add/address-type', {
+      crumb: CRUMB,
+      addressType: 'ORIGIN_OR_CONSIGNOR'
+    })
+    .reply(HTTP_FOUND, '', { location: '/address-book/add' })
 
 const listing = (...links) =>
   app()
@@ -95,6 +107,7 @@ describe('#seedAddress', () => {
 
   test('Should create the seed address through the add page when the book lists none, posting the crumb the page issued', async () => {
     listing(viewLink(STUB_ADDRESS_ID, 'Stub Farm 1'))
+    const typeStep = serveTypeStep()
     const created = app()
       .get('/address-book/add')
       .reply(HTTP_OK, page('<form></form>'), { 'set-cookie': [CRUMB_COOKIE] })
@@ -109,11 +122,13 @@ describe('#seedAddress', () => {
     await expect(seedAddress(createPageClient(ORIGIN))).resolves.toBe(
       ADDRESS_ID
     )
+    expect(typeStep.isDone()).toBe(true)
     expect(created.isDone()).toBe(true)
   })
 
   test('Should refuse when the add page rejects the seed', async () => {
     listing()
+    serveTypeStep()
     app()
       .get('/address-book/add')
       .reply(HTTP_OK, page('<form></form>'))
@@ -130,6 +145,7 @@ describe('#seedAddress', () => {
 
   test('Should refuse when the address book does not list the address it just accepted', async () => {
     listing()
+    serveTypeStep()
     app()
       .get('/address-book/add')
       .reply(HTTP_OK, page('<form></form>'))
@@ -139,6 +155,55 @@ describe('#seedAddress', () => {
 
     await expect(seedAddress(createPageClient(ORIGIN))).rejects.toThrow(
       /does not list the seed address it just accepted/
+    )
+  })
+})
+
+describe('#chooseAddressType', () => {
+  refuseOutboundHttp()
+
+  test('Should choose Origin or Consignor on the address type page, posting the crumb the page issued', async () => {
+    const typeStep = serveTypeStep()
+
+    await chooseAddressType(createPageClient(ORIGIN))
+
+    expect(typeStep.isDone()).toBe(true)
+  })
+
+  test('Should refuse when the address type page does not move on to the add form', async () => {
+    app()
+      .get('/address-book/add/address-type')
+      .reply(HTTP_OK, page('<form></form>'))
+      .post('/address-book/add/address-type')
+      .reply(
+        HTTP_BAD_REQUEST,
+        page('<div role="alert">There is a problem</div>')
+      )
+
+    await expect(chooseAddressType(createPageClient(ORIGIN))).rejects.toThrow(
+      /did not move on to the add form \(400\)/
+    )
+  })
+
+  test('Should refuse when the address type page does not render', async () => {
+    app()
+      .get('/address-book/add/address-type')
+      .reply(HTTP_SERVER_ERROR, page('<h1>Sorry</h1>'))
+
+    await expect(chooseAddressType(createPageClient(ORIGIN))).rejects.toThrow(
+      'The address type page did not render (500)'
+    )
+  })
+
+  test('Should refuse when the address type page redirects somewhere other than the add form', async () => {
+    app()
+      .get('/address-book/add/address-type')
+      .reply(HTTP_OK, page('<form></form>'))
+      .post('/address-book/add/address-type')
+      .reply(HTTP_FOUND, '', { location: '/address-book/add/address-type' })
+
+    await expect(chooseAddressType(createPageClient(ORIGIN))).rejects.toThrow(
+      'The address type page did not move on to the add form (302)'
     )
   })
 })

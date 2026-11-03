@@ -11,7 +11,7 @@ import {
   parsePage
 } from '../../../shared/list-page.js'
 import {
-  addressAddPath,
+  addressTypeStartPath,
   addressBookPath,
   addressPath
 } from '../../../shared/paths.js'
@@ -83,7 +83,7 @@ const buildView = (toolkit, { recoverableError = false, ...model }) =>
     contentColumnClass: kit.surfaceClass('display'),
     copy,
     listHref: addressBookPath(),
-    addHref: addressAddPath(),
+    addHref: addressTypeStartPath(),
     ...model
   })
 

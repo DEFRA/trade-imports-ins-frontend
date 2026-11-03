@@ -279,3 +279,25 @@ describe('#copy of the list page', () => {
     })
   })
 })
+
+describe('#copy of the address type page', () => {
+  it('Should word the caption, heading, each address type with its hint, the Continue button and the missing-type message', () => {
+    expect(copy.addressType).toEqual({
+      caption: 'Add a new address',
+      title: 'Choose an address type',
+      options: {
+        ORIGIN_OR_CONSIGNOR: {
+          label: 'Origin or Consignor',
+          hint: 'Place of origin, Consignor'
+        },
+        DESTINATION_CONSIGNEE_OR_IMPORTER: {
+          label: 'Destination, Consignee or Importer',
+          hint: 'Place of destination, Consignee, Importer'
+        },
+        BRANCH: { label: 'Branch', hint: 'Branch address' }
+      },
+      continue: 'Continue'
+    })
+    expect(copy.errors.addressType.required).toBe('Select an address type')
+  })
+})

@@ -1,5 +1,7 @@
 import { expect } from 'vitest'
 
+import { addressTypeStartPath } from '../../app/shared/paths.js'
+import { ADDRESS_TYPES } from '../../app/services/address-book/index.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { addressBookApi } from './real-mode.js'
 import { ORGANISATION_ID, sessionAuth } from './session-auth.js'
@@ -15,6 +17,10 @@ export const OTHER_ORGANISATION_ID = '0c4e7a92-3b1d-4f58-a6e2-9d8b5c1f7a34'
 export const ADDRESS_BOOK_PATH = '/address-book'
 
 export const ADD_ADDRESS_PATH = `${ADDRESS_BOOK_PATH}/add`
+
+export const ADDRESS_TYPE_PATH = `${ADD_ADDRESS_PATH}/address-type`
+
+export const ADDRESS_TYPE_START_PATH = addressTypeStartPath()
 
 export const RETURN_HOME = '?return=%2F'
 
@@ -118,11 +124,42 @@ export const pageOf = (items, overrides = {}) => ({
   ...overrides
 })
 
-export const getPage = (server, url, sessionId) =>
-  server.inject({ method: 'GET', url, auth: sessionAuth(sessionId) })
+const cookieHeaders = (cookie) => (cookie ? { cookie } : {})
 
-export const postPage = (server, url, sessionId, payload) =>
-  server.inject({ method: 'POST', url, auth: sessionAuth(sessionId), payload })
+export const cookieHeaderOf = (headers) =>
+  [headers['set-cookie']]
+    .flat()
+    .filter(Boolean)
+    .map((cookie) => cookie.split(';')[0])
+    .join('; ')
+
+export const getPage = (server, url, sessionId, cookie) =>
+  server.inject({
+    method: 'GET',
+    url,
+    auth: sessionAuth(sessionId),
+    headers: cookieHeaders(cookie)
+  })
+
+export const postPage = (server, url, sessionId, payload, cookie) =>
+  server.inject({
+    method: 'POST',
+    url,
+    auth: sessionAuth(sessionId),
+    payload,
+    headers: cookieHeaders(cookie)
+  })
+
+export const chooseAddressTypeForCookie = async (
+  server,
+  sessionId,
+  addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+) => {
+  const { headers } = await postPage(server, ADDRESS_TYPE_PATH, sessionId, {
+    addressType
+  })
+  return cookieHeaderOf(headers)
+}
 
 export const getPageAsOtherOrganisation = (server, url, sessionId) =>
   server.inject({
