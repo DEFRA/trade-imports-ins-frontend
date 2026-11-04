@@ -72,7 +72,7 @@ describe('#buildRows', () => {
     )
   })
 
-  test('Should treat a whitespace-only optional field as blank', () => {
+  test('Should leave out address line 2 when it is only whitespace', () => {
     const rows = buildRows({ ...STORED_ADDRESS, addressLine2: '   ' }, UK_NAME)
 
     expect(rows.map((row) => row.key.text)).toEqual(
