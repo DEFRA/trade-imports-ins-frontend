@@ -42,12 +42,16 @@ const validationProblem = {
   }
 }
 
-describe('against the real address book', () => {
+const runAgainstRealAddressBook = () => {
   runInRealMode()
 
   beforeEach(() => {
     getTraceIdMock.mockReturnValue(TRACE_ID)
   })
+}
+
+describe('listing against the real address book', () => {
+  runAgainstRealAddressBook()
 
   describe('#listAddresses', () => {
     test('Should GET the organisation path with the organisation and trace headers and parse the page', async () => {
@@ -94,7 +98,51 @@ describe('against the real address book', () => {
 
       expect(scope.isDone()).toBe(true)
     })
+
+    test('Should forward the address type as the addressType query parameter', async () => {
+      const scope = addressBookApi()
+        .get(addressesApiPath())
+        .query({
+          page: '1',
+          pageSize: String(PAGE_SIZE),
+          addressType: addressBook.ADDRESS_TYPES.BRANCH
+        })
+        .reply(200, pageOf([], { pageSize: PAGE_SIZE }))
+
+      await addressBook.listAddresses(ORGANISATION_ID, {
+        page: 1,
+        pageSize: PAGE_SIZE,
+        addressType: addressBook.ADDRESS_TYPES.BRANCH
+      })
+
+      expect(scope.isDone()).toBe(true)
+    })
+
+    test('Should forward the use as the use query parameter and each search use as a searchUse query parameter', async () => {
+      const scope = addressBookApi()
+        .get(addressesApiPath())
+        .query({
+          page: '1',
+          pageSize: String(PAGE_SIZE),
+          use: 'CONSIGNOR',
+          searchUse: ['CONSIGNOR', 'CONSIGNEE']
+        })
+        .reply(200, pageOf([], { pageSize: PAGE_SIZE }))
+
+      await addressBook.listAddresses(ORGANISATION_ID, {
+        page: 1,
+        pageSize: PAGE_SIZE,
+        use: 'CONSIGNOR',
+        searchUses: ['CONSIGNOR', 'CONSIGNEE']
+      })
+
+      expect(scope.isDone()).toBe(true)
+    })
   })
+})
+
+describe('against the real address book', () => {
+  runAgainstRealAddressBook()
 
   describe('#createAddress', () => {
     test('Should POST the address with the organisation header and return the created record', async () => {
