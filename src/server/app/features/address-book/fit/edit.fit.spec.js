@@ -208,7 +208,7 @@ test.describe('edit address', () => {
   })
 
   test.describe('opened from the dashboard', () => {
-    test('Back goes to the dashboard', async ({ page }) => {
+    test('has a Back link to the dashboard', async ({ page }) => {
       await openEditForm(page, 'stub-org-edit-back-return', {
         returnTo: dashboardPath()
       })
