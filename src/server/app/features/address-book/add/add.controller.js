@@ -85,11 +85,16 @@ const openingEntryFor = (request, addMode) => {
   }
 }
 
+const addressBookAddressTypeOf = (request, addMode) =>
+  addMode === ADD_MODES.ADDRESS_BOOK
+    ? storedChosenAddressType(request)
+    : undefined
+
 const storeAddressBookEntry = (
   request,
-  { handshakeContext, addressType, postedValues, postedUses }
+  { addMode, addressType, postedValues, postedUses }
 ) => {
-  if (addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK) {
+  if (addMode === ADD_MODES.ADDRESS_BOOK) {
     storeEnteredAddress(request, {
       formValues: postedValues,
       tickedUses: keepUsesOfferedBy(addressType, postedUses)
@@ -156,6 +161,7 @@ const usesQuestionFor = (
 const buildView = (
   toolkit,
   {
+    addMode,
     formValues,
     countryItems,
     errors = {},
@@ -164,9 +170,8 @@ const buildView = (
     addressType,
     tickedUses = []
   }
-) => {
-  const addMode = addModeFor(handshakeContext)
-  return toolkit
+) =>
+  toolkit
     .view(view, {
       ...kit.base(copy.add.title, {
         recoverableError,
@@ -192,7 +197,6 @@ const buildView = (
       cancelHref: cancelUrlFor(addMode, handshakeContext)
     })
     .header('Cache-Control', 'no-store')
-}
 
 const handBackAddress = (
   toolkit,
@@ -214,8 +218,7 @@ const handBackAddress = (
   )
 }
 
-const redirectAfterCancel = (toolkit, handshakeContext) => {
-  const addMode = addModeFor(handshakeContext)
+const redirectAfterCancel = (toolkit, { addMode, handshakeContext }) => {
   if (addMode !== ADD_MODES.ADDRESS_BOOK) {
     logger.info(
       {
@@ -255,7 +258,7 @@ const get = async (request, toolkit) => {
     return redirectToTypePage
   }
 
-  const addressType = storedChosenAddressType(request)
+  const addressType = addressBookAddressTypeOf(request, addMode)
   const { formValues: openingFormValues, tickedUses } = openingEntryFor(
     request,
     addMode
@@ -268,6 +271,7 @@ const get = async (request, toolkit) => {
   })
 
   return buildView(toolkit, {
+    addMode,
     formValues,
     countryItems,
     handshakeContext,
@@ -329,16 +333,21 @@ const logDiscardedUses = ({
   }
 }
 
-const rerenderIfUsesInvalid = ({ isAddressBookAdd, keptUses, rerender }) => {
-  if (!isAddressBookAdd) {
+const rerenderIfUsesInvalid = ({ addMode, keptUses, rerender }) => {
+  if (addMode !== ADD_MODES.ADDRESS_BOOK) {
     return undefined
   }
   const errors = usesErrorsOf(keptUses)
   return errors ? rerender({ errors }).code(HTTP_STATUS_BAD_REQUEST) : undefined
 }
 
-const typeAndUsesToSave = (handshakeContext, { addressType, postedUses }) =>
-  addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK
+const typeAndUsesToSave = ({
+  addMode,
+  handshakeContext,
+  addressType,
+  postedUses
+}) =>
+  addMode === ADD_MODES.ADDRESS_BOOK
     ? { addressType, uses: keepUsesOfferedBy(addressType, postedUses) }
     : addressTypeAndUsesOfParty(handshakeContext, postedUses)
 
@@ -380,7 +389,7 @@ const createAddressAndRespond = async (
     organisationId,
     addressType,
     landing,
-    isAddressBookAdd,
+    addMode,
     addressToCreate,
     postedCountryCode,
     storedCountryCode
@@ -395,7 +404,7 @@ const createAddressAndRespond = async (
     postedCountryCode,
     storedCountryCode
   })
-  return isAddressBookAdd
+  return addMode === ADD_MODES.ADDRESS_BOOK
     ? finishAddressBookAdd(request, toolkit, {
         organisationId,
         createdAddress,
@@ -412,6 +421,7 @@ const submitAddress = async (
   request,
   toolkit,
   {
+    addMode,
     handshakeContext,
     organisationId,
     postedValues,
@@ -428,6 +438,7 @@ const submitAddress = async (
   })
   const rerender = (model) =>
     buildView(toolkit, {
+      addMode,
       formValues,
       countryItems,
       handshakeContext,
@@ -443,9 +454,9 @@ const submitAddress = async (
     if (errors) {
       return rerender({ errors }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    const isAddressBookAdd =
-      addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK
-    const typeAndUses = typeAndUsesToSave(handshakeContext, {
+    const typeAndUses = typeAndUsesToSave({
+      addMode,
+      handshakeContext,
       addressType,
       postedUses
     })
@@ -457,7 +468,7 @@ const submitAddress = async (
       keptUses: typeAndUses.uses
     })
     const usesRefusal = rerenderIfUsesInvalid({
-      isAddressBookAdd,
+      addMode,
       keptUses: typeAndUses.uses,
       rerender
     })
@@ -469,7 +480,7 @@ const submitAddress = async (
       organisationId,
       addressType,
       landing,
-      isAddressBookAdd,
+      addMode,
       addressToCreate: { ...validatedAddress, ...typeAndUses },
       postedCountryCode: postedValues.countryCode,
       storedCountryCode: formValues.countryCode
@@ -481,14 +492,15 @@ const submitAddress = async (
 
 const post = async (request, toolkit) => {
   const handshakeContext = resolveHandshakeContext(request)
+  const addMode = addModeFor(handshakeContext)
   const payload = request.payload ?? {}
   if (payload.cancel) {
-    return redirectAfterCancel(toolkit, handshakeContext)
+    return redirectAfterCancel(toolkit, { addMode, handshakeContext })
   }
   const redirectToTypePage = redirectIfNoAddressTypeChosen(
     request,
     toolkit,
-    addModeFor(handshakeContext)
+    addMode
   )
   if (redirectToTypePage) {
     return redirectToTypePage
@@ -496,15 +508,16 @@ const post = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const postedValues = formValuesOf(payload)
   const postedUses = postedUsesOf(payload)
-  const addressType = storedChosenAddressType(request)
+  const addressType = addressBookAddressTypeOf(request, addMode)
   storeAddressBookEntry(request, {
-    handshakeContext,
+    addMode,
     addressType,
     postedValues,
     postedUses
   })
 
   return submitAddress(request, toolkit, {
+    addMode,
     handshakeContext,
     organisationId,
     postedValues,
