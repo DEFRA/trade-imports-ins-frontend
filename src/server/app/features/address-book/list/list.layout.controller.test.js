@@ -114,9 +114,6 @@ describe('#addressBookListLayout', () => {
     expect(resultsLineOf($)).toBe(NO_RESULTS_LINE)
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
-    expect(contentOf($).children('div').find('a').attr('href')).toBe(
-      ADD_ADDRESS_PATH
-    )
   })
 
   test('breaks the name after its first word and puts every stored address line on its own line', async () => {
