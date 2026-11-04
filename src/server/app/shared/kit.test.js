@@ -145,7 +145,12 @@ describe('#pageRoutes', () => {
   })
 
   it('Should name the session strategy on every route', () => {
-    expect(routeOptions).toEqual({ auth: 'session' })
+    const routes = pageRoutes(ADD_PATH, { get, post })
+
+    expect(routes.map((route) => route.options.auth)).toEqual([
+      'session',
+      'session'
+    ])
   })
 })
 
