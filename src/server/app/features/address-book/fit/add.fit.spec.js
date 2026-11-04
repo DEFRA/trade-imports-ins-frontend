@@ -14,6 +14,7 @@ import {
   maxLengthValidations,
   originOrConsignorListUrl,
   requiredValidations,
+  saveAndContinueButton,
   setFieldValue,
   tickUses,
   validAddress
@@ -46,9 +47,6 @@ import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import { addressBookPageHref } from '../view-model/list.js'
-
-const submit = (page) =>
-  page.getByRole('button', { name: 'Save and continue' }).click()
 
 const LATE_ALPHABETICAL_NAME = 'Zetland Livestock Ltd'
 
@@ -156,7 +154,7 @@ test.describe('add address uses question', () => {
     await openAddForm(page)
 
     await fillValidAddress(page)
-    await submit(page)
+    await saveAndContinueButton(page).click()
 
     await expect(page).toHaveTitle(/^Error: /)
     await expect(page.getByRole('alert')).toContainText('There is a problem')
@@ -196,7 +194,7 @@ test.describe('add address uses question', () => {
     await openAddForm(page)
     await fillValidAddress(page)
     await tickUses(page, ['CONSIGNOR'])
-    await submit(page)
+    await saveAndContinueButton(page).click()
     await expect(page).toHaveURL(originOrConsignorListUrl)
 
     await searchAndExpectSingleMatch(page, 'Consignor', {
@@ -294,7 +292,7 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
       await openAddForm(page, addressType)
 
       await fillValidAddress(page)
-      await submit(page)
+      await saveAndContinueButton(page).click()
 
       await expect(usesGroupOf(page, addressType)).toContainText(
         copy.errors.uses.required
@@ -604,7 +602,7 @@ test.describe('add address validation', () => {
       await openAddForm(page)
 
       await fillValidAddress(page, { [field]: '' })
-      await submit(page)
+      await saveAndContinueButton(page).click()
 
       await expectErrorFocusOn(page, {
         message: error,
@@ -627,7 +625,7 @@ test.describe('add address validation', () => {
 
       const value = 'A'.repeat(maxLength + 1)
       await fillValidAddress(page, { [field]: value })
-      await submit(page)
+      await saveAndContinueButton(page).click()
 
       await expectErrorFocusOn(page, {
         message: error,
@@ -646,7 +644,7 @@ test.describe('add address validation', () => {
     await openAddForm(page)
 
     await fillValidAddress(page, { email: 'not-an-email' })
-    await submit(page)
+    await saveAndContinueButton(page).click()
 
     await expectErrorFocusOn(page, {
       message: 'Enter an email address in the correct format',
@@ -663,7 +661,7 @@ test.describe('add address validation', () => {
     await openAddForm(page)
 
     await fillValidAddress(page, { name: '' })
-    await submit(page)
+    await saveAndContinueButton(page).click()
     await expect(page.getByRole('alert')).toBeVisible()
 
     await expectNoSeriousOrCriticalViolations(
