@@ -129,7 +129,7 @@ describe('#addFormCountryOffer', () => {
           { value: GB_COUNTRY.code, text: GB_COUNTRY.name }
         ],
         countryCodes: ['FR', GB_COUNTRY.code],
-        formValues: postedValues
+        formValues: { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
       })
     }
   )
