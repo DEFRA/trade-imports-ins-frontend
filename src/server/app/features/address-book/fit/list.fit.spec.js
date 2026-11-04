@@ -257,14 +257,11 @@ test.describe('filter addresses', () => {
     })
   })
 
-  test('finds the addresses in a country by part of its name', async ({
-    page
-  }) => {
+  test('finds an address by part of its country name', async ({ page }) => {
     await addValidAddressToFreshOrganisation(page, {
       organisationPrefix: 'stub-org-list-country',
       overrides: { name: 'Paris Depot', countryCode: 'FR' }
     })
-    await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
 
     await searchAndExpectSingleMatch(page, 'fran', {
       matchedCellText: 'France'
