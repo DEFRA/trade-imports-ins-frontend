@@ -244,25 +244,15 @@ describe('ownAndOtherUsesOfParty', () => {
 })
 
 describe('addressTypeAndUsesOfParty', () => {
-  test.each([
-    ['placeOfOrigin', 'ORIGIN_OR_CONSIGNOR', 'PLACE_OF_ORIGIN'],
-    ['consignor', 'ORIGIN_OR_CONSIGNOR', 'CONSIGNOR'],
-    ['consignee', 'DESTINATION_CONSIGNEE_OR_IMPORTER', 'CONSIGNEE'],
-    ['importer', 'DESTINATION_CONSIGNEE_OR_IMPORTER', 'IMPORTER'],
-    [
-      'placeOfDestination',
-      'DESTINATION_CONSIGNEE_OR_IMPORTER',
-      'PLACE_OF_DESTINATION'
-    ]
-  ])(
+  test.each(Object.entries(USES_BY_ROLE))(
     'gives the %s handshake its type and its one use',
-    (role, addressType, use) => {
+    (role, { addressType, ownUse }) => {
       expect(
         addressTypeAndUsesOfParty(
           handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
           []
         )
-      ).toEqual({ addressType, uses: [use] })
+      ).toEqual({ addressType, uses: [ownUse] })
     }
   )
 

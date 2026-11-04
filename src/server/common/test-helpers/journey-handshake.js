@@ -1,4 +1,6 @@
+import { copy } from '../../app/features/address-book/copy/copy.en.js'
 import { CONSIGNMENT_CONTACT_FULFILMENT_ID } from '../../app/features/address-book/journey-registry.js'
+import { ADDRESS_TYPES } from '../../app/services/address-book/index.js'
 
 const handshakeForFulfilmentId = (fulfilmentId) =>
   Object.freeze({
@@ -22,31 +24,34 @@ export const JOURNEY_HANDSHAKES_BY_ROLE = Object.freeze({
 
 export const USES_BY_ROLE = Object.freeze({
   placeOfOrigin: {
+    addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
     ownUse: 'PLACE_OF_ORIGIN',
-    article: 'a',
     otherUses: ['CONSIGNOR']
   },
   consignor: {
+    addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
     ownUse: 'CONSIGNOR',
-    article: 'a',
     otherUses: ['PLACE_OF_ORIGIN']
   },
   consignee: {
+    addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
     ownUse: 'CONSIGNEE',
-    article: 'a',
     otherUses: ['IMPORTER', 'PLACE_OF_DESTINATION']
   },
   importer: {
+    addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
     ownUse: 'IMPORTER',
-    article: 'an',
     otherUses: ['CONSIGNEE', 'PLACE_OF_DESTINATION']
   },
   placeOfDestination: {
+    addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
     ownUse: 'PLACE_OF_DESTINATION',
-    article: 'a',
     otherUses: ['CONSIGNEE', 'IMPORTER']
   }
 })
+
+export const journeyUsesHintFor = (role) =>
+  copy.uses.journeyHint(copy.uses.options[USES_BY_ROLE[role].ownUse].label)
 
 export const UNITED_KINGDOM_ROLES = Object.freeze([
   'consignee',

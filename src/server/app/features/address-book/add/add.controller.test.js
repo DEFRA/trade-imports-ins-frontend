@@ -36,6 +36,7 @@ import {
   ANY_COUNTRY_ROLES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   JOURNEY_HANDSHAKES_BY_ROLE,
+  journeyUsesHintFor,
   returnUrlFor,
   UNITED_KINGDOM_ROLES,
   UNREGISTERED_JOURNEY_TYPE,
@@ -153,9 +154,9 @@ const JOURNEY_USES_LEGEND = 'What else should this address be used for?'
 const DISCARDED_MESSAGE =
   'Posted uses the address page does not offer were not saved'
 const otherUseQuestionOf = (role) => {
-  const { ownUse, article, otherUses } = USES_BY_ROLE[role]
+  const { otherUses } = USES_BY_ROLE[role]
   return {
-    hint: `This address is being added as ${article} ${copy.uses.options[ownUse].label} address. Select any other roles or addresses this address should be used for.`,
+    hint: journeyUsesHintFor(role),
     labels: otherUses.map((use) => copy.uses.options[use].label)
   }
 }
@@ -977,23 +978,9 @@ describe(
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
 
-    test.each([
-      ['placeOfOrigin', ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, 'PLACE_OF_ORIGIN'],
-      ['consignor', ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, 'CONSIGNOR'],
-      [
-        'consignee',
-        ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-        'CONSIGNEE'
-      ],
-      ['importer', ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, 'IMPORTER'],
-      [
-        'placeOfDestination',
-        ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-        'PLACE_OF_DESTINATION'
-      ]
-    ])(
+    test.each(Object.entries(USES_BY_ROLE))(
       'POST from the %s handshake saves the address with its type and only its own use when the posted use is from outside its side',
-      async (role, addressType, use) => {
+      async (role, { addressType, ownUse }) => {
         const { scope, captured } = serveAddressCreationCapturingBody()
 
         await postAdd(server(), `add-post-handshake-type-${role}`, {
@@ -1003,7 +990,7 @@ describe(
         })
 
         expect(scope.isDone()).toBe(true)
-        expect(captured.body).toMatchObject({ addressType, uses: [use] })
+        expect(captured.body).toMatchObject({ addressType, uses: [ownUse] })
       }
     )
 

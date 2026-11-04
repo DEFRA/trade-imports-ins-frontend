@@ -73,9 +73,10 @@ handshake, `ANIMALS_BASE_URL`, the animals frontend's base URL the return
 URLs start with, and `returnUrlFor(handshake, { addressId, landing })`, the
 return URL a test expects for a handshake, built from that handshake's own
 ids and token; the Vitest tests and the fit specs both use these;
-`USES_BY_ROLE`, each role's own use, the article its uses hint names it
-with and the other uses on its side, and `UNREGISTERED_JOURNEY_TYPE`, a
-journey type the registry does not list),
+`USES_BY_ROLE`, each role's address type, own use and the other uses on its
+side, `journeyUsesHintFor(role)`, the uses question's hint naming that
+role's own use, and `UNREGISTERED_JOURNEY_TYPE`, a journey type the
+registry does not list),
 `answer-oidc-discovery.js` (`answerOidcDiscovery()`, which answers the Defra
 ID OIDC discovery request once with `mockOidcConfig`),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,

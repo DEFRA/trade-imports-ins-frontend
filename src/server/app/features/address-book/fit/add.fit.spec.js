@@ -43,6 +43,7 @@ import {
   ANIMALS_BASE_URL,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   JOURNEY_HANDSHAKES_BY_ROLE,
+  journeyUsesHintFor,
   returnUrlFor,
   USES_BY_ROLE
 } from '../../../../common/test-helpers/journey-handshake.js'
@@ -488,9 +489,7 @@ test.describe('add address reached from a notification journey', () => {
 })
 
 test.describe('add address uses question reached from a notification journey', () => {
-  for (const [role, { ownUse, article, otherUses }] of Object.entries(
-    USES_BY_ROLE
-  )) {
+  for (const [role, { otherUses }] of Object.entries(USES_BY_ROLE)) {
     test(`from the ${role} handshake asks what else the address should be used for, naming the role and offering only the other uses on its side, unticked`, async ({
       page
     }) => {
@@ -504,7 +503,7 @@ test.describe('add address uses question reached from a notification journey', (
         name: copy.uses.journeyLegend
       })
       await expect(usesGroup).toHaveAccessibleDescription(
-        `This address is being added as ${article} ${copy.uses.options[ownUse].label} address. Select any other roles or addresses this address should be used for.`
+        journeyUsesHintFor(role)
       )
       await expect(usesGroup.locator('label')).toHaveText(
         otherUses.map((use) => copy.uses.options[use].label)
