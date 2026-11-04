@@ -54,7 +54,7 @@ describe('#addressBookListController', () => {
     )
   })
 
-  test('renders numbered pagination when more than one page', async () => {
+  test('shows the page 2 results range, links pages 1 to 4 and marks page 2 current when the address book spans four pages', async () => {
     stubAddressPage(
       { page: '2' },
       pageOf(
@@ -63,15 +63,24 @@ describe('#addressBookListController', () => {
       )
     )
 
-    const { html, statusCode } = await readPage(
+    const { $, statusCode } = await readPage(
       `${ADDRESS_BOOK_PATH}?page=2`,
       'list-page-2'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(html).toContain('govuk-pagination')
-    expect(html).toContain('Showing 9-16 of 30')
-    expect(html).toContain('?page=2')
+    expect(resultsLineOf($)).toBe('Showing 9-16 of 30')
+    expect(
+      $('.govuk-pagination__item a')
+        .map((_, link) => $(link).attr('href'))
+        .get()
+    ).toEqual([
+      ADDRESS_BOOK_PATH,
+      `${ADDRESS_BOOK_PATH}?page=2`,
+      `${ADDRESS_BOOK_PATH}?page=3`,
+      `${ADDRESS_BOOK_PATH}?page=4`
+    ])
+    expect(textOf($, '.govuk-pagination__item--current')).toBe('2')
   })
 
   test.each(['0', 'abc'])(
