@@ -16,7 +16,7 @@ import {
   INVALID_ADDRESS_PAYLOAD,
   postPage,
   serveAddressCreated,
-  SELECTED_COUNTRY,
+  SELECTED_COUNTRY_OPTION,
   serveAddressCreationCapturingBody,
   STORED_ADDRESS,
   VALID_ADDRESS_PAYLOAD
@@ -760,7 +760,7 @@ describe(
       expect(firstOption.attr('value')).toBe('')
       expect(textOf($, firstOption)).toBe(COUNTRY_PLACEHOLDER)
       expect($(COUNTRY_OPTIONS).length).toBeGreaterThan(1)
-      expect($(SELECTED_COUNTRY)).toHaveLength(0)
+      expect($(SELECTED_COUNTRY_OPTION)).toHaveLength(0)
     })
 
     test('GET lists the countries by name, not by code, with United Kingdom in its place', async () => {

@@ -19,7 +19,7 @@ import {
   INVALID_ADDRESS_PAYLOAD,
   MALFORMED_ADDRESS_ID,
   postPage,
-  SELECTED_COUNTRY,
+  SELECTED_COUNTRY_OPTION,
   serveAddressBookServerError,
   serveAddressNotFound,
   serveAddressNotFoundForOtherOrganisation,
@@ -105,7 +105,7 @@ describe('GET /address-book/{addressId}/edit', () => {
       townOrCity: $('#townOrCity').val(),
       county: $('#county').val(),
       postcode: $('#postcode').val(),
-      countryCode: $(SELECTED_COUNTRY).attr('value'),
+      countryCode: $(SELECTED_COUNTRY_OPTION).attr('value'),
       email: $('#email').val(),
       phone: $('#phone').val()
     }).toEqual({
@@ -150,7 +150,7 @@ describe('GET /address-book/{addressId}/edit', () => {
       'Switzerland',
       GB_COUNTRY.name
     ])
-    expect($(SELECTED_COUNTRY).attr('value')).toBe('FR')
+    expect($(SELECTED_COUNTRY_OPTION).attr('value')).toBe('FR')
   })
 
   test('Should open on one blank option with no country selected when the stored country is not offered', async () => {
@@ -164,7 +164,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     const $ = load(result)
     expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', GB_COUNTRY.code])
     expect(textOf($, $(COUNTRY_OPTIONS).first())).toBe(COUNTRY_PLACEHOLDER)
-    expect($(SELECTED_COUNTRY)).toHaveLength(0)
+    expect($(SELECTED_COUNTRY_OPTION)).toHaveLength(0)
   })
 
   test('Should link Back to the address view page when the edit was opened with no return', async () => {

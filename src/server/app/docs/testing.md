@@ -62,7 +62,7 @@ organisationId)`, both defaulting to the session organisation), fixtures
 field labels in page order, written out as literals), `COUNTRIES`,
 `MALFORMED_ADDRESS_ID`,
 `ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,
-`COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()`,
+`COUNTRY_OPTIONS`, `SELECTED_COUNTRY_OPTION`), requests (`getPage()`,
 `postPage()`, `getPageAsOtherOrganisation()`), address book API stubs
 (`pageOf(items, overrides)`, `serveStoredAddress(address)`,
 `serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,

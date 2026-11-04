@@ -30,7 +30,7 @@ export const BACK_LINK = 'a.govuk-back-link'
 
 export const COUNTRY_OPTIONS = '#countryCode option'
 
-export const SELECTED_COUNTRY = '#countryCode option[selected]'
+export const SELECTED_COUNTRY_OPTION = '#countryCode option[selected]'
 
 export const ADDRESS_FORM_LABELS = [
   'Name or organisation',
