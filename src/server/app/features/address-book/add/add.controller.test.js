@@ -45,7 +45,7 @@ import {
 } from '../../../../common/test-helpers/expect-add-form-country-select.js'
 import {
   expectSummaryAndFieldErrors,
-  expectSummaryLinks,
+  INVALID_ADDRESS_PAYLOAD_ERRORS,
   REQUIRED_MESSAGES
 } from '../../../../common/test-helpers/expect-address-form-errors.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
@@ -250,11 +250,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(result).toContain(
       `Error: ${ADD_TITLE} - Import notification service - GOV.UK`
     )
-    expect(result).toContain('href="#name"')
-    expectSummaryLinks(result)
-    expect(result).toContain('href="#email"')
-    expect(result).toContain(EMAIL_FORMAT_ERROR)
-    expect(result).toContain('govuk-error-message')
+    expectSummaryAndFieldErrors(load(result), INVALID_ADDRESS_PAYLOAD_ERRORS)
     expect(headers['cache-control']).toBe('no-store')
   })
 

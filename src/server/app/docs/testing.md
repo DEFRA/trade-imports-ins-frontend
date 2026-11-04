@@ -95,9 +95,10 @@ which the fit specs import too),
 `expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`
 and `expectPlaceholderThenCountriesNoneSelected($, countryNames)`, the add form's
 Country select),
-`expect-address-form-errors.js` (`expectSummaryLinks(result)` and
-`expectSummaryAndFieldErrors($, errors)`, the error summary links and the
-messages beside the fields),
+`expect-address-form-errors.js` (`expectSummaryAndFieldErrors($, errors)`,
+the exact error summary links and the messages beside the fields, and
+`INVALID_ADDRESS_PAYLOAD_ERRORS`, the errors `INVALID_ADDRESS_PAYLOAD`
+shows),
 `rendered-text.js` (`textOf($, selectorOrElement)`, `textsOf($, selector)`
 and `normalisedText(text)`, a rendered element's text trimmed with its
 whitespace collapsed to single spaces, which every Vitest test reads text

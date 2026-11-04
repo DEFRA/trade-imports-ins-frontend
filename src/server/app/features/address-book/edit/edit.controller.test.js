@@ -31,7 +31,8 @@ import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import {
-  expectSummaryLinks,
+  expectSummaryAndFieldErrors,
+  INVALID_ADDRESS_PAYLOAD_ERRORS,
   REQUIRED_MESSAGES
 } from '../../../../common/test-helpers/expect-address-form-errors.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
@@ -310,11 +311,8 @@ describe('POST /address-book/{addressId}/edit', () => {
 
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
-    expectSummaryLinks(result)
-    expect(result).toContain('href="#email"')
-    expect(result).toContain('Enter an email address in the correct format')
-    expect(result).toContain('govuk-error-message')
     const $ = load(result)
+    expectSummaryAndFieldErrors($, INVALID_ADDRESS_PAYLOAD_ERRORS)
     expect($('head > title').text()).toContain(
       'Error: Edit address and contact details'
     )
