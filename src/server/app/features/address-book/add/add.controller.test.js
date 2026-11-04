@@ -97,23 +97,29 @@ const getAdd = (server, sessionId, query, cookie) =>
     cookie
   )
 
-const getAddWithTypeChosen = async (server, sessionId, addressType) => {
-  const cookie = await cookieAfterChoosingAddressType(server, sessionId, {
-    addressType
+const getAddWithTypeChosen = async (
+  server,
+  sessionId,
+  { addressType, cookie } = {}
+) => {
+  const typeCookie = await cookieAfterChoosingAddressType(server, sessionId, {
+    addressType,
+    cookie
   })
-  return getAdd(server, sessionId, undefined, cookie)
+  return getAdd(server, sessionId, undefined, typeCookie)
 }
 
 const postAddWithTypeChosen = async (
   server,
   sessionId,
   payload,
-  addressType
+  { addressType, cookie } = {}
 ) => {
-  const cookie = await cookieAfterChoosingAddressType(server, sessionId, {
-    addressType
+  const typeCookie = await cookieAfterChoosingAddressType(server, sessionId, {
+    addressType,
+    cookie
   })
-  return postPage(server, ADD_ADDRESS_PATH, sessionId, payload, cookie)
+  return postPage(server, ADD_ADDRESS_PATH, sessionId, payload, typeCookie)
 }
 
 const ORIGIN_OR_CONSIGNOR_LIST_PATH = `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR}`
@@ -420,13 +426,10 @@ describe(
     test('GET after a successful save redirects to the address type page', async () => {
       serveAddressCreated()
       const sessionId = 'add-get-after-save'
-      const cookie = await cookieAfterChoosingAddressType(server(), sessionId)
-      const saved = await postPage(
+      const saved = await postAddWithTypeChosen(
         server(),
-        ADD_ADDRESS_PATH,
         sessionId,
-        VALID_ADDRESS_PAYLOAD,
-        cookie
+        VALID_ADDRESS_PAYLOAD
       )
 
       const response = await getAdd(
@@ -495,7 +498,7 @@ describe(
         const { result } = await getAddWithTypeChosen(
           server(),
           `add-get-uses-${addressType}`,
-          addressType
+          { addressType }
         )
 
         const $ = load(result)
@@ -524,7 +527,7 @@ describe(
           server(),
           `add-post-no-use-${addressType}`,
           fieldsOnly,
-          addressType
+          { addressType }
         )
 
         expect(statusCode).toBe(statusCodes.badRequest)
@@ -616,7 +619,7 @@ describe(
           server(),
           `add-post-uses-${addressType}`,
           { ...VALID_ADDRESS_PAYLOAD, uses: FIRST_USE_OF(addressType) },
-          addressType
+          { addressType }
         )
 
         expectRedirectTo(
@@ -646,7 +649,7 @@ describe(
         const { result } = await getAddWithTypeChosen(
           server(),
           `add-get-uk-alone-${addressType}`,
-          addressType
+          { addressType }
         )
 
         expectUnitedKingdomAloneSelected(load(result))
@@ -666,7 +669,7 @@ describe(
             countryCode: 'FR',
             uses: USES_BY_ADDRESS_TYPE[addressType][0]
           },
-          addressType
+          { addressType }
         )
 
         expect(scope.isDone()).toBe(true)
@@ -687,7 +690,7 @@ describe(
             phone: '',
             countryCode: 'FR'
           },
-          addressType
+          { addressType }
         )
 
         expect(statusCode).toBe(statusCodes.badRequest)
@@ -720,7 +723,7 @@ describe(
             countryCode: 'FR',
             uses: USES_BY_ADDRESS_TYPE[addressType][0]
           },
-          addressType
+          { addressType }
         )
 
         expect(loggedWith(REPLACED_MESSAGE)).toEqual([
@@ -746,7 +749,7 @@ describe(
           ...VALID_ADDRESS_PAYLOAD,
           uses: 'CONSIGNEE'
         },
-        ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+        { addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER }
       )
       const origin = serveAddressCreationCapturingBody()
       await postAddWithTypeChosen(server(), 'add-log-not-replaced-origin', {
@@ -791,13 +794,13 @@ describe(
         server(),
         'add-log-refused-field',
         { ...france, name: '' },
-        destination
+        { addressType: destination }
       )
       const usesError = await postAddWithTypeChosen(
         server(),
         'add-log-refused-uses',
         franceWithoutUse,
-        destination
+        { addressType: destination }
       )
       addressBookApi()
         .post(addressesApiPath())
@@ -809,7 +812,7 @@ describe(
         server(),
         'add-log-refused-address-book',
         { ...france, uses: 'CONSIGNEE' },
-        destination
+        { addressType: destination }
       )
 
       expect(textsOf(load(fieldError.result), ERROR_SUMMARY_LINKS)).toEqual([
@@ -855,32 +858,15 @@ describe(
       )
 
     const postRefusedAddFor = async (sessionId, addressType, use) => {
-      const typeCookie = await cookieAfterChoosingAddressType(
+      const refused = await postAddWithTypeChosen(
         server(),
-        sessionId,
-        { addressType }
-      )
-      const refused = await postPage(
-        server(),
-        ADD_ADDRESS_PATH,
         sessionId,
         { ...ENTERED_FIELDS, uses: use },
-        typeCookie
+        { addressType }
       )
       expect(refused.statusCode).toBe(statusCodes.badRequest)
-      return cookieHeaderOf(refused.headers) || typeCookie
+      return cookieHeaderOf(refused.headers)
     }
-
-    const openAddAfterChoosing = async (sessionId, addressType, cookie) =>
-      getAdd(
-        server(),
-        sessionId,
-        undefined,
-        await cookieAfterChoosingAddressType(server(), sessionId, {
-          addressType,
-          cookie
-        })
-      )
 
     test.each([
       [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, 'PLACE_OF_ORIGIN'],
@@ -892,11 +878,10 @@ describe(
         const sessionId = `add-kept-${addressType}`
         const cookie = await postRefusedAddFor(sessionId, addressType, use)
 
-        const { result } = await openAddAfterChoosing(
-          sessionId,
+        const { result } = await getAddWithTypeChosen(server(), sessionId, {
           addressType,
           cookie
-        )
+        })
 
         const $ = load(result)
         expect(enteredValuesOf($)).toEqual(
@@ -916,11 +901,10 @@ describe(
         'PLACE_OF_ORIGIN'
       )
 
-      const { result } = await openAddAfterChoosing(
-        sessionId,
-        ADDRESS_TYPES.BRANCH,
+      const { result } = await getAddWithTypeChosen(server(), sessionId, {
+        addressType: ADDRESS_TYPES.BRANCH,
         cookie
-      )
+      })
 
       expect(enteredValuesOf(load(result))).toEqual(
         Object.fromEntries(
@@ -943,11 +927,9 @@ describe(
         cookie
       )
 
-      const { result } = await openAddAfterChoosing(
-        sessionId,
-        ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-        cookieHeaderOf(started.headers) || cookie
-      )
+      const { result } = await getAddWithTypeChosen(server(), sessionId, {
+        cookie: cookieHeaderOf(started.headers) || cookie
+      })
 
       const $ = load(result)
       expect(enteredValuesOf($)).toEqual(
@@ -973,11 +955,9 @@ describe(
         cookie
       )
 
-      const { result } = await openAddAfterChoosing(
-        sessionId,
-        ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-        cookieHeaderOf(saved.headers) || cookie
-      )
+      const { result } = await getAddWithTypeChosen(server(), sessionId, {
+        cookie: cookieHeaderOf(saved.headers) || cookie
+      })
 
       expect(enteredValuesOf(load(result))).toEqual(
         Object.fromEntries(TEXT_FIELDS.map((field) => [field, '']))
