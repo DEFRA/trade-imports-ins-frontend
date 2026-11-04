@@ -44,7 +44,7 @@ import {
   addressTypeAndUsesOfParty,
   buildReturnUrl,
   isConsignmentContact,
-  usesOfParty
+  ownAndOtherUsesOfParty
 } from '../journey-registry.js'
 import { addressBookPageHref } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -147,7 +147,7 @@ const usesQuestionFor = (
       )
     }
   }
-  const { ownUse, otherUses } = usesOfParty(handshakeContext)
+  const { ownUse, otherUses } = ownAndOtherUsesOfParty(handshakeContext)
   if (otherUses.length === 0) {
     return null
   }

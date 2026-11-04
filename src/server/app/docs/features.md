@@ -58,7 +58,7 @@ root:
   `isKnownJourneyType`, `requiresUnitedKingdomAddress`
   (whether the role's address must be in the United Kingdom: the address type
   of its use is one `addressTypeRequiresUnitedKingdom` holds, and the party is
-  not the consignment contact), `usesOfParty` (the party's own use and the
+  not the consignment contact), `ownAndOtherUsesOfParty` (the party's own use and the
   other uses on its side, in `USES_BY_ADDRESS_TYPE` order, which feeds the add
   page's checkboxes; no own use and no other uses for a fulfilment id the map
   does not list), `addressTypeAndUsesOfParty`
@@ -72,7 +72,7 @@ root:
   The `gbn-ag` registry entry's `useByPartyFulfilmentId` map is the one map
   from each party's fulfilment id, the five roles and the consignment contact,
   to the party's own use, which its address is always saved with alongside any
-  ticked uses its side offers; `usesOfParty`,
+  ticked uses its side offers; `ownAndOtherUsesOfParty`,
   `addressTypeAndUsesOfParty` and `requiresUnitedKingdomAddress` read it.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
   `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address

@@ -65,7 +65,7 @@ export const requiresUnitedKingdomAddress = (context) =>
   !isConsignmentContact(context) &&
   addressTypeRequiresUnitedKingdom(addressTypeOfUse(useOfParty(context)))
 
-export const usesOfParty = (context) => {
+export const ownAndOtherUsesOfParty = (context) => {
   const ownUse = useOfParty(context)
   if (!ownUse) {
     return { otherUses: [] }

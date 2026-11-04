@@ -24,7 +24,7 @@ import {
   isKnownJourneyType,
   JOURNEY_TYPES,
   requiresUnitedKingdomAddress,
-  usesOfParty
+  ownAndOtherUsesOfParty
 } from './journey-registry.js'
 
 const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_ROLE.consignor
@@ -202,19 +202,21 @@ describe('journey-registry', () => {
   })
 })
 
-describe('usesOfParty', () => {
+describe('ownAndOtherUsesOfParty', () => {
   test.each(Object.entries(USES_BY_ROLE))(
     'gives the %s handshake its own use and the other uses on its side',
     (role, { ownUse, otherUses }) => {
       expect(
-        usesOfParty(handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]))
+        ownAndOtherUsesOfParty(
+          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+        )
       ).toEqual({ ownUse, otherUses })
     }
   )
 
   test('gives the consignment contact its own use and no other uses', () => {
     expect(
-      usesOfParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE))
+      ownAndOtherUsesOfParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE))
     ).toEqual({ ownUse: 'BRANCH_ADDRESS', otherUses: [] })
   })
 
@@ -223,7 +225,7 @@ describe('usesOfParty', () => {
     (_name, overrides) => {
       const context = overrides && { ...CONSIGNOR_CONTEXT, ...overrides }
 
-      expect(usesOfParty(context)).toEqual({ otherUses: [] })
+      expect(ownAndOtherUsesOfParty(context)).toEqual({ otherUses: [] })
     }
   )
 })
