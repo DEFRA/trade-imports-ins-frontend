@@ -31,7 +31,9 @@ describe('#copy', () => {
     expect(copy.form.addressHeading).toBe('Address')
     expect(copy.form.contactHeading).toBe('Contact details')
     expect(copy.form.countryPlaceholder).toBe('Select a country')
-    expect(copy.add.cancel).toBe('Cancel and return to address book')
+    expect(copy.add.cancelAndReturnToAddressBook).toBe(
+      'Cancel and return to address book'
+    )
   })
 
   it('Should word the add page title and caption', () => {
@@ -44,7 +46,7 @@ describe('#copy', () => {
     expect(copy.add.saveAndReturnToAddressPage).toBe(
       'Save and return to address page'
     )
-    expect(copy.add.cancelToHub).toBe('Cancel and return to hub')
+    expect(copy.add.cancelAndReturnToHub).toBe('Cancel and return to hub')
   })
 
   it('Should word the Welsh add page title, caption and journey-mode actions', () => {
@@ -53,7 +55,7 @@ describe('#copy', () => {
       caption,
       saveAndSelect,
       saveAndReturnToAddressPage,
-      cancelToHub
+      cancelAndReturnToHub
     } = cy.add
 
     expect({
@@ -61,13 +63,13 @@ describe('#copy', () => {
       caption,
       saveAndSelect,
       saveAndReturnToAddressPage,
-      cancelToHub
+      cancelAndReturnToHub
     }).toEqual({
       title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
       caption: 'Ychwanegu cyfeiriad newydd',
       saveAndSelect: 'Cadw a dewis',
       saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
-      cancelToHub: 'Canslo a dychwelyd i’r hyb'
+      cancelAndReturnToHub: 'Canslo a dychwelyd i’r hyb'
     })
   })
 
