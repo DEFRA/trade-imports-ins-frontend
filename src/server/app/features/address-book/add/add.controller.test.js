@@ -908,7 +908,7 @@ describe(
       }
     )
 
-    test('GET after a refused save and choosing another type keeps the fields and shows no tick for a use the type does not offer', async () => {
+    test('GET after a refused save and choosing another type shows every field entered', async () => {
       const sessionId = 'add-kept-other-type'
       const cookie = await postRefusedAddFor(
         sessionId,
@@ -922,9 +922,11 @@ describe(
         cookie
       )
 
-      const $ = load(result)
-      expect($('#name').val()).toBe(ENTERED_FIELDS.name)
-      expect(tickedUsesOf($)).toEqual([])
+      expect(enteredValuesOf(load(result))).toEqual(
+        Object.fromEntries(
+          TEXT_FIELDS.map((field) => [field, ENTERED_FIELDS[field]])
+        )
+      )
     })
 
     test('GET after starting a new address opens empty text fields with United Kingdom selected', async () => {
