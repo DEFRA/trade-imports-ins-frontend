@@ -159,7 +159,3 @@ production code cannot use test exemptions.
   ([`address-form.js`](../features/address-book/fit/address-form.js))
   across the add, address type, edit, list, view and page-title specs and the
   repo-root smoke spec.
-- [`lib/validate/validators.js`](../lib/validate/validators.js) and
-  [`address-id-params.js`](../features/address-book/address-id-params.js)
-  still import Joi directly, although the package is not declared in
-  `package.json`.
