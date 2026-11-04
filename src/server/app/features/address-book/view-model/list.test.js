@@ -146,6 +146,12 @@ describe('#useLabelsOf', () => {
     )
   })
 
+  test('Should show the code of a use the copy has no label for', () => {
+    expect(useLabelsOf(['CONSIGNOR', 'TRANSPORTER'], copy.list.uses)).toBe(
+      'Consignor, TRANSPORTER'
+    )
+  })
+
   test('Should give an empty label for an address with no uses', () => {
     expect(useLabelsOf([], copy.list.uses)).toBe('')
     expect(useLabelsOf(undefined, copy.list.uses)).toBe('')
