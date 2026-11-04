@@ -167,14 +167,14 @@ describe('#addressBookListTabs', () => {
     expect(hiddenInput.attr('value')).toBe(ADDRESS_TYPES.BRANCH)
   })
 
-  test('links each tab with the current search and no use or page', async () => {
+  test('links each tab, from a page after the first, with the current search and no use or page', async () => {
     stubAddressPage(
-      { page: '1', q: 'farm', use: 'CONSIGNOR' },
-      pageOf([highlandAddress])
+      { page: '2', q: 'farm', use: 'CONSIGNOR' },
+      pageOf([highlandAddress], { page: 2, totalItems: 30, totalPages: 2 })
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=farm&use=CONSIGNOR&page=1`,
+      `${ADDRESS_BOOK_PATH}?q=farm&use=CONSIGNOR&page=2`,
       'list-tab-links-with-search'
     )
 
