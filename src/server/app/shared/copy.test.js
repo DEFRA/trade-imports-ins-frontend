@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { leaves } from './copy-leaves.js'
-import { textOf } from './copy-leaves.test-support.js'
+import { SAMPLE_ARGUMENTS, sampleText } from './copy-leaves.test-support.js'
 import { copyFor } from './copy.js'
 import {
   copy as sharedEn,
@@ -110,7 +110,7 @@ describe('validator defaults', () => {
     (locale, defaults) => {
       for (const { path, value } of leaves(defaults)) {
         expect(
-          textOf(value).trim().length,
+          sampleText(value, SAMPLE_ARGUMENTS).trim().length,
           `${locale}: ${path} must render text`
         ).toBeGreaterThan(0)
       }

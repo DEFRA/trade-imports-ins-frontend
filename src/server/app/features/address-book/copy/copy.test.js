@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { leaves } from '../../../shared/copy-leaves.js'
 import {
   itHoldsCopyAtEveryLeaf,
-  textOf
+  SAMPLE_ARGUMENTS,
+  sampleText
 } from '../../../shared/copy-leaves.test-support.js'
 import { FIELDS, FIELD_RULES, isRequiredField } from '../fields.js'
 import { copy } from './copy.en.js'
@@ -166,7 +167,10 @@ describe('#copy', () => {
 
   it('Should word the Welsh list title, intro, search, add link, results lines, table headings and View link', () => {
     expect(
-      leaves(cy.list).map(({ path, value }) => [path, textOf(value)])
+      leaves(cy.list).map(({ path, value }) => [
+        path,
+        sampleText(value, SAMPLE_ARGUMENTS)
+      ])
     ).toEqual([
       ['title', 'Llyfr cyfeiriadau'],
       [
