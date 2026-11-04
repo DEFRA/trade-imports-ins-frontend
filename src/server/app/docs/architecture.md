@@ -35,6 +35,19 @@ static files.
 - `src/server/auth/` and `src/server/health/` — the routes those helpers
   serve.
 
+**Process start-up**: [`src/index.js`](../../../index.js) calls
+`allowOneSecondPerAddressWhenConnecting()`
+([`common/helpers/connect-attempt.js`](../../common/helpers/connect-attempt.js))
+before it starts the server. It raises Node's process-wide happy-eyeballs
+connect attempt per address from 250ms to one second, for every outbound
+client: Wreck, Bell and `fetch`. In the workspace stack and CI, services
+reach each other through `host.docker.internal`, which resolves to an IPv4
+and an IPv6 address. Under load neither answered within 250ms, so the JWKS
+fetch to the Defra ID stub at sign-in (`/auth/sign-in-oidc`) and the
+address book's create failed with `AggregateError [ETIMEDOUT]` a few
+hundred milliseconds into the call. The animals and plants frontends set
+the same one second.
+
 **The error page**: [`common/helpers/errors.js`](../../common/helpers/errors.js)'s
 `catchAll` renders `shared/error` through `kit.base()` with the
 status-keyed message from `sharedCopy.errorPage`.

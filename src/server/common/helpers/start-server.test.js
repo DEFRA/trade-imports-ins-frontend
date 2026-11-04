@@ -1,7 +1,4 @@
-import {
-  createServer as createNetServer,
-  getDefaultAutoSelectFamilyAttemptTimeout
-} from 'node:net'
+import { createServer as createNetServer } from 'node:net'
 
 import nock from 'nock'
 import { beforeAll, afterAll, afterEach, describe, expect, test } from 'vitest'
@@ -49,10 +46,6 @@ describe('#startServer', () => {
     test('listens on a port once started', () => {
       expect(server.info.started).toBeGreaterThan(0)
       expect(server.info.port).toBeGreaterThan(0)
-    })
-
-    test('gives each address of a host one second to connect before trying the next', () => {
-      expect(getDefaultAutoSelectFamilyAttemptTimeout()).toBe(1000)
     })
   })
 
