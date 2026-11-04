@@ -17,8 +17,8 @@ export const SEED_ADDRESS = {
   county: 'Greater London',
   postcode: 'SW1A 1AA',
   countryCode: 'GB',
-  phone: '01632 960000',
-  email: 'lighthouse@example.com'
+  email: 'lighthouse@example.com',
+  phone: '01632 960000'
 }
 
 const seedSearchPath = () =>

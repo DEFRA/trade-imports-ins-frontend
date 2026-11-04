@@ -92,7 +92,15 @@ describe('#addressRules', () => {
       email: 'bad'
     })
 
-    expect(Object.keys(errors)).toEqual(REQUIRED_FIELDS)
+    expect(Object.keys(errors)).toEqual([
+      'name',
+      'addressLine1',
+      'townOrCity',
+      'postcode',
+      'countryCode',
+      'email',
+      'phone'
+    ])
     expect(errors.email).toBe(copy.errors.email.format)
   })
 
@@ -144,8 +152,8 @@ describe('#isRequiredField', () => {
       'townOrCity',
       'postcode',
       'countryCode',
-      'phone',
-      'email'
+      'email',
+      'phone'
     ])
   })
 })
@@ -160,8 +168,8 @@ describe('#formValuesOf', () => {
       county: '',
       postcode: '',
       countryCode: '',
-      phone: '',
-      email: ''
+      email: '',
+      phone: ''
     })
     expect(Object.keys(formValuesOf())).toEqual(FIELDS)
   })

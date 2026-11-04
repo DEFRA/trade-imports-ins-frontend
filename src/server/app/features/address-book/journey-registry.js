@@ -1,6 +1,7 @@
 import { SET_BASES } from '../../../common/constants/journey-set-bases.js'
 import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
 import {
+  USES_BY_ADDRESS_TYPE,
   addressTypeOfUse,
   addressTypeRequiresUnitedKingdom
 } from '../../services/address-book/index.js'
@@ -63,9 +64,32 @@ export const requiresUnitedKingdomAddress = (context) =>
   !isConsignmentContact(context) &&
   addressTypeRequiresUnitedKingdom(addressTypeOfUse(useOfParty(context)))
 
-export const addressTypeAndUsesOfParty = (context) => {
-  const use = useOfParty(context)
-  return use ? { addressType: addressTypeOfUse(use), uses: [use] } : {}
+export const usesOfParty = (context) => {
+  const ownUse = useOfParty(context)
+  if (!ownUse) {
+    return { otherUses: [] }
+  }
+  return {
+    ownUse,
+    otherUses: USES_BY_ADDRESS_TYPE[addressTypeOfUse(ownUse)].filter(
+      (use) => use !== ownUse
+    )
+  }
+}
+
+export const addressTypeAndUsesOfParty = (context, postedUses = []) => {
+  const { ownUse, otherUses } = usesOfParty(context)
+  if (!ownUse) {
+    return {}
+  }
+  const addressType = addressTypeOfUse(ownUse)
+  return {
+    addressType,
+    uses: USES_BY_ADDRESS_TYPE[addressType].filter(
+      (use) =>
+        use === ownUse || (otherUses.includes(use) && postedUses.includes(use))
+    )
+  }
 }
 
 const assertHandshakeIds = (context) => {

@@ -40,7 +40,7 @@ describe('#copy', () => {
   })
 
   it('Should word the uses question with its legend per address type, hint, one label per use and error', () => {
-    expect(copy.uses).toEqual({
+    expect(copy.uses).toMatchObject({
       legendByAddressType: {
         ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
         DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',
@@ -321,5 +321,37 @@ describe('#copy of the address type page', () => {
       continue: 'Continue'
     })
     expect(copy.errors.addressType.required).toBe('Select an address type')
+  })
+})
+
+describe('#copy.uses journey question', () => {
+  const HINT_TAIL =
+    'Select any other roles or addresses this address should be used for.'
+
+  it('Should word the legend', () => {
+    expect(copy.uses.journeyLegend).toBe(
+      'What else should this address be used for?'
+    )
+  })
+
+  it.each([
+    ['Consignor', 'a'],
+    ['Importer', 'an']
+  ])(
+    'Should word the hint for the %s role with the article %s',
+    (roleLabel, article) => {
+      expect(copy.uses.journeyHint(roleLabel)).toBe(
+        `This address is being added as ${article} ${roleLabel} address. ${HINT_TAIL}`
+      )
+    }
+  )
+
+  it('Should word the Welsh legend and a hint naming the Welsh role', () => {
+    expect(cy.uses.journeyLegend).toBe(
+      'Ar gyfer beth arall y dylid defnyddio’r cyfeiriad hwn?'
+    )
+    expect(cy.uses.journeyHint('Mewnforiwr')).toBe(
+      'Mae’r cyfeiriad hwn yn cael ei ychwanegu fel cyfeiriad Mewnforiwr. Dewiswch unrhyw rolau neu gyfeiriadau eraill y dylid defnyddio’r cyfeiriad hwn ar eu cyfer.'
+    )
   })
 })

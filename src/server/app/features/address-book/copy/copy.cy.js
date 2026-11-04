@@ -82,8 +82,8 @@ export const copy = {
       county: 'Sir (dewisol)',
       postcode: 'Cod post neu god zip',
       countryCode: 'Gwlad',
-      phone: 'Rhif ffôn',
-      email: 'Cyfeiriad e-bost'
+      email: 'Cyfeiriad e-bost',
+      phone: 'Rhif ffôn'
     },
     phoneHint: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad',
     countryPlaceholder: SELECT_COUNTRY
@@ -105,6 +105,9 @@ export const copy = {
     continue: 'Parhau'
   },
   uses: {
+    journeyLegend: 'Ar gyfer beth arall y dylid defnyddio’r cyfeiriad hwn?',
+    journeyHint: (roleLabel) =>
+      `Mae’r cyfeiriad hwn yn cael ei ychwanegu fel cyfeiriad ${roleLabel}. Dewiswch unrhyw rolau neu gyfeiriadau eraill y dylid defnyddio’r cyfeiriad hwn ar eu cyfer.`,
     legendByAddressType: {
       ORIGIN_OR_CONSIGNOR: 'Ar gyfer beth y gellir defnyddio’r cyfeiriad hwn?',
       DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE,

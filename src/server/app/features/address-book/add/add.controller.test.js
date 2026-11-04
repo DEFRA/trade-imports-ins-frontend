@@ -139,6 +139,38 @@ const expectNamePostcodeAndPhoneErrorsOnly = ($) => {
 }
 
 const ORIGIN_USE_LABELS = ['Place of origin', 'Consignor']
+const PLACE_OF_DESTINATION_LABEL = 'Place of destination'
+const USES_LEGEND_SELECTOR =
+  'hr.govuk-section-break--visible + .govuk-form-group legend'
+const USES_HINT_SELECTOR = '#uses-hint'
+const USE_LABEL_SELECTOR = '.govuk-checkboxes__label'
+const JOURNEY_USES_LEGEND = 'What else should this address be used for?'
+const DISCARDED_MESSAGE =
+  'Posted uses the address page does not offer were not saved'
+const journeyHintFor = (roleWithArticle) =>
+  `This address is being added as ${roleWithArticle} address. Select any other roles or addresses this address should be used for.`
+const OTHER_USE_QUESTION_BY_ROLE = {
+  placeOfOrigin: {
+    hint: journeyHintFor('a Place of origin'),
+    labels: ['Consignor']
+  },
+  consignor: {
+    hint: journeyHintFor('a Consignor'),
+    labels: ['Place of origin']
+  },
+  consignee: {
+    hint: journeyHintFor('a Consignee'),
+    labels: ['Importer', PLACE_OF_DESTINATION_LABEL]
+  },
+  importer: {
+    hint: journeyHintFor('an Importer'),
+    labels: ['Consignee', PLACE_OF_DESTINATION_LABEL]
+  },
+  placeOfDestination: {
+    hint: journeyHintFor('a Place of destination'),
+    labels: ['Consignee', 'Importer']
+  }
+}
 const VALIDATION_PROBLEM_TYPE =
   'https://api.cdp.defra.cloud/problems/validation-error'
 
@@ -431,8 +463,6 @@ describe(
   () => {
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
-    const DISCARDED_MESSAGE =
-      'Posted uses the chosen address type does not offer were not saved'
     const FIRST_USE_OF = (addressType) => USES_BY_ADDRESS_TYPE[addressType][0]
     const USE_CHECKBOXES = 'input[name="uses"]'
 
@@ -447,11 +477,9 @@ describe(
       expect(result.indexOf('id="phone"')).toBeLessThan(
         result.indexOf('govuk-section-break--visible')
       )
-      expect(
-        textsOf($, 'hr.govuk-section-break--visible + .govuk-form-group legend')
-      ).toEqual([USES_LEGEND])
-      expect(textsOf($, '#uses-hint')).toEqual([USES_HINT])
-      expect(textsOf($, '.govuk-checkboxes__label')).toEqual(ORIGIN_USE_LABELS)
+      expect(textsOf($, USES_LEGEND_SELECTOR)).toEqual([USES_LEGEND])
+      expect(textsOf($, USES_HINT_SELECTOR)).toEqual([USES_HINT])
+      expect(textsOf($, USE_LABEL_SELECTOR)).toEqual(ORIGIN_USE_LABELS)
       expect($('.govuk-checkboxes__hint')).toHaveLength(0)
       expect(tickedUsesOf($)).toEqual([])
       expect($(USE_CHECKBOXES).first().attr('id')).toBe('uses')
@@ -468,7 +496,7 @@ describe(
         ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
         ADDRESS_TYPE_LEGEND,
         ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
-        ['Place of destination', 'Consignee', 'Importer']
+        [PLACE_OF_DESTINATION_LABEL, 'Consignee', 'Importer']
       ],
       [
         ADDRESS_TYPES.BRANCH,
@@ -486,19 +514,14 @@ describe(
         )
 
         const $ = load(result)
-        expect(
-          textsOf(
-            $,
-            'hr.govuk-section-break--visible + .govuk-form-group legend'
-          )
-        ).toEqual([legend])
-        expect(textsOf($, '#uses-hint')).toEqual([USES_HINT])
+        expect(textsOf($, USES_LEGEND_SELECTOR)).toEqual([legend])
+        expect(textsOf($, USES_HINT_SELECTOR)).toEqual([USES_HINT])
         expect(
           $(USE_CHECKBOXES)
             .map((_, input) => $(input).attr('value'))
             .get()
         ).toEqual(values)
-        expect(textsOf($, '.govuk-checkboxes__label')).toEqual(labels)
+        expect(textsOf($, USE_LABEL_SELECTOR)).toEqual(labels)
         expect($('.govuk-checkboxes__hint')).toHaveLength(0)
         expect(tickedUsesOf($)).toEqual([])
         expect([...values].sort()).toEqual(
@@ -978,6 +1001,7 @@ describe(
   { concurrent: false },
   () => {
     const server = startRealModeServerServingCountries(COUNTRIES)
+    const loggedWith = captureInfoLogs()
 
     test.each([
       ['placeOfOrigin', ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, 'PLACE_OF_ORIGIN'],
@@ -994,7 +1018,7 @@ describe(
         'PLACE_OF_DESTINATION'
       ]
     ])(
-      'POST from the %s handshake saves the address with its type and exactly its one use, whatever uses are posted',
+      'POST from the %s handshake saves the address with its type and only its own use when the posted use is from outside its side',
       async (role, addressType, use) => {
         const { scope, captured } = serveAddressCreationCapturingBody()
 
@@ -1006,6 +1030,100 @@ describe(
 
         expect(scope.isDone()).toBe(true)
         expect(captured.body).toMatchObject({ addressType, uses: [use] })
+      }
+    )
+
+    test('POST from the consignee handshake with Importer ticked saves the consignee and importer uses and hands back with the select landing', async () => {
+      const { scope, captured } = serveAddressCreationCapturingBody()
+
+      const response = await postAdd(server(), 'add-post-handshake-ticked', {
+        ...CONSIGNEE_HANDSHAKE,
+        ...VALID_ADDRESS_FIELDS,
+        uses: 'IMPORTER',
+        action: ADDRESS_LANDING.SELECT
+      })
+
+      expect(scope.isDone()).toBe(true)
+      expect(captured.body).toMatchObject({
+        addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+        uses: ['CONSIGNEE', 'IMPORTER']
+      })
+      expectRedirectTo(
+        response,
+        returnUrlFor(CONSIGNEE_HANDSHAKE, {
+          addressId: ADDRESS_ID,
+          landing: ADDRESS_LANDING.SELECT
+        })
+      )
+    })
+
+    test('POST from the consignee handshake with a use from outside its side logs the discarded use against the notification and fulfilment', async () => {
+      serveAddressCreated()
+
+      await postAdd(server(), 'add-post-handshake-discard', {
+        ...CONSIGNEE_HANDSHAKE,
+        ...VALID_ADDRESS_FIELDS,
+        uses: ['IMPORTER', 'CONSIGNOR']
+      })
+
+      expect(loggedWith(DISCARDED_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            notificationId: CONSIGNEE_HANDSHAKE['notification-id'],
+            fulfilmentId: CONSIGNEE_HANDSHAKE['fulfilment-id'],
+            discardedUses: ['CONSIGNOR']
+          },
+          message: DISCARDED_MESSAGE
+        }
+      ])
+    })
+
+    test('POST from the consignee handshake with a field error re-renders with exactly the offered use ticked', async () => {
+      const { result, statusCode } = await postAdd(
+        server(),
+        'add-post-handshake-ticks-kept',
+        {
+          ...CONSIGNEE_HANDSHAKE,
+          ...VALID_ADDRESS_FIELDS,
+          postcode: '',
+          uses: ['IMPORTER', 'PLACE_OF_ORIGIN']
+        }
+      )
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(tickedUsesOf(load(result))).toEqual(['IMPORTER'])
+    })
+
+    test.each([ADDRESS_LANDING.SELECT, ADDRESS_LANDING.RETURN])(
+      'POST from the consignee handshake with Save action %s and answers missing re-renders the errors in field order, keeps the name and the tick, and writes nothing',
+      async (action) => {
+        const createRequested = serveAddressCreated()
+
+        const { result, statusCode } = await postAdd(
+          server(),
+          `add-post-handshake-blank-${action}`,
+          {
+            ...CONSIGNEE_HANDSHAKE,
+            name: 'Highland Livestock Ltd',
+            countryCode: 'GB',
+            uses: 'IMPORTER',
+            action
+          }
+        )
+
+        expect(statusCode).toBe(statusCodes.badRequest)
+        const $ = load(result)
+        expectSummaryAndFieldErrors($, [
+          ['addressLine1', 'Enter address line 1'],
+          ['townOrCity', 'Enter a town or city'],
+          ['postcode', REQUIRED_MESSAGES.postcode],
+          ['email', 'Enter an email address'],
+          ['phone', REQUIRED_MESSAGES.phone]
+        ])
+        expect($('#name').val()).toBe('Highland Livestock Ltd')
+        expect(tickedUsesOf($)).toEqual(['IMPORTER'])
+        expect(createRequested.isDone()).toBe(false)
       }
     )
 
@@ -1024,23 +1142,35 @@ describe(
       })
     })
 
-    test.each([
-      ['a role', CONSIGNOR_HANDSHAKE],
-      ['the consignment contact', CONSIGNMENT_CONTACT_HANDSHAKE]
-    ])(
-      'GET from %s handshake shows no uses question',
-      async (_name, handshake) => {
+    test.each(Object.entries(OTHER_USE_QUESTION_BY_ROLE))(
+      'GET from the %s handshake asks what else the address should be used for after a section break, naming the role and offering only the other uses on its side, unticked',
+      async (role, { hint, labels }) => {
         const { result } = await getAdd(
           server(),
-          'add-get-handshake-no-uses',
-          handshake
+          `add-get-handshake-uses-${role}`,
+          JOURNEY_HANDSHAKES_BY_ROLE[role]
         )
 
         const $ = load(result)
-        expect(textsOf($, 'form legend')).toEqual([])
-        expect($('input[name="uses"]')).toHaveLength(0)
+        expect(textsOf($, USES_LEGEND_SELECTOR)).toEqual([JOURNEY_USES_LEGEND])
+        expect(textsOf($, USES_HINT_SELECTOR)).toEqual([hint])
+        expect(textsOf($, USE_LABEL_SELECTOR)).toEqual(labels)
+        expect(tickedUsesOf($)).toEqual([])
       }
     )
+
+    test('GET from the consignment contact handshake shows the address fields and no uses question', async () => {
+      const { result } = await getAdd(
+        server(),
+        'add-get-handshake-no-uses',
+        CONSIGNMENT_CONTACT_HANDSHAKE
+      )
+
+      const $ = load(result)
+      expect(textsOf($, 'form legend')).toEqual([])
+      expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+      expect($('input[name="uses"]')).toHaveLength(0)
+    })
   }
 )
 
@@ -1143,7 +1273,10 @@ describe(
       expect(textsOf($, CAPTION_SELECTOR)).toEqual(['Add new address'])
       expect(textsOf($, 'h1')).toEqual([ADD_TITLE])
       expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
-      expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+      expect(textsOf($, FORM_LABELS)).toEqual([
+        ...ADDRESS_FORM_LABELS,
+        ...OTHER_USE_QUESTION_BY_ROLE.consignor.labels
+      ])
     })
 
     test('GET from a role handshake links Back to the journey return with no address and no landing', async () => {
@@ -1345,7 +1478,10 @@ describe(
         const $ = await openAddFrom(role)
 
         expectUnitedKingdomAloneSelected($)
-        expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+        expect(textsOf($, FORM_LABELS)).toEqual([
+          ...ADDRESS_FORM_LABELS,
+          ...OTHER_USE_QUESTION_BY_ROLE[role].labels
+        ])
       }
     )
 
@@ -1355,7 +1491,10 @@ describe(
         const $ = await openAddFrom(role)
 
         expectPlaceholderThenCountriesNoneSelected($, SERVED_COUNTRY_NAMES)
-        expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+        expect(textsOf($, FORM_LABELS)).toEqual([
+          ...ADDRESS_FORM_LABELS,
+          ...OTHER_USE_QUESTION_BY_ROLE[role].labels
+        ])
       }
     )
 

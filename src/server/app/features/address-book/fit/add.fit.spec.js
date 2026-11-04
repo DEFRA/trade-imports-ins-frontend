@@ -6,12 +6,14 @@ import {
   errorLink,
   expectErrorFocusOn,
   openAddForm,
+  openAddFormFromJourney,
   fieldLabels,
   fieldLabelsInFormOrder,
   fillValidAddress,
   maxLengthValidations,
   originOrConsignorListUrl,
   requiredValidations,
+  setFieldValue,
   tickUses,
   validAddress
 } from './address-form.js'
@@ -40,6 +42,7 @@ import {
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
+import { addressBookPageHref } from '../view-model/list.js'
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -304,19 +307,10 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
 })
 
 test.describe('add address reached from a notification journey', () => {
-  const openFromJourney = async (
-    page,
-    organisationId,
-    handshake = JOURNEY_HANDSHAKES_BY_ROLE.consignor
-  ) => {
-    await signIn(page, { organisationId })
-    await page.goto(`${addressAddPath()}?${new URLSearchParams(handshake)}`)
-  }
-
   test('shows the Draft status and notification id above the caption, heading, section headings and fields', async ({
     page
   }) => {
-    await openFromJourney(page, 'stub-org-add-journey')
+    await openAddFormFromJourney(page, 'stub-org-add-journey')
 
     await expect(page).toHaveTitle(
       'Add address and contact details - Import notification service - GOV.UK'
@@ -366,7 +360,7 @@ test.describe('add address reached from a notification journey', () => {
   test('gives each personal-data field its browser autocomplete hint', async ({
     page
   }) => {
-    await openFromJourney(page, 'stub-org-add-journey-autocomplete')
+    await openAddFormFromJourney(page, 'stub-org-add-journey-autocomplete')
 
     for (const [field, autocomplete] of Object.entries(AUTOCOMPLETE_BY_FIELD)) {
       await expect(page.getByLabel(fieldLabels[field])).toHaveAttribute(
@@ -377,7 +371,7 @@ test.describe('add address reached from a notification journey', () => {
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
-    await openFromJourney(page, 'stub-org-add-journey-axe')
+    await openAddFormFromJourney(page, 'stub-org-add-journey-axe')
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address from journey')
   })
@@ -385,7 +379,7 @@ test.describe('add address reached from a notification journey', () => {
   test('from the consignee handshake offers United Kingdom alone, selected, with every field shown', async ({
     page
   }) => {
-    await openFromJourney(
+    await openAddFormFromJourney(
       page,
       'stub-org-add-journey-consignee',
       JOURNEY_HANDSHAKES_BY_ROLE.consignee
@@ -406,7 +400,7 @@ test.describe('add address reached from a notification journey', () => {
     test(`from the ${roleName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
       page
     }) => {
-      await openFromJourney(
+      await openAddFormFromJourney(
         page,
         `stub-org-add-journey-countries-${role}`,
         JOURNEY_HANDSHAKES_BY_ROLE[role]
@@ -425,14 +419,14 @@ test.describe('add address reached from a notification journey', () => {
   test('from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations', async ({
     page
   }) => {
-    await openFromJourney(
+    await openAddFormFromJourney(
       page,
       'stub-org-add-journey-consignee-name',
       JOURNEY_HANDSHAKES_BY_ROLE.consignee
     )
 
     await fillValidAddress(page, { name: '' })
-    await page.getByRole('button', { name: 'Save and select' }).click()
+    await page.getByRole('button', { name: copy.add.saveAndSelect }).click()
 
     await expectErrorFocusOn(page, {
       message: 'Enter a name or organisation',
@@ -449,7 +443,7 @@ test.describe('add address reached from a notification journey', () => {
   test('from a role handshake offers Back to the journey, Save and select, Save and return to address page and a Cancel and return to hub link', async ({
     page
   }) => {
-    await openFromJourney(page, 'stub-org-add-journey-actions')
+    await openAddFormFromJourney(page, 'stub-org-add-journey-actions')
 
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
@@ -474,7 +468,7 @@ test.describe('add address reached from a notification journey', () => {
   test('from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page', async ({
     page
   }) => {
-    await openFromJourney(
+    await openAddFormFromJourney(
       page,
       'stub-org-add-journey-contact',
       CONSIGNMENT_CONTACT_HANDSHAKE
@@ -487,6 +481,131 @@ test.describe('add address reached from a notification journey', () => {
       'Save and continue',
       'Cancel and return to address page'
     ])
+  })
+})
+
+test.describe('add address uses question reached from a notification journey', () => {
+  const rolesWithTheirUses = {
+    placeOfOrigin: {
+      ownUse: 'PLACE_OF_ORIGIN',
+      article: 'a',
+      otherUses: ['CONSIGNOR']
+    },
+    consignor: {
+      ownUse: 'CONSIGNOR',
+      article: 'a',
+      otherUses: ['PLACE_OF_ORIGIN']
+    },
+    consignee: {
+      ownUse: 'CONSIGNEE',
+      article: 'a',
+      otherUses: ['IMPORTER', 'PLACE_OF_DESTINATION']
+    },
+    importer: {
+      ownUse: 'IMPORTER',
+      article: 'an',
+      otherUses: ['CONSIGNEE', 'PLACE_OF_DESTINATION']
+    },
+    placeOfDestination: {
+      ownUse: 'PLACE_OF_DESTINATION',
+      article: 'a',
+      otherUses: ['CONSIGNEE', 'IMPORTER']
+    }
+  }
+
+  for (const [role, { ownUse, article, otherUses }] of Object.entries(
+    rolesWithTheirUses
+  )) {
+    test(`from the ${role} handshake asks what else the address should be used for, naming the role and offering only the other uses on its side, unticked`, async ({
+      page
+    }) => {
+      await openAddFormFromJourney(
+        page,
+        `stub-org-add-journey-uses-${role}`,
+        JOURNEY_HANDSHAKES_BY_ROLE[role]
+      )
+
+      const usesGroup = page.getByRole('group', {
+        name: copy.uses.journeyLegend
+      })
+      await expect(usesGroup).toHaveAccessibleDescription(
+        `This address is being added as ${article} ${copy.uses.options[ownUse].label} address. Select any other roles or addresses this address should be used for.`
+      )
+      await expect(usesGroup.locator('label')).toHaveText(
+        otherUses.map((use) => copy.uses.options[use].label)
+      )
+      for (const checkbox of await usesGroup.getByRole('checkbox').all()) {
+        await expect(checkbox).not.toBeChecked()
+      }
+    })
+  }
+
+  test('Save and return to address page with answers missing keeps the page, lists the errors in field order and keeps the tick', async ({
+    page
+  }) => {
+    await openAddFormFromJourney(
+      page,
+      'stub-org-add-journey-return-blank',
+      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+    )
+
+    await setFieldValue(page, 'name', validAddress.name)
+    await tickUses(page, ['IMPORTER'])
+    await page
+      .getByRole('button', { name: 'Save and return to address page' })
+      .click()
+
+    await expect(page).toHaveURL((url) => url.pathname === addressAddPath())
+    await expect(page.getByRole('alert').getByRole('link')).toHaveText([
+      'Enter address line 1',
+      'Enter a town or city',
+      'Enter a postcode or Zip code',
+      'Enter an email address',
+      'Enter a phone number'
+    ])
+    await expect(page.getByLabel(fieldLabels.name)).toHaveValue(
+      validAddress.name
+    )
+    await expect(
+      page.getByRole('checkbox', { name: 'Importer', exact: true })
+    ).toBeChecked()
+  })
+})
+
+test.describe('add address reached from a notification journey with JavaScript off', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer uses', async ({
+    page
+  }) => {
+    await page.route('http://localhost:3000/**', (route) => route.abort())
+    await openAddFormFromJourney(
+      page,
+      `stub-org-add-journey-ticked-${crypto.randomUUID()}`,
+      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+    )
+    await fillValidAddress(page)
+    await tickUses(page, ['IMPORTER'])
+    const journeyReturn = page.waitForRequest((request) =>
+      request.url().includes('/address-return')
+    )
+    await page.getByRole('button', { name: copy.add.saveAndSelect }).click()
+
+    const returnUrl = new URL((await journeyReturn).url())
+    expect(returnUrl.searchParams.get('addressId')).toBeTruthy()
+    expect(returnUrl.searchParams.get('landing')).toBe(ADDRESS_LANDING.SELECT)
+
+    await page.goto(
+      addressBookPageHref(1, {
+        addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+      })
+    )
+    await expect(
+      page
+        .getByRole('row', { name: new RegExp(validAddress.name) })
+        .getByRole('cell')
+        .nth(1)
+    ).toHaveText('Consignee, Importer')
   })
 })
 

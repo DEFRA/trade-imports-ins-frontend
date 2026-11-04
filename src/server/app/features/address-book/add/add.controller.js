@@ -43,7 +43,8 @@ import {
   ADDRESS_LANDING,
   addressTypeAndUsesOfParty,
   buildReturnUrl,
-  isConsignmentContact
+  isConsignmentContact,
+  usesOfParty
 } from '../journey-registry.js'
 import { addressBookPageHref } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -119,12 +120,38 @@ const placeUsesFirst = (uses) => [
   ...uses.filter((use) => !PLACE_USES.includes(use))
 ]
 
-const useItemsOf = (addressType, tickedUses) =>
-  placeUsesFirst(USES_BY_ADDRESS_TYPE[addressType]).map((use) => ({
+const useItemsOf = (uses, tickedUses) =>
+  uses.map((use) => ({
     value: use,
     text: copy.uses.options[use].label,
     checked: tickedUses.includes(use)
   }))
+
+const usesQuestionFor = (
+  addMode,
+  handshakeContext,
+  { addressType, tickedUses }
+) => {
+  if (addMode === ADD_MODES.ADDRESS_BOOK) {
+    return {
+      legend: copy.uses.legendByAddressType[addressType],
+      hint: copy.uses.hint,
+      items: useItemsOf(
+        placeUsesFirst(USES_BY_ADDRESS_TYPE[addressType]),
+        tickedUses
+      )
+    }
+  }
+  const { ownUse, otherUses } = usesOfParty(handshakeContext)
+  if (otherUses.length === 0) {
+    return null
+  }
+  return {
+    legend: copy.uses.journeyLegend,
+    hint: copy.uses.journeyHint(copy.uses.options[ownUse].label),
+    items: useItemsOf(otherUses, tickedUses)
+  }
+}
 
 const buildView = (
   toolkit,
@@ -152,11 +179,10 @@ const buildView = (
       copy,
       formValues,
       countryItems,
-      useItems:
-        addMode === ADD_MODES.ADDRESS_BOOK
-          ? useItemsOf(addressType, tickedUses)
-          : [],
-      usesLegend: copy.uses.legendByAddressType[addressType],
+      usesQuestion: usesQuestionFor(addMode, handshakeContext, {
+        addressType,
+        tickedUses
+      }),
       errors,
       errorSummary: kit.errorSummary(errors),
       handshakeContext,
@@ -250,6 +276,14 @@ const get = async (request, toolkit) => {
   })
 }
 
+const addedFromOf = (handshakeContext, addressType) =>
+  handshakeContext
+    ? {
+        notificationId: handshakeContext.notificationId,
+        fulfilmentId: handshakeContext.fulfilmentId
+      }
+    : { addressType }
+
 const logReplacedCountry = ({
   handshakeContext,
   organisationId,
@@ -264,19 +298,19 @@ const logReplacedCountry = ({
   ) {
     return
   }
-  const addedFrom = handshakeContext
-    ? {
-        notificationId: handshakeContext.notificationId,
-        fulfilmentId: handshakeContext.fulfilmentId
-      }
-    : { addressType }
   logger.info(
-    { organisationId, addressId, ...addedFrom, postedCountryCode },
+    {
+      organisationId,
+      addressId,
+      ...addedFromOf(handshakeContext, addressType),
+      postedCountryCode
+    },
     'Posted country was replaced with the country the address must be in'
   )
 }
 
 const logDiscardedUses = ({
+  handshakeContext,
   organisationId,
   addressType,
   postedUses,
@@ -285,41 +319,28 @@ const logDiscardedUses = ({
   const discardedUses = postedUses.filter((use) => !keptUses.includes(use))
   if (discardedUses.length > 0) {
     logger.info(
-      { organisationId, addressType, discardedUses },
-      'Posted uses the chosen address type does not offer were not saved'
+      {
+        organisationId,
+        ...addedFromOf(handshakeContext, addressType),
+        discardedUses
+      },
+      'Posted uses the address page does not offer were not saved'
     )
   }
 }
 
-const usesErrorsAfterLoggingDiscards = (postedAndKeptUses) => {
-  logDiscardedUses(postedAndKeptUses)
-  return usesErrorsOf(postedAndKeptUses.keptUses)
-}
-
-const rerenderIfUsesInvalid = ({
-  isAddressBookAdd,
-  organisationId,
-  addressType,
-  postedUses,
-  keptUses,
-  rerender
-}) => {
+const rerenderIfUsesInvalid = ({ isAddressBookAdd, keptUses, rerender }) => {
   if (!isAddressBookAdd) {
     return undefined
   }
-  const errors = usesErrorsAfterLoggingDiscards({
-    organisationId,
-    addressType,
-    postedUses,
-    keptUses
-  })
+  const errors = usesErrorsOf(keptUses)
   return errors ? rerender({ errors }).code(HTTP_STATUS_BAD_REQUEST) : undefined
 }
 
 const typeAndUsesToSave = (handshakeContext, { addressType, postedUses }) =>
   addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK
     ? { addressType, uses: keepUsesOfferedBy(addressType, postedUses) }
-    : addressTypeAndUsesOfParty(handshakeContext)
+    : addressTypeAndUsesOfParty(handshakeContext, postedUses)
 
 const finishAddressBookAdd = (
   request,
@@ -388,11 +409,15 @@ const submitAddress = async (
       addressType,
       postedUses
     })
-    const usesRefusal = rerenderIfUsesInvalid({
-      isAddressBookAdd,
+    logDiscardedUses({
+      handshakeContext,
       organisationId,
       addressType,
       postedUses,
+      keptUses: typeAndUses.uses
+    })
+    const usesRefusal = rerenderIfUsesInvalid({
+      isAddressBookAdd,
       keptUses: typeAndUses.uses,
       rerender
     })

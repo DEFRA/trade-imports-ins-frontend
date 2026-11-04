@@ -8,6 +8,7 @@ import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { addressAddPath, addressTypePath } from '../../../shared/paths.js'
 import { addressBookPageHref } from '../view-model/list.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
+import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../../common/test-helpers/journey-handshake.js'
 
 export const fieldLabels = copy.form.fields
 
@@ -208,3 +209,12 @@ export const maxLengthValidations = [
     'Email address must be 254 characters or fewer'
   ]
 ]
+
+export const openAddFormFromJourney = async (
+  page,
+  organisationId,
+  handshake = JOURNEY_HANDSHAKES_BY_ROLE.consignor
+) => {
+  await signIn(page, { organisationId })
+  await page.goto(`${addressAddPath()}?${new URLSearchParams(handshake)}`)
+}

@@ -79,8 +79,8 @@ export const copy = {
       county: 'County (optional)',
       postcode: 'Postcode or Zip code',
       countryCode: 'Country',
-      phone: 'Phone number',
-      email: 'Email address'
+      email: 'Email address',
+      phone: 'Phone number'
     },
     phoneHint: 'For international numbers include the country code',
     countryPlaceholder: SELECT_COUNTRY
@@ -102,6 +102,9 @@ export const copy = {
     continue: 'Continue'
   },
   uses: {
+    journeyLegend: 'What else should this address be used for?',
+    journeyHint: (roleLabel) =>
+      `This address is being added as ${/^[AEIOU]/.test(roleLabel) ? 'an' : 'a'} ${roleLabel} address. Select any other roles or addresses this address should be used for.`,
     legendByAddressType: {
       ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
       DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE,

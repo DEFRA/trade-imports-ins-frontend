@@ -14,7 +14,6 @@ import {
 import {
   ADDRESS_LANDING,
   CONSIGNMENT_CONTACT_FULFILMENT_ID,
-  addressTypeAndUsesOfParty,
   buildReturnUrl,
   isConsignmentContact,
   isKnownJourneyType,
@@ -86,60 +85,6 @@ describe('journey-registry', () => {
         })
       ).toBe(false)
       expect(requiresUnitedKingdomAddress(null)).toBe(false)
-    })
-  })
-
-  describe('addressTypeAndUsesOfParty', () => {
-    test.each([
-      ['placeOfOrigin', 'ORIGIN_OR_CONSIGNOR', 'PLACE_OF_ORIGIN'],
-      ['consignor', 'ORIGIN_OR_CONSIGNOR', 'CONSIGNOR'],
-      ['consignee', 'DESTINATION_CONSIGNEE_OR_IMPORTER', 'CONSIGNEE'],
-      ['importer', 'DESTINATION_CONSIGNEE_OR_IMPORTER', 'IMPORTER'],
-      [
-        'placeOfDestination',
-        'DESTINATION_CONSIGNEE_OR_IMPORTER',
-        'PLACE_OF_DESTINATION'
-      ]
-    ])(
-      'gives the %s handshake its type and its one use',
-      (role, addressType, use) => {
-        expect(
-          addressTypeAndUsesOfParty(
-            handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
-          )
-        ).toEqual({ addressType, uses: [use] })
-      }
-    )
-
-    test('gives the consignment contact a Branch address', () => {
-      expect(
-        addressTypeAndUsesOfParty(
-          handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE)
-        )
-      ).toEqual({ addressType: 'BRANCH', uses: ['BRANCH_ADDRESS'] })
-    })
-
-    test.each([
-      [
-        'a fulfilment id the registry does not list',
-        { fulfilmentId: 'not-a-fulfilment-id' }
-      ],
-      [
-        'a fulfilment id named like an Object property',
-        { fulfilmentId: 'constructor' }
-      ],
-      [
-        'a listed fulfilment id under an unregistered journey type',
-        { journeyType: UNREGISTERED_JOURNEY_TYPE }
-      ],
-      ['no context', null]
-    ])('gives no type and no uses for %s', (_name, overrides) => {
-      const context = overrides && {
-        ...CONSIGNOR_CONTEXT,
-        ...overrides
-      }
-
-      expect(addressTypeAndUsesOfParty(context)).toEqual({})
     })
   })
 
