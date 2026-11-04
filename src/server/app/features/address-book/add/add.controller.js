@@ -368,6 +368,38 @@ const rerenderAfterCreateFailure = (err, { organisationId, rerender }) => {
   )
 }
 
+const createAddressAndRespond = async (
+  request,
+  toolkit,
+  {
+    handshakeContext,
+    organisationId,
+    addressType,
+    landing,
+    isAddressBookAdd,
+    addressToCreate,
+    postedCountryCode,
+    storedCountryCode
+  }
+) => {
+  const createdAddress = await createAddress(organisationId, addressToCreate)
+  logReplacedCountry({
+    handshakeContext,
+    organisationId,
+    addressId: createdAddress.id,
+    addressType,
+    postedCountryCode,
+    storedCountryCode
+  })
+  return isAddressBookAdd
+    ? finishAddressBookAdd(request, toolkit, { createdAddress, addressType })
+    : handBackAddress(toolkit, handshakeContext, {
+        organisationId,
+        addressId: createdAddress.id,
+        landing
+      })
+}
+
 const submitAddress = async (
   request,
   toolkit,
@@ -424,25 +456,16 @@ const submitAddress = async (
     if (usesRefusal) {
       return usesRefusal
     }
-    const createdAddress = await createAddress(organisationId, {
-      ...validatedAddress,
-      ...typeAndUses
-    })
-    logReplacedCountry({
+    return await createAddressAndRespond(request, toolkit, {
       handshakeContext,
       organisationId,
-      addressId: createdAddress.id,
       addressType,
+      landing,
+      isAddressBookAdd,
+      addressToCreate: { ...validatedAddress, ...typeAndUses },
       postedCountryCode: postedValues.countryCode,
       storedCountryCode: formValues.countryCode
     })
-    return isAddressBookAdd
-      ? finishAddressBookAdd(request, toolkit, { createdAddress, addressType })
-      : handBackAddress(toolkit, handshakeContext, {
-          organisationId,
-          addressId: createdAddress.id,
-          landing
-        })
   } catch (err) {
     return rerenderAfterCreateFailure(err, { organisationId, rerender })
   }

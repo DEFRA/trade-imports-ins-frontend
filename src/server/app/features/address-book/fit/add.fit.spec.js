@@ -595,13 +595,14 @@ test.describe('add address reached from a notification journey with JavaScript o
     expect(returnUrl.searchParams.get('addressId')).toBeTruthy()
     expect(returnUrl.searchParams.get('landing')).toBe(ADDRESS_LANDING.SELECT)
 
-    await page.goto(
+    const listPage = await page.context().newPage()
+    await listPage.goto(
       addressBookPageHref(1, {
         addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
       })
     )
     await expect(
-      page
+      listPage
         .getByRole('row', { name: new RegExp(validAddress.name) })
         .getByRole('cell')
         .nth(1)
