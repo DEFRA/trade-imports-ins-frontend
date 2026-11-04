@@ -88,7 +88,9 @@ test.describe('page title', () => {
     )
   })
 
-  test('titles an error page the same way', async ({ page }) => {
+  test('titles a missing page Page not found - Import notification service - GOV.UK', async ({
+    page
+  }) => {
     await page.goto('/no-such-page')
 
     await expect(page).toHaveTitle(
