@@ -20,7 +20,7 @@ describe('#copy', () => {
     }
   )
 
-  it('Should describe the results range the way the page always has', () => {
+  it('Should word the results range as Showing {from}-{to} of {total}', () => {
     expect(copy.results(26, 40, 40)).toBe('Showing 26-40 of 40')
   })
 
