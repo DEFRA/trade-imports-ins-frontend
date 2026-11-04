@@ -627,11 +627,12 @@ describe(
         { ...CONSIGNEE_HANDSHAKE, ...VALID_ADDRESS_PAYLOAD }
       )
 
+      const $ = load(result)
       expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain(
+      expect(textsOf($, '.govuk-notification-banner__content')).toEqual([
         'Sorry, there is a problem with the service. Try again in a few minutes.'
-      )
-      expectUnitedKingdomAloneSelected(load(result))
+      ])
+      expectUnitedKingdomAloneSelected($)
     })
 
     test('POST from the consignee handshake saves the address as United Kingdom whatever country is posted', async () => {
