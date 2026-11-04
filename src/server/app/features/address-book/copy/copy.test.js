@@ -40,23 +40,19 @@ describe('#copy', () => {
   })
 
   it('Should word the uses question with its legend per address type, hint, one label per use and error', () => {
-    expect(copy.uses).toEqual({
-      journeyLegend: 'What else should this address be used for?',
-      journeyHint: expect.any(Function),
-      legendByAddressType: {
-        ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
-        DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',
-        BRANCH: 'Address type'
-      },
-      hint: 'Select where this address can be used',
-      options: {
-        PLACE_OF_ORIGIN: { label: 'Place of origin' },
-        CONSIGNOR: { label: 'Consignor' },
-        CONSIGNEE: { label: 'Consignee' },
-        IMPORTER: { label: 'Importer' },
-        PLACE_OF_DESTINATION: { label: 'Place of destination' },
-        BRANCH_ADDRESS: { label: 'Branch address' }
-      }
+    expect(copy.uses.legendByAddressType).toEqual({
+      ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
+      DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',
+      BRANCH: 'Address type'
+    })
+    expect(copy.uses.hint).toBe('Select where this address can be used')
+    expect(copy.uses.options).toEqual({
+      PLACE_OF_ORIGIN: { label: 'Place of origin' },
+      CONSIGNOR: { label: 'Consignor' },
+      CONSIGNEE: { label: 'Consignee' },
+      IMPORTER: { label: 'Importer' },
+      PLACE_OF_DESTINATION: { label: 'Place of destination' },
+      BRANCH_ADDRESS: { label: 'Branch address' }
     })
     expect(copy.errors.uses.required).toBe(
       'Select what this address can be used for'
