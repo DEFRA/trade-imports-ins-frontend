@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
-import { textOf } from '../../../shared/copy-leaves.test-support.js'
+import { leaves } from '../../../shared/copy-leaves.js'
+import {
+  itHoldsCopyAtEveryLeaf,
+  textOf
+} from '../../../shared/copy-leaves.test-support.js'
 import { FIELDS, FIELD_RULES, isRequiredField } from '../fields.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
@@ -14,18 +17,7 @@ const LOCALES = [
 ]
 
 describe('#copy', () => {
-  it.each(LOCALES)(
-    'Should hold a non-empty string or copy function at every %s leaf',
-    (locale, bundle) => {
-      for (const { path, value } of leaves(bundle)) {
-        expect(isCopyLeaf(value), `${locale}: ${path} must be copy`).toBe(true)
-        expect(
-          textOf(value).trim().length,
-          `${locale}: ${path} must render text`
-        ).toBeGreaterThan(0)
-      }
-    }
-  )
+  itHoldsCopyAtEveryLeaf(copy, cy)
 
   it('Should word the add-details form with its section headings, country placeholder and cancel link', () => {
     expect(copy.form.addressHeading).toBe('Address')
