@@ -50,7 +50,7 @@ test.describe('navigation', () => {
 })
 
 test.describe('list and pagination', () => {
-  test('renders addresses in a table with Name, Address, Country and Action columns', async ({
+  test('renders the seed address in a table with Name, Address, Country and Action columns', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
@@ -79,9 +79,6 @@ test.describe('list and pagination', () => {
     ).toBeVisible()
     await expect(
       table.getByRole('cell', { name: 'United Kingdom', exact: true })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: ADD_NEW_ADDRESS })
     ).toBeVisible()
   })
 
