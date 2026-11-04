@@ -47,7 +47,7 @@ describe('unauthorised-page copy', () => {
 })
 
 describe('error-page copy', () => {
-  it('Should carry one message per status the catch-all names, and the fallback', () => {
+  it('Should word the not-found, forbidden, unauthorized, bad-request and unexpected error pages in English', () => {
     expect(sharedEn.errorPage).toEqual({
       notFound: 'Page not found',
       forbidden: 'Forbidden',
