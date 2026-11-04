@@ -101,7 +101,7 @@ const loadAddressPage = async (organisationId, { page, ...listFilters }) => {
   logger.info(
     {
       organisationId,
-      category: listFilters.category,
+      addressType: listFilters.addressType,
       use: listFilters.use,
       requestedPage: page,
       servedPage
@@ -120,12 +120,12 @@ const get = async (request, toolkit) => {
   const page = parsePage(request.query.page)
   const searchTerm = request.query.q?.trim() ?? ''
   const selectedTab = resolveTab(request.query.addressType)
-  const { addressType: category } = selectedTab
+  const { addressType } = selectedTab
   const requestedUse = request.query.use
   const use = resolveUse(selectedTab, requestedUse)
   if (requestedUse && !use) {
     logger.info(
-      { organisationId, category, requestedUse },
+      { organisationId, addressType, requestedUse },
       'Address book list ignored a use the tab does not offer'
     )
   }
@@ -140,7 +140,7 @@ const get = async (request, toolkit) => {
       searchTerm,
       countryCodes,
       searchUses,
-      category,
+      addressType,
       use
     })
     const pagination = paginationOf(addressPage)
@@ -158,12 +158,12 @@ const get = async (request, toolkit) => {
       resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
         addressBookPageHref(targetPage, {
-          addressType: category,
+          addressType,
           searchTerm,
           use
         })
       ),
-      addressType: category,
+      addressType,
       useItems: useItemsOf(selectedTab, use),
       searchTerm,
       successMessage
@@ -173,12 +173,12 @@ const get = async (request, toolkit) => {
       throw err
     }
     logger.error(
-      { err, organisationId, category, use },
+      { err, organisationId, addressType, use },
       'Failed to load address book'
     )
     return buildView(toolkit, {
       listLoaded: false,
-      addressType: category,
+      addressType,
       useItems: useItemsOf(selectedTab, use),
       searchTerm,
       successMessage,

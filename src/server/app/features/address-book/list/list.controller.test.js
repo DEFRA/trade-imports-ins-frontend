@@ -147,7 +147,7 @@ describe('#addressBookListController', () => {
 
   test('links every page with the selected tab, the search term and the page number only', async () => {
     const scope = stubAddressPage(
-      { page: '2', q: 'green', category: ADDRESS_TYPES.BRANCH },
+      { page: '2', q: 'green', addressType: ADDRESS_TYPES.BRANCH },
       pageOf([greenFarmAddress], {
         page: 2,
         totalItems: 30,

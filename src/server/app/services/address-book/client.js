@@ -49,7 +49,7 @@ export const listAddresses = async (
     pageSize,
     searchTerm,
     countryCodes = [],
-    category,
+    addressType,
     use,
     searchUses = []
   } = {}
@@ -57,8 +57,8 @@ export const listAddresses = async (
   const url = new URL(addressesUrl(organisationId))
   url.searchParams.set('page', String(page))
   url.searchParams.set('pageSize', String(pageSize))
-  if (category) {
-    url.searchParams.set('category', category)
+  if (addressType) {
+    url.searchParams.set('addressType', addressType)
   }
   if (use) {
     url.searchParams.set('use', use)

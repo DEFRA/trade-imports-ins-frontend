@@ -116,7 +116,7 @@ holds the list's fixtures, nock stubs and Cheerio readers:
 `NO_RESULTS_LINE` (the results line for no matches),
 `startServerWithPageReader()`, `stubAddressPage(query, addressPage)` (which
 stubs the Origin and Consignor tab unless the query names another
-`category`), `stubAddressBookUnavailable()`, `contentOf`,
+`addressType`), `stubAddressBookUnavailable()`, `contentOf`,
 `tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`, `typeSelectStateOf`
 (the Type select's label, option texts, options with an empty value and chosen
 options), `panelHeadingTextOf`, `resultsLineOf`,
@@ -204,7 +204,7 @@ links), `selectedTabOf` (the tab marked current), `tabPanelHeadingOf`
 `expectEmptyAddressBookList`, `searchFieldOf`, `typeSelectOf` (the
 Playwright locator for the Type select; the jsdom and Cheerio reader in
 `list.test-support.js` is `typeSelectStateOf`), `followTab` (follows a
-category tab's link), `openFilterDisclosure`,
+address type tab's link), `openFilterDisclosure`,
 `expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery`,
 `resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
 [`dashboard.js`](../features/address-book/fit/dashboard.js) —

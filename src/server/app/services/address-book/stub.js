@@ -60,15 +60,15 @@ const notFound = () =>
 
 const isLive = (address) => !address.deleted
 
-const isListedUnder = (address, category) => {
-  if (!category) {
+const isListedUnder = (address, addressType) => {
+  if (!addressType) {
     return true
   }
   const uses = address.uses ?? []
   if (uses.length === 0) {
-    return category === ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+    return addressType === ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
   }
-  const usesListed = USES_BY_ADDRESS_TYPE[category] ?? []
+  const usesListed = USES_BY_ADDRESS_TYPE[addressType] ?? []
   return uses.some((use) => usesListed.includes(use))
 }
 
@@ -112,11 +112,11 @@ const pageOfMatches = (matches, { page, pageSize }) => ({
 
 export const listAddresses = async (
   organisationId,
-  { page = 1, pageSize, category, use, ...search } = {}
+  { page = 1, pageSize, addressType, use, ...search } = {}
 ) => {
   const matches = addressesOf(organisationId)
     .filter(isLive)
-    .filter((address) => isListedUnder(address, category))
+    .filter((address) => isListedUnder(address, addressType))
     .filter((address) => holdsUse(address, use))
     .filter((address) => matchesSearch(address, search))
   return pageOfMatches(matches, { page, pageSize })

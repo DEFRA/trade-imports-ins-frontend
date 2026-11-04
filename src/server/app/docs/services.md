@@ -31,7 +31,7 @@ starting, and a test can switch modes with `config.set('stubMode', …)`.
 ### address-book
 
 [`index.js`](../services/address-book/index.js) exports `listAddresses(organisationId,
-listQuery)`, where `listQuery` is `{ page, pageSize, searchTerm, countryCodes, searchUses, category, use }`,
+listQuery)`, where `listQuery` is `{ page, pageSize, searchTerm, countryCodes, searchUses, addressType, use }`,
 `createAddress(organisationId, address)`, `getAddress(organisationId, addressId)`,
 `updateAddress(organisationId, addressId, address)`,
 `deleteAddress(organisationId, addressId)`, plus `mapApiErrorsToFormErrors(problemBody)`
@@ -52,7 +52,7 @@ addresses, `-typed` for five addresses holding uses of all three address
 types, otherwise `Stub Farm 1` at `000000000000000000000001`), and
 mints 24-character hex ids because the `{id}` routes validate an
 ObjectId. It lists newest first, a created address ahead of the seeded
-ones, and at the page size the request gives. With a `category`, it
+ones, and at the page size the request gives. With an `addressType`, it
 first keeps the addresses holding one of that type's uses, an address
 with no uses counting as `ORIGIN_OR_CONSIGNOR`, as the address book does;
 the uses each type lists come from `address-types.js`. With a `use`, it then
