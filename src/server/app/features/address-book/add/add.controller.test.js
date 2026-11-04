@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADD_ADDRESS_PATH,
-  ADDRESS_BOOK_PATH,
+  addressAddPath,
+  addressBookPath,
   ADDRESS_FORM_LABELS,
   ADDRESS_ID,
   BACK_LINK,
@@ -73,12 +73,12 @@ const FORM_LINK = 'form a.govuk-link'
 const ADD_TITLE = 'Add address and contact details'
 
 const postAdd = (server, sessionId, payload) =>
-  postPage(server, ADD_ADDRESS_PATH, sessionId, payload)
+  postPage(server, addressAddPath(), sessionId, payload)
 
 const getAdd = (server, sessionId, query = {}) =>
   getPage(
     server,
-    `${ADD_ADDRESS_PATH}?${new URLSearchParams(query)}`,
+    `${addressAddPath()}?${new URLSearchParams(query)}`,
     sessionId
   )
 
@@ -112,7 +112,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect($(CAPTION_SELECTOR).next().is('h1')).toBe(true)
     expect($(JOURNEY_STRIP)).toHaveLength(0)
     expect($('main .govuk-tag')).toHaveLength(0)
-    expect($(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect($(BACK_LINK).attr('href')).toBe(addressBookPath())
     expect(textsOf($, BACK_LINK)).toEqual(['Back'])
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
     expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual(ADDRESS_FORM_LABELS)
@@ -120,7 +120,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
       'For international numbers include the country code'
     ])
     expect(textsOf($, 'form button')).toEqual([saveAndContinue])
-    expect($(FORM_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect($(FORM_LINK).attr('href')).toBe(addressBookPath())
     expect(textsOf($, FORM_LINK)).toEqual([cancelToAddressBook])
     expect(result.indexOf(saveAndContinue)).toBeLessThan(
       result.indexOf(cancelToAddressBook)
@@ -171,7 +171,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
       VALID_ADDRESS_PAYLOAD
     )
 
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
     expect(scope.isDone()).toBe(true)
     expect(captured.body).toMatchObject(VALID_ADDRESS_PAYLOAD)
     expect(response.headers['cache-control']).not.toBe('no-store')
@@ -277,7 +277,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
       cancel: 'true'
     })
 
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
     expect(response.headers['cache-control']).not.toBe('no-store')
   })
 })

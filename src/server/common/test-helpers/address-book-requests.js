@@ -12,20 +12,15 @@ export const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
 export const OTHER_ORGANISATION_ID = '0c4e7a92-3b1d-4f58-a6e2-9d8b5c1f7a34'
 
-export const ADDRESS_BOOK_PATH = '/address-book'
-
-export const ADD_ADDRESS_PATH = `${ADDRESS_BOOK_PATH}/add`
+export {
+  addressAddPath,
+  addressBookPath,
+  addressDeletePath,
+  addressEditPath,
+  addressPath
+} from '../../app/shared/paths.js'
 
 export const RETURN_HOME = '?return=%2F'
-
-export const addressPagePath = (addressId) =>
-  `${ADDRESS_BOOK_PATH}/${addressId}`
-
-export const editAddressPagePath = (addressId) =>
-  `${addressPagePath(addressId)}/edit`
-
-export const deleteAddressPagePath = (addressId) =>
-  `${addressPagePath(addressId)}/delete`
 
 export const addressesApiPath = (organisationId = ORGANISATION_ID) =>
   `/organisation/${organisationId}/addresses`

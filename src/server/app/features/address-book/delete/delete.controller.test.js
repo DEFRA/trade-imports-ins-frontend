@@ -7,13 +7,13 @@ import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
-  ADDRESS_BOOK_PATH,
+  addressBookPath,
   ADDRESS_ID,
   addressApiPath,
-  addressPagePath,
+  addressPath,
   BACK_LINK,
   COUNTRIES,
-  deleteAddressPagePath,
+  addressDeletePath,
   expectRedirectTo,
   expectServerErrorPage,
   getPage,
@@ -41,15 +41,10 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 const UK_NAME = 'United Kingdom'
 
 const getDelete = (server, sessionId, query = '') =>
-  getPage(server, `${deleteAddressPagePath(ADDRESS_ID)}${query}`, sessionId)
+  getPage(server, `${addressDeletePath(ADDRESS_ID)}${query}`, sessionId)
 
 const postDelete = (server, sessionId, query = '') =>
-  postPage(
-    server,
-    `${deleteAddressPagePath(ADDRESS_ID)}${query}`,
-    sessionId,
-    {}
-  )
+  postPage(server, `${addressDeletePath(ADDRESS_ID)}${query}`, sessionId, {})
 
 const BANNER = '.govuk-notification-banner'
 const SUMMARY_VALUE = '.govuk-summary-list__value'
@@ -154,7 +149,7 @@ describe('GET /address-book/{addressId}/delete', () => {
     expect(confirmButton.hasClass('govuk-button--warning')).toBe(true)
     const cancelLink = $('.govuk-button-group a.govuk-link')
     expect(textOf($, cancelLink)).toBe('No, cancel')
-    expect(cancelLink.attr('href')).toBe(addressPagePath(ADDRESS_ID))
+    expect(cancelLink.attr('href')).toBe(addressPath(ADDRESS_ID))
     expect($('.govuk-button--secondary')).toHaveLength(0)
   })
 
@@ -207,7 +202,7 @@ describe('GET /address-book/{addressId}/delete', () => {
 
     expectRedirectTo(
       await getDelete(getServer(), 'delete-get-404'),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -216,7 +211,7 @@ describe('GET /address-book/{addressId}/delete', () => {
 
     expectRedirectTo(
       await getDelete(getServer(), 'delete-get-tombstone'),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -224,10 +219,10 @@ describe('GET /address-book/{addressId}/delete', () => {
     expectRedirectTo(
       await getPage(
         getServer(),
-        deleteAddressPagePath(MALFORMED_ADDRESS_ID),
+        addressDeletePath(MALFORMED_ADDRESS_ID),
         'delete-get-bad-id'
       ),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -249,7 +244,7 @@ describe('GET /address-book/{addressId}/delete', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      const addressPageHref = `${addressPagePath(ADDRESS_ID)}${RETURN_HOME}`
+      const addressPageHref = `${addressPath(ADDRESS_ID)}${RETURN_HOME}`
       expect($(BACK_LINK).attr('href')).toBe(addressPageHref)
       expect($('.govuk-button-group a.govuk-link').attr('href')).toBe(
         addressPageHref
@@ -269,7 +264,7 @@ describe('POST /address-book/{addressId}/delete', () => {
 
     expectRedirectTo(
       await postDelete(getServer(), 'delete-post-tombstone'),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -278,7 +273,7 @@ describe('POST /address-book/{addressId}/delete', () => {
 
     expectRedirectTo(
       await postDelete(getServer(), 'delete-post-unknown'),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -290,7 +285,7 @@ describe('POST /address-book/{addressId}/delete', () => {
 
     expectRedirectTo(
       await postDelete(getServer(), 'delete-post-404'),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -311,7 +306,7 @@ describe('POST /address-book/{addressId}/delete', () => {
 
     expectRedirectTo(
       await postDelete(getServer(), 'delete-post-confirm'),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
     expect(scope.isDone()).toBe(true)
   })
@@ -370,9 +365,9 @@ describe('POST /address-book/{addressId}/delete', () => {
         await postDelete(
           getServer(),
           'delete-post-return-own-page',
-          `?return=${encodeURIComponent(addressPagePath(ADDRESS_ID))}`
+          `?return=${encodeURIComponent(addressPath(ADDRESS_ID))}`
         ),
-        ADDRESS_BOOK_PATH
+        addressBookPath()
       )
     })
 

@@ -4,15 +4,15 @@ import { describe, expect, test, vi } from 'vitest'
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESS_BOOK_PATH,
+  addressBookPath,
   ADDRESS_FORM_LABELS,
   ADDRESS_ID,
   addressApiPath,
-  addressPagePath,
+  addressPath,
   BACK_LINK,
   COUNTRIES,
-  deleteAddressPagePath,
-  editAddressPagePath,
+  addressDeletePath,
+  addressEditPath,
   expectRedirectTo,
   expectServerErrorPage,
   getPage,
@@ -99,7 +99,7 @@ describe('GET /address-book/{addressId}', () => {
 
     const { result, statusCode } = await getPage(
       getServer(),
-      addressPagePath(ADDRESS_ID),
+      addressPath(ADDRESS_ID),
       'view-get'
     )
 
@@ -117,15 +117,13 @@ describe('GET /address-book/{addressId}', () => {
 
     const { result } = await getPage(
       getServer(),
-      addressPagePath(ADDRESS_ID),
+      addressPath(ADDRESS_ID),
       'view-get-buttons'
     )
 
     const group = load(result)('.govuk-button-group')
-    const editLink = group.find(`a[href="${editAddressPagePath(ADDRESS_ID)}"]`)
-    const deleteLink = group.find(
-      `a[href="${deleteAddressPagePath(ADDRESS_ID)}"]`
-    )
+    const editLink = group.find(`a[href="${addressEditPath(ADDRESS_ID)}"]`)
+    const deleteLink = group.find(`a[href="${addressDeletePath(ADDRESS_ID)}"]`)
     expect(editLink).toHaveLength(1)
     expect(editLink.hasClass('govuk-button--secondary')).toBe(true)
     expect(deleteLink).toHaveLength(1)
@@ -137,7 +135,7 @@ describe('GET /address-book/{addressId}', () => {
 
     const { result } = await getPage(
       getServer(),
-      addressPagePath(ADDRESS_ID),
+      addressPath(ADDRESS_ID),
       'view-get-title'
     )
 
@@ -150,8 +148,8 @@ describe('GET /address-book/{addressId}', () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await getPage(getServer(), addressPagePath(ADDRESS_ID), 'view-not-found'),
-      ADDRESS_BOOK_PATH
+      await getPage(getServer(), addressPath(ADDRESS_ID), 'view-not-found'),
+      addressBookPath()
     )
   })
 
@@ -160,34 +158,30 @@ describe('GET /address-book/{addressId}', () => {
 
     const response = await getPageAsOtherOrganisation(
       getServer(),
-      addressPagePath(ADDRESS_ID),
+      addressPath(ADDRESS_ID),
       'view-other-org'
     )
 
     expect(scope.isDone()).toBe(true)
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
   })
 
   test('Should redirect to the address book for a malformed address id without reaching the address book', async () => {
     const response = await getPage(
       getServer(),
-      addressPagePath(MALFORMED_ADDRESS_ID),
+      addressPath(MALFORMED_ADDRESS_ID),
       'view-bad-id'
     )
 
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
   })
 
   test('Should redirect to the address book for soft-deleted tombstones', async () => {
     serveStoredAddress({ ...STORED_ADDRESS, deleted: true })
 
     expectRedirectTo(
-      await getPage(
-        getServer(),
-        addressPagePath(ADDRESS_ID),
-        'view-get-tombstone'
-      ),
-      ADDRESS_BOOK_PATH
+      await getPage(getServer(), addressPath(ADDRESS_ID), 'view-get-tombstone'),
+      addressBookPath()
     )
   })
 
@@ -195,7 +189,7 @@ describe('GET /address-book/{addressId}', () => {
     serveAddressBookServerError(addressApiPath(ADDRESS_ID))
 
     expectServerErrorPage(
-      await getPage(getServer(), addressPagePath(ADDRESS_ID), 'view-get-500')
+      await getPage(getServer(), addressPath(ADDRESS_ID), 'view-get-500')
     )
   })
 })
@@ -208,7 +202,7 @@ describe('GET /address-book/{addressId} with a return', () => {
 
     const { result, statusCode } = await getPage(
       getServer(),
-      `${addressPagePath(ADDRESS_ID)}${RETURN_HOME}`,
+      `${addressPath(ADDRESS_ID)}${RETURN_HOME}`,
       'view-return-ins'
     )
 
@@ -217,10 +211,10 @@ describe('GET /address-book/{addressId} with a return', () => {
     expect($(BACK_LINK).attr('href')).toBe(INS_HOME)
     const group = $('.govuk-button-group')
     expect(
-      group.find(`a[href="${editAddressPagePath(ADDRESS_ID)}${RETURN_HOME}"]`)
+      group.find(`a[href="${addressEditPath(ADDRESS_ID)}${RETURN_HOME}"]`)
     ).toHaveLength(1)
     expect(
-      group.find(`a[href="${deleteAddressPagePath(ADDRESS_ID)}${RETURN_HOME}"]`)
+      group.find(`a[href="${addressDeletePath(ADDRESS_ID)}${RETURN_HOME}"]`)
     ).toHaveLength(1)
   })
 
@@ -229,12 +223,12 @@ describe('GET /address-book/{addressId} with a return', () => {
 
     const { result, statusCode } = await getPage(
       getServer(),
-      `${addressPagePath(ADDRESS_ID)}?return=${encodeURIComponent(addressPagePath(ADDRESS_ID))}`,
+      `${addressPath(ADDRESS_ID)}?return=${encodeURIComponent(addressPath(ADDRESS_ID))}`,
       'view-return-own-page'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(load(result)(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect(load(result)(BACK_LINK).attr('href')).toBe(addressBookPath())
   })
 
   test('Should link Back to a return on the animals frontend origin', async () => {
@@ -243,7 +237,7 @@ describe('GET /address-book/{addressId} with a return', () => {
 
     const { result, statusCode } = await getPage(
       getServer(),
-      `${addressPagePath(ADDRESS_ID)}?return=${encodeURIComponent(animalsUrl)}`,
+      `${addressPath(ADDRESS_ID)}?return=${encodeURIComponent(animalsUrl)}`,
       'view-return-animals'
     )
 
@@ -256,13 +250,13 @@ describe('GET /address-book/{addressId} with a return', () => {
 
     const { result, statusCode } = await getPage(
       getServer(),
-      `${addressPagePath(ADDRESS_ID)}?return=https%3A%2F%2Fevil.example%2F`,
+      `${addressPath(ADDRESS_ID)}?return=https%3A%2F%2Fevil.example%2F`,
       'view-return-other-origin'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect($(BACK_LINK).attr('href')).toBe(addressBookPath())
     expect(result).not.toContain('?return')
   })
 
@@ -272,7 +266,7 @@ describe('GET /address-book/{addressId} with a return', () => {
     expectRedirectTo(
       await getPage(
         getServer(),
-        `${addressPagePath(ADDRESS_ID)}${RETURN_HOME}`,
+        `${addressPath(ADDRESS_ID)}${RETURN_HOME}`,
         'view-return-not-found'
       ),
       INS_HOME
@@ -283,7 +277,7 @@ describe('GET /address-book/{addressId} with a return', () => {
     expectRedirectTo(
       await getPage(
         getServer(),
-        `${addressPagePath(MALFORMED_ADDRESS_ID)}${RETURN_HOME}`,
+        `${addressPath(MALFORMED_ADDRESS_ID)}${RETURN_HOME}`,
         'view-return-bad-id'
       ),
       INS_HOME
@@ -299,7 +293,7 @@ describe('GET /address-book/{addressId} with a return', () => {
       expectRedirectTo(
         await getPage(
           getServer(),
-          `${addressPagePath(MALFORMED_ADDRESS_ID)}?return=${encoded}`,
+          `${addressPath(MALFORMED_ADDRESS_ID)}?return=${encoded}`,
           'view-return-encoded'
         ),
         location

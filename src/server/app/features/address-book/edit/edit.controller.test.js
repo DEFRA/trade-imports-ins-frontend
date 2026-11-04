@@ -3,15 +3,15 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESS_BOOK_PATH,
+  addressBookPath,
   ADDRESS_FORM_LABELS,
   ADDRESS_ID,
   addressApiPath,
-  addressPagePath,
+  addressPath,
   BACK_LINK,
   COUNTRIES,
   COUNTRY_OPTIONS,
-  editAddressPagePath,
+  addressEditPath,
   expectRedirectTo,
   expectServerErrorPage,
   getPage,
@@ -55,15 +55,10 @@ const RECOVERABLE_ERROR_MESSAGE =
   'Sorry, there is a problem with the service. Try again in a few minutes.'
 
 const getEdit = (server, sessionId, query = '') =>
-  getPage(server, `${editAddressPagePath(ADDRESS_ID)}${query}`, sessionId)
+  getPage(server, `${addressEditPath(ADDRESS_ID)}${query}`, sessionId)
 
 const postEdit = (server, sessionId, payload, query = '') =>
-  postPage(
-    server,
-    `${editAddressPagePath(ADDRESS_ID)}${query}`,
-    sessionId,
-    payload
-  )
+  postPage(server, `${addressEditPath(ADDRESS_ID)}${query}`, sessionId, payload)
 
 const countryValuesOf = ($) =>
   $(COUNTRY_OPTIONS)
@@ -168,9 +163,7 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     const { result } = await getEdit(getServer(), 'edit-get-back-default')
 
-    expect(load(result)(BACK_LINK).attr('href')).toBe(
-      addressPagePath(ADDRESS_ID)
-    )
+    expect(load(result)(BACK_LINK).attr('href')).toBe(addressPath(ADDRESS_ID))
   })
 
   test('Should link Back to the page the edit was opened from', async () => {
@@ -190,7 +183,7 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     expectRedirectTo(
       await getEdit(getServer(), 'edit-get-unknown'),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -199,7 +192,7 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     expectRedirectTo(
       await getEdit(getServer(), 'edit-get-deleted'),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -208,22 +201,22 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     const response = await getPageAsOtherOrganisation(
       getServer(),
-      editAddressPagePath(ADDRESS_ID),
+      addressEditPath(ADDRESS_ID),
       'edit-get-other-organisation'
     )
 
     expect(scope.isDone()).toBe(true)
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
   })
 
   test('Should redirect to the address book for a malformed address id without reaching the address book', async () => {
     const response = await getPage(
       getServer(),
-      editAddressPagePath(MALFORMED_ADDRESS_ID),
+      addressEditPath(MALFORMED_ADDRESS_ID),
       'edit-get-malformed'
     )
 
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
   })
 
   test('Should redirect to the page the edit was opened from when the address is unknown', async () => {
@@ -242,9 +235,9 @@ describe('GET /address-book/{addressId}/edit', () => {
       await getEdit(
         getServer(),
         'edit-get-unknown-own-page',
-        `?return=${encodeURIComponent(addressPagePath(ADDRESS_ID))}`
+        `?return=${encodeURIComponent(addressPath(ADDRESS_ID))}`
       ),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -273,7 +266,7 @@ describe('POST /address-book/{addressId}/edit', () => {
       name: UPDATED_NAME
     })
 
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
     expect(scope.isDone()).toBe(true)
     expect(sent).toEqual({ ...VALID_ADDRESS_PAYLOAD, name: UPDATED_NAME })
   })
@@ -347,7 +340,7 @@ describe('POST /address-book/{addressId}/edit', () => {
 
     expectRedirectTo(
       await postEdit(getServer(), 'edit-post-not-live', VALID_ADDRESS_PAYLOAD),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -377,7 +370,7 @@ describe('POST /address-book/{addressId}/edit', () => {
         'edit-post-update-404',
         VALID_ADDRESS_PAYLOAD
       ),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
@@ -420,7 +413,7 @@ describe('POST /address-book/{addressId}/edit', () => {
   test('Should go to the view page on Cancel with no return, sending nothing', async () => {
     expectRedirectTo(
       await postEdit(getServer(), 'edit-post-cancel', { cancel: 'true' }),
-      addressPagePath(ADDRESS_ID)
+      addressPath(ADDRESS_ID)
     )
   })
 

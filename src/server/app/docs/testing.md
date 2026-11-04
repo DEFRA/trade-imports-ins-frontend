@@ -51,9 +51,9 @@ for the pattern, and the helpers in
 (`runInRealMode()`, `refuseOutboundHttp()`, `addressBookApi()`,
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
 `address-book-requests.js`, the one owner of the address book tests'
-set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
-`addressPagePath(addressId)`, `editAddressPagePath(addressId)`,
-`deleteAddressPagePath(addressId)`, `RETURN_HOME`), address book API paths
+set-up: page paths (`addressBookPath()`, `addressAddPath()`,
+`addressPath(id)`, `addressEditPath(id)` and `addressDeletePath(id)`,
+re-exported from `app/shared/paths.js`, and `RETURN_HOME`), address book API paths
 (`addressesApiPath(organisationId)`, `addressApiPath(addressId,
 organisationId)`, both defaulting to the session organisation), fixtures
 (`ADDRESS_ID`, `STORED_ADDRESS`, `VALID_ADDRESS_PAYLOAD`,

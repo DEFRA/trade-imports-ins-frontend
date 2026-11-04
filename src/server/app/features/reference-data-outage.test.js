@@ -2,11 +2,11 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../common/constants/status-codes.js'
 import {
-  ADD_ADDRESS_PATH,
-  ADDRESS_BOOK_PATH,
+  addressAddPath,
+  addressBookPath,
   ADDRESS_ID,
-  addressPagePath,
-  editAddressPagePath,
+  addressPath,
+  addressEditPath,
   getPage,
   INVALID_ADDRESS_PAYLOAD,
   postPage,
@@ -50,7 +50,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(getServer(), ADDRESS_BOOK_PATH, 'outage-list')
+      await getPage(getServer(), addressBookPath(), 'outage-list')
     )
   })
 
@@ -58,7 +58,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(getServer(), ADD_ADDRESS_PATH, 'outage-add')
+      await getPage(getServer(), addressAddPath(), 'outage-add')
     )
   })
 
@@ -67,7 +67,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(getServer(), addressPagePath(ADDRESS_ID), 'outage-view')
+      await getPage(getServer(), addressPath(ADDRESS_ID), 'outage-view')
     )
   })
 
@@ -78,7 +78,7 @@ describe('#referenceDataOutage', () => {
     expectServiceUnavailablePage(
       await postPage(
         getServer(),
-        editAddressPagePath(ADDRESS_ID),
+        addressEditPath(ADDRESS_ID),
         'outage-edit-save',
         INVALID_ADDRESS_PAYLOAD
       )

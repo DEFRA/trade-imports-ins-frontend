@@ -2,8 +2,8 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADD_ADDRESS_PATH,
-  ADDRESS_BOOK_PATH,
+  addressAddPath,
+  addressBookPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
@@ -35,7 +35,7 @@ describe('#addressBookListController', () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, parisDepotAddress]))
 
     const { $, statusCode } = await readPage(
-      ADDRESS_BOOK_PATH,
+      addressBookPath(),
       'list-with-addresses'
     )
 
@@ -63,7 +63,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?page=2`,
+      `${addressBookPath()}?page=2`,
       'list-page-2'
     )
 
@@ -74,10 +74,10 @@ describe('#addressBookListController', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      ADDRESS_BOOK_PATH,
-      `${ADDRESS_BOOK_PATH}?page=2`,
-      `${ADDRESS_BOOK_PATH}?page=3`,
-      `${ADDRESS_BOOK_PATH}?page=4`
+      addressBookPath(),
+      `${addressBookPath()}?page=2`,
+      `${addressBookPath()}?page=3`,
+      `${addressBookPath()}?page=4`
     ])
     expect(textOf($, '.govuk-pagination__item--current')).toBe('2')
   })
@@ -88,7 +88,7 @@ describe('#addressBookListController', () => {
       const scope = stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
       const { statusCode } = await readPage(
-        `${ADDRESS_BOOK_PATH}?page=${queryPage}`,
+        `${addressBookPath()}?page=${queryPage}`,
         'list-unusable-page'
       )
 
@@ -112,7 +112,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?page=99`,
+      `${addressBookPath()}?page=99`,
       'list-past-last-page'
     )
 
@@ -131,7 +131,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=green`,
+      `${addressBookPath()}?q=green`,
       'list-search-one-page'
     )
 
@@ -146,7 +146,7 @@ describe('#addressBookListController', () => {
     )
 
     const { statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=fran`,
+      `${addressBookPath()}?q=fran`,
       'list-search-country'
     )
 
@@ -163,13 +163,13 @@ describe('#addressBookListController', () => {
       stubAddressPage({ page: '1', q: 'green' }, addressPage)
 
       const { $ } = await readPage(
-        `${ADDRESS_BOOK_PATH}?q=green`,
+        `${addressBookPath()}?q=green`,
         'list-clear-search'
       )
 
       const clearSearch = $('[data-testid="address-book-clear-search"]')
       expect(textOf($, clearSearch)).toBe('Clear search')
-      expect(clearSearch.attr('href')).toBe(ADDRESS_BOOK_PATH)
+      expect(clearSearch.attr('href')).toBe(addressBookPath())
       expect(
         $('[data-testid="address-book-results-label"]')
           .next()
@@ -189,7 +189,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=green&countryCode=GB&page=2`,
+      `${addressBookPath()}?q=green&countryCode=GB&page=2`,
       'list-search-page-2'
     )
 
@@ -200,10 +200,10 @@ describe('#addressBookListController', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      `${ADDRESS_BOOK_PATH}?q=green`,
-      `${ADDRESS_BOOK_PATH}?q=green&page=2`,
-      `${ADDRESS_BOOK_PATH}?q=green&page=3`,
-      `${ADDRESS_BOOK_PATH}?q=green&page=4`
+      `${addressBookPath()}?q=green`,
+      `${addressBookPath()}?q=green&page=2`,
+      `${addressBookPath()}?q=green&page=3`,
+      `${addressBookPath()}?q=green&page=4`
     ])
   })
 
@@ -211,7 +211,7 @@ describe('#addressBookListController', () => {
     stubAddressBookUnavailable()
 
     const { $, html, statusCode } = await readPage(
-      ADDRESS_BOOK_PATH,
+      addressBookPath(),
       'list-500'
     )
 
@@ -226,7 +226,7 @@ describe('#addressBookListController', () => {
       'Manage your addresses for use across all your import notifications'
     )
     expect(contentOf($).children('p').next('div').find('a').attr('href')).toBe(
-      ADD_ADDRESS_PATH
+      addressAddPath()
     )
     expect(contentOf($).children('form').find('input[name="q"]')).toHaveLength(
       1
