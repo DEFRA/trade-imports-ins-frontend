@@ -20,7 +20,10 @@ import { copy } from '../copy/copy.en.js'
 import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
-import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-form-autocomplete.js'
+import {
+  AUTOCOMPLETE_BY_FIELD,
+  FIELDS_WITHOUT_AUTOCOMPLETE
+} from '../../../../common/test-helpers/address-form-autocomplete.js'
 import {
   CONSIGNMENT_CONTACT_HANDSHAKE,
   JOURNEY_HANDSHAKES_BY_ROLE,
@@ -154,7 +157,7 @@ test.describe('add address reached from a notification journey', () => {
     }
   })
 
-  test('gives each personal-data field its browser autocomplete hint', async ({
+  test('sets autocomplete on address lines, town, postcode, email and phone, and none on name, county and country', async ({
     page
   }) => {
     await openFromJourney(page, 'stub-org-add-journey-autocomplete')
@@ -164,6 +167,11 @@ test.describe('add address reached from a notification journey', () => {
         'autocomplete',
         autocomplete
       )
+    }
+    for (const field of FIELDS_WITHOUT_AUTOCOMPLETE) {
+      await expect(
+        page.getByLabel(fieldLabels[field], { exact: true })
+      ).not.toHaveAttribute('autocomplete')
     }
   })
 

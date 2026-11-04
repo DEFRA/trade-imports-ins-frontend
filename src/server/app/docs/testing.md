@@ -78,7 +78,8 @@ add and edit forms' field widths),
 `expect-address-form-autocomplete.js`
 (`expectAddressFormAutocomplete(result)`, the add and edit forms' browser
 autocomplete hints, read from `address-form-autocomplete.js`'s
-`AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
+`AUTOCOMPLETE_BY_FIELD` and `FIELDS_WITHOUT_AUTOCOMPLETE`, which the fit
+specs import too),
 `journey-handshake.js` (`handshakeContextOf(handshake)`, the handshake
 context the app builds from a handshake's query or form fields,
 `JOURNEY_HANDSHAKES_BY_ROLE`, one complete journey

@@ -130,7 +130,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     expectAddressFormWidths(result)
   })
 
-  test('Should give each personal-data field its browser autocomplete hint and none to County or Country', async () => {
+  test('Should set autocomplete on address lines, town, postcode, email and phone, and none on name, county and country', async () => {
     serveStoredAddress()
 
     const { result } = await getEdit(getServer(), 'edit-get-autocomplete')

@@ -738,7 +738,7 @@ describe(
       expectAddressFormWidths(result)
     })
 
-    test('GET gives each personal-data field its browser autocomplete hint and none to County or Country', async () => {
+    test('GET sets autocomplete on address lines, town, postcode, email and phone, and none on name, county and country', async () => {
       const { result } = await getAdd(getServer(), 'add-get-autocomplete')
 
       expectAddressFormAutocomplete(result)
