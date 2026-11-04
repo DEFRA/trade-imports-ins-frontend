@@ -102,7 +102,7 @@ export const copy = {
     },
     phone: {
       required: 'Enter a phone number',
-      maxLength: (max) => `Telephone number must be ${max} characters or fewer`
+      maxLength: (max) => `Phone number must be ${max} characters or fewer`
     },
     email: {
       required: 'Enter an email address',

@@ -125,7 +125,7 @@ export const maxLengthValidations = [
     'phone',
     fieldLabels.phone,
     FIELD_RULES.phone.maxLength,
-    'Telephone number must be 20 characters or fewer'
+    'Phone number must be 20 characters or fewer'
   ],
   [
     'email',
