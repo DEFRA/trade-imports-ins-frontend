@@ -299,7 +299,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     ).toContain('GREEN VALLEY FARM address updated')
   })
 
-  test('Should re-render the form with the posted values and the summary links when the data is invalid', async () => {
+  test('Should re-render the form with the posted email and the summary links when the data is invalid', async () => {
     serveStoredAddress()
 
     const { result, statusCode } = await postEdit(
@@ -400,12 +400,13 @@ describe('POST /address-book/{addressId}/edit', () => {
     const { result, statusCode } = await postEdit(
       server(),
       'edit-post-live-read-500',
-      VALID_ADDRESS_PAYLOAD
+      { ...VALID_ADDRESS_PAYLOAD, name: UPDATED_NAME }
     )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toContain('govuk-notification-banner')
     expect(result).toContain(RECOVERABLE_ERROR_MESSAGE)
-    expect(result).toContain(`value="${STORED_ADDRESS.name}"`)
+    expect(load(result)('#name').val()).toBe(UPDATED_NAME)
   })
 
   test('Should go to the view page on Cancel with no return, sending nothing', async () => {
