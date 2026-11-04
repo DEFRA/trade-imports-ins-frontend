@@ -53,7 +53,9 @@ test.describe('view address', () => {
     ).toBeVisible()
   })
 
-  test('leaves out a blank address line 2 and county', async ({ page }) => {
+  test('shows every field of an address except a blank address line 2 and county', async ({
+    page
+  }) => {
     await openSeedAddress(page, 'stub-org-view-rows')
 
     await expect(page.getByRole('term')).toHaveText([
@@ -76,7 +78,7 @@ test.describe('view address', () => {
     ])
   })
 
-  test('shows address line 2 and County (optional) when the address has them', async ({
+  test('shows every field of an address, address line 2 and County (optional) included, when the address has them', async ({
     page
   }) => {
     await addValidAddressToFreshOrganisation(page, {
@@ -108,7 +110,7 @@ test.describe('view address', () => {
     ])
   })
 
-  test('offers Edit and Delete for the address being viewed', async ({
+  test('offers Edit as a secondary button and Delete as a warning button for the address being viewed', async ({
     page
   }) => {
     await openSeedAddress(page, 'stub-org-view-actions')
