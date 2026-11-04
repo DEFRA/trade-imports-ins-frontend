@@ -95,7 +95,7 @@ describe('#copy', () => {
     })
   })
 
-  it('Should word the list intro, filter disclosure, search field and hint, Type select and its options, search button and empty results line', () => {
+  it('Should word the list intro, filter disclosure, search field and hint, Type select label and placeholder, search button and empty results line', () => {
     expect(copy.list.intro).toBe(
       'Manage your addresses for use across all your import notifications'
     )
