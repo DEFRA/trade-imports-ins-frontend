@@ -76,11 +76,7 @@ describe('the address types that must be in the United Kingdom', () => {
 })
 
 describe('the place uses', () => {
-  test.each([
-    ['PLACE_OF_ORIGIN', ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR],
-    ['PLACE_OF_DESTINATION', ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
-  ])('Should hold %s, a use the type %s lists', (use, addressType) => {
-    expect(PLACE_USES).toContain(use)
-    expect(addressTypeOfUse(use)).toBe(addressType)
+  test('Should be exactly the place of origin and the place of destination, in that order', () => {
+    expect(PLACE_USES).toEqual(['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION'])
   })
 })
