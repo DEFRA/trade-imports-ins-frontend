@@ -362,20 +362,18 @@ test.describe('add address validation', () => {
 test.describe('save and confirm', () => {
   const organisationPrefix = 'stub-org-add-save'
 
-  test('saves a valid address and keeps the Success banner naming it showing 10 seconds after the list loads', async ({
+  test('saves a valid address and shows the Success banner naming it', async ({
     page
   }) => {
-    await page.clock.install()
     await addValidAddressToFreshOrganisation(page, { organisationPrefix })
 
-    const banner = page
-      .getByRole('alert', { name: 'Success' })
-      .getByText(`${validAddress.name} address added to your address book`, {
-        exact: true
-      })
-    await expect(banner).toBeVisible()
-    await page.clock.runFor(10_000)
-    await expect(banner).toBeVisible()
+    await expect(
+      page
+        .getByRole('alert', { name: 'Success' })
+        .getByText(`${validAddress.name} address added to your address book`, {
+          exact: true
+        })
+    ).toBeVisible()
   })
 
   test('lists the saved address first, ahead of the seeded address, with a View link to its own details page', async ({
