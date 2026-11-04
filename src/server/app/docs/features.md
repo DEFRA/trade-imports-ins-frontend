@@ -79,7 +79,7 @@ root:
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
 specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
-`dashboard.js` and `seed-address.js`. `view-model/list.js` owns the list's
+`dashboard.js`, `return-query.js` (`withReturn`) and `seed-address.js`. `view-model/list.js` owns the list's
 name lines, postal lines and results line, which the list controller builds
 into table cells.
 
