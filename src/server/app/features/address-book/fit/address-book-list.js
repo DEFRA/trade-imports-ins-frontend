@@ -35,13 +35,10 @@ export const selectedTabOf = (page) =>
 export const panelHeadingLocatorOf = (page) =>
   page.getByRole('main').getByRole('heading', { level: 2 })
 
-export const namesListedBy = (page) =>
-  page.getByRole('row').locator('td:first-child').allInnerTexts()
+const nameCellsOf = (page) => page.getByRole('row').locator('td:first-child')
 
 export const expectNamesListed = async (page, names) => {
-  expect(await namesListedBy(page)).toEqual(
-    names.map((name) => name.replace(' ', '\n'))
-  )
+  await expect(nameCellsOf(page)).toHaveText(names)
 }
 
 export const expectAddressBookList = async (page) => {

@@ -195,7 +195,7 @@ validation tables.
 `UNKNOWN_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE`,
 `openAddressBookList`, `subNavigationLinkLocatorsOf` (the address type tabs'
 links), `selectedTabOf` (the tab marked current), `panelHeadingLocatorOf`
-(the selected tab's panel heading), `namesListedBy` and `expectNamesListed`
+(the selected tab's panel heading), `expectNamesListed`
 (the names in the list's Name column), `expectAddressBookList`,
 `expectEmptyAddressBookList`, `searchFieldOf`, `typeSelectOf` (the
 Playwright locator for the Type select; the jsdom and Cheerio reader in
