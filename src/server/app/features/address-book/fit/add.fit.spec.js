@@ -36,6 +36,7 @@ import {
 import { signIn } from '../../../../../../fit/sign-in.js'
 import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-form-autocomplete.js'
 import {
+  ANIMALS_BASE_URL,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   JOURNEY_HANDSHAKES_BY_ROLE,
   returnUrlFor,
@@ -562,7 +563,7 @@ test.describe('add address reached from a notification journey with JavaScript o
   test('Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer uses', async ({
     page
   }) => {
-    await page.route('http://localhost:3000/**', (route) => route.abort())
+    await page.route(`${ANIMALS_BASE_URL}/**`, (route) => route.abort())
     await openAddFormFromJourney(
       page,
       `stub-org-add-journey-ticked-${crypto.randomUUID()}`,
