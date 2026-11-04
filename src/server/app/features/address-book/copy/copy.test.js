@@ -141,7 +141,8 @@ describe('#copy', () => {
     expect(copy.successBanner.deletedUnnamed).toBe('Address deleted')
   })
 
-  it('Should word the delete summary label, confirmation sentence, warning, fallback and Yes, delete and No, cancel', () => {
+  it('Should word the delete heading, summary label, confirmation sentence, warning, fallback and Yes, delete and No, cancel', () => {
+    expect(copy.delete.title).toBe('Delete this address?')
     expect(copy.delete.summaryAddress).toBe('Address')
     expect(copy.delete.confirmation).toBe(
       'Confirm that you want to delete this address.'
@@ -152,13 +153,6 @@ describe('#copy', () => {
     expect(copy.delete.notApplicable).toBe('Not applicable')
     expect(copy.delete.confirm).toBe('Yes, delete')
     expect(copy.delete.cancel).toBe('No, cancel')
-  })
-
-  it('Should word the delete heading and cap the name at 255 characters', () => {
-    expect(copy.delete.title).toBe('Delete this address?')
-    expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
-      'Name must be 255 characters or fewer'
-    )
   })
 
   it('Should word the Welsh added, updated, deleted and unnamed deleted banners', () => {
@@ -213,5 +207,11 @@ describe('#copy', () => {
     expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
     expect(copy.errors.countryCode.required).toBe('Select a country')
     expect(copy.errors.phone.required).toBe('Enter a phone number')
+  })
+
+  it('Should cap the name at 255 characters in its maxLength message', () => {
+    expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
+      'Name must be 255 characters or fewer'
+    )
   })
 })
