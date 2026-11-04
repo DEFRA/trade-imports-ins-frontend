@@ -99,7 +99,7 @@ describe('#addressBookListController', () => {
   )
 
   test('shows the last page, asked for a second time, when the page number is past the last page', async () => {
-    const stalePage = stubAddressPage(
+    const pastLastPage = stubAddressPage(
       { page: '99' },
       pageOf([], { page: 99, totalItems: 12, totalPages: 2 })
     )
@@ -114,11 +114,11 @@ describe('#addressBookListController', () => {
 
     const { $, statusCode } = await readPage(
       `${ADDRESS_BOOK_PATH}?page=99`,
-      'list-stale-page'
+      'list-past-last-page'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(stalePage.isDone()).toBe(true)
+    expect(pastLastPage.isDone()).toBe(true)
     expect(lastPage.isDone()).toBe(true)
     expect(resultsLineOf($)).toBe('Showing 9-12 of 12')
     expect(bodyRowCountOf($)).toBe(2)
