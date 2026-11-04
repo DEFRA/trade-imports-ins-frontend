@@ -180,7 +180,8 @@ names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
 `saveAndContinueButton`,
 `chooseAddressType` (chooses a type on the 'Choose an address type' page and
 continues), `openAddForm` (opens the address form through the type page with
-a type chosen), `tickUses` (ticks the uses checkboxes it is given),
+a type chosen), `useCheckbox` (the checkbox for one use), `tickUses` (ticks the
+uses checkboxes it is given),
 `openAddFormFromJourney` (signs in and opens the add form with a journey
 handshake, the consignor's by default), `addressTypeListUrl` (an address
 type's list URL, written out rather than built by the list view model),

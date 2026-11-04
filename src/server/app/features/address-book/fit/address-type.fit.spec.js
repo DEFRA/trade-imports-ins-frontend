@@ -21,6 +21,7 @@ import {
   malformedEmail,
   openAddForm,
   refuseSaveThenReopenAddForm,
+  useCheckbox,
   validAddress
 } from './address-form.js'
 import { openAddressBookList } from './address-book-list.js'
@@ -37,6 +38,9 @@ const addFormHeading = (page) =>
 
 const continueButton = (page) =>
   page.getByRole('button', { name: typeCopy.continue })
+
+const addressTypeErrorMessage = (page) =>
+  page.locator('.govuk-error-message').getByText(errors.addressType.required)
 
 const openTypePageFromList = async (page, organisationId) => {
   await openAddressBookList(page, { organisationId })
@@ -83,11 +87,7 @@ test.describe('choose an address type', () => {
 
     const summary = page.getByRole('alert')
     await expect(summary.getByRole('heading')).toHaveText('There is a problem')
-    await expect(
-      page
-        .locator('.govuk-error-message')
-        .getByText(errors.addressType.required)
-    ).toBeVisible()
+    await expect(addressTypeErrorMessage(page)).toBeVisible()
     await expectNoSeriousOrCriticalViolations(
       page,
       'Choose an address type with an error'
@@ -193,12 +193,7 @@ const expectEnteredAddressKept = async (page, use) => {
   for (const [field, value] of Object.entries(entered)) {
     await expect(page.getByLabel(fieldLabels[field])).toHaveValue(value)
   }
-  await expect(
-    page.getByRole('checkbox', {
-      name: copy.uses.options[use].label,
-      exact: true
-    })
-  ).toBeChecked()
+  await expect(useCheckbox(page, use)).toBeChecked()
 }
 
 const expectRefusedEntryKeptOnReturn = async (
@@ -248,11 +243,7 @@ test.describe('choose an address type without JavaScript', () => {
 
     await continueButton(page).click()
 
-    await expect(
-      page
-        .locator('.govuk-error-message')
-        .getByText(errors.addressType.required)
-    ).toBeVisible()
+    await expect(addressTypeErrorMessage(page)).toBeVisible()
 
     await openAddForm(page, ADDRESS_TYPES.BRANCH)
     await expect(addFormHeading(page)).toBeVisible()

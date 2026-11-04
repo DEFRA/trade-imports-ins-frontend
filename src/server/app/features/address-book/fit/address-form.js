@@ -89,14 +89,15 @@ export const openAddForm = async (
   await expect(page).toHaveURL(addressAddPath())
 }
 
+export const useCheckbox = (page, use) =>
+  page.getByRole('checkbox', {
+    name: copy.uses.options[use].label,
+    exact: true
+  })
+
 export const tickUses = async (page, uses) => {
   for (const use of uses) {
-    await page
-      .getByRole('checkbox', {
-        name: copy.uses.options[use].label,
-        exact: true
-      })
-      .check()
+    await useCheckbox(page, use).check()
   }
 }
 

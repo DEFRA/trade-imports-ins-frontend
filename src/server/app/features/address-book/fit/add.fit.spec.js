@@ -18,6 +18,7 @@ import {
   saveAndContinueButton,
   setFieldValue,
   tickUses,
+  useCheckbox,
   validAddress
 } from './address-form.js'
 import {
@@ -162,12 +163,7 @@ test.describe('add address uses question', () => {
       usesGroupOf(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
     ).toContainText(copy.errors.uses.required)
     await errorLink(page, copy.errors.uses.required).click()
-    await expect(
-      page.getByRole('checkbox', {
-        name: copy.uses.options.PLACE_OF_ORIGIN.label,
-        exact: true
-      })
-    ).toBeFocused()
+    await expect(useCheckbox(page, 'PLACE_OF_ORIGIN')).toBeFocused()
     await expectNoSeriousOrCriticalViolations(page, 'Add address uses error')
   })
 
@@ -298,12 +294,7 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
         copy.errors.uses.required
       )
       await errorLink(page, copy.errors.uses.required).click()
-      await expect(
-        page.getByRole('checkbox', {
-          name: copy.uses.options[offeredUses[0]].label,
-          exact: true
-        })
-      ).toBeFocused()
+      await expect(useCheckbox(page, offeredUses[0])).toBeFocused()
     })
   }
 
@@ -549,9 +540,7 @@ test.describe('add address uses question reached from a notification journey', (
     await expect(page.getByLabel(fieldLabels.name)).toHaveValue(
       validAddress.name
     )
-    await expect(
-      page.getByRole('checkbox', { name: 'Importer', exact: true })
-    ).toBeChecked()
+    await expect(useCheckbox(page, 'IMPORTER')).toBeChecked()
   })
 })
 
