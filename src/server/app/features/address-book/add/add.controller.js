@@ -21,10 +21,10 @@ import {
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
-  chosenAddressType,
+  storedChosenAddressType,
   clearAddInProgress,
-  keepEnteredAddress,
-  keptEnteredAddress
+  storeEnteredAddress,
+  storedEnteredAddress
 } from '../add-in-progress.js'
 import { addFormCountryOffer, GB_COUNTRY } from '../address-countries.js'
 import {
@@ -78,19 +78,19 @@ const openingEntryFor = (request, addMode) => {
   if (addMode !== ADD_MODES.ADDRESS_BOOK) {
     return { formValues: formValuesOf(), tickedUses: [] }
   }
-  const { formValues, tickedUses } = keptEnteredAddress(request)
+  const { formValues, tickedUses } = storedEnteredAddress(request)
   return {
     formValues: formValues ?? formValuesOf({ countryCode: GB_COUNTRY.code }),
     tickedUses
   }
 }
 
-const keepAddressBookEntry = (
+const storeAddressBookEntry = (
   request,
   { handshakeContext, addressType, postedValues, postedUses }
 ) => {
   if (addModeFor(handshakeContext) === ADD_MODES.ADDRESS_BOOK) {
-    keepEnteredAddress(request, {
+    storeEnteredAddress(request, {
       formValues: postedValues,
       tickedUses: keepUsesOfferedBy(addressType, postedUses)
     })
@@ -229,7 +229,7 @@ const redirectAfterCancel = (toolkit, handshakeContext) => {
 }
 
 const redirectIfNoAddressTypeChosen = (request, toolkit, addMode) => {
-  if (addMode !== ADD_MODES.ADDRESS_BOOK || chosenAddressType(request)) {
+  if (addMode !== ADD_MODES.ADDRESS_BOOK || storedChosenAddressType(request)) {
     return undefined
   }
   logger.info(
@@ -255,7 +255,7 @@ const get = async (request, toolkit) => {
     return redirectToTypePage
   }
 
-  const addressType = chosenAddressType(request)
+  const addressType = storedChosenAddressType(request)
   const { formValues: openingFormValues, tickedUses } = openingEntryFor(
     request,
     addMode
@@ -496,8 +496,8 @@ const post = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const postedValues = formValuesOf(payload)
   const postedUses = postedUsesOf(payload)
-  const addressType = chosenAddressType(request)
-  keepAddressBookEntry(request, {
+  const addressType = storedChosenAddressType(request)
+  storeAddressBookEntry(request, {
     handshakeContext,
     addressType,
     postedValues,

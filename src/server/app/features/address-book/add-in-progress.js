@@ -10,19 +10,19 @@ export const storeChosenAddressType = (request, addressType) =>
     addressType
   })
 
-export const chosenAddressType = (request) => {
+export const storedChosenAddressType = (request) => {
   const stored = request.yar.get(SESSION_KEY)?.addressType
   return isAddressType(stored) ? stored : undefined
 }
 
-export const keepEnteredAddress = (request, { formValues, tickedUses }) =>
+export const storeEnteredAddress = (request, { formValues, tickedUses }) =>
   request.yar.set(SESSION_KEY, {
     ...request.yar.get(SESSION_KEY),
     formValues,
     tickedUses
   })
 
-export const keptEnteredAddress = (request) => {
+export const storedEnteredAddress = (request) => {
   const { formValues, tickedUses = [] } = request.yar.get(SESSION_KEY) ?? {}
   return { formValues, tickedUses }
 }

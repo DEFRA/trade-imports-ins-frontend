@@ -108,10 +108,10 @@ root:
 - [`success-message.js`](../features/address-book/success-message.js) —
   yar-backed, read-once.
 - [`add-in-progress.js`](../features/address-book/add-in-progress.js) —
-  yar-backed state of the add in progress: `storeChosenAddressType` keeps
-  the address type chosen on the type page and any entry already kept,
-  `chosenAddressType` reads the type back (only a value in `ADDRESS_TYPES`,
-  else nothing), `keepEnteredAddress` and `keptEnteredAddress` keep and read
+  yar-backed state of the add in progress: `storeChosenAddressType` stores
+  the address type chosen on the type page beside any entry already stored,
+  `storedChosenAddressType` reads the type back (only a value in `ADDRESS_TYPES`,
+  else nothing), `storeEnteredAddress` and `storedEnteredAddress` store and read
   the field values and `tickedUses` posted with the add form, and `clearAddInProgress`
   removes everything, on a new add and on a save.
 

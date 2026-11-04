@@ -11,7 +11,7 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
-  chosenAddressType,
+  storedChosenAddressType,
   clearAddInProgress,
   storeChosenAddressType
 } from '../add-in-progress.js'
@@ -60,7 +60,7 @@ const get = (request, toolkit) => {
     )
   }
   return buildView(toolkit, {
-    selectedAddressType: chosenAddressType(request)
+    selectedAddressType: storedChosenAddressType(request)
   })
 }
 
