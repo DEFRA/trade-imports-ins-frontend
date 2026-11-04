@@ -1,6 +1,5 @@
 import { expect } from 'vitest'
 
-import { addressTypeStartPath } from '../../app/shared/paths.js'
 import { ADDRESS_TYPES } from '../../app/services/address-book/index.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { addressBookApi } from './real-mode.js'
@@ -20,7 +19,7 @@ export const ADD_ADDRESS_PATH = `${ADDRESS_BOOK_PATH}/add`
 
 export const ADDRESS_TYPE_PATH = `${ADD_ADDRESS_PATH}/address-type`
 
-export const ADDRESS_TYPE_START_PATH = addressTypeStartPath()
+export const ADDRESS_TYPE_START_PATH = `${ADDRESS_TYPE_PATH}?start=true`
 
 export const RETURN_HOME = '?return=%2F'
 
