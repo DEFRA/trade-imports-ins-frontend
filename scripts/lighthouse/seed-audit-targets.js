@@ -4,21 +4,21 @@ import process from 'node:process'
 
 import puppeteer from 'puppeteer'
 
-import signIn from '../../tests/lighthouse/auth-setup.cjs'
+import signInAndChooseAddressType from '../../tests/lighthouse/auth-setup.cjs'
 import { auditUrls, reportNames, TARGETS_FILE } from './audit-targets.js'
 import { createPageClient } from './page-client.js'
-import { chooseAddressType, seedAddress } from './seed-address.js'
+import { seedAddress } from './seed-address.js'
 
 const HTTP_OK = 200
 
 const origin = process.env.LIGHTHOUSE_BASE_URL ?? 'http://localhost:3002'
 
-const signedInCookies = async () => {
+const cookiesWithAddressTypeChosen = async () => {
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-gpu']
   })
   try {
-    await signIn(browser, { url: origin })
+    await signInAndChooseAddressType(browser, { url: origin })
     const { hostname } = new URL(origin)
     return (await browser.cookies()).filter(({ domain }) =>
       hostname.endsWith(domain.replace(/^\./, ''))
@@ -50,11 +50,10 @@ const write = (payload) => {
   writeFileSync(TARGETS_FILE, `${JSON.stringify(payload, null, 2)}\n`)
 }
 
-const client = createPageClient(origin, await signedInCookies())
-const addressId = await seedAddress(client)
-await chooseAddressType(client)
+const auditCookies = await cookiesWithAddressTypeChosen()
+const addressId = await seedAddress(createPageClient(origin, auditCookies))
 const urls = auditUrls(origin, addressId)
-await assertUrlsRenderTheirOwnPage(urls, client)
+await assertUrlsRenderTheirOwnPage(urls, createPageClient(origin, auditCookies))
 write({ origin, addressId, urls, reports: reportNames(origin, addressId) })
 
 process.stdout.write(

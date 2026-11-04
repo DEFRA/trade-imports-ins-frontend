@@ -56,5 +56,7 @@ export const createPageClient = (baseUrl, cookies = []) => {
     }
   }
 
-  return { document, submit }
+  const heldCookies = () => [...jar].map(([name, value]) => ({ name, value }))
+
+  return { document, submit, cookies: heldCookies }
 }

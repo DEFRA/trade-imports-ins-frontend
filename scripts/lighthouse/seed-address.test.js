@@ -176,6 +176,27 @@ describe('#chooseAddressType', () => {
     expect(typeStep.isDone()).toBe(true)
   })
 
+  test('Should hold the session cookie the chosen type was saved in, beside the cookies it started with', async () => {
+    app()
+      .get('/address-book/add/address-type')
+      .reply(HTTP_OK, page('<form></form>'))
+      .post('/address-book/add/address-type')
+      .reply(HTTP_FOUND, '', {
+        location: '/address-book/add',
+        'set-cookie': 'session=type-chosen; Path=/; HttpOnly'
+      })
+    const client = createPageClient(ORIGIN, [
+      { name: 'sid', value: 'signed-in' }
+    ])
+
+    await chooseAddressType(client)
+
+    expect(client.cookies()).toEqual([
+      { name: 'sid', value: 'signed-in' },
+      { name: 'session', value: 'type-chosen' }
+    ])
+  })
+
   test('Should refuse when the address type page does not move on to the add form', async () => {
     app()
       .get('/address-book/add/address-type')

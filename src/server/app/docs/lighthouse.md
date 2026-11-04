@@ -22,8 +22,8 @@ The three `{id}` pages are audited on one address the setup step creates
 through the app's own address type page and add page, named
 `Lighthouse seed address`. A run that finds it already in the book reuses it
 rather than adding another. The add page sends a user with no address type
-chosen to the type page, so the seed walk and the sign-in set-up each choose a
-type on the type page before they open the add form. The seed walk ticks
+chosen to the type page, so the seed walk and the sign-in set-up each choose
+Origin or Consignor through `chooseAddressType` before they open the add form. The seed walk ticks
 Place of origin, as the add page requires a use, and expects the save to land
 on the Origin and Consignor tab of the list.
 
@@ -34,20 +34,24 @@ needs a query string before it renders. Both are checked against the live
 route table, so a stale entry fails the run rather than quietly shrinking
 the audit. `scripts/lighthouse/seed-address.js` (with
 `seed-address.test.js`) holds the seed address, the find-or-create walk
-through the list, type and add pages, and `chooseAddressType`, which the
-targets step also calls before it re-fetches the add page.
+through the list, type and add pages, and `chooseAddressType`, the one step
+that chooses Origin or Consignor on the type page and fails unless it lands
+on the add form. `scripts/lighthouse/page-client.js` is the cookie-carrying
+HTTP client both use.
 
 ## What the run does
 
 `npm run lighthouse` is `run-s lighthouse:targets lighthouse:run`.
 
-`lighthouse:targets` (`seed-audit-targets.js`) signs in through
-`tests/lighthouse/auth-setup.cjs`, which chooses an address type after
-signing in, seeds the address, chooses a type again, derives the audit
+`lighthouse:targets` (`seed-audit-targets.js`) signs in and chooses an
+address type through `tests/lighthouse/auth-setup.cjs`, which runs
+`chooseAddressType` with the browser's cookies and hands the resulting
+session cookie back to the browser. It seeds the address, derives the audit
 URLs from the app's registered routes and writes them to
-`.lighthouse/targets.json`. It then re-fetches every URL and fails when one
-does not return 200 for its own page — a redirected URL would silently
-audit whatever it landed on.
+`.lighthouse/targets.json`. It then re-fetches every URL with the cookies the
+set-up left, as each audit starts with, and fails when one does not return
+200 for its own page — a redirected URL would silently audit whatever it
+landed on.
 
 `lighthouse:run` (`run-audit.js`) clears the previous run's reports, runs
 `lhci autorun`, then renames each report from the LHCI filename pattern to

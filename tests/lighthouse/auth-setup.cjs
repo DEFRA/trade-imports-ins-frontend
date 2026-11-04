@@ -1,10 +1,11 @@
 const { TimeoutError } = require('puppeteer')
 
-const { addressTypePath } = require('../../src/server/app/shared/paths.js')
+const { createPageClient } = require('../../scripts/lighthouse/page-client.js')
+const {
+  chooseAddressType
+} = require('../../scripts/lighthouse/seed-address.js')
 
 const SIGN_IN_TIMEOUT_MS = 10000
-const FIRST_ADDRESS_TYPE = '#addressType'
-const CONTINUE_BUTTON = 'form button'
 
 const waitForSignInForm = async (page) => {
   try {
@@ -27,15 +28,16 @@ const signInForm = (page, url) => {
     : page.$('input[name="crn"]')
 }
 
-const chooseAddressType = async (page, url) => {
-  await page.goto(new URL(addressTypePath(), url).toString(), {
-    waitUntil: 'domcontentloaded'
-  })
-  await page.click(FIRST_ADDRESS_TYPE)
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-    page.click(CONTINUE_BUTTON)
-  ])
+const chooseAddressTypeInBrowser = async (browser, url) => {
+  const client = createPageClient(url, await browser.cookies())
+  await chooseAddressType(client)
+  await browser.setCookie(
+    ...client.cookies().map(({ name, value }) => ({
+      name,
+      value,
+      domain: new URL(url).hostname
+    }))
+  )
 }
 
 module.exports = async (browser, { url }) => {
@@ -54,7 +56,7 @@ module.exports = async (browser, { url }) => {
     ])
   }
 
-  await chooseAddressType(page, url)
+  await chooseAddressTypeInBrowser(browser, url)
 
   await page.close()
 }
