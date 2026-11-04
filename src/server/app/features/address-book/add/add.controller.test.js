@@ -37,6 +37,7 @@ import {
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { GB_COUNTRY } from '../address-countries.js'
+import { copy } from '../copy/copy.en.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
   expectPlaceholderThenCountriesNoneSelected,
@@ -47,7 +48,6 @@ import {
   expectSummaryLinks,
   REQUIRED_MESSAGES
 } from '../../../../common/test-helpers/expect-address-form-errors.js'
-import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
@@ -758,7 +758,7 @@ describe(
       const $ = load(result)
       const firstOption = $(COUNTRY_OPTIONS).first()
       expect(firstOption.attr('value')).toBe('')
-      expect(textOf($, firstOption)).toBe(COUNTRY_PLACEHOLDER)
+      expect(textOf($, firstOption)).toBe(copy.form.countryPlaceholder)
       expect($(COUNTRY_OPTIONS).length).toBeGreaterThan(1)
       expect($(SELECTED_COUNTRY_OPTION)).toHaveLength(0)
     })

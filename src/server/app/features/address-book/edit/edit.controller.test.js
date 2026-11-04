@@ -34,7 +34,6 @@ import {
   expectSummaryLinks,
   REQUIRED_MESSAGES
 } from '../../../../common/test-helpers/expect-address-form-errors.js'
-import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
@@ -43,6 +42,7 @@ import {
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { GB_COUNTRY } from '../address-countries.js'
+import { copy } from '../copy/copy.en.js'
 import { pathWithReturn } from '../return-to.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
@@ -163,7 +163,9 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     const $ = load(result)
     expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', GB_COUNTRY.code])
-    expect(textOf($, $(COUNTRY_OPTIONS).first())).toBe(COUNTRY_PLACEHOLDER)
+    expect(textOf($, $(COUNTRY_OPTIONS).first())).toBe(
+      copy.form.countryPlaceholder
+    )
     expect($(SELECTED_COUNTRY_OPTION)).toHaveLength(0)
   })
 

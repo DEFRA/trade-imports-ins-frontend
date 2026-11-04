@@ -16,6 +16,7 @@ import {
 } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { GB_COUNTRY } from '../address-countries.js'
+import { copy } from '../copy/copy.en.js'
 import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
@@ -26,7 +27,6 @@ import {
   returnUrlFor
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
-import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 
 const submit = (page) =>
@@ -59,7 +59,7 @@ test.describe('add address', () => {
     const country = page.getByLabel('Country')
     await expect(country).toHaveValue('')
     await expect(country.getByRole('option').first()).toHaveText(
-      COUNTRY_PLACEHOLDER
+      copy.form.countryPlaceholder
     )
     await expect(
       country.getByRole('option', { name: GB_COUNTRY.name })
@@ -207,7 +207,7 @@ test.describe('add address reached from a notification journey', () => {
       await expect(country).toHaveJSProperty('tagName', 'SELECT')
       await expect(country).toHaveValue('')
       await expect(country.getByRole('option')).toHaveText([
-        COUNTRY_PLACEHOLDER,
+        copy.form.countryPlaceholder,
         ...addressFormCountryNames
       ])
     })
