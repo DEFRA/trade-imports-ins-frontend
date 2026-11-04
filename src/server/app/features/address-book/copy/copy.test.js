@@ -128,7 +128,7 @@ describe('#copy', () => {
     }
   )
 
-  it('Should name the address in each success banner', () => {
+  it('Should word the added, updated, deleted and unnamed deleted banners', () => {
     expect(copy.successBanner.added(ADDRESS_NAME)).toBe(
       'Green Farm address added to your address book'
     )
