@@ -3,12 +3,7 @@ import { config } from '../../../config/config.js'
 
 async function startServer() {
   const server = await createServer()
-  try {
-    await server.start()
-  } catch (err) {
-    await server.stop({ timeout: 0 })
-    throw err
-  }
+  await server.start()
 
   server.logger.info('Server started successfully')
   server.logger.info(
