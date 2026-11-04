@@ -29,6 +29,9 @@ import { expectNoSeriousOrCriticalViolations } from './axe.js'
 
 const { addressType: typeCopy, errors } = copy
 const ADDRESS_TYPE_VALUES = Object.values(ADDRESS_TYPES)
+const TEXT_FIELD_LABELS = fieldLabelsInFormOrder.filter(
+  (label) => label !== fieldLabels.countryCode
+)
 
 const typePageHeading = (page) =>
   page.getByRole('heading', { level: 1, name: typeCopy.title })
@@ -39,8 +42,8 @@ const addFormHeading = (page) =>
 const continueButton = (page) =>
   page.getByRole('button', { name: typeCopy.continue })
 
-const addressTypeErrorMessage = (page) =>
-  page.locator('.govuk-error-message').getByText(errors.addressType.required)
+const addressTypeGroup = (page) =>
+  page.getByRole('group', { name: typeCopy.title })
 
 const openTypePageFromList = async (page, organisationId) => {
   await openAddressBookList(page, { organisationId })
@@ -59,18 +62,17 @@ test.describe('choose an address type', () => {
   }) => {
     await openTypePageFromList(page, 'stub-org-type-render')
 
-    await expect(page.locator('.govuk-caption-l')).toHaveText(typeCopy.caption)
+    await expect(
+      page.getByText(typeCopy.caption, { exact: true })
+    ).toBeVisible()
     await expect(typePageHeading(page)).toBeVisible()
-    await expect(page.locator('.govuk-radios__label')).toHaveText(
-      ADDRESS_TYPE_VALUES.map(
-        (addressType) => typeCopy.options[addressType].label
-      )
-    )
-    await expect(page.locator('.govuk-radios__hint')).toHaveText(
-      ADDRESS_TYPE_VALUES.map(
-        (addressType) => typeCopy.options[addressType].hint
-      )
-    )
+    const radios = page.getByRole('radio')
+    await expect(radios).toHaveCount(ADDRESS_TYPE_VALUES.length)
+    for (const [index, addressType] of ADDRESS_TYPE_VALUES.entries()) {
+      const { label, hint } = typeCopy.options[addressType]
+      await expect(radios.nth(index)).toHaveAccessibleName(label)
+      await expect(radios.nth(index)).toHaveAccessibleDescription(hint)
+    }
     await expect(continueButton(page)).toBeVisible()
     await expect(backLink(page)).toHaveAttribute('href', addressBookPath())
     await expectNoTypeChosen(page)
@@ -87,7 +89,9 @@ test.describe('choose an address type', () => {
 
     const summary = page.getByRole('alert')
     await expect(summary.getByRole('heading')).toHaveText('There is a problem')
-    await expect(addressTypeErrorMessage(page)).toBeVisible()
+    await expect(addressTypeGroup(page)).toContainText(
+      errors.addressType.required
+    )
     await expectNoSeriousOrCriticalViolations(
       page,
       'Choose an address type with an error'
@@ -108,7 +112,9 @@ test.describe('choose an address type', () => {
     await chooseAddressType(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
 
     await expect(page).toHaveURL(addressAddPath())
-    await expect(page.locator('.govuk-caption-l')).toHaveText(copy.add.caption)
+    await expect(
+      page.getByText(copy.add.caption, { exact: true })
+    ).toBeVisible()
     await expect(addFormHeading(page)).toBeVisible()
     await expect(page.locator(JOURNEY_STRIP)).toHaveCount(0)
     const country = page.getByLabel(fieldLabels.countryCode)
@@ -174,10 +180,8 @@ test.describe('choose an address type', () => {
 
     await chooseAddressType(page)
 
-    for (const label of fieldLabelsInFormOrder) {
-      if (label !== fieldLabels.countryCode) {
-        await expect(page.getByLabel(label)).toHaveValue('')
-      }
+    for (const label of TEXT_FIELD_LABELS) {
+      await expect(page.getByLabel(label)).toHaveValue('')
     }
   })
 })
@@ -243,7 +247,9 @@ test.describe('choose an address type without JavaScript', () => {
 
     await continueButton(page).click()
 
-    await expect(addressTypeErrorMessage(page)).toBeVisible()
+    await expect(addressTypeGroup(page)).toContainText(
+      errors.addressType.required
+    )
 
     await openAddForm(page, ADDRESS_TYPES.BRANCH)
     await expect(addFormHeading(page)).toBeVisible()
