@@ -39,10 +39,8 @@ export const PLACE_USES = Object.freeze([
   USES.PLACE_OF_DESTINATION
 ])
 
-const UNITED_KINGDOM_ADDRESS_TYPES = Object.freeze([
-  ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-  ADDRESS_TYPES.BRANCH
-])
-
 export const addressTypeRequiresUnitedKingdom = (addressType) =>
-  UNITED_KINGDOM_ADDRESS_TYPES.includes(addressType)
+  [
+    ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+    ADDRESS_TYPES.BRANCH
+  ].includes(addressType)
