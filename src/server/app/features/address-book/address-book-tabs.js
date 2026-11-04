@@ -22,8 +22,7 @@ export const ADDRESS_BOOK_TABS = Object.freeze([
 export const [DEFAULT_ADDRESS_BOOK_TAB] = ADDRESS_BOOK_TABS
 
 export const resolveTab = (requestedAddressType) =>
-  ADDRESS_BOOK_TABS.find((tab) => tab.addressType === requestedAddressType) ??
-  DEFAULT_ADDRESS_BOOK_TAB
+  ADDRESS_BOOK_TABS.find((tab) => tab.addressType === requestedAddressType)
 
 export const resolveUse = (tab, requestedUse) =>
   tab.uses.find((use) => use === requestedUse)

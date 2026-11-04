@@ -78,9 +78,10 @@ root:
   `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address
   type, the uses its Type select offers in order, and the copy key of its label
   and panel heading), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and Consignor tab),
-  `resolveTab` (the tab a requested address type names, the default tab when it
-  is missing or unknown) and `resolveUse` (the requested use when the tab offers
-  it, else nothing). The address type values (`ADDRESS_TYPES`) and the uses each
+  `resolveTab` (the tab a requested address type names, else nothing) and
+  `resolveUse` (the requested use when the tab offers it, else nothing). The
+  list controller serves the default tab when `resolveTab` finds none, and
+  logs a requested address type it replaced. The address type values (`ADDRESS_TYPES`) and the uses each
   lists (`USES_BY_ADDRESS_TYPE`) belong to `services/address-book`, imported
   through its barrel.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —

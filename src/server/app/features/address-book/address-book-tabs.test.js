@@ -31,12 +31,9 @@ describe('address-book-tabs', () => {
     ['an empty address type', ''],
     ['an unknown address type', 'TRANSPORTER'],
     ['an address type in the wrong case', 'branch']
-  ])(
-    'resolves %s to the Origin and Consignor tab',
-    (_description, requested) => {
-      expect(resolveTab(requested)).toBe(ORIGIN_TAB)
-    }
-  )
+  ])('resolves %s to no tab', (_description, requested) => {
+    expect(resolveTab(requested)).toBeUndefined()
+  })
 
   test('offers each tab its own uses in the Type select order', () => {
     expect(ADDRESS_BOOK_TABS.map((tab) => tab.uses)).toEqual([

@@ -22,6 +22,7 @@ import {
 } from '../address-countries.js'
 import {
   ADDRESS_BOOK_TABS,
+  DEFAULT_ADDRESS_BOOK_TAB,
   resolveTab,
   resolveUse
 } from '../address-book-tabs.js'
@@ -115,11 +116,29 @@ const loadAddressPage = async (organisationId, { page, ...listFilters }) => {
   })
 }
 
+const selectTab = (organisationId, requestedAddressType) => {
+  const requestedTab = resolveTab(requestedAddressType)
+  if (requestedTab) {
+    return requestedTab
+  }
+  if (requestedAddressType) {
+    logger.info(
+      {
+        organisationId,
+        requestedAddressType,
+        addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType
+      },
+      'Address book list ignored an address type it does not offer'
+    )
+  }
+  return DEFAULT_ADDRESS_BOOK_TAB
+}
+
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const page = parsePage(request.query.page)
   const searchTerm = request.query.q?.trim() ?? ''
-  const selectedTab = resolveTab(request.query.addressType)
+  const selectedTab = selectTab(organisationId, request.query.addressType)
   const { addressType } = selectedTab
   const requestedUse = request.query.use
   const use = resolveUse(selectedTab, requestedUse)

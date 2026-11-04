@@ -5,7 +5,9 @@ import {
   ADDRESS_BOOK_PATH,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
+import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
+import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
   ADDRESS_BOOK_TABS,
@@ -61,6 +63,58 @@ describe('#addressBookListTabs', () => {
       expect(scope.isDone()).toBe(true)
     }
   )
+
+  describe('logging the address type it serves in place of the one asked', () => {
+    const IGNORED_ADDRESS_TYPE_MESSAGE =
+      'Address book list ignored an address type it does not offer'
+    const infoLogs = captureInfoLogs()
+
+    test('logs an unknown address type once, with the organisation and the address type served', async () => {
+      stubAddressPage(
+        { page: '1', addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType },
+        pageOf([highlandAddress])
+      )
+
+      await readPage(
+        `${ADDRESS_BOOK_PATH}?addressType=TRANSPORTER`,
+        'list-unknown-tab-log'
+      )
+
+      expect(infoLogs(IGNORED_ADDRESS_TYPE_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            requestedAddressType: 'TRANSPORTER',
+            addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType
+          },
+          message: IGNORED_ADDRESS_TYPE_MESSAGE
+        }
+      ])
+    })
+
+    test.each([
+      [
+        'no address type',
+        ADDRESS_BOOK_PATH,
+        DEFAULT_ADDRESS_BOOK_TAB.addressType
+      ],
+      [
+        'an address type it offers',
+        `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.BRANCH}`,
+        ADDRESS_TYPES.BRANCH
+      ]
+    ])('logs nothing for %s', async (_description, url, servedAddressType) => {
+      const scope = stubAddressPage(
+        { page: '1', addressType: servedAddressType },
+        pageOf([highlandAddress])
+      )
+
+      await readPage(url, 'list-known-tab-log')
+
+      expect(scope.isDone()).toBe(true)
+      expect(infoLogs(IGNORED_ADDRESS_TYPE_MESSAGE)).toEqual([])
+    })
+  })
 
   test.each([
     [
