@@ -193,8 +193,8 @@ origin by default, and lands on that type's list), `refuseSaveThenReopenAddForm`
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
 `UNKNOWN_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE`,
-`openAddressBookList`, `subNavigationLinkLocatorsOf` (the address type tabs'
-links), `selectedTabOf` (the tab marked current), `panelHeadingLocatorOf`
+`openAddressBookList`, `tabLinksOf` (the address type tabs'
+links), `selectedTabOf` (the tab marked current), `tabPanelHeadingOf`
 (the selected tab's panel heading), `expectNamesListed`
 (the names in the list's Name column), `expectAddressBookList`,
 `expectEmptyAddressBookList`, `searchFieldOf`, `typeSelectOf` (the

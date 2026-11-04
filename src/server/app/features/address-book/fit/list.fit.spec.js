@@ -10,7 +10,7 @@ import {
   openFilterDisclosure,
   expectFilterDisclosureOpensAndCloses,
   openAddressBookList,
-  panelHeadingLocatorOf,
+  tabPanelHeadingOf,
   resultsLineOf,
   searchAndExpectMatches,
   searchAndExpectQuery,
@@ -19,7 +19,7 @@ import {
   followTab,
   typeSelectOf,
   selectedTabOf,
-  subNavigationLinkLocatorsOf
+  tabLinksOf
 } from './address-book-list.js'
 import { expectDashboard } from './dashboard.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
@@ -220,9 +220,7 @@ const TABS = [
 const [ORIGIN_TAB, , BRANCH_TAB] = TABS
 
 const expectTabsInOrderWithSelected = async (page, selectedLabel) => {
-  await expect(subNavigationLinkLocatorsOf(page)).toHaveText(
-    TABS.map(({ label }) => label)
-  )
+  await expect(tabLinksOf(page)).toHaveText(TABS.map(({ label }) => label))
   await expect(selectedTabOf(page)).toHaveText(selectedLabel)
 }
 
@@ -233,7 +231,7 @@ test.describe('address type tabs', () => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
 
     await expectTabsInOrderWithSelected(page, ORIGIN_TAB.label)
-    await expect(panelHeadingLocatorOf(page)).toHaveText(ORIGIN_TAB.heading)
+    await expect(tabPanelHeadingOf(page)).toHaveText(ORIGIN_TAB.heading)
   })
 
   test('shows Origin and Consignor selected when the tab is unknown', async ({
@@ -257,7 +255,7 @@ test.describe('address type tabs', () => {
       })
 
       await expectTabsInOrderWithSelected(page, label)
-      await expect(panelHeadingLocatorOf(page)).toHaveText(heading)
+      await expect(tabPanelHeadingOf(page)).toHaveText(heading)
       await expectNamesListed(page, names)
     })
   }
@@ -320,7 +318,7 @@ test.describe('address type tabs', () => {
     })
 
     await expectTabsInOrderWithSelected(page, BRANCH_TAB.label)
-    await expect(panelHeadingLocatorOf(page)).toHaveText(BRANCH_TAB.heading)
+    await expect(tabPanelHeadingOf(page)).toHaveText(BRANCH_TAB.heading)
   })
 
   test('has no serious or critical axe violations on the Branch tab', async ({
@@ -345,7 +343,7 @@ test.describe('address type tabs without JavaScript', () => {
       await followTab(page, label)
 
       await expectTabsInOrderWithSelected(page, label)
-      await expect(panelHeadingLocatorOf(page)).toHaveText(heading)
+      await expect(tabPanelHeadingOf(page)).toHaveText(heading)
       await expectNamesListed(page, names)
     }
   })
@@ -463,7 +461,7 @@ test.describe('filter addresses', () => {
     await searchAndExpectQuery(page, 'stub', { submitWith: 'button' })
 
     const mainLinks = page.getByRole('main').getByRole('link')
-    const tabLinks = subNavigationLinkLocatorsOf(page)
+    const tabLinks = tabLinksOf(page)
     const rowLinks = page.getByRole('table').getByRole('link')
     await expect(rowLinks).not.toHaveCount(0)
     await expect(mainLinks).toHaveText([

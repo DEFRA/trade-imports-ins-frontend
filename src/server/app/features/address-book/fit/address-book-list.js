@@ -23,16 +23,15 @@ export const openAddressBookList = async (
   await page.goto(`${addressBookPath()}${query}`)
 }
 
-const addressTypesNavOf = (page) =>
+const tabsNavOf = (page) =>
   page.getByRole('navigation', { name: 'Address types' })
 
-export const subNavigationLinkLocatorsOf = (page) =>
-  addressTypesNavOf(page).getByRole('link')
+export const tabLinksOf = (page) => tabsNavOf(page).getByRole('link')
 
 export const selectedTabOf = (page) =>
-  addressTypesNavOf(page).locator('[aria-current="page"]')
+  tabsNavOf(page).locator('[aria-current="page"]')
 
-export const panelHeadingLocatorOf = (page) =>
+export const tabPanelHeadingOf = (page) =>
   page.getByRole('main').getByRole('heading', { level: 2 })
 
 const nameCellsOf = (page) => page.getByRole('row').locator('td:first-child')
@@ -88,9 +87,7 @@ export const typeSelectOf = (page) =>
   page.getByRole('combobox', { name: 'Type', exact: true })
 
 export const followTab = (page, label) =>
-  addressTypesNavOf(page)
-    .getByRole('link', { name: label, exact: true })
-    .click()
+  tabsNavOf(page).getByRole('link', { name: label, exact: true }).click()
 
 const submitSearch = async (page, term, { submitWith, use }) => {
   await openFilterDisclosure(page)
