@@ -5,6 +5,7 @@ import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
   ADDRESS_BOOK_PATH,
+  ADDRESS_FORM_LABELS,
   ADDRESS_ID,
   addressApiPath,
   addressPagePath,
@@ -45,18 +46,6 @@ const INS_HOME = '/'
 const ADDRESS_LINE_2_LABEL = 'Address line 2 (optional)'
 const COUNTY_LABEL = 'County (optional)'
 
-const STORED_ADDRESS_ROW_LABELS = [
-  'Name or organisation',
-  'Address line 1',
-  ADDRESS_LINE_2_LABEL,
-  'Town or city',
-  COUNTY_LABEL,
-  'Postcode or Zip code',
-  'Country',
-  'Email address',
-  'Phone number'
-]
-
 const STORED_ADDRESS_ROW_VALUES = [
   STORED_ADDRESS.name,
   STORED_ADDRESS.addressLine1,
@@ -77,7 +66,7 @@ describe('#buildRows', () => {
     )
 
     expect(rows.map((row) => row.key.text)).toEqual(
-      STORED_ADDRESS_ROW_LABELS.filter(
+      ADDRESS_FORM_LABELS.filter(
         (label) => label !== ADDRESS_LINE_2_LABEL && label !== COUNTY_LABEL
       )
     )
@@ -87,16 +76,14 @@ describe('#buildRows', () => {
     const rows = buildRows({ ...STORED_ADDRESS, addressLine2: '   ' }, UK_NAME)
 
     expect(rows.map((row) => row.key.text)).toEqual(
-      STORED_ADDRESS_ROW_LABELS.filter(
-        (label) => label !== ADDRESS_LINE_2_LABEL
-      )
+      ADDRESS_FORM_LABELS.filter((label) => label !== ADDRESS_LINE_2_LABEL)
     )
   })
 
   test('Should render one row per address field with its label and value, address line 2 and county marked optional', () => {
     const rows = buildRows(STORED_ADDRESS, UK_NAME)
 
-    expect(rows.map((row) => row.key.text)).toEqual(STORED_ADDRESS_ROW_LABELS)
+    expect(rows.map((row) => row.key.text)).toEqual(ADDRESS_FORM_LABELS)
     expect(rows.map((row) => row.value.text)).toEqual(STORED_ADDRESS_ROW_VALUES)
   })
 })
@@ -119,9 +106,7 @@ describe('GET /address-book/{addressId}', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
     const $ = load(result)
-    expect(textsOf($, '.govuk-summary-list__key')).toEqual(
-      STORED_ADDRESS_ROW_LABELS
-    )
+    expect(textsOf($, '.govuk-summary-list__key')).toEqual(ADDRESS_FORM_LABELS)
     expect(textsOf($, '.govuk-summary-list__value')).toEqual(
       STORED_ADDRESS_ROW_VALUES
     )
