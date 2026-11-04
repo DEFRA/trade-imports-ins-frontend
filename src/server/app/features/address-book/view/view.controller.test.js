@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { beforeAll, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
@@ -25,7 +25,6 @@ import {
   serveStoredAddress,
   STORED_ADDRESS
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
   textOf,
@@ -98,7 +97,6 @@ describe('#buildRows', () => {
 })
 
 describe('GET /address-book/{addressId}', () => {
-  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test("Should show the signed-in organisation's address field by field with the country by name", async () => {
@@ -213,7 +211,6 @@ describe('GET /address-book/{addressId}', () => {
 })
 
 describe('GET /address-book/{addressId} with a return', () => {
-  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should link Back to an INS return and carry it on Edit and Delete', async () => {

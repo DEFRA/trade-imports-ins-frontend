@@ -1,18 +1,12 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 
-import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { mockOidcConfig } from '../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../common/test-helpers/session-auth.js'
 import {
   insBackendApi,
-  runInRealMode,
   serveCountries
 } from '../../../common/test-helpers/real-mode.js'
-
-vi.mock('../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
+import { startRealModeServer } from '../../../common/test-helpers/test-server.js'
 
 const NOTIFICATIONS_PATH = '/notifications'
 const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
@@ -31,18 +25,7 @@ const pageOf = (content, overrides = {}) => ({
 })
 
 describe('#dashboard', () => {
-  let server
-
-  runInRealMode()
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
+  const server = startRealModeServer()
 
   beforeEach(() => {
     serveCountries([
@@ -68,7 +51,7 @@ describe('#dashboard', () => {
         ])
       )
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-with-notifications')
@@ -110,7 +93,7 @@ describe('#dashboard', () => {
         )
       )
 
-    const { result } = await server.inject({
+    const { result } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-two-statuses')
@@ -136,7 +119,7 @@ describe('#dashboard', () => {
         ])
       )
 
-    const { result } = await server.inject({
+    const { result } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-submitted-link')
@@ -163,7 +146,7 @@ describe('#dashboard', () => {
         ])
       )
 
-    const { result } = await server.inject({
+    const { result } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-draft-link')
@@ -177,18 +160,7 @@ describe('#dashboard', () => {
 })
 
 describe('#dashboard — search, sort and errors', () => {
-  let server
-
-  runInRealMode()
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
+  const server = startRealModeServer()
 
   beforeEach(() => {
     serveCountries([
@@ -213,7 +185,7 @@ describe('#dashboard — search, sort and errors', () => {
         ])
       )
 
-    const { result } = await server.inject({
+    const { result } = await server().inject({
       method: 'GET',
       url: `/?referenceNumber=${REFERENCE_NUMBER}`,
       auth: sessionAuth('dashboard-search-match')
@@ -229,7 +201,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query({ ...DEFAULT_QUERY, referenceNumber: 'GBN-AG-26-999999' })
       .reply(200, pageOf([]))
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: '/?referenceNumber=GBN-AG-26-999999',
       auth: sessionAuth('dashboard-search-no-match')
@@ -245,7 +217,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query(DEFAULT_QUERY)
       .reply(200, pageOf([]))
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-empty-store')
@@ -268,7 +240,7 @@ describe('#dashboard — search, sort and errors', () => {
       })
       .reply(200, pageOf([]))
 
-    await server.inject({
+    await server().inject({
       method: 'GET',
       url: `/?sort=lastUpdated,asc&referenceNumber=${REFERENCE_NUMBER}`,
       auth: sessionAuth('dashboard-sort-forward')
@@ -283,7 +255,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query(DEFAULT_QUERY)
       .reply(200, pageOf([]))
 
-    await server.inject({
+    await server().inject({
       method: 'GET',
       url: '/?sort=not-a-real-option',
       auth: sessionAuth('dashboard-sort-invalid')
@@ -298,7 +270,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query(DEFAULT_QUERY)
       .reply(500, { title: 'Internal Server Error' })
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-error')

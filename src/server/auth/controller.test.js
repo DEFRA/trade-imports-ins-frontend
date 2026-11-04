@@ -1,17 +1,11 @@
 import { vi } from 'vitest'
-import { createServer } from '../server.js'
-import { config } from '../../config/config.js'
 import { statusCodes } from '../common/constants/status-codes.js'
-import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../common/test-helpers/session-auth.js'
+import { startRealModeServer } from '../common/test-helpers/test-server.js'
 import { readEmfDocuments } from '../common/test-helpers/emf-documents.js'
 import { verifyToken } from '../../auth/verify-token.js'
 import { getPermissions } from '../../auth/get-permissions.js'
 import { copy as sharedEn } from '../app/shared/copy.en.js'
-
-vi.mock('../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 vi.mock('../../config/config.js', async (importOriginal) => {
   const { mockAuthConfig } =
@@ -57,34 +51,28 @@ const expectSessionCookieCleared = (headers) => {
 }
 
 describe('#authController', () => {
-  const originalMode = config.get('stubMode')
-  let server
+  beforeAll(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, json: async () => [] }))
+    )
+  })
+
+  afterAll(() => {
+    vi.unstubAllGlobals()
+  })
+
+  const server = startRealModeServer()
 
   const signInOidc = (profileOverrides) =>
-    server.inject({
+    server().inject({
       method: 'GET',
       url: SIGN_IN_OIDC_URL,
       auth: defraIdAuth(profileOverrides)
     })
 
-  beforeAll(async () => {
-    config.set('stubMode', false)
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => ({ ok: true, json: async () => [] }))
-    )
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-    vi.unstubAllGlobals()
-    config.set('stubMode', originalMode)
-  })
-
   test('GET /auth/sign-in redirects to home', async () => {
-    const { statusCode, headers } = await server.inject({
+    const { statusCode, headers } = await server().inject({
       method: 'GET',
       url: '/auth/sign-in',
       auth: {
@@ -98,7 +86,7 @@ describe('#authController', () => {
   })
 
   test('GET /auth/sign-out redirects unauthenticated users to home', async () => {
-    const { statusCode, headers } = await server.inject({
+    const { statusCode, headers } = await server().inject({
       method: 'GET',
       url: '/auth/sign-out'
     })
@@ -109,9 +97,9 @@ describe('#authController', () => {
 
   test('GET /auth/sign-out drops the session and redirects authenticated users to the sign-out URL', async () => {
     const sessionId = 'signout-authenticated'
-    await server.app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
+    await server().app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
 
-    const { statusCode, headers } = await server.inject({
+    const { statusCode, headers } = await server().inject({
       method: 'GET',
       url: '/auth/sign-out',
       auth: sessionAuth(sessionId)
@@ -119,12 +107,12 @@ describe('#authController', () => {
 
     expect(statusCode).toBe(HTTP_STATUS_FOUND)
     expect(headers.location).toBe(SIGNED_OUT_URL)
-    expect(await server.app.cache.get(sessionId)).toBeNull()
+    expect(await server().app.cache.get(sessionId)).toBeNull()
     expectSessionCookieCleared(headers)
   })
 
   test('GET /auth/sign-out-oidc redirects unauthenticated users to home', async () => {
-    const { statusCode, headers } = await server.inject({
+    const { statusCode, headers } = await server().inject({
       method: 'GET',
       url: '/auth/sign-out-oidc'
     })
@@ -135,9 +123,9 @@ describe('#authController', () => {
 
   test('GET /auth/sign-out-oidc clears authenticated session and redirects', async () => {
     const sessionId = 'signout-oidc-authenticated'
-    await server.app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
+    await server().app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
 
-    const { statusCode, headers } = await server.inject({
+    const { statusCode, headers } = await server().inject({
       method: 'GET',
       url: '/auth/sign-out-oidc',
       auth: sessionAuth(sessionId)
@@ -145,7 +133,7 @@ describe('#authController', () => {
 
     expect(statusCode).toBe(HTTP_STATUS_FOUND)
     expect(headers.location).toBe(SIGNED_OUT_URL)
-    expect(await server.app.cache.get(sessionId)).toBeNull()
+    expect(await server().app.cache.get(sessionId)).toBeNull()
     expectSessionCookieCleared(headers)
   })
 
@@ -209,7 +197,7 @@ describe('#authController', () => {
       verifyToken.mockResolvedValue(undefined)
       getPermissions.mockResolvedValue({ role: 'role', scope: [] })
 
-      const { statusCode, headers } = await server.inject({
+      const { statusCode, headers } = await server().inject({
         method: 'GET',
         url: SIGN_IN_OIDC_URL,
         auth: defraIdAuth(),
@@ -229,7 +217,7 @@ describe('#authController', () => {
     })
 
     test('GET /auth/sign-in-oidc records the Defra ID token exchange as failed when sign-in is not authenticated', async () => {
-      const { statusCode, payload } = await server.inject({
+      const { statusCode, payload } = await server().inject({
         method: 'GET',
         url: `${SIGN_IN_OIDC_URL}?code=unused&state=unmatched&refresh=1`,
         app: { defraIdTokenExchangeStartedAt: performance.now() }

@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
@@ -15,7 +15,6 @@ import {
   postPage
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
-import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import {
   textOf,
   textsOf
@@ -42,7 +41,6 @@ const checkedValuesOf = ($) =>
     .get()
 
 describe('#addressTypeController', { concurrent: false }, () => {
-  beforeAll(answerOidcDiscovery)
   const server = startRealModeServer()
   const loggedWith = captureInfoLogs()
 

@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { beforeAll, beforeEach, describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -25,7 +25,6 @@ import {
   VALID_ADDRESS_FIELDS,
   VALID_ADDRESS_PAYLOAD
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { expectDraftJourneyStrip } from '../../../../common/test-helpers/expect-draft-journey-strip.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
@@ -174,7 +173,6 @@ beforeEach(() => {
 })
 
 describe('#addressBookAddController', { concurrent: false }, () => {
-  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('GET sets Cache-Control: no-store', async () => {
@@ -387,7 +385,6 @@ describe(
   '#addressBookAddController — address type guard',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const NO_TYPE_MESSAGE =
       'No address type chosen, sending the user to choose one'
@@ -449,7 +446,6 @@ describe(
   '#addressBookAddController — uses question',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
     const FIRST_USE_OF = (addressType) => USES_BY_ADDRESS_TYPE[addressType][0]
@@ -641,7 +637,6 @@ describe(
   '#addressBookAddController — types that must be in the United Kingdom',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
 
     test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
@@ -705,7 +700,6 @@ describe(
   '#addressBookAddController — replaced country log',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
     const REPLACED_MESSAGE =
@@ -834,7 +828,6 @@ describe(
   '#addressBookAddController — add in progress',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const ENTERED_FIELDS = {
       ...VALID_ADDRESS_FIELDS,
@@ -974,7 +967,6 @@ describe(
   '#addressBookAddController — journey handshake type and use',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
 
@@ -1150,7 +1142,6 @@ describe(
   '#addressBookAddController — journey handshake page',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
 
     test('GET from a role handshake offers Save and select, Save and return to address page and a Cancel and return to hub link, and carries the journey forward in hidden fields', async () => {
@@ -1261,7 +1252,6 @@ describe(
   '#addressBookAddController — journey handshake',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
 
@@ -1440,7 +1430,6 @@ describe(
   '#addressBookAddController — journey handshake by role',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const openAddFrom = async (role) => {
       const { result, statusCode } = await getAdd(
@@ -1578,7 +1567,6 @@ describe(
   '#addressBookAddController — field layout',
   { concurrent: false },
   () => {
-    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
 
     test('GET renders name, address lines and email full width, town, county, postcode and country at one half, and phone at two thirds', async () => {

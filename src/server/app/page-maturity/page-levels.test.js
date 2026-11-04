@@ -1,14 +1,9 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { createServer } from '../../server.js'
-import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
 import { LEVELS } from './levels.js'
 import { PAGE_LEVELS, SECTION_LEVELS } from './page-levels.js'
 import { isInSection } from './page-maturity.js'
-
-vi.mock('../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 describe('page maturity page levels', () => {
   let server

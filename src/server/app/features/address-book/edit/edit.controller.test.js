@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { beforeAll, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -28,7 +28,6 @@ import {
   STORED_ADDRESS,
   VALID_ADDRESS_FIELDS
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import {
@@ -67,7 +66,6 @@ const countryValuesOf = ($) =>
     .get()
 
 describe('GET /address-book/{addressId}/edit', () => {
-  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should head the page and title the browser Edit address and contact details', async () => {
@@ -256,7 +254,6 @@ describe('GET /address-book/{addressId}/edit', () => {
 })
 
 describe('POST /address-book/{addressId}/edit', () => {
-  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should send the edited fields with the stored address type and uses, ignoring any posted uses, and redirect to the address book', async () => {

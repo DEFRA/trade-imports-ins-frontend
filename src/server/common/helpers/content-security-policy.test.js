@@ -1,12 +1,6 @@
 import { createServer } from '../../server.js'
-import { vi } from 'vitest'
 
 import { siblingFrontendBaseUrls } from '../../../config/config.js'
-import { mockOidcConfig } from '../test-helpers/mock-oidc-config.js'
-
-vi.mock('../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 describe('#contentSecurityPolicy', () => {
   let server

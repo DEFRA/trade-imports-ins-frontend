@@ -1,5 +1,4 @@
 import { load } from 'cheerio'
-import { beforeAll } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -8,7 +7,6 @@ import {
   getPage,
   STORED_ADDRESS
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
   textOf,
@@ -105,7 +103,6 @@ export const rowCellsOf = ($, rowIndex) =>
   $('tbody tr').eq(rowIndex).children('td')
 
 export const startServerWithPageReader = () => {
-  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
   return async (url, sessionId) => {
     const { result: html, statusCode } = await getPage(server(), url, sessionId)

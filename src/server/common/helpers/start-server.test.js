@@ -1,10 +1,9 @@
 import { createServer as createNetServer } from 'node:net'
 
-import nock from 'nock'
 import { beforeAll, afterAll, afterEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../config/config.js'
-import { answerOidcDiscovery } from '../test-helpers/answer-oidc-discovery.js'
+import { refuseOutboundHttp } from '../test-helpers/real-mode.js'
 import { startServer } from './start-server.js'
 
 const listenOnFreePort = (host) =>
@@ -17,17 +16,10 @@ const listenOnFreePort = (host) =>
 describe('#startServer', () => {
   const originalPort = config.get('port')
 
-  beforeAll(() => {
-    nock.disableNetConnect()
-  })
+  refuseOutboundHttp()
 
   afterEach(() => {
-    nock.cleanAll()
     config.set('port', originalPort)
-  })
-
-  afterAll(() => {
-    nock.enableNetConnect()
   })
 
   describe('When server starts', () => {
@@ -35,7 +27,6 @@ describe('#startServer', () => {
 
     beforeAll(async () => {
       config.set('port', 0)
-      answerOidcDiscovery()
       server = await startServer()
     })
 
@@ -53,7 +44,6 @@ describe('#startServer', () => {
     test('rejects when the port is already in use', async () => {
       const occupier = await listenOnFreePort(config.get('host'))
       config.set('port', occupier.address().port)
-      answerOidcDiscovery()
 
       try {
         await expect(startServer()).rejects.toThrow(/EADDRINUSE/)

@@ -1,9 +1,8 @@
 import { load } from 'cheerio'
-import { beforeAll, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
-import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
@@ -111,7 +110,6 @@ describe('#deletedSuccessMessage', () => {
 })
 
 describe('GET /address-book/{addressId}/delete', () => {
-  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should render the confirmation with one Address summary row, the warning, Yes, delete and a No, cancel link', async () => {
@@ -253,7 +251,6 @@ describe('GET /address-book/{addressId}/delete', () => {
 })
 
 describe('POST /address-book/{addressId}/delete', () => {
-  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   const interceptDeleteOf = (addressId) =>

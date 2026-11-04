@@ -109,13 +109,12 @@ entry module under `src/client/javascripts/`, name it as an `entry` in
 Write `controller.test.js` in the shape of
 [`add/add.controller.test.js`](../features/address-book/add/add.controller.test.js):
 
-- `vi.mock` of `get-oidc-config.js`, `runInRealMode()`, and
-  `describe(name, { concurrent: false }, fn)`.
-- `createServer()` and `initialize()` in `beforeAll`; `server.stop({
-timeout: 0 })` in `afterAll`.
-- `config.set('csrf.enabled', false)` and `serveCountries(...)` in
-  `beforeEach`.
-- `server.inject` with `auth: sessionAuth('<unique id>')`.
+- `describe(name, { concurrent: false }, fn)` holding
+  `const server = startRealModeServerServingCountries(COUNTRIES)` from
+  `test-server.js`, which runs in real mode, answers the Defra ID OIDC
+  discovery request, starts the server and stops it after the describe.
+- `config.set('csrf.enabled', false)` in `beforeEach`.
+- `server().inject` with `auth: sessionAuth('<unique id>')`.
 - nock scopes from `real-mode.js` for every upstream call, asserted with
   `scope.isDone()`.
 - coverage: GET render, every validation rule's message, raw values

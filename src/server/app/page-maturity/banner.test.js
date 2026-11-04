@@ -1,19 +1,9 @@
 import { load } from 'cheerio'
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { config } from '../../../config/config.js'
 import { nunjucksConfig } from '../../../config/nunjucks/nunjucks.js'
-import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
 import {
   normalisedText,
   textsOf
@@ -21,16 +11,12 @@ import {
 import { sessionAuth } from '../../common/test-helpers/session-auth.js'
 import {
   insBackendApi,
-  runInRealMode,
   serveCountries
 } from '../../common/test-helpers/real-mode.js'
+import { startRealModeServer } from '../../common/test-helpers/test-server.js'
 import { sharedCopy } from '../shared/kit.js'
 import { copy } from './copy/copy.en.js'
 import { BANNER_CLASSES, LEVELS, TAG_CLASSES } from './levels.js'
-
-vi.mock('../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const environment = nunjucksConfig.options.compileOptions.environment
 
@@ -140,18 +126,7 @@ describe('page maturity banner', () => {
 
   describe('on a rendered page', () => {
     const FLAG = 'pageMaturityBanner.enabled'
-    let server
-
-    runInRealMode()
-
-    beforeAll(async () => {
-      server = await createServer()
-      await server.initialize()
-    })
-
-    afterAll(async () => {
-      await server.stop({ timeout: 0 })
-    })
+    const server = startRealModeServer()
 
     afterEach(() => {
       config.set(FLAG, true)
@@ -170,7 +145,7 @@ describe('page maturity banner', () => {
           totalElements: 0,
           totalPages: 0
         })
-      const { result, statusCode } = await server.inject({
+      const { result, statusCode } = await server().inject({
         method: 'GET',
         url: '/',
         auth: sessionAuth(user)
@@ -200,7 +175,7 @@ describe('page maturity banner', () => {
     it('Should show only the Alpha tag on the not found page, though every route has a level', async () => {
       config.set(FLAG, true)
 
-      const { result, statusCode } = await server.inject({
+      const { result, statusCode } = await server().inject({
         method: 'GET',
         url: '/no-such-page',
         auth: sessionAuth('maturity-not-found')

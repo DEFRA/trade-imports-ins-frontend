@@ -78,7 +78,8 @@ side, `journeyUsesHintFor(role)`, the uses question's hint naming that
 role's own use, and `UNREGISTERED_JOURNEY_TYPE`, a journey type the
 registry does not list),
 `answer-oidc-discovery.js` (`answerOidcDiscovery()`, which answers the Defra
-ID OIDC discovery request once with `mockOidcConfig`),
+ID OIDC discovery request once with `mockOidcConfig`; `startRealModeServer()`
+calls it before each server start, so no test calls it itself),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
 notificationId)`, the Draft tag and notification id in the
 journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
