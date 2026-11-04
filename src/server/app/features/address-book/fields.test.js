@@ -11,7 +11,6 @@ import {
   addressRules,
   formValuesOf,
   isRequiredField,
-  keepUsesOfferedBy,
   postalLinesOf,
   postedUsesOf,
   storedTypeAndUsesOf,
@@ -237,27 +236,6 @@ describe('#postedUsesOf', () => {
     ]
   ])('Should give a list for %s', (_name, payload, expected) => {
     expect(postedUsesOf(payload)).toEqual(expected)
-  })
-})
-
-describe('#keepUsesOfferedBy', () => {
-  test('Should keep the posted uses the address type offers, in USES_BY_ADDRESS_TYPE order', () => {
-    expect(
-      keepUsesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'PLACE_OF_ORIGIN'])
-    ).toEqual(['PLACE_OF_ORIGIN', 'CONSIGNOR'])
-    expect(
-      keepUsesOfferedBy('DESTINATION_CONSIGNEE_OR_IMPORTER', [
-        'PLACE_OF_DESTINATION',
-        'CONSIGNEE'
-      ])
-    ).toEqual(['CONSIGNEE', 'PLACE_OF_DESTINATION'])
-  })
-
-  test('Should drop a posted use the address type does not offer', () => {
-    expect(
-      keepUsesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'IMPORTER'])
-    ).toEqual(['CONSIGNOR'])
-    expect(keepUsesOfferedBy('BRANCH', ['CONSIGNOR'])).toEqual([])
   })
 })
 

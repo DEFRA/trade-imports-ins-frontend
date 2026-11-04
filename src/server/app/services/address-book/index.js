@@ -8,7 +8,8 @@ export {
   PLACE_USES,
   USES_BY_ADDRESS_TYPE,
   addressTypeOfUse,
-  addressTypeRequiresUnitedKingdom
+  addressTypeRequiresUnitedKingdom,
+  keepUsesOfferedBy
 } from './address-types.js'
 export { TYPED_SEED } from './typed-seed.js'
 

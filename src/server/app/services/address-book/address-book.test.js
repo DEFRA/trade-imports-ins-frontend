@@ -279,7 +279,7 @@ describe('#mapApiErrorsToFormErrors', () => {
 })
 
 describe('the public surface', () => {
-  test('exposes the five address operations, the error mapper, the validation-failure predicate, the address types, the uses each lists, the place uses, the type that lists a use, the rule of which types must be in the United Kingdom and the typed seed, nothing else', () => {
+  test('exposes the five address operations, the error mapper, the validation-failure predicate, the address types, the uses each lists, the place uses, the type that lists a use, the uses a type offers, the rule of which types must be in the United Kingdom and the typed seed, nothing else', () => {
     expect(Object.keys(addressBook).sort()).toEqual([
       'ADDRESS_TYPES',
       'PLACE_USES',
@@ -291,6 +291,7 @@ describe('the public surface', () => {
       'deleteAddress',
       'getAddress',
       'isValidationFailure',
+      'keepUsesOfferedBy',
       'listAddresses',
       'mapApiErrorsToFormErrors',
       'updateAddress'

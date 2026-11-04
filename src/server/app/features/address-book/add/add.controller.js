@@ -5,6 +5,7 @@ import {
   USES_BY_ADDRESS_TYPE,
   createAddress,
   isValidationFailure,
+  keepUsesOfferedBy,
   mapApiErrorsToFormErrors
 } from '../../../services/address-book/index.js'
 import {
@@ -30,7 +31,6 @@ import { addFormCountryOffer, GB_COUNTRY } from '../address-countries.js'
 import {
   addressRules,
   formValuesOf,
-  keepUsesOfferedBy,
   postedUsesOf,
   usesErrorsOf
 } from '../fields.js'

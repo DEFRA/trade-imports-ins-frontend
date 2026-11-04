@@ -3,9 +3,9 @@ import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
 import {
   USES_BY_ADDRESS_TYPE,
   addressTypeOfUse,
-  addressTypeRequiresUnitedKingdom
+  addressTypeRequiresUnitedKingdom,
+  keepUsesOfferedBy
 } from '../../services/address-book/index.js'
-import { keepUsesOfferedBy } from './fields.js'
 
 export const JOURNEY_TYPES = Object.freeze({
   GBN_AG: 'gbn-ag'

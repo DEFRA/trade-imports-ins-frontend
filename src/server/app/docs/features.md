@@ -32,10 +32,10 @@ root:
   refused and whether the view always shows its row. Each field's
   `maxLength` and `required` match the address book API's `AddressRequest`
   validation, so the form refuses what the API would refuse. The same file owns
-  the uses question's rules: `postedUsesOf` (the posted `uses` as a list),
-  `keepUsesOfferedBy` (the posted uses the chosen address type offers, kept in
-  `USES_BY_ADDRESS_TYPE`'s order, which is not the order the question shows them) and `usesErrorsOf` (the required-use error when none is
-  kept), and `storedTypeAndUsesOf`, the address type and uses an edited
+  the uses question's rules: `postedUsesOf` (the posted `uses` as a list) and
+  `usesErrorsOf` (the required-use error when none is kept; the add
+  controller keeps the posted uses the chosen address type offers through the
+  address book's `keepUsesOfferedBy`), and `storedTypeAndUsesOf`, the address type and uses an edited
   address carries back to the API unchanged. `FIELD_RULES` holds the fields in
   the order the form asks them, which is the order validation errors are
   listed in.
@@ -64,7 +64,7 @@ root:
   does not list), `addressTypeAndUsesOfParty`
   (the address type and the uses a journey-mode save carries: the party's own
   use (`useOfParty`) plus the posted uses its address type offers, through
-  `keepUsesOfferedBy`), `isConsignmentContact` (whether a
+  the address book's `keepUsesOfferedBy`), `isConsignmentContact` (whether a
   handshake is the consignment contact's, so the add page offers the contact's
   controls rather than a role's), `buildReturnUrl` (the journey's address-return
   URL, with an optional address id and `landing`) and

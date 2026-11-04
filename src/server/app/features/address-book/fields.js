@@ -7,7 +7,6 @@ import {
   requiredMaxText,
   requiredOneOf
 } from '../../lib/validate/index.js'
-import { USES_BY_ADDRESS_TYPE } from '../../services/address-book/index.js'
 import { copyFor } from '../../shared/copy.js'
 import { copy as en } from './copy/copy.en.js'
 import { copy as cy } from './copy/copy.cy.js'
@@ -57,9 +56,6 @@ export const storedTypeAndUsesOf = ({ addressType, uses }) => ({
 })
 
 export const postedUsesOf = (payload) => [payload.uses ?? []].flat()
-
-export const keepUsesOfferedBy = (addressType, postedUses) =>
-  USES_BY_ADDRESS_TYPE[addressType].filter((use) => postedUses.includes(use))
 
 const { errors } = copyFor({ en, cy })
 

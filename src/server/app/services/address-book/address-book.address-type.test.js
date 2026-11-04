@@ -15,7 +15,8 @@ import {
   PLACE_USES,
   USES_BY_ADDRESS_TYPE,
   addressTypeOfUse,
-  addressTypeRequiresUnitedKingdom
+  addressTypeRequiresUnitedKingdom,
+  keepUsesOfferedBy
 } from './address-types.js'
 import * as addressBook from './index.js'
 import { TYPED_SEED } from './typed-seed.js'
@@ -77,6 +78,27 @@ describe('the uses each address type lists', () => {
       ],
       BRANCH: ['BRANCH_ADDRESS']
     })
+  })
+})
+
+describe('the uses an address type offers', () => {
+  test('Should keep the given uses the address type offers, in USES_BY_ADDRESS_TYPE order', () => {
+    expect(
+      keepUsesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'PLACE_OF_ORIGIN'])
+    ).toEqual(['PLACE_OF_ORIGIN', 'CONSIGNOR'])
+    expect(
+      keepUsesOfferedBy('DESTINATION_CONSIGNEE_OR_IMPORTER', [
+        'PLACE_OF_DESTINATION',
+        'CONSIGNEE'
+      ])
+    ).toEqual(['CONSIGNEE', 'PLACE_OF_DESTINATION'])
+  })
+
+  test('Should drop a given use the address type does not offer', () => {
+    expect(
+      keepUsesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'IMPORTER'])
+    ).toEqual(['CONSIGNOR'])
+    expect(keepUsesOfferedBy('BRANCH', ['CONSIGNOR'])).toEqual([])
   })
 })
 
