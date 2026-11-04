@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
+import { VALID_ADDRESS_RECORD } from '../../../common/test-helpers/address-book-requests.js'
 import {
   STUB_SEED_ADDRESS_NAME,
   listedStubNames
@@ -112,7 +113,11 @@ describe('in stub mode, listing by address type', () => {
       ['Third Consignor', ['CONSIGNOR']],
       ['Only Origin', ['PLACE_OF_ORIGIN']]
     ]) {
-      await addressBook.createAddress(ownOrganisationId, { name, uses })
+      await addressBook.createAddress(ownOrganisationId, {
+        ...VALID_ADDRESS_RECORD,
+        name,
+        uses
+      })
     }
 
     const secondPage = await addressBook.listAddresses(ownOrganisationId, {

@@ -8,7 +8,7 @@ import {
   addressesApiPath,
   ORGANISATION_ID_HEADER,
   pageOf,
-  VALID_ADDRESS_FIELDS
+  VALID_ADDRESS_RECORD
 } from '../../../common/test-helpers/address-book-requests.js'
 import {
   STUB_SEED_ADDRESS_NAME,
@@ -147,16 +147,16 @@ describe('against the real address book', () => {
   describe('#createAddress', () => {
     test('Should POST the address with the organisation header and return the created record', async () => {
       const scope = addressBookApi()
-        .post(addressesApiPath(), VALID_ADDRESS_FIELDS)
+        .post(addressesApiPath(), VALID_ADDRESS_RECORD)
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
         .reply(statusCodes.created, {
           id: ADDRESS_ID,
-          ...VALID_ADDRESS_FIELDS
+          ...VALID_ADDRESS_RECORD
         })
 
       const createdAddress = await addressBook.createAddress(
         ORGANISATION_ID,
-        VALID_ADDRESS_FIELDS
+        VALID_ADDRESS_RECORD
       )
 
       expect(createdAddress.id).toBe(ADDRESS_ID)
@@ -168,7 +168,7 @@ describe('against the real address book', () => {
 
       await expect(
         addressBook.createAddress(ORGANISATION_ID, {
-          ...VALID_ADDRESS_FIELDS,
+          ...VALID_ADDRESS_RECORD,
           email: 'bad'
         })
       ).rejects.toMatchObject({
@@ -186,13 +186,13 @@ describe('against the real address book', () => {
         .matchHeader(TRACING_HEADER, TRACE_ID)
         .reply(200, {
           id: ADDRESS_ID,
-          ...VALID_ADDRESS_FIELDS,
+          ...VALID_ADDRESS_RECORD,
           deleted: false
         })
 
       const address = await addressBook.getAddress(ORGANISATION_ID, ADDRESS_ID)
 
-      expect(address.name).toBe(VALID_ADDRESS_FIELDS.name)
+      expect(address.name).toBe(VALID_ADDRESS_RECORD.name)
       expect(address.deleted).toBe(false)
       expect(scope.isDone()).toBe(true)
     })
@@ -218,14 +218,14 @@ describe('against the real address book', () => {
   describe('#updateAddress', () => {
     test('Should PUT the address with the organisation header and return the updated record', async () => {
       const scope = addressBookApi()
-        .put(addressApiPath(ADDRESS_ID), VALID_ADDRESS_FIELDS)
+        .put(addressApiPath(ADDRESS_ID), VALID_ADDRESS_RECORD)
         .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
-        .reply(200, { id: ADDRESS_ID, ...VALID_ADDRESS_FIELDS })
+        .reply(200, { id: ADDRESS_ID, ...VALID_ADDRESS_RECORD })
 
       const updatedAddress = await addressBook.updateAddress(
         ORGANISATION_ID,
         ADDRESS_ID,
-        VALID_ADDRESS_FIELDS
+        VALID_ADDRESS_RECORD
       )
 
       expect(updatedAddress.id).toBe(ADDRESS_ID)
@@ -239,7 +239,7 @@ describe('against the real address book', () => {
 
       await expect(
         addressBook.updateAddress(ORGANISATION_ID, ADDRESS_ID, {
-          ...VALID_ADDRESS_FIELDS,
+          ...VALID_ADDRESS_RECORD,
           email: 'bad'
         })
       ).rejects.toMatchObject({
@@ -291,13 +291,13 @@ describe('against the real address book', () => {
         refusal
       )
       await expect(
-        addressBook.createAddress(undefined, VALID_ADDRESS_FIELDS)
+        addressBook.createAddress(undefined, VALID_ADDRESS_RECORD)
       ).rejects.toThrow(refusal)
       await expect(
         addressBook.getAddress(undefined, ADDRESS_ID)
       ).rejects.toThrow(refusal)
       await expect(
-        addressBook.updateAddress(undefined, ADDRESS_ID, VALID_ADDRESS_FIELDS)
+        addressBook.updateAddress(undefined, ADDRESS_ID, VALID_ADDRESS_RECORD)
       ).rejects.toThrow(refusal)
       await expect(
         addressBook.deleteAddress(undefined, ADDRESS_ID)
@@ -424,7 +424,7 @@ describe('in stub mode', () => {
   test('Should list only the addresses with the search term inside a name, address line, town, county or postcode, ignoring case', async () => {
     const organisationId = 'stub-org-search-fields'
     await addressBook.createAddress(organisationId, {
-      ...VALID_ADDRESS_FIELDS,
+      ...VALID_ADDRESS_RECORD,
       name: GLEN_DEPOT,
       addressLine2: 'Ballymore Road',
       county: 'Antrim'
@@ -459,11 +459,11 @@ describe('in stub mode', () => {
   test('Should list created addresses newest first, ahead of the seeded address', async () => {
     const organisationId = 'stub-org-newest-first'
     await addressBook.createAddress(organisationId, {
-      ...VALID_ADDRESS_FIELDS,
+      ...VALID_ADDRESS_RECORD,
       name: GLEN_DEPOT
     })
     await addressBook.createAddress(organisationId, {
-      ...VALID_ADDRESS_FIELDS,
+      ...VALID_ADDRESS_RECORD,
       name: PARIS_DEPOT
     })
 
@@ -477,12 +477,12 @@ describe('in stub mode', () => {
   test('Should list the addresses in any of the country codes, or matching the search term, newest first', async () => {
     const organisationId = 'stub-org-country-codes'
     await addressBook.createAddress(organisationId, {
-      ...VALID_ADDRESS_FIELDS,
+      ...VALID_ADDRESS_RECORD,
       name: PARIS_DEPOT,
       countryCode: 'FR'
     })
     await addressBook.createAddress(organisationId, {
-      ...VALID_ADDRESS_FIELDS,
+      ...VALID_ADDRESS_RECORD,
       name: BOSTON_DEPOT,
       countryCode: 'US'
     })
@@ -512,19 +512,17 @@ describe('in stub mode', () => {
 
     const created = await addressBook.createAddress(
       organisationId,
-      VALID_ADDRESS_FIELDS
+      VALID_ADDRESS_RECORD
     )
     expect(created.id).toMatch(/^[0-9a-f]{24}$/)
     expect(
       await addressBook.getAddress(organisationId, created.id)
-    ).toMatchObject(VALID_ADDRESS_FIELDS)
+    ).toMatchObject(VALID_ADDRESS_RECORD)
 
     const updated = await addressBook.updateAddress(
       organisationId,
       created.id,
-      {
-        name: 'Updated Farm Ltd'
-      }
+      { ...VALID_ADDRESS_RECORD, name: 'Updated Farm Ltd' }
     )
     expect(updated).toMatchObject({
       id: created.id,
@@ -542,7 +540,7 @@ describe('in stub mode', () => {
     const organisationId = 'stub-org-tombstone'
     const created = await addressBook.createAddress(
       organisationId,
-      VALID_ADDRESS_FIELDS
+      VALID_ADDRESS_RECORD
     )
     expect(created.deleted).toBe(false)
 
@@ -553,7 +551,10 @@ describe('in stub mode', () => {
     })
     expect(items.map(({ id }) => id)).toEqual(['000000000000000000000001'])
     await expect(
-      addressBook.updateAddress(organisationId, created.id, { name: 'Again' })
+      addressBook.updateAddress(organisationId, created.id, {
+        ...VALID_ADDRESS_RECORD,
+        name: 'Again'
+      })
     ).rejects.toMatchObject({ status: 404 })
   })
 

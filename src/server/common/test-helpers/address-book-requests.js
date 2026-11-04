@@ -92,6 +92,12 @@ export const VALID_ADDRESS_FIELDS = {
   email: STORED_ADDRESS.email
 }
 
+export const VALID_ADDRESS_RECORD = {
+  ...VALID_ADDRESS_FIELDS,
+  addressType: STORED_ADDRESS.addressType,
+  uses: STORED_ADDRESS.uses
+}
+
 export const VALID_ADDRESS_PAYLOAD = {
   ...VALID_ADDRESS_FIELDS,
   uses: 'PLACE_OF_ORIGIN'
