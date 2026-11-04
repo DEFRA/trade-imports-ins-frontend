@@ -132,7 +132,7 @@
       "basic-ftp": "6.2.3"
     },
     "hapi-pulse": {
-      "joi": "18.3.1"
+      "joi": "$joi"
     },
     "lighthouse": {
       ".": "13.4.1"
