@@ -24,7 +24,7 @@ describe('#copy', () => {
     expect(copy.results(26, 40, 40)).toBe('Showing 26-40 of 40')
   })
 
-  it('Should carry the search and empty-state wording the fit specs pin', () => {
+  it('Should word the title, search label, no-results line, empty text and start button', () => {
     expect(copy.title).toBe('Dashboard')
     expect(copy.search.label).toBe('Search by notification reference')
     expect(copy.search.noResults).toBe('No notifications found')
