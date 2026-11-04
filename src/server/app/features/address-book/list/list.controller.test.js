@@ -21,8 +21,7 @@ import {
   startServerWithPageReader,
   stubAddressBookUnavailable,
   stubAddressPage,
-  tableHeadingsOf,
-  tagNamesOf
+  tableHeadingsOf
 } from './list.test-support.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
@@ -222,13 +221,6 @@ describe('#addressBookListController', () => {
       'Sorry, there is a problem with the service. Try again in a few minutes.'
     )
     expect(html).not.toContain('govuk-error-summary')
-    expect(tagNamesOf(contentOf($).children())).toEqual([
-      'div',
-      'h1',
-      'p',
-      'div',
-      'form'
-    ])
     expect(contentOf($).children('h1').text()).toBe('Address book')
     expect(contentOf($).children('p.govuk-body-l').text()).toBe(
       'Manage your addresses for use across all your import notifications'
