@@ -72,7 +72,14 @@ place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's
 handshake, `ANIMALS_BASE_URL`, the animals frontend's base URL the return
 URLs start with, and `returnUrlFor(handshake, { addressId, landing })`, the
 return URL a test expects for a handshake, built from that handshake's own
-ids and token; the Vitest tests and the fit specs both use these),
+ids and token; the Vitest tests and the fit specs both use these;
+`USES_BY_ROLE`, each role's own use, the article its uses hint names it
+with and the other uses on its side, `UNREGISTERED_JOURNEY_TYPE`, a journey
+type the registry does not list, `CONSIGNOR_CONTEXT`, the consignor
+handshake's context, and `UNRESOLVABLE_PARTY_CASES`, the contexts the
+registry resolves to no party),
+`answer-oidc-discovery.js` (`answerOidcDiscovery()`, which answers the Defra
+ID OIDC discovery request once with `mockOidcConfig`),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
 notificationId)`, the Draft tag and notification id in the
 journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
@@ -105,6 +112,8 @@ for the started server).
 
 [`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
 holds the list's fixtures, nock stubs and Cheerio readers:
+`TABLE_HEADINGS` (the list table's column headings in order),
+`NO_RESULTS_LINE` (the results line for no matches),
 `startServerWithPageReader()`, `stubAddressPage(query, addressPage)` (which
 stubs the Origin and Consignor tab unless the query names another
 `category`), `stubAddressBookUnavailable()`, `contentOf`,
@@ -167,9 +176,14 @@ Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 [`address-form.js`](../features/address-book/fit/address-form.js) —
 `fieldLabels`, `fieldLabelsInFormOrder` (the nine labels in page order), `addressFormCountryNames` (the captured countries fixture's
 names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
+`addressTypeRadio` (the type page's radio for an address type), `backLink`,
+`saveAndContinueButton`,
 `chooseAddressType` (chooses a type on the 'Choose an address type' page and
 continues), `openAddForm` (opens the address form through the type page with
-a type chosen), `addValidAddressToFreshOrganisation` (signs in to a fresh
+a type chosen), `tickUses` (ticks the uses checkboxes it is given),
+`openAddFormFromJourney` (signs in and opens the add form with a journey
+handshake, the consignor's by default), `originOrConsignorListUrl` (the
+Origin or Consignor tab's list URL, where a save of that type lands), `addValidAddressToFreshOrganisation` (signs in to a fresh
 organisation, goes through the type page, then saves a valid address of the
 given type with the uses the caller passes, Origin or Consignor with Place of
 origin by default, and lands on that type's list), `refuseSaveThenReopenAddForm`
@@ -178,7 +192,11 @@ origin by default, and lands on that type's list), `refuseSaveThenReopenAddForm`
 `expectErrorFocusOn`, the two
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
-`openAddressBookList`, `expectAddressBookList`,
+`UNKNOWN_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE`,
+`openAddressBookList`, `subNavigationLinkLocatorsOf` (the address type tabs'
+links), `selectedTabOf` (the tab marked current), `panelHeadingLocatorOf`
+(the selected tab's panel heading), `namesListedBy` and `expectNamesListed`
+(the names in the list's Name column), `expectAddressBookList`,
 `expectEmptyAddressBookList`, `searchFieldOf`, `typeSelectOf` (the
 Playwright locator for the Type select; the jsdom and Cheerio reader in
 `list.test-support.js` is `typeSelectStateOf`), `followTab` (follows a
