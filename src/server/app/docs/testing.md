@@ -86,7 +86,7 @@ journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
 which the fit specs import too),
 `expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`,
 `expectPlaceholderThenCountriesNoneSelected($, countryNames)` and
-`expectPlaceholderFirstWithUnitedKingdomSelected($, countryNames)`, the add form's
+`expectPlaceholderThenCountriesUnitedKingdomSelected($, countryNames)`, the add form's
 Country select),
 `expect-address-form-errors.js` (`expectSummaryLinks(result)` and
 `expectSummaryAndFieldErrors($, errors)`, the error summary links and the

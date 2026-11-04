@@ -51,7 +51,7 @@ import { GB_COUNTRY } from '../address-countries.js'
 import { copy } from '../copy/copy.en.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
-  expectPlaceholderFirstWithUnitedKingdomSelected,
+  expectPlaceholderThenCountriesUnitedKingdomSelected,
   expectPlaceholderThenCountriesNoneSelected,
   expectUnitedKingdomAloneSelected
 } from '../../../../common/test-helpers/expect-add-form-country-select.js'
@@ -935,7 +935,10 @@ describe(
       expect(enteredValuesOf($)).toEqual(
         Object.fromEntries(TEXT_FIELDS.map((field) => [field, '']))
       )
-      expectPlaceholderFirstWithUnitedKingdomSelected($, SERVED_COUNTRY_NAMES)
+      expectPlaceholderThenCountriesUnitedKingdomSelected(
+        $,
+        SERVED_COUNTRY_NAMES
+      )
       expect(tickedUsesOf($)).toEqual([])
     })
 
@@ -1615,7 +1618,10 @@ describe(
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
       expect($(COUNTRY_OPTIONS).first().attr('value')).toBe('')
-      expectPlaceholderFirstWithUnitedKingdomSelected($, SERVED_COUNTRY_NAMES)
+      expectPlaceholderThenCountriesUnitedKingdomSelected(
+        $,
+        SERVED_COUNTRY_NAMES
+      )
     })
 
     test('GET lists the countries by name, not by code, with United Kingdom in its place', async () => {

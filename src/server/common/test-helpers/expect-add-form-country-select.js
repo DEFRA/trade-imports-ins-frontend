@@ -21,7 +21,7 @@ export const expectPlaceholderThenCountriesNoneSelected = ($, countryNames) => {
   expect($(SELECTED_COUNTRY)).toHaveLength(0)
 }
 
-export const expectPlaceholderFirstWithUnitedKingdomSelected = (
+export const expectPlaceholderThenCountriesUnitedKingdomSelected = (
   $,
   countryNames
 ) => {
