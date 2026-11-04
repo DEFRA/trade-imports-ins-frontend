@@ -35,13 +35,19 @@ const GB_AND_FRANCE_ITEMS = [
 const anyCountryContexts = [
   ...ANY_COUNTRY_ROLES.map((role) => [
     `the ${role} handshake`,
-    handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+    handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
+    undefined
   ]),
   [
     'the consignment contact handshake',
-    handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE)
+    handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE),
+    undefined
   ],
-  ['no handshake', null]
+  [
+    'no handshake and Origin or Consignor chosen',
+    null,
+    ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+  ]
 ]
 
 const importAddressCountriesInRealMode = async () => {
@@ -129,25 +135,6 @@ describe('#addFormCountryOffer', () => {
     }
   )
 
-  test('Should offer the placeholder then every served country with no handshake and Origin or Consignor chosen', async () => {
-    serveCountries([FRANCE, GB_COUNTRY])
-    const { addFormCountryOffer } = await importAddressCountriesInRealMode()
-
-    const offer = await addFormCountryOffer({
-      handshakeContext: null,
-      addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-      placeholder: COUNTRY_PLACEHOLDER,
-      formValues: postedValues
-    })
-
-    expect(offer.countryItems).toEqual([
-      { value: '', text: COUNTRY_PLACEHOLDER },
-      { value: FRANCE.code, text: FRANCE.name },
-      { value: GB_COUNTRY.code, text: GB_COUNTRY.name }
-    ])
-    expect(offer.formValues).toEqual(postedValues)
-  })
-
   test('Should let the consignor handshake decide over a chosen type that must be in the United Kingdom', async () => {
     serveCountries([FRANCE, GB_COUNTRY])
     const { addFormCountryOffer } = await importAddressCountriesInRealMode()
@@ -167,12 +154,13 @@ describe('#addFormCountryOffer', () => {
 
   test.each(anyCountryContexts)(
     'Should offer the placeholder then every served country and leave the posted country as posted for %s',
-    async (_name, handshakeContext) => {
+    async (_name, handshakeContext, addressType) => {
       serveCountries([FRANCE, GB_COUNTRY])
       const { addFormCountryOffer } = await importAddressCountriesInRealMode()
 
       const offer = await addFormCountryOffer({
         handshakeContext,
+        addressType,
         placeholder: COUNTRY_PLACEHOLDER,
         formValues: postedValues
       })
