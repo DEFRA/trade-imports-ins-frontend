@@ -206,8 +206,9 @@ The add and edit forms render their Address and Contact details fields
 through the one `addressFields` macro in
 [`address-fields.njk`](../features/address-book/address-fields.njk), passed
 its copy, form values, country items and errors in a single params
-object, and it sets each personal-data field's browser `autocomplete`
-hint.
+object. It sets a browser `autocomplete` hint on the two address lines,
+town or city, postcode, email and phone; name, county and country have
+none.
 Input `name`, `id` and the error-map key stay identical so the summary
 link focuses the control. Stay inside the govuk-frontend toolbox.
 
