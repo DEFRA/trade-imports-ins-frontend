@@ -6,6 +6,7 @@ import { signIn } from '../../../../../../fit/sign-in.js'
 
 export const UNKNOWN_ADDRESS_TYPE = 'TRANSPORTER'
 export const NO_RESULTS_LINE = 'Showing 0 of 0'
+export const ONE_MATCH_LINE = 'Showing 1-1 of 1'
 
 export const openAddressBookList = async (
   page,
@@ -133,7 +134,7 @@ export const searchAndExpectSingleMatch = async (
 ) => {
   await searchAndExpectMatches(page, term, {
     submitWith,
-    resultsLine: 'Showing 1-1 of 1',
+    resultsLine: ONE_MATCH_LINE,
     addressType,
     use
   })

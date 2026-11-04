@@ -22,6 +22,7 @@ import {
   validAddress
 } from './address-form.js'
 import {
+  ONE_MATCH_LINE,
   resultsLineOf,
   searchAndExpectSingleMatch,
   selectedTabOf
@@ -766,7 +767,7 @@ test.describe('cancel', () => {
       .click()
 
     await expect(page).toHaveURL(addressBookPath())
-    await expect(resultsLineOf(page)).toHaveText('Showing 1-1 of 1')
+    await expect(resultsLineOf(page)).toHaveText(ONE_MATCH_LINE)
     await expect(
       page.getByRole('link', { name: `View ${seedAddress.name}` })
     ).toBeVisible()

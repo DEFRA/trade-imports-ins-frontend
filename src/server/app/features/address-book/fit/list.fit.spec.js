@@ -4,6 +4,7 @@ import { addValidAddressToFreshOrganisation } from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import {
   NO_RESULTS_LINE,
+  ONE_MATCH_LINE,
   UNKNOWN_ADDRESS_TYPE,
   expectEmptyAddressBookList,
   expectNamesListed,
@@ -510,7 +511,6 @@ const CONSIGNOR_USE = { label: 'Consignor', value: 'CONSIGNOR' }
 const CONSIGNEE_USE = { label: 'Consignee', value: 'CONSIGNEE' }
 const IMPORTER_USE = { label: 'Importer', value: 'IMPORTER' }
 const SELECT_ONE = 'Select one'
-const ONE_ADDRESS_LINE = 'Showing 1-1 of 1'
 
 const expectTypeChosen = (page, label) =>
   expect(typeSelectOf(page).locator('option:checked')).toHaveText(label)
@@ -525,7 +525,7 @@ test.describe('type filter', () => {
       await searchAndExpectMatches(page, '', {
         submitWith,
         use: CONSIGNOR_USE,
-        resultsLine: ONE_ADDRESS_LINE
+        resultsLine: ONE_MATCH_LINE
       })
 
       await expectNamesListed(page, [TYPED_SEED.originAndConsignor.name])
@@ -547,7 +547,7 @@ test.describe('type filter', () => {
     await searchAndExpectMatches(page, '', {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       use: CONSIGNEE_USE,
-      resultsLine: ONE_ADDRESS_LINE
+      resultsLine: ONE_MATCH_LINE
     })
 
     await expectNamesListed(page, [TYPED_SEED.mixedOriginAndConsignee.name])
@@ -636,7 +636,7 @@ test.describe('type filter without JavaScript', () => {
     await searchAndExpectMatches(page, '', {
       submitWith: 'button',
       use: CONSIGNOR_USE,
-      resultsLine: ONE_ADDRESS_LINE
+      resultsLine: ONE_MATCH_LINE
     })
 
     await expectNamesListed(page, [TYPED_SEED.originAndConsignor.name])
