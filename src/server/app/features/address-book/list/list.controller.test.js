@@ -145,38 +145,9 @@ describe('#addressBookListController', () => {
     expect($('input[name="q"]').val()).toBe('fran')
   })
 
-  test.each([
-    ['matches', pageOf([greenFarmAddress])],
-    ['no matches', pageOf([])]
-  ])(
-    'Should link Clear search to the whole list of the selected tab under the results line when a search has %s',
-    async (_, addressPage) => {
-      stubAddressPage(
-        { page: '1', q: 'green', addressType: ADDRESS_TYPES.BRANCH },
-        addressPage
-      )
-
-      const { $ } = await readPage(
-        `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green`,
-        'list-clear-search'
-      )
-
-      const clearSearch = $('[data-testid="address-book-clear-search"]')
-      expect(textOf($, clearSearch)).toBe('Clear search')
-      expect(clearSearch.attr('href')).toBe(
-        `${ADDRESS_BOOK_PATH}?addressType=BRANCH`
-      )
-      expect(
-        $('[data-testid="address-book-results-label"]')
-          .next()
-          .is(clearSearch.parent())
-      ).toBe(true)
-    }
-  )
-
   test('links every page with the selected tab, the search term and the page number only', async () => {
     const scope = stubAddressPage(
-      { page: '2', q: 'green', addressType: ADDRESS_TYPES.BRANCH },
+      { page: '2', q: 'green', category: ADDRESS_TYPES.BRANCH },
       pageOf([greenFarmAddress], {
         page: 2,
         totalItems: 30,

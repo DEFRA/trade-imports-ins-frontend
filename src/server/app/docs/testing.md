@@ -107,7 +107,7 @@ for the started server).
 holds the list's fixtures, nock stubs and Cheerio readers:
 `startServerWithPageReader()`, `stubAddressPage(query, addressPage)` (which
 stubs the Origin and Consignor tab unless the query names another
-`addressType`), `stubAddressBookUnavailable()`, `contentOf`,
+`category`), `stubAddressBookUnavailable()`, `contentOf`,
 `tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`, `typeSelectStateOf`
 (the Type select's label, option texts, options with an empty value and chosen
 options), `panelHeadingTextOf`, `resultsLineOf`,

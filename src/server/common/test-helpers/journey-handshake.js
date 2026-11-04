@@ -20,6 +20,34 @@ export const JOURNEY_HANDSHAKES_BY_ROLE = Object.freeze({
   )
 })
 
+export const USES_BY_ROLE = Object.freeze({
+  placeOfOrigin: {
+    ownUse: 'PLACE_OF_ORIGIN',
+    article: 'a',
+    otherUses: ['CONSIGNOR']
+  },
+  consignor: {
+    ownUse: 'CONSIGNOR',
+    article: 'a',
+    otherUses: ['PLACE_OF_ORIGIN']
+  },
+  consignee: {
+    ownUse: 'CONSIGNEE',
+    article: 'a',
+    otherUses: ['IMPORTER', 'PLACE_OF_DESTINATION']
+  },
+  importer: {
+    ownUse: 'IMPORTER',
+    article: 'an',
+    otherUses: ['CONSIGNEE', 'PLACE_OF_DESTINATION']
+  },
+  placeOfDestination: {
+    ownUse: 'PLACE_OF_DESTINATION',
+    article: 'a',
+    otherUses: ['CONSIGNEE', 'IMPORTER']
+  }
+})
+
 export const UNITED_KINGDOM_ROLES = Object.freeze([
   'consignee',
   'importer',
@@ -57,3 +85,22 @@ export const handshakeContextOf = (handshake) => ({
   fulfilmentId: handshake['fulfilment-id'],
   handshakeToken: handshake['handshake-token']
 })
+
+export const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
+
+export const CONSIGNOR_CONTEXT = handshakeContextOf(
+  JOURNEY_HANDSHAKES_BY_ROLE.consignor
+)
+
+export const UNRESOLVABLE_PARTY_CASES = Object.freeze([
+  ['a fulfilment id the registry does not list', { fulfilmentId: 'x' }],
+  [
+    'a fulfilment id named like an Object property',
+    { fulfilmentId: 'constructor' }
+  ],
+  [
+    'a listed fulfilment id under an unregistered journey type',
+    { journeyType: UNREGISTERED_JOURNEY_TYPE }
+  ],
+  ['no context', null]
+])

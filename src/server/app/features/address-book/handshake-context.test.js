@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import Boom from '@hapi/boom'
 
-import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../common/test-helpers/journey-handshake.js'
+import {
+  JOURNEY_HANDSHAKES_BY_ROLE,
+  UNREGISTERED_JOURNEY_TYPE
+} from '../../../common/test-helpers/journey-handshake.js'
 import {
   loadHandshakeContext,
   readHandshakePayload,
@@ -20,7 +23,6 @@ const PADDED_CONSIGNOR_HANDSHAKE = Object.fromEntries(
   ])
 )
 const INCOMPLETE_HANDSHAKE_ERROR = 'Incomplete journey handshake'
-const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
 
 const validContext = {
   journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
@@ -73,6 +75,17 @@ describe('readHandshakeQuery', () => {
     ).toThrow(Boom.notFound())
   })
 
+  test('throws when the fulfilment id is not listed for the journey type', () => {
+    expect(() =>
+      readHandshakeQuery(
+        mockRequest({
+          ...CONSIGNOR_HANDSHAKE,
+          'fulfilment-id': 'not-a-fulfilment-id'
+        })
+      )
+    ).toThrow(Boom.notFound())
+  })
+
   test('returns trimmed handshake context for a valid query', () => {
     expect(
       readHandshakeQuery(mockRequest({ ...PADDED_CONSIGNOR_HANDSHAKE }))
@@ -98,6 +111,15 @@ describe('readHandshakePayload', () => {
       readHandshakePayload({
         ...CONSIGNOR_HANDSHAKE,
         'journey-type': UNREGISTERED_JOURNEY_TYPE
+      })
+    ).toThrow(Boom.notFound())
+  })
+
+  test('throws when the fulfilment id is not listed for the journey type', () => {
+    expect(() =>
+      readHandshakePayload({
+        ...CONSIGNOR_HANDSHAKE,
+        'fulfilment-id': 'not-a-fulfilment-id'
       })
     ).toThrow(Boom.notFound())
   })

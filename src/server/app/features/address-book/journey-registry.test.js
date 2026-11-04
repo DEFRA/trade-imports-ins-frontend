@@ -6,24 +6,28 @@ import {
   ANIMALS_BASE_URL,
   ANY_COUNTRY_ROLES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
+  CONSIGNOR_CONTEXT,
   handshakeContextOf,
   JOURNEY_HANDSHAKES_BY_ROLE,
   returnUrlFor,
-  UNITED_KINGDOM_ROLES
+  UNITED_KINGDOM_ROLES,
+  UNREGISTERED_JOURNEY_TYPE,
+  UNRESOLVABLE_PARTY_CASES,
+  USES_BY_ROLE
 } from '../../../common/test-helpers/journey-handshake.js'
 import {
   ADDRESS_LANDING,
   CONSIGNMENT_CONTACT_FULFILMENT_ID,
+  addressTypeAndUsesOfParty,
   buildReturnUrl,
   isConsignmentContact,
   isKnownJourneyType,
   JOURNEY_TYPES,
-  requiresUnitedKingdomAddress
+  requiresUnitedKingdomAddress,
+  usesOfParty
 } from './journey-registry.js'
 
-const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
 const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_ROLE.consignor
-const CONSIGNOR_CONTEXT = handshakeContextOf(CONSIGNOR_HANDSHAKE)
 const BASE_URL_CONFIG_KEY = 'tradeImportsAnimalsFrontend.baseUrl'
 
 describe('journey-registry', () => {
@@ -195,5 +199,91 @@ describe('journey-registry', () => {
         'Handshake context must include notificationId and fulfilmentId'
       )
     })
+  })
+})
+
+describe('usesOfParty', () => {
+  test.each(Object.entries(USES_BY_ROLE))(
+    'gives the %s handshake its own use and the other uses on its side',
+    (role, { ownUse, otherUses }) => {
+      expect(
+        usesOfParty(handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]))
+      ).toEqual({ ownUse, otherUses })
+    }
+  )
+
+  test('gives the consignment contact its own use and no other uses', () => {
+    expect(
+      usesOfParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE))
+    ).toEqual({ ownUse: 'BRANCH_ADDRESS', otherUses: [] })
+  })
+
+  test.each(UNRESOLVABLE_PARTY_CASES)(
+    'gives no own use and no other uses for %s',
+    (_name, overrides) => {
+      const context = overrides && { ...CONSIGNOR_CONTEXT, ...overrides }
+
+      expect(usesOfParty(context)).toEqual({ otherUses: [] })
+    }
+  )
+})
+
+describe('addressTypeAndUsesOfParty', () => {
+  test.each([
+    ['placeOfOrigin', 'ORIGIN_OR_CONSIGNOR', 'PLACE_OF_ORIGIN'],
+    ['consignor', 'ORIGIN_OR_CONSIGNOR', 'CONSIGNOR'],
+    ['consignee', 'DESTINATION_CONSIGNEE_OR_IMPORTER', 'CONSIGNEE'],
+    ['importer', 'DESTINATION_CONSIGNEE_OR_IMPORTER', 'IMPORTER'],
+    [
+      'placeOfDestination',
+      'DESTINATION_CONSIGNEE_OR_IMPORTER',
+      'PLACE_OF_DESTINATION'
+    ]
+  ])(
+    'gives the %s handshake its type and its one use',
+    (role, addressType, use) => {
+      expect(
+        addressTypeAndUsesOfParty(
+          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
+          []
+        )
+      ).toEqual({ addressType, uses: [use] })
+    }
+  )
+
+  test.each([
+    ['consignee', ['IMPORTER'], ['CONSIGNEE', 'IMPORTER']],
+    ['importer', ['CONSIGNEE'], ['CONSIGNEE', 'IMPORTER']],
+    [
+      'importer',
+      ['PLACE_OF_DESTINATION', 'CONSIGNEE'],
+      ['CONSIGNEE', 'IMPORTER', 'PLACE_OF_DESTINATION']
+    ],
+    ['placeOfOrigin', ['CONSIGNOR'], ['PLACE_OF_ORIGIN', 'CONSIGNOR']],
+    [
+      'consignee',
+      ['IMPORTER', 'IMPORTER', 'CONSIGNEE'],
+      ['CONSIGNEE', 'IMPORTER']
+    ],
+    ['consignee', ['BRANCH_ADDRESS', 'CONSIGNOR'], ['CONSIGNEE']]
+  ])(
+    'gives the %s handshake its own use and the posted %j its side offers, in the type order',
+    (role, postedUses, uses) => {
+      expect(
+        addressTypeAndUsesOfParty(
+          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
+          postedUses
+        ).uses
+      ).toEqual(uses)
+    }
+  )
+
+  test('gives the consignment contact only its own use whatever is posted', () => {
+    expect(
+      addressTypeAndUsesOfParty(
+        handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE),
+        ['CONSIGNOR']
+      )
+    ).toEqual({ addressType: 'BRANCH', uses: ['BRANCH_ADDRESS'] })
   })
 })

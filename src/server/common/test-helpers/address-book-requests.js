@@ -107,7 +107,10 @@ export const INVALID_ADDRESS_PAYLOAD = {
   email: 'bad'
 }
 
-export const serveAddressCreated = (matchBody) =>
+const carriesAddressTypeAndUses = (body) =>
+  Boolean(body.addressType) && body.uses?.length > 0
+
+export const serveAddressCreated = (matchBody = carriesAddressTypeAndUses) =>
   addressBookApi()
     .post(addressesApiPath(), matchBody)
     .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
@@ -131,7 +134,7 @@ export const pageOf = (items, overrides = {}) => ({
   ...overrides
 })
 
-const cookieHeaders = (cookie) => (cookie ? { cookie } : {})
+const headersWithCookie = (cookie) => (cookie ? { cookie } : {})
 
 export const cookieHeaderOf = (headers) =>
   [headers['set-cookie']]
@@ -145,7 +148,7 @@ export const getPage = (server, url, sessionId, cookie) =>
     method: 'GET',
     url,
     auth: sessionAuth(sessionId),
-    headers: cookieHeaders(cookie)
+    headers: headersWithCookie(cookie)
   })
 
 export const postPage = (server, url, sessionId, payload, cookie) =>
@@ -154,7 +157,7 @@ export const postPage = (server, url, sessionId, payload, cookie) =>
     url,
     auth: sessionAuth(sessionId),
     payload,
-    headers: cookieHeaders(cookie)
+    headers: headersWithCookie(cookie)
   })
 
 export const cookieAfterChoosingAddressType = async (

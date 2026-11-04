@@ -1,9 +1,9 @@
 import { load } from 'cheerio'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeAll, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
@@ -33,10 +33,6 @@ import {
   addressSummaryLines,
   deletedSuccessMessage
 } from './delete.controller.js'
-
-vi.mock('../../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const UK_NAME = 'United Kingdom'
 
@@ -115,6 +111,7 @@ describe('#deletedSuccessMessage', () => {
 })
 
 describe('GET /address-book/{addressId}/delete', () => {
+  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should render the confirmation with one Address summary row, the warning, Yes, delete and a No, cancel link', async () => {
@@ -256,6 +253,7 @@ describe('GET /address-book/{addressId}/delete', () => {
 })
 
 describe('POST /address-book/{addressId}/delete', () => {
+  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   const interceptDeleteOf = (addressId) =>

@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeAll, describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -28,7 +28,7 @@ import {
   STORED_ADDRESS,
   VALID_ADDRESS_FIELDS
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import {
@@ -44,10 +44,6 @@ import {
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { GB_COUNTRY } from '../address-countries.js'
-
-vi.mock('../../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const UPDATED_NAME = 'Updated Farm Ltd'
 const UNOFFERED_COUNTRY_CODE = 'XX'
@@ -71,6 +67,7 @@ const countryValuesOf = ($) =>
     .get()
 
 describe('GET /address-book/{addressId}/edit', () => {
+  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should head the page and title the browser Edit address and contact details', async () => {
@@ -259,6 +256,7 @@ describe('GET /address-book/{addressId}/edit', () => {
 })
 
 describe('POST /address-book/{addressId}/edit', () => {
+  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should send the edited fields with the stored address type and uses, ignoring any posted uses, and redirect to the address book', async () => {

@@ -37,7 +37,8 @@ import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-f
 import {
   CONSIGNMENT_CONTACT_HANDSHAKE,
   JOURNEY_HANDSHAKES_BY_ROLE,
-  returnUrlFor
+  returnUrlFor,
+  USES_BY_ROLE
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
@@ -440,7 +441,7 @@ test.describe('add address reached from a notification journey', () => {
     )
   })
 
-  test('from a role handshake offers Back to the journey, Save and select, Save and return to address page and a Cancel and return to hub link', async ({
+  test(`from a role handshake offers Back to the journey, ${copy.add.saveAndSelect}, ${copy.add.saveAndReturnToAddressPage} and a Cancel and return to hub link`, async ({
     page
   }) => {
     await openAddFormFromJourney(page, 'stub-org-add-journey-actions')
@@ -452,8 +453,8 @@ test.describe('add address reached from a notification journey', () => {
       returnUrlFor(JOURNEY_HANDSHAKES_BY_ROLE.consignor)
     )
     await expect(page.locator('form button')).toHaveText([
-      'Save and select',
-      'Save and return to address page'
+      copy.add.saveAndSelect,
+      copy.add.saveAndReturnToAddressPage
     ])
     await expect(
       page.getByRole('link', { name: 'Cancel and return to hub' })
@@ -485,36 +486,8 @@ test.describe('add address reached from a notification journey', () => {
 })
 
 test.describe('add address uses question reached from a notification journey', () => {
-  const rolesWithTheirUses = {
-    placeOfOrigin: {
-      ownUse: 'PLACE_OF_ORIGIN',
-      article: 'a',
-      otherUses: ['CONSIGNOR']
-    },
-    consignor: {
-      ownUse: 'CONSIGNOR',
-      article: 'a',
-      otherUses: ['PLACE_OF_ORIGIN']
-    },
-    consignee: {
-      ownUse: 'CONSIGNEE',
-      article: 'a',
-      otherUses: ['IMPORTER', 'PLACE_OF_DESTINATION']
-    },
-    importer: {
-      ownUse: 'IMPORTER',
-      article: 'an',
-      otherUses: ['CONSIGNEE', 'PLACE_OF_DESTINATION']
-    },
-    placeOfDestination: {
-      ownUse: 'PLACE_OF_DESTINATION',
-      article: 'a',
-      otherUses: ['CONSIGNEE', 'IMPORTER']
-    }
-  }
-
   for (const [role, { ownUse, article, otherUses }] of Object.entries(
-    rolesWithTheirUses
+    USES_BY_ROLE
   )) {
     test(`from the ${role} handshake asks what else the address should be used for, naming the role and offering only the other uses on its side, unticked`, async ({
       page
@@ -540,7 +513,7 @@ test.describe('add address uses question reached from a notification journey', (
     })
   }
 
-  test('Save and return to address page with answers missing keeps the page, lists the errors in field order and keeps the tick', async ({
+  test(`${copy.add.saveAndReturnToAddressPage} with answers missing keeps the page, lists the errors in field order and keeps the tick`, async ({
     page
   }) => {
     await openAddFormFromJourney(
@@ -552,7 +525,7 @@ test.describe('add address uses question reached from a notification journey', (
     await setFieldValue(page, 'name', validAddress.name)
     await tickUses(page, ['IMPORTER'])
     await page
-      .getByRole('button', { name: 'Save and return to address page' })
+      .getByRole('button', { name: copy.add.saveAndReturnToAddressPage })
       .click()
 
     await expect(page).toHaveURL((url) => url.pathname === addressAddPath())

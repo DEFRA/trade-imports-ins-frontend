@@ -13,7 +13,6 @@ export const copy = {
       label: 'Chwilio',
       hint: 'Chwilio yn ôl enw, cyfeiriad neu wlad',
       button: 'Chwilio',
-      clear: 'Clirio’r chwiliad',
       type: {
         label: 'Math',
         placeholder: 'Dewiswch un'

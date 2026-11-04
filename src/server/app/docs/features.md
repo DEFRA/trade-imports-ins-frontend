@@ -20,9 +20,7 @@ below.
 `<page>.njk` and `<page>.controller.test.js`. Group-wide modules sit at the
 root:
 
-- [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`, which
-  holds the fields in the order the form asks them and so the order validation
-  errors are listed in,
+- [`fields.js`](../features/address-book/fields.js) — `FIELD_RULES`,
   `FIELDS`, `isRequiredField`, `formValuesOf` and
   `addressRules(countryCodes)`, plus `POSTAL_LINE_FIELDS` (address line 1,
   address line 2, town or city, county and postcode, in display order),
@@ -38,7 +36,9 @@ root:
   `keepUsesOfferedBy` (the posted uses the chosen address type offers, kept in
   `USES_BY_ADDRESS_TYPE`'s order, which is not the order the question shows them) and `usesErrorsOf` (the required-use error when none is
   kept), and `storedTypeAndUsesOf`, the address type and uses an edited
-  address carries back to the API unchanged.
+  address carries back to the API unchanged. `FIELD_RULES` holds the fields in
+  the order the form asks them, which is the order validation errors are
+  listed in.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems` (a select that opens on a blank option),
@@ -59,19 +59,20 @@ root:
   (whether the role's address must be in the United Kingdom: the address type
   of its use is one `addressTypeRequiresUnitedKingdom` holds, and the party is
   not the consignment contact), `usesOfParty` (the party's own use and the
-  other uses on its side, in `USES_BY_ADDRESS_TYPE` order, which the add page's
-  checkboxes and the journey save both read; no own use and no other uses for
-  a fulfilment id the map does not list), `addressTypeAndUsesOfParty`
+  other uses on its side, in `USES_BY_ADDRESS_TYPE` order, which feeds the add
+  page's checkboxes; no own use and no other uses for a fulfilment id the map
+  does not list), `addressTypeAndUsesOfParty`
   (the address type and the uses a journey-mode save carries: the party's own
-  use plus the posted uses `usesOfParty` offers for it, or nothing for
-  a fulfilment id the map does not list), `isConsignmentContact` (whether a
+  use (`useOfParty`) plus the posted uses its address type offers, through
+  `keepUsesOfferedBy`), `isConsignmentContact` (whether a
   handshake is the consignment contact's, so the add page offers the contact's
   controls rather than a role's), `buildReturnUrl` (the journey's address-return
   URL, with an optional address id and `landing`) and
   `CONSIGNMENT_CONTACT_FULFILMENT_ID` (the consignment contact's fulfilment id).
   The `gbn-ag` registry entry's `useByPartyFulfilmentId` map is the one map
   from each party's fulfilment id, the five roles and the consignment contact,
-  to the one use that party's address is saved with; `usesOfParty`,
+  to the party's own use, which its address is always saved with alongside any
+  ticked uses its side offers; `usesOfParty`,
   `addressTypeAndUsesOfParty` and `requiresUnitedKingdomAddress` read it.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
   `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address
@@ -207,16 +208,17 @@ adds to that shape for a journey:
   the chosen type, offering the chosen type's uses from
   `USES_BY_ADDRESS_TYPE`, labelled from `copy.uses`. `useItemsOf` builds the
   checkbox items from an ordered list of uses and the ticked uses, and each
-  mode passes its own order: the address book add its type's uses with the
-  place uses `address-types.js` marks first, a role handshake the party's other
-  uses in `USES_BY_ADDRESS_TYPE`'s order. The POST checks the
+  mode passes its own order: the address book add passes its type's uses with
+  the place uses `address-types.js` marks first, and a role handshake passes
+  the party's other uses in `USES_BY_ADDRESS_TYPE`'s order. The POST checks the
   uses only once the address and contact fields pass; it keeps the posted uses
   the chosen type offers (logging any it discards at info), re-renders with
   the required-use error when none is kept, and otherwise saves the validated
   fields with the chosen address type and the kept uses and redirects to the
   address book list on that type's tab. In `ROLE_HANDSHAKE` mode the form shows
   the "What else should this address be used for?" question after the same
-  visible section break, with a hint naming the party's own use and the other
+  visible section break, with a hint naming only the party's own use ("This
+  address is being added as a <Role> address…") and checkboxes for the other
   uses on its side, all unticked and optional: no error is raised for it, the
   ticked uses stay ticked when the page is shown again with errors, and the
   save carries `addressTypeAndUsesOfParty`'s type, the party's own use and the

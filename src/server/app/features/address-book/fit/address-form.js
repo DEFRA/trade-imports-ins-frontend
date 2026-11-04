@@ -57,16 +57,23 @@ export async function fillValidAddress(page, overrides = {}) {
   }
 }
 
+export const addressTypeRadio = (page, addressType) =>
+  page.getByRole('radio', {
+    name: copy.addressType.options[addressType].label,
+    exact: true
+  })
+
+export const backLink = (page) =>
+  page.getByRole('link', { name: 'Back', exact: true })
+
+export const saveAndContinueButton = (page) =>
+  page.getByRole('button', { name: 'Save and continue' })
+
 export const chooseAddressType = async (
   page,
   addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
 ) => {
-  await page
-    .getByRole('radio', {
-      name: copy.addressType.options[addressType].label,
-      exact: true
-    })
-    .check()
+  await addressTypeRadio(page, addressType).check()
   await page.getByRole('button', { name: copy.addressType.continue }).click()
 }
 
@@ -99,9 +106,9 @@ export const refuseSaveThenReopenAddForm = async (
   await openAddForm(page, addressType)
   await fillValidAddress(page, { email: malformedEmail })
   await tickUses(page, [use])
-  await page.getByRole('button', { name: 'Save and continue' }).click()
+  await saveAndContinueButton(page).click()
   await expect(page.getByRole('alert')).toBeVisible()
-  await page.getByRole('link', { name: 'Back', exact: true }).click()
+  await backLink(page).click()
   await expect(page).toHaveURL(addressTypePath())
   await chooseAddressType(page, addressType)
   await expect(page).toHaveURL(addressAddPath())
@@ -126,7 +133,7 @@ export const addValidAddressToFreshOrganisation = async (
   await openAddForm(page, addressType)
   await fillValidAddress(page, overrides)
   await tickUses(page, uses)
-  await page.getByRole('button', { name: 'Save and continue' }).click()
+  await saveAndContinueButton(page).click()
   await expect(page).toHaveURL(addressBookPageHref(1, { addressType }))
 }
 

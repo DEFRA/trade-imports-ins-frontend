@@ -5,6 +5,7 @@ import {
   addressTypeOfUse,
   addressTypeRequiresUnitedKingdom
 } from '../../services/address-book/index.js'
+import { keepUsesOfferedBy } from './fields.js'
 
 export const JOURNEY_TYPES = Object.freeze({
   GBN_AG: 'gbn-ag'
@@ -42,7 +43,7 @@ const registry = Object.freeze({
 export const isKnownJourneyType = (journeyType) =>
   Object.hasOwn(registry, journeyType)
 
-const useOfParty = (context) => {
+export const useOfParty = (context) => {
   const useByFulfilmentId =
     registry[context?.journeyType]?.useByPartyFulfilmentId
   return useByFulfilmentId &&
@@ -77,18 +78,12 @@ export const usesOfParty = (context) => {
   }
 }
 
-export const addressTypeAndUsesOfParty = (context, postedUses = []) => {
-  const { ownUse, otherUses } = usesOfParty(context)
-  if (!ownUse) {
-    return {}
-  }
+export const addressTypeAndUsesOfParty = (context, postedUses) => {
+  const ownUse = useOfParty(context)
   const addressType = addressTypeOfUse(ownUse)
   return {
     addressType,
-    uses: USES_BY_ADDRESS_TYPE[addressType].filter(
-      (use) =>
-        use === ownUse || (otherUses.includes(use) && postedUses.includes(use))
-    )
+    uses: keepUsesOfferedBy(addressType, [ownUse, ...postedUses])
   }
 }
 

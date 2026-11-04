@@ -40,7 +40,9 @@ describe('#copy', () => {
   })
 
   it('Should word the uses question with its legend per address type, hint, one label per use and error', () => {
-    expect(copy.uses).toMatchObject({
+    expect(copy.uses).toEqual({
+      journeyLegend: 'What else should this address be used for?',
+      journeyHint: expect.any(Function),
       legendByAddressType: {
         ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
         DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',
@@ -93,7 +95,7 @@ describe('#copy', () => {
     })
   })
 
-  it('Should word the list intro, filter disclosure, search field and hint, Type select and its options, search button, Clear search link and empty results line', () => {
+  it('Should word the list intro, filter disclosure, search field and hint, Type select and its options, search button and empty results line', () => {
     expect(copy.list.intro).toBe(
       'Manage your addresses for use across all your import notifications'
     )
@@ -102,7 +104,6 @@ describe('#copy', () => {
       label: 'Search',
       hint: 'Search by name, address or country',
       button: 'Search',
-      clear: 'Clear search',
       type: {
         label: 'Type',
         placeholder: 'Select one'
@@ -229,7 +230,6 @@ describe('#copy of the list page', () => {
       ['search.label', 'Chwilio'],
       ['search.hint', 'Chwilio yn ôl enw, cyfeiriad neu wlad'],
       ['search.button', 'Chwilio'],
-      ['search.clear', 'Clirio’r chwiliad'],
       ['search.type.label', 'Math'],
       ['search.type.placeholder', 'Dewiswch un'],
       ['add', 'Ychwanegu cyfeiriad newydd'],

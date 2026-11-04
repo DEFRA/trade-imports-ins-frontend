@@ -101,7 +101,7 @@ const loadAddressPage = async (organisationId, { page, ...listFilters }) => {
   logger.info(
     {
       organisationId,
-      addressType: listFilters.addressType,
+      category: listFilters.category,
       use: listFilters.use,
       requestedPage: page,
       servedPage
@@ -120,12 +120,12 @@ const get = async (request, toolkit) => {
   const page = parsePage(request.query.page)
   const searchTerm = request.query.q?.trim() ?? ''
   const selectedTab = resolveTab(request.query.addressType)
-  const { addressType } = selectedTab
+  const { addressType: category } = selectedTab
   const requestedUse = request.query.use
   const use = resolveUse(selectedTab, requestedUse)
   if (requestedUse && !use) {
     logger.info(
-      { organisationId, addressType, requestedUse },
+      { organisationId, category, requestedUse },
       'Address book list ignored a use the tab does not offer'
     )
   }
@@ -140,7 +140,7 @@ const get = async (request, toolkit) => {
       searchTerm,
       countryCodes,
       searchUses,
-      addressType,
+      category,
       use
     })
     const pagination = paginationOf(addressPage)
@@ -154,13 +154,16 @@ const get = async (request, toolkit) => {
       listLoaded: true,
       subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
       panelHeading: copy.list.tabs[selectedTab.copyKey].heading,
-      clearSearchHref: addressBookPageHref(1, { addressType, use }),
       tableRows: tableRowsOf(addresses),
       resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
-        addressBookPageHref(targetPage, { addressType, searchTerm, use })
+        addressBookPageHref(targetPage, {
+          addressType: category,
+          searchTerm,
+          use
+        })
       ),
-      addressType,
+      addressType: category,
       useItems: useItemsOf(selectedTab, use),
       searchTerm,
       successMessage
@@ -170,12 +173,12 @@ const get = async (request, toolkit) => {
       throw err
     }
     logger.error(
-      { err, organisationId, addressType, use },
+      { err, organisationId, category, use },
       'Failed to load address book'
     )
     return buildView(toolkit, {
       listLoaded: false,
-      addressType,
+      addressType: category,
       useItems: useItemsOf(selectedTab, use),
       searchTerm,
       successMessage,

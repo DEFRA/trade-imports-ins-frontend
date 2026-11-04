@@ -345,8 +345,12 @@ const typeAndUsesToSave = (handshakeContext, { addressType, postedUses }) =>
 const finishAddressBookAdd = (
   request,
   toolkit,
-  { createdAddress, addressType }
+  { organisationId, createdAddress, addressType }
 ) => {
+  logger.info(
+    { organisationId, addressId: createdAddress.id, addressType },
+    'Address added from the address book'
+  )
   clearAddInProgress(request)
   setSuccessMessage(request, copy.successBanner.added(createdAddress.name))
   return toolkit.redirect(addressBookPageHref(1, { addressType }))
@@ -392,7 +396,11 @@ const createAddressAndRespond = async (
     storedCountryCode
   })
   return isAddressBookAdd
-    ? finishAddressBookAdd(request, toolkit, { createdAddress, addressType })
+    ? finishAddressBookAdd(request, toolkit, {
+        organisationId,
+        createdAddress,
+        addressType
+      })
     : handBackAddress(toolkit, handshakeContext, {
         organisationId,
         addressId: createdAddress.id,

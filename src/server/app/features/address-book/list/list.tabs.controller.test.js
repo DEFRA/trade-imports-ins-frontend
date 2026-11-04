@@ -51,7 +51,7 @@ describe('#addressBookListTabs', () => {
     'asks the address book for the tab chosen by %s',
     async (_description, url, askedAddressType) => {
       const scope = stubAddressPage(
-        { page: '1', addressType: askedAddressType },
+        { page: '1', category: askedAddressType },
         pageOf([highlandAddress])
       )
 
@@ -129,7 +129,10 @@ describe('#addressBookListTabs', () => {
   )(
     'marks only the %s tab as current and heads its panel',
     async (addressType, tabIndex) => {
-      stubAddressPage({ page: '1', addressType }, pageOf([highlandAddress]))
+      stubAddressPage(
+        { page: '1', category: addressType },
+        pageOf([highlandAddress])
+      )
 
       const { $ } = await readPage(
         `${ADDRESS_BOOK_PATH}?addressType=${addressType}`,
@@ -152,7 +155,7 @@ describe('#addressBookListTabs', () => {
 
   test('holds the selected tab in the filter form so a search stays on it', async () => {
     stubAddressPage(
-      { page: '1', addressType: ADDRESS_TYPES.BRANCH },
+      { page: '1', category: ADDRESS_TYPES.BRANCH },
       pageOf([highlandAddress])
     )
 

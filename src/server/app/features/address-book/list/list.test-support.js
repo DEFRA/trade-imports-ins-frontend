@@ -118,7 +118,7 @@ const interceptListRequest = (query) =>
     .get(addressesApiPath())
     .query({
       pageSize: String(LIST_PAGE_SIZE),
-      addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType,
+      category: DEFAULT_ADDRESS_BOOK_TAB.addressType,
       ...query
     })
 

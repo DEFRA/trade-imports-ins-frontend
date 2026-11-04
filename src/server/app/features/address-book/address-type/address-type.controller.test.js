@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
@@ -15,7 +15,7 @@ import {
   postPage
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import {
   textOf,
   textsOf
@@ -24,10 +24,6 @@ import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js
 import { startRealModeServer } from '../../../../common/test-helpers/test-server.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { addressTypeStartPath } from '../../../shared/paths.js'
-
-vi.mock('../../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const CAPTION = '.govuk-caption-l'
 const LEGEND = 'fieldset legend'
@@ -46,6 +42,7 @@ const checkedValuesOf = ($) =>
     .get()
 
 describe('#addressTypeController', { concurrent: false }, () => {
+  beforeAll(answerOidcDiscovery)
   const server = startRealModeServer()
   const loggedWith = captureInfoLogs()
 

@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -25,7 +25,7 @@ import {
   VALID_ADDRESS_FIELDS,
   VALID_ADDRESS_PAYLOAD
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
+import { answerOidcDiscovery } from '../../../../common/test-helpers/answer-oidc-discovery.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { expectDraftJourneyStrip } from '../../../../common/test-helpers/expect-draft-journey-strip.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
@@ -37,7 +37,9 @@ import {
   CONSIGNMENT_CONTACT_HANDSHAKE,
   JOURNEY_HANDSHAKES_BY_ROLE,
   returnUrlFor,
-  UNITED_KINGDOM_ROLES
+  UNITED_KINGDOM_ROLES,
+  UNREGISTERED_JOURNEY_TYPE,
+  USES_BY_ROLE
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
 import {
@@ -46,6 +48,7 @@ import {
   USES_BY_ADDRESS_TYPE
 } from '../../../services/address-book/index.js'
 import { GB_COUNTRY } from '../address-countries.js'
+import { copy } from '../copy/copy.en.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
   expectPlaceholderFirstWithUnitedKingdomSelected,
@@ -65,10 +68,6 @@ import {
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { config } from '../../../../../config/config.js'
-
-vi.mock('../../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const SERVED_COUNTRY_NAMES = [
   'France',
@@ -147,28 +146,11 @@ const USE_LABEL_SELECTOR = '.govuk-checkboxes__label'
 const JOURNEY_USES_LEGEND = 'What else should this address be used for?'
 const DISCARDED_MESSAGE =
   'Posted uses the address page does not offer were not saved'
-const journeyHintFor = (roleWithArticle) =>
-  `This address is being added as ${roleWithArticle} address. Select any other roles or addresses this address should be used for.`
-const OTHER_USE_QUESTION_BY_ROLE = {
-  placeOfOrigin: {
-    hint: journeyHintFor('a Place of origin'),
-    labels: ['Consignor']
-  },
-  consignor: {
-    hint: journeyHintFor('a Consignor'),
-    labels: ['Place of origin']
-  },
-  consignee: {
-    hint: journeyHintFor('a Consignee'),
-    labels: ['Importer', PLACE_OF_DESTINATION_LABEL]
-  },
-  importer: {
-    hint: journeyHintFor('an Importer'),
-    labels: ['Consignee', PLACE_OF_DESTINATION_LABEL]
-  },
-  placeOfDestination: {
-    hint: journeyHintFor('a Place of destination'),
-    labels: ['Consignee', 'Importer']
+const otherUseQuestionOf = (role) => {
+  const { ownUse, article, otherUses } = USES_BY_ROLE[role]
+  return {
+    hint: `This address is being added as ${article} ${copy.uses.options[ownUse].label} address. Select any other roles or addresses this address should be used for.`,
+    labels: otherUses.map((use) => copy.uses.options[use].label)
   }
 }
 const VALIDATION_PROBLEM_TYPE =
@@ -185,6 +167,7 @@ beforeEach(() => {
 })
 
 describe('#addressBookAddController', { concurrent: false }, () => {
+  beforeAll(answerOidcDiscovery)
   const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('GET sets Cache-Control: no-store', async () => {
@@ -397,6 +380,7 @@ describe(
   '#addressBookAddController — address type guard',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const NO_TYPE_MESSAGE =
       'No address type chosen, sending the user to choose one'
@@ -461,6 +445,7 @@ describe(
   '#addressBookAddController — uses question',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
     const FIRST_USE_OF = (addressType) => USES_BY_ADDRESS_TYPE[addressType][0]
@@ -652,6 +637,7 @@ describe(
   '#addressBookAddController — types that must be in the United Kingdom',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
 
     test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
@@ -715,6 +701,7 @@ describe(
   '#addressBookAddController — replaced country log',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
     const REPLACED_MESSAGE =
@@ -843,6 +830,7 @@ describe(
   '#addressBookAddController — add in progress',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const ENTERED_FIELDS = {
       ...VALID_ADDRESS_FIELDS,
@@ -1000,6 +988,7 @@ describe(
   '#addressBookAddController — journey handshake type and use',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
 
@@ -1142,9 +1131,10 @@ describe(
       })
     })
 
-    test.each(Object.entries(OTHER_USE_QUESTION_BY_ROLE))(
+    test.each(Object.keys(USES_BY_ROLE))(
       'GET from the %s handshake asks what else the address should be used for after a section break, naming the role and offering only the other uses on its side, unticked',
-      async (role, { hint, labels }) => {
+      async (role) => {
+        const { hint, labels } = otherUseQuestionOf(role)
         const { result } = await getAdd(
           server(),
           `add-get-handshake-uses-${role}`,
@@ -1188,6 +1178,7 @@ describe(
   '#addressBookAddController — journey handshake page',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
 
     test('GET from a role handshake offers Save and select, Save and return to address page and a Cancel and return to hub link, and carries the journey forward in hidden fields', async () => {
@@ -1275,7 +1266,7 @@ describe(
       expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
       expect(textsOf($, FORM_LABELS)).toEqual([
         ...ADDRESS_FORM_LABELS,
-        ...OTHER_USE_QUESTION_BY_ROLE.consignor.labels
+        ...otherUseQuestionOf('consignor').labels
       ])
     })
 
@@ -1298,13 +1289,14 @@ describe(
   '#addressBookAddController — journey handshake',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
 
     test('GET refuses an unrecognised journey type', async () => {
       const { statusCode } = await getAdd(server(), 'add-get-unknown-journey', {
         ...CONSIGNOR_HANDSHAKE,
-        'journey-type': 'not-a-journey'
+        'journey-type': UNREGISTERED_JOURNEY_TYPE
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
@@ -1359,6 +1351,21 @@ describe(
         response.headers
       )
       expect(load(listResponse.result)(SUCCESS_BANNER)).toHaveLength(0)
+    })
+
+    test('POST from a fulfilment id the registry does not list is refused with 404 and creates nothing', async () => {
+      const scope = serveAddressCreated()
+
+      const response = await postAdd(server(), 'add-post-handshake-unlisted', {
+        ...CONSIGNOR_HANDSHAKE,
+        'fulfilment-id': 'not-a-fulfilment-id',
+        ...VALID_ADDRESS_PAYLOAD,
+        uses: 'CONSIGNOR',
+        action: ADDRESS_LANDING.SELECT
+      })
+
+      expect(response.statusCode).toBe(statusCodes.notFound)
+      expect(scope.isDone()).toBe(false)
     })
 
     test('POST of Save and return to address page returns to the journey with the new address id and the return landing', async () => {
@@ -1461,6 +1468,7 @@ describe(
   '#addressBookAddController — journey handshake by role',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
     const openAddFrom = async (role) => {
       const { result, statusCode } = await getAdd(
@@ -1480,7 +1488,7 @@ describe(
         expectUnitedKingdomAloneSelected($)
         expect(textsOf($, FORM_LABELS)).toEqual([
           ...ADDRESS_FORM_LABELS,
-          ...OTHER_USE_QUESTION_BY_ROLE[role].labels
+          ...otherUseQuestionOf(role).labels
         ])
       }
     )
@@ -1493,7 +1501,7 @@ describe(
         expectPlaceholderThenCountriesNoneSelected($, SERVED_COUNTRY_NAMES)
         expect(textsOf($, FORM_LABELS)).toEqual([
           ...ADDRESS_FORM_LABELS,
-          ...OTHER_USE_QUESTION_BY_ROLE[role].labels
+          ...otherUseQuestionOf(role).labels
         ])
       }
     )
@@ -1598,6 +1606,7 @@ describe(
   '#addressBookAddController — field layout',
   { concurrent: false },
   () => {
+    beforeAll(answerOidcDiscovery)
     const server = startRealModeServerServingCountries(COUNTRIES)
 
     test('GET renders name, address lines and email full width, town, county, postcode and country at one half, and phone at two thirds', async () => {

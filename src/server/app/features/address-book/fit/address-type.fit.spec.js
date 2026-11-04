@@ -12,9 +12,12 @@ import { copy } from '../copy/copy.en.js'
 import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import {
+  addressTypeRadio,
   addValidAddressToFreshOrganisation,
+  backLink,
   chooseAddressType,
   fieldLabels,
+  fieldLabelsInFormOrder,
   malformedEmail,
   openAddForm,
   refuseSaveThenReopenAddForm,
@@ -32,16 +35,8 @@ const typePageHeading = (page) =>
 const addFormHeading = (page) =>
   page.getByRole('heading', { level: 1, name: copy.add.title })
 
-const radioFor = (page, addressType) =>
-  page.getByRole('radio', {
-    name: typeCopy.options[addressType].label,
-    exact: true
-  })
-
 const continueButton = (page) =>
   page.getByRole('button', { name: typeCopy.continue })
-
-const backLink = (page) => page.getByRole('link', { name: 'Back', exact: true })
 
 const openTypePageFromList = async (page, organisationId) => {
   await openAddressBookList(page, { organisationId })
@@ -50,7 +45,7 @@ const openTypePageFromList = async (page, organisationId) => {
 
 const expectNoTypeChosen = async (page) => {
   for (const addressType of ADDRESS_TYPE_VALUES) {
-    await expect(radioFor(page, addressType)).not.toBeChecked()
+    await expect(addressTypeRadio(page, addressType)).not.toBeChecked()
   }
 }
 
@@ -101,7 +96,7 @@ test.describe('choose an address type', () => {
       .getByRole('link', { name: errors.addressType.required, exact: true })
       .click()
     await expect(
-      radioFor(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
+      addressTypeRadio(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
     ).toBeFocused()
   })
 
@@ -126,7 +121,7 @@ test.describe('choose an address type', () => {
 
     await expect(page).toHaveURL(addressTypePath())
     await expect(
-      radioFor(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
+      addressTypeRadio(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
     ).toBeChecked()
 
     await page.goto(addressBookPath())
@@ -152,7 +147,7 @@ test.describe('choose an address type', () => {
 
       await backLink(page).click()
 
-      await expect(radioFor(page, addressType)).toBeChecked()
+      await expect(addressTypeRadio(page, addressType)).toBeChecked()
     })
   }
 
@@ -179,8 +174,11 @@ test.describe('choose an address type', () => {
 
     await chooseAddressType(page)
 
-    await expect(page.getByLabel(fieldLabels.name)).toHaveValue('')
-    await expect(page.getByLabel(fieldLabels.addressLine1)).toHaveValue('')
+    for (const label of fieldLabelsInFormOrder) {
+      if (label !== fieldLabels.countryCode) {
+        await expect(page.getByLabel(label)).toHaveValue('')
+      }
+    }
   })
 })
 
@@ -261,6 +259,6 @@ test.describe('choose an address type without JavaScript', () => {
 
     await backLink(page).click()
 
-    await expect(radioFor(page, ADDRESS_TYPES.BRANCH)).toBeChecked()
+    await expect(addressTypeRadio(page, ADDRESS_TYPES.BRANCH)).toBeChecked()
   })
 })
