@@ -1,5 +1,5 @@
 const SELECT_COUNTRY = 'Select a country'
-const ADD_NEW_ADDRESS = 'Add a new address'
+const ADD_A_NEW_ADDRESS = 'Add a new address'
 const ADDRESS_TYPE = 'Address type'
 
 export const copy = {
@@ -16,7 +16,7 @@ export const copy = {
         placeholder: 'Select one'
       }
     },
-    add: ADD_NEW_ADDRESS,
+    add: ADD_A_NEW_ADDRESS,
     results: (from, to, total) => `Showing ${from}-${to} of ${total}`,
     noResults: 'Showing 0 of 0',
     tabsLabel: 'Address types',
@@ -85,7 +85,7 @@ export const copy = {
     countryPlaceholder: SELECT_COUNTRY
   },
   addressType: {
-    caption: ADD_NEW_ADDRESS,
+    caption: ADD_A_NEW_ADDRESS,
     title: 'Choose an address type',
     options: {
       ORIGIN_OR_CONSIGNOR: {

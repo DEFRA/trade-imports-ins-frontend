@@ -1,6 +1,6 @@
 // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
 const SELECT_COUNTRY = 'Dewiswch wlad'
-const ADD_NEW_ADDRESS = 'Ychwanegu cyfeiriad newydd'
+const ADD_A_NEW_ADDRESS = 'Ychwanegu cyfeiriad newydd'
 const ADDRESS_TYPE = 'Math o gyfeiriad'
 
 export const copy = {
@@ -18,7 +18,7 @@ export const copy = {
         placeholder: 'Dewiswch un'
       }
     },
-    add: ADD_NEW_ADDRESS,
+    add: ADD_A_NEW_ADDRESS,
     results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,
     noResults: 'Yn dangos 0 o 0',
     tabsLabel: 'Mathau o gyfeiriad',
@@ -88,7 +88,7 @@ export const copy = {
     countryPlaceholder: SELECT_COUNTRY
   },
   addressType: {
-    caption: ADD_NEW_ADDRESS,
+    caption: ADD_A_NEW_ADDRESS,
     title: 'Dewiswch fath o gyfeiriad',
     options: {
       ORIGIN_OR_CONSIGNOR: {
@@ -124,7 +124,7 @@ export const copy = {
   },
   add: {
     title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
-    caption: ADD_NEW_ADDRESS,
+    caption: ADD_A_NEW_ADDRESS,
     save: 'Cadw a pharhau',
     saveAndSelect: 'Cadw a dewis',
     saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',

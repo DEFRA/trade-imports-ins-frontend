@@ -34,7 +34,7 @@ import { addressBookPath, addressTypeStartPath } from '../../../shared/paths.js'
 const ORG_DEFAULT = 'stub-org-1'
 const ORG_EMPTY = 'stub-org-empty'
 const ORG_PAGINATED = 'stub-org-paginated'
-const ADD_NEW_ADDRESS = 'Add a new address'
+const ADD_A_NEW_ADDRESS = 'Add a new address'
 const FARM_12 = 'Stub Farm 12'
 const FIRST_PAGE_LINE = 'Showing 1-8 of 30'
 const TWO_ADDRESSES_LINE = 'Showing 1-2 of 2'
@@ -89,7 +89,7 @@ test.describe('list and pagination', () => {
       table.getByRole('cell', { name: 'United Kingdom', exact: true })
     ).toBeVisible()
     await expect(
-      page.getByRole('button', { name: ADD_NEW_ADDRESS })
+      page.getByRole('button', { name: ADD_A_NEW_ADDRESS })
     ).toBeVisible()
   })
 
@@ -98,7 +98,7 @@ test.describe('list and pagination', () => {
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
-    await page.getByRole('button', { name: ADD_NEW_ADDRESS }).click()
+    await page.getByRole('button', { name: ADD_A_NEW_ADDRESS }).click()
 
     await expect(page).toHaveURL(addressTypeStartPath())
     await expect(
@@ -161,7 +161,7 @@ test.describe('intro and cells', () => {
       )
     ).toBeVisible()
     await expect(
-      page.getByRole('button', { name: ADD_NEW_ADDRESS })
+      page.getByRole('button', { name: ADD_A_NEW_ADDRESS })
     ).toBeVisible()
   })
 
