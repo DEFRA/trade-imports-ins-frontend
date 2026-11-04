@@ -276,7 +276,7 @@ const get = async (request, toolkit) => {
   })
 }
 
-const addedFromOf = (handshakeContext, addressType) =>
+const addIdsForLog = (handshakeContext, addressType) =>
   handshakeContext
     ? {
         notificationId: handshakeContext.notificationId,
@@ -302,7 +302,7 @@ const logReplacedCountry = ({
     {
       organisationId,
       addressId,
-      ...addedFromOf(handshakeContext, addressType),
+      ...addIdsForLog(handshakeContext, addressType),
       postedCountryCode
     },
     'Posted country was replaced with the country the address must be in'
@@ -321,7 +321,7 @@ const logDiscardedUses = ({
     logger.info(
       {
         organisationId,
-        ...addedFromOf(handshakeContext, addressType),
+        ...addIdsForLog(handshakeContext, addressType),
         discardedUses
       },
       'Posted uses the address page does not offer were not saved'
