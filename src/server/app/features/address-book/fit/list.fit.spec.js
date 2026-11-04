@@ -40,6 +40,9 @@ const FARM_12 = 'Stub Farm 12'
 const FIRST_PAGE_LINE = 'Showing 1-8 of 30'
 const TWO_ADDRESSES_LINE = 'Showing 1-2 of 2'
 
+const paginationOf = (page) =>
+  page.getByRole('navigation', { name: 'Pagination' })
+
 test.describe('navigation', () => {
   test('Dashboard and Address book links are visible and navigate correctly', async ({
     page
@@ -416,7 +419,7 @@ test.describe('filter addresses', () => {
       resultsLine: TWO_ADDRESSES_LINE
     })
 
-    await expect(page.locator('.govuk-pagination')).toHaveCount(0)
+    await expect(paginationOf(page)).toHaveCount(0)
   })
 
   test('finds an address by a term inside its address line 1', async ({
@@ -510,10 +513,10 @@ test.describe('filter addresses without JavaScript', () => {
 const CONSIGNOR_USE = { label: 'Consignor', value: 'CONSIGNOR' }
 const CONSIGNEE_USE = { label: 'Consignee', value: 'CONSIGNEE' }
 const IMPORTER_USE = { label: 'Importer', value: 'IMPORTER' }
-const SELECT_ONE = 'Select one'
+const NO_TYPE_VALUE = ''
 
-const expectTypeChosen = (page, label) =>
-  expect(typeSelectOf(page).locator('option:checked')).toHaveText(label)
+const expectTypeChosen = (page, value) =>
+  expect(typeSelectOf(page)).toHaveValue(value)
 
 test.describe('type filter', () => {
   for (const { submitWith, how } of SUBMIT_METHODS) {
@@ -529,10 +532,10 @@ test.describe('type filter', () => {
       })
 
       await expectNamesListed(page, [TYPED_SEED.originAndConsignor.name])
-      await expect(page.locator('.govuk-pagination')).toHaveCount(0)
+      await expect(paginationOf(page)).toHaveCount(0)
       await expectTabsInOrderWithSelected(page, ORIGIN_TAB.label)
       await openFilterDisclosure(page)
-      await expectTypeChosen(page, CONSIGNOR_USE.label)
+      await expectTypeChosen(page, CONSIGNOR_USE.value)
     })
   }
 
@@ -585,7 +588,7 @@ test.describe('type filter', () => {
     await expectNamesListed(page, ORIGIN_TAB.names)
     await openFilterDisclosure(page)
     await expect(searchFieldOf(page)).toHaveValue('Stub')
-    await expectTypeChosen(page, SELECT_ONE)
+    await expectTypeChosen(page, NO_TYPE_VALUE)
   })
 
   test('finds an address by the label of one of its uses', async ({ page }) => {
