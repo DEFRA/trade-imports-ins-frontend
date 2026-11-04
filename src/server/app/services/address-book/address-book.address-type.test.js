@@ -5,6 +5,10 @@ import {
   pageOf
 } from '../../../common/test-helpers/address-book-requests.js'
 import {
+  STUB_SEED_ADDRESS_NAME,
+  listedStubNames
+} from '../../../common/test-helpers/address-book-stub.js'
+import {
   addressBookApi,
   refuseOutboundHttp,
   runInRealMode
@@ -148,7 +152,6 @@ describe('in stub mode, listing by address type', () => {
 
   const TYPED_ORGANISATION_ID = 'stub-org-typed'
   const UNTYPED_ORGANISATION_ID = 'stub-org-untyped'
-  const UNTYPED_SEED_NAME = 'Stub Farm 1'
   const {
     originAndConsignor,
     mixedOriginAndConsignee,
@@ -157,17 +160,9 @@ describe('in stub mode, listing by address type', () => {
     branchDepot
   } = TYPED_SEED
 
-  const listedNamesUnder = async (organisationId, query) =>
-    (
-      await addressBook.listAddresses(organisationId, {
-        pageSize: PAGE_SIZE,
-        ...query
-      })
-    ).items.map(({ name }) => name)
-
   test('Should list exactly the addresses holding a use of Origin or Consignor, the place of origin and consignee address included', async () => {
     expect(
-      await listedNamesUnder(TYPED_ORGANISATION_ID, {
+      await listedStubNames(TYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
       })
     ).toEqual([originAndConsignor.name, mixedOriginAndConsignee.name])
@@ -175,7 +170,7 @@ describe('in stub mode, listing by address type', () => {
 
   test('Should list exactly the addresses holding a use of Destination, Consignee or Importer, the place of origin and consignee address included', async () => {
     expect(
-      await listedNamesUnder(TYPED_ORGANISATION_ID, {
+      await listedStubNames(TYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
       })
     ).toEqual([mixedOriginAndConsignee.name, importer.name])
@@ -183,14 +178,14 @@ describe('in stub mode, listing by address type', () => {
 
   test('Should list exactly the addresses holding a branch address use under Branch', async () => {
     expect(
-      await listedNamesUnder(TYPED_ORGANISATION_ID, {
+      await listedStubNames(TYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.BRANCH
       })
     ).toEqual([branch.name, branchDepot.name])
   })
 
   test('Should list every live address when no address type is given', async () => {
-    expect(await listedNamesUnder(TYPED_ORGANISATION_ID, {})).toEqual([
+    expect(await listedStubNames(TYPED_ORGANISATION_ID, {})).toEqual([
       originAndConsignor.name,
       mixedOriginAndConsignee.name,
       importer.name,
@@ -201,13 +196,13 @@ describe('in stub mode, listing by address type', () => {
 
   test('Should apply the search term within the address type', async () => {
     expect(
-      await listedNamesUnder(TYPED_ORGANISATION_ID, {
+      await listedStubNames(TYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.BRANCH,
         searchTerm: 'depot'
       })
     ).toEqual([branchDepot.name])
     expect(
-      await listedNamesUnder(TYPED_ORGANISATION_ID, {
+      await listedStubNames(TYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
         searchTerm: 'depot'
       })
@@ -216,17 +211,17 @@ describe('in stub mode, listing by address type', () => {
 
   test('Should list an address with no uses under Origin or Consignor only', async () => {
     expect(
-      await listedNamesUnder(UNTYPED_ORGANISATION_ID, {
+      await listedStubNames(UNTYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
       })
-    ).toEqual([UNTYPED_SEED_NAME])
+    ).toEqual([STUB_SEED_ADDRESS_NAME])
     expect(
-      await listedNamesUnder(UNTYPED_ORGANISATION_ID, {
+      await listedStubNames(UNTYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
       })
     ).toEqual([])
     expect(
-      await listedNamesUnder(UNTYPED_ORGANISATION_ID, {
+      await listedStubNames(UNTYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.BRANCH
       })
     ).toEqual([])
@@ -234,13 +229,13 @@ describe('in stub mode, listing by address type', () => {
 
   test('Should list exactly the addresses of the tab that hold the use', async () => {
     expect(
-      await listedNamesUnder(TYPED_ORGANISATION_ID, {
+      await listedStubNames(TYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
         use: 'CONSIGNOR'
       })
     ).toEqual([originAndConsignor.name])
     expect(
-      await listedNamesUnder(TYPED_ORGANISATION_ID, {
+      await listedStubNames(TYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
         use: 'CONSIGNEE'
       })
@@ -273,14 +268,14 @@ describe('in stub mode, listing by address type', () => {
 
   test('Should match a search use as it matches a search term, within the address type', async () => {
     expect(
-      await listedNamesUnder(TYPED_ORGANISATION_ID, {
+      await listedStubNames(TYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
         searchTerm: 'consignor',
         searchUses: ['CONSIGNOR']
       })
     ).toEqual([originAndConsignor.name])
     expect(
-      await listedNamesUnder(TYPED_ORGANISATION_ID, {
+      await listedStubNames(TYPED_ORGANISATION_ID, {
         addressType: ADDRESS_TYPES.BRANCH,
         searchTerm: 'consignor',
         searchUses: ['CONSIGNOR']

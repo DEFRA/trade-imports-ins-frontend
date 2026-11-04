@@ -11,6 +11,10 @@ import {
   VALID_ADDRESS_FIELDS
 } from '../../../common/test-helpers/address-book-requests.js'
 import {
+  STUB_SEED_ADDRESS_NAME,
+  listedStubNames
+} from '../../../common/test-helpers/address-book-stub.js'
+import {
   addressBookApi,
   refuseOutboundHttp,
   runInRealMode
@@ -324,18 +328,9 @@ describe('in stub mode', () => {
   refuseOutboundHttp()
 
   const PAGINATED_ORGANISATION_ID = 'stub-org-paginated'
-  const SEED_ADDRESS_NAME = 'Stub Farm 1'
   const GLEN_DEPOT = 'Glen Depot'
   const PARIS_DEPOT = 'Paris Depot'
   const BOSTON_DEPOT = 'Boston Depot'
-
-  const listedNames = async (organisationId, query = {}) =>
-    (
-      await addressBook.listAddresses(organisationId, {
-        pageSize: PAGE_SIZE,
-        ...query
-      })
-    ).items.map(({ name }) => name)
 
   test('Should seed one GB address, Stub Farm 1 at id 000000000000000000000001, for an ordinary organisation', async () => {
     const { items, totalItems } = await addressBook.listAddresses(
@@ -348,7 +343,7 @@ describe('in stub mode', () => {
     expect(totalItems).toBe(1)
     expect(items[0]).toMatchObject({
       id: '000000000000000000000001',
-      name: SEED_ADDRESS_NAME,
+      name: STUB_SEED_ADDRESS_NAME,
       countryCode: 'GB'
     })
   })
@@ -387,15 +382,16 @@ describe('in stub mode', () => {
       county: 'Antrim'
     })
 
-    const search = (searchTerm) => listedNames(organisationId, { searchTerm })
+    const search = (searchTerm) =>
+      listedStubNames(organisationId, { searchTerm })
 
     expect(await search('glen')).toEqual([GLEN_DEPOT])
     expect(await search('iv2 3jh')).toEqual([GLEN_DEPOT])
     expect(await search(' BALLYMORE ')).toEqual([GLEN_DEPOT])
     expect(await search('antrim')).toEqual([GLEN_DEPOT])
     expect(await search('inverness')).toEqual([GLEN_DEPOT])
-    expect(await search('stub way')).toEqual([SEED_ADDRESS_NAME])
-    expect(await search('stubton')).toEqual([SEED_ADDRESS_NAME])
+    expect(await search('stub way')).toEqual([STUB_SEED_ADDRESS_NAME])
+    expect(await search('stubton')).toEqual([STUB_SEED_ADDRESS_NAME])
   })
 
   test('Should count the matches of a search over the whole book, not only the page', async () => {
@@ -423,10 +419,10 @@ describe('in stub mode', () => {
       name: PARIS_DEPOT
     })
 
-    expect(await listedNames(organisationId)).toEqual([
+    expect(await listedStubNames(organisationId)).toEqual([
       PARIS_DEPOT,
       GLEN_DEPOT,
-      SEED_ADDRESS_NAME
+      STUB_SEED_ADDRESS_NAME
     ])
   })
 
@@ -444,14 +440,14 @@ describe('in stub mode', () => {
     })
 
     expect(
-      await listedNames(organisationId, { countryCodes: ['FR', 'US'] })
+      await listedStubNames(organisationId, { countryCodes: ['FR', 'US'] })
     ).toEqual([BOSTON_DEPOT, PARIS_DEPOT])
     expect(
-      await listedNames(organisationId, {
+      await listedStubNames(organisationId, {
         searchTerm: 'stub farm',
         countryCodes: ['FR']
       })
-    ).toEqual([PARIS_DEPOT, SEED_ADDRESS_NAME])
+    ).toEqual([PARIS_DEPOT, STUB_SEED_ADDRESS_NAME])
   })
 
   test('Should report no matches over no pages for a search that matches nothing', async () => {
