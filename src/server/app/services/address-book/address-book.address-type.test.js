@@ -23,6 +23,30 @@ describe('in stub mode, listing by address type', () => {
     branchDepot
   } = TYPED_SEED
 
+  test('Should seed each typed address with its address type and its uses', async () => {
+    const { items } = await addressBook.listAddresses(TYPED_ORGANISATION_ID, {
+      pageSize: 8
+    })
+
+    expect(
+      items.map(({ name, addressType, uses }) => [name, addressType, uses])
+    ).toEqual([
+      [
+        'Stub Origin Farm',
+        'ORIGIN_OR_CONSIGNOR',
+        ['PLACE_OF_ORIGIN', 'CONSIGNOR']
+      ],
+      [
+        'Stub Mixed Farm',
+        'ORIGIN_OR_CONSIGNOR',
+        ['PLACE_OF_ORIGIN', 'CONSIGNEE']
+      ],
+      ['Stub Importer Farm', 'DESTINATION_CONSIGNEE_OR_IMPORTER', ['IMPORTER']],
+      ['Stub Branch Farm', 'BRANCH', ['BRANCH_ADDRESS']],
+      ['Stub Branch Depot', 'BRANCH', ['BRANCH_ADDRESS']]
+    ])
+  })
+
   test('Should list exactly the addresses holding a use of Origin or Consignor, the place of origin and consignee address included', async () => {
     expect(
       await listedStubNames(TYPED_ORGANISATION_ID, {

@@ -10,7 +10,7 @@ the given uses an address type offers, kept in `USES_BY_ADDRESS_TYPE`'s
 order, which is not the order the uses question shows them,
 `addressTypeRequiresUnitedKingdom`, whether an address type must be in the
 United Kingdom, and `PLACE_USES`, the uses that name a place) and
-**`typed-seed.js`** (the stub's typed seed addresses), which the barrel
+**`typed-seed.js`** (the stub's typed seed addresses, each with an address type and its uses), which the barrel
 exports. A feature imports only the barrel, and nothing imports any other file
 from outside its folder.
 
