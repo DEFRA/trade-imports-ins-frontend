@@ -30,7 +30,7 @@ describe('#copyFor', () => {
 })
 
 describe('unauthorised-page copy', () => {
-  it('Should carry the sign-in failure wording the auth controller renders', () => {
+  it('Should word the unauthorised page title, heading, body prefix and sign-in link', () => {
     expect(sharedEn.unauthorised).toEqual({
       title: 'Unable to sign in',
       heading: 'Sorry, we are unable to sign you in.',
