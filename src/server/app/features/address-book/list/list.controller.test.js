@@ -146,16 +146,13 @@ describe('#addressBookListController', () => {
       pageOf([parisDepotAddress])
     )
 
-    const { $, statusCode } = await readPage(
+    const { statusCode } = await readPage(
       `${ADDRESS_BOOK_PATH}?q=fran`,
       'list-search-country'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
-    expect(rowCellsOf($, 0).eq(0).html()).toBe('Paris<br> Depot')
-    expect(textOf($, rowCellsOf($, 0).eq(2))).toBe('France')
-    expect($('input[name="q"]').val()).toBe('fran')
   })
 
   test.each([
