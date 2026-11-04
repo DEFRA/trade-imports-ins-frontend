@@ -87,20 +87,3 @@ export const handshakeContextOf = (handshake) => ({
 })
 
 export const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
-
-export const CONSIGNOR_CONTEXT = handshakeContextOf(
-  JOURNEY_HANDSHAKES_BY_ROLE.consignor
-)
-
-export const UNRESOLVABLE_PARTY_CASES = Object.freeze([
-  ['a fulfilment id the registry does not list', { fulfilmentId: 'x' }],
-  [
-    'a fulfilment id named like an Object property',
-    { fulfilmentId: 'constructor' }
-  ],
-  [
-    'a listed fulfilment id under an unregistered journey type',
-    { journeyType: UNREGISTERED_JOURNEY_TYPE }
-  ],
-  ['no context', null]
-])

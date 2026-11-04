@@ -6,13 +6,11 @@ import {
   ANIMALS_BASE_URL,
   ANY_COUNTRY_ROLES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
-  CONSIGNOR_CONTEXT,
   handshakeContextOf,
   JOURNEY_HANDSHAKES_BY_ROLE,
   returnUrlFor,
   UNITED_KINGDOM_ROLES,
   UNREGISTERED_JOURNEY_TYPE,
-  UNRESOLVABLE_PARTY_CASES,
   USES_BY_ROLE
 } from '../../../common/test-helpers/journey-handshake.js'
 import {
@@ -28,6 +26,21 @@ import {
 } from './journey-registry.js'
 
 const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_ROLE.consignor
+
+const CONSIGNOR_CONTEXT = handshakeContextOf(CONSIGNOR_HANDSHAKE)
+
+const UNRESOLVABLE_PARTY_CASES = Object.freeze([
+  ['a fulfilment id the registry does not list', { fulfilmentId: 'x' }],
+  [
+    'a fulfilment id named like an Object property',
+    { fulfilmentId: 'constructor' }
+  ],
+  [
+    'a listed fulfilment id under an unregistered journey type',
+    { journeyType: UNREGISTERED_JOURNEY_TYPE }
+  ],
+  ['no context', null]
+])
 const BASE_URL_CONFIG_KEY = 'tradeImportsAnimalsFrontend.baseUrl'
 
 describe('journey-registry', () => {
