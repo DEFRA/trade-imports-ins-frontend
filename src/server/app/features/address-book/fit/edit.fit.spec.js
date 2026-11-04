@@ -39,7 +39,9 @@ const save = (page) =>
 const cancel = (page) => page.getByRole('button', { name: 'Cancel' }).click()
 
 test.describe('edit address', () => {
-  test('prefills every field from the stored address', async ({ page }) => {
+  test('is headed Edit address and contact details and prefills every field from the stored address', async ({
+    page
+  }) => {
     await openEditForm(page, 'stub-org-edit-render')
 
     await expect(
@@ -49,19 +51,37 @@ test.describe('edit address', () => {
       })
     ).toBeVisible()
     for (const [field, value] of Object.entries(seedValues)) {
-      await expect(page.getByLabel(fieldLabels[field])).toHaveValue(value)
+      await expect(
+        page.getByLabel(fieldLabels[field], { exact: true })
+      ).toHaveValue(value)
     }
+  })
+
+  test('groups fields under Address and Contact details', async ({ page }) => {
+    await openEditForm(page, 'stub-org-edit-sections')
+
     for (const name of ['Address', 'Contact details']) {
       await expect(
         page.getByRole('heading', { level: 2, name, exact: true })
       ).toBeVisible()
     }
+  })
+
+  test('hints that international phone numbers include the country code', async ({
+    page
+  }) => {
+    await openEditForm(page, 'stub-org-edit-phone-hint')
+
     await expect(
-      page.getByLabel(fieldLabels.name, { exact: true })
-    ).toBeVisible()
-    await expect(
-      page.getByText('For international numbers include the country code')
-    ).toBeVisible()
+      page.getByLabel(fieldLabels.phone)
+    ).toHaveAccessibleDescription(
+      'For international numbers include the country code'
+    )
+  })
+
+  test('has a Back link to the address details', async ({ page }) => {
+    await openEditForm(page, 'stub-org-edit-back')
+
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
     ).toHaveAttribute('href', addressPath(seedAddressId))
