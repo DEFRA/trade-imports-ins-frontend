@@ -5,8 +5,11 @@ import { FIELD_RULES } from '../fields.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { countries } from '../../../services/_capture/fixtures.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
-import { addressAddPath, addressTypePath } from '../../../shared/paths.js'
-import { addressBookPageHref } from '../view-model/list.js'
+import {
+  addressAddPath,
+  addressBookPath,
+  addressTypePath
+} from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../../common/test-helpers/journey-handshake.js'
 
@@ -136,9 +139,12 @@ export const refuseSaveThenReopenAddForm = async (
   await expect(page).toHaveURL(addressAddPath())
 }
 
-export const originOrConsignorListUrl = addressBookPageHref(1, {
-  addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
-})
+export const addressTypeListUrl = (addressType) =>
+  `${addressBookPath()}?${new URLSearchParams({ addressType })}`
+
+export const originOrConsignorListUrl = addressTypeListUrl(
+  ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+)
 
 export const addValidAddressToFreshOrganisation = async (
   page,
@@ -156,7 +162,7 @@ export const addValidAddressToFreshOrganisation = async (
   await fillValidAddress(page, overrides)
   await tickUses(page, uses)
   await saveAndContinueButton(page).click()
-  await expect(page).toHaveURL(addressBookPageHref(1, { addressType }))
+  await expect(page).toHaveURL(addressTypeListUrl(addressType))
 }
 
 export const validAddressViewLink = (page) =>

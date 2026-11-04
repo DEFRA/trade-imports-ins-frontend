@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test'
 import {
   addValidAddressToFreshOrganisation,
   addressFormCountryNames,
+  addressTypeListUrl,
   errorLink,
   expectErrorFocusOn,
   expectInDocumentOrder,
@@ -46,7 +47,6 @@ import {
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
-import { addressBookPageHref } from '../view-model/list.js'
 
 const LATE_ALPHABETICAL_NAME = 'Zetland Livestock Ltd'
 
@@ -580,9 +580,7 @@ test.describe('add address reached from a notification journey with JavaScript o
 
     const listPage = await page.context().newPage()
     await listPage.goto(
-      addressBookPageHref(1, {
-        addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
-      })
+      addressTypeListUrl(ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER)
     )
     await expect(
       listPage

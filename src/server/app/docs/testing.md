@@ -182,7 +182,9 @@ names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
 continues), `openAddForm` (opens the address form through the type page with
 a type chosen), `tickUses` (ticks the uses checkboxes it is given),
 `openAddFormFromJourney` (signs in and opens the add form with a journey
-handshake, the consignor's by default), `originOrConsignorListUrl` (the
+handshake, the consignor's by default), `addressTypeListUrl` (an address
+type's list URL, written out rather than built by the list view model),
+`originOrConsignorListUrl` (the
 Origin or Consignor tab's list URL, where a save of that type lands), `addValidAddressToFreshOrganisation` (signs in to a fresh
 organisation, goes through the type page, then saves a valid address of the
 given type with the uses the caller passes, Origin or Consignor with Place of
