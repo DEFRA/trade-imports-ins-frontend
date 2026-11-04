@@ -20,7 +20,6 @@ import {
   MALFORMED_ADDRESS_ID,
   ORGANISATION_ID_HEADER,
   postPage,
-  RETURN_HOME,
   serveAddressBookServerError,
   serveAddressNotFound,
   serveStoredAddress,
@@ -29,6 +28,7 @@ import {
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
+import { pathWithReturn } from '../return-to.js'
 import {
   addressSummaryLines,
   deletedSuccessMessage
@@ -40,11 +40,20 @@ vi.mock('../../../../../auth/get-oidc-config.js', () => ({
 
 const UK_NAME = 'United Kingdom'
 
-const getDelete = (server, sessionId, query = '') =>
-  getPage(server, `${addressDeletePath(ADDRESS_ID)}${query}`, sessionId)
+const getDelete = (server, sessionId, returnTo) =>
+  getPage(
+    server,
+    pathWithReturn(addressDeletePath(ADDRESS_ID), returnTo),
+    sessionId
+  )
 
-const postDelete = (server, sessionId, query = '') =>
-  postPage(server, `${addressDeletePath(ADDRESS_ID)}${query}`, sessionId, {})
+const postDelete = (server, sessionId, returnTo) =>
+  postPage(
+    server,
+    pathWithReturn(addressDeletePath(ADDRESS_ID), returnTo),
+    sessionId,
+    {}
+  )
 
 const BANNER = '.govuk-notification-banner'
 const SUMMARY_VALUE = '.govuk-summary-list__value'
@@ -239,12 +248,12 @@ describe('GET /address-book/{addressId}/delete', () => {
       const { result, statusCode } = await getDelete(
         getServer(),
         'delete-get-return',
-        RETURN_HOME
+        '/'
       )
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      const addressPageHref = `${addressPath(ADDRESS_ID)}${RETURN_HOME}`
+      const addressPageHref = pathWithReturn(addressPath(ADDRESS_ID), '/')
       expect($(BACK_LINK).attr('href')).toBe(addressPageHref)
       expect($('.govuk-button-group a.govuk-link').attr('href')).toBe(
         addressPageHref
@@ -333,7 +342,7 @@ describe('POST /address-book/{addressId}/delete', () => {
       const scope = interceptDeleteOf(ADDRESS_ID).reply(statusCodes.noContent)
 
       expectRedirectTo(
-        await postDelete(getServer(), 'delete-post-return', RETURN_HOME),
+        await postDelete(getServer(), 'delete-post-return', '/'),
         '/'
       )
       expect(scope.isDone()).toBe(true)
@@ -346,7 +355,7 @@ describe('POST /address-book/{addressId}/delete', () => {
       const { headers } = await postDelete(
         getServer(),
         'delete-post-return-banner',
-        RETURN_HOME
+        '/'
       )
 
       const listResponse = await openEmptyAddressBookWithCookiesFrom(
@@ -365,7 +374,7 @@ describe('POST /address-book/{addressId}/delete', () => {
         await postDelete(
           getServer(),
           'delete-post-return-own-page',
-          `?return=${encodeURIComponent(addressPath(ADDRESS_ID))}`
+          addressPath(ADDRESS_ID)
         ),
         addressBookPath()
       )
@@ -377,11 +386,7 @@ describe('POST /address-book/{addressId}/delete', () => {
       interceptDeleteOf(ADDRESS_ID).reply(statusCodes.noContent)
 
       expectRedirectTo(
-        await postDelete(
-          getServer(),
-          'delete-post-return-animals',
-          `?return=${encodeURIComponent(animalsUrl)}`
-        ),
+        await postDelete(getServer(), 'delete-post-return-animals', animalsUrl),
         animalsUrl
       )
     })
@@ -390,11 +395,7 @@ describe('POST /address-book/{addressId}/delete', () => {
       serveAddressNotFound(ADDRESS_ID)
 
       expectRedirectTo(
-        await postDelete(
-          getServer(),
-          'delete-post-return-unknown',
-          RETURN_HOME
-        ),
+        await postDelete(getServer(), 'delete-post-return-unknown', '/'),
         '/'
       )
     })

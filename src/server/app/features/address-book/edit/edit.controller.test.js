@@ -19,7 +19,6 @@ import {
   INVALID_ADDRESS_PAYLOAD,
   MALFORMED_ADDRESS_ID,
   postPage,
-  RETURN_HOME,
   SELECTED_COUNTRY,
   serveAddressBookServerError,
   serveAddressNotFound,
@@ -44,6 +43,7 @@ import {
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { GB_COUNTRY } from '../address-countries.js'
+import { pathWithReturn } from '../return-to.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
   getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
@@ -54,11 +54,20 @@ const UNOFFERED_COUNTRY_CODE = 'XX'
 const RECOVERABLE_ERROR_MESSAGE =
   'Sorry, there is a problem with the service. Try again in a few minutes.'
 
-const getEdit = (server, sessionId, query = '') =>
-  getPage(server, `${addressEditPath(ADDRESS_ID)}${query}`, sessionId)
+const getEdit = (server, sessionId, returnTo) =>
+  getPage(
+    server,
+    pathWithReturn(addressEditPath(ADDRESS_ID), returnTo),
+    sessionId
+  )
 
-const postEdit = (server, sessionId, payload, query = '') =>
-  postPage(server, `${addressEditPath(ADDRESS_ID)}${query}`, sessionId, payload)
+const postEdit = (server, sessionId, payload, returnTo) =>
+  postPage(
+    server,
+    pathWithReturn(addressEditPath(ADDRESS_ID), returnTo),
+    sessionId,
+    payload
+  )
 
 const countryValuesOf = ($) =>
   $(COUNTRY_OPTIONS)
@@ -169,11 +178,7 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should link Back to the page the edit was opened from', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(
-      getServer(),
-      'edit-get-back-return',
-      RETURN_HOME
-    )
+    const { result } = await getEdit(getServer(), 'edit-get-back-return', '/')
 
     expect(load(result)(BACK_LINK).attr('href')).toBe('/')
   })
@@ -223,7 +228,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await getEdit(getServer(), 'edit-get-unknown-return', RETURN_HOME),
+      await getEdit(getServer(), 'edit-get-unknown-return', '/'),
       '/'
     )
   })
@@ -235,7 +240,7 @@ describe('GET /address-book/{addressId}/edit', () => {
       await getEdit(
         getServer(),
         'edit-get-unknown-own-page',
-        `?return=${encodeURIComponent(addressPath(ADDRESS_ID))}`
+        addressPath(ADDRESS_ID)
       ),
       addressBookPath()
     )
@@ -352,7 +357,7 @@ describe('POST /address-book/{addressId}/edit', () => {
         getServer(),
         'edit-post-not-live-return',
         VALID_ADDRESS_PAYLOAD,
-        RETURN_HOME
+        '/'
       ),
       '/'
     )
@@ -423,7 +428,7 @@ describe('POST /address-book/{addressId}/edit', () => {
         getServer(),
         'edit-post-cancel-return',
         { cancel: 'true' },
-        RETURN_HOME
+        '/'
       ),
       '/'
     )

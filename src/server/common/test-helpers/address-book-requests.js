@@ -20,8 +20,6 @@ export {
   addressPath
 } from '../../app/shared/paths.js'
 
-export const RETURN_HOME = '?return=%2F'
-
 export const addressesApiPath = (organisationId = ORGANISATION_ID) =>
   `/organisation/${organisationId}/addresses`
 
