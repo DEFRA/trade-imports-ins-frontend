@@ -97,6 +97,28 @@ export const tickUses = async (page, uses) => {
   }
 }
 
+export const expectInDocumentOrder = async (page, locators) => {
+  await expect
+    .poll(async () => {
+      const elements = await Promise.all(
+        locators.map((locator) => locator.elementHandle())
+      )
+      return page.evaluate(
+        (candidates) =>
+          candidates.every(
+            (element, index) =>
+              index === 0 ||
+              Boolean(
+                candidates[index - 1].compareDocumentPosition(element) &
+                Node.DOCUMENT_POSITION_FOLLOWING
+              )
+          ),
+        elements
+      )
+    })
+    .toBe(true)
+}
+
 export const malformedEmail = 'not-an-email'
 
 export const refuseSaveThenReopenAddForm = async (

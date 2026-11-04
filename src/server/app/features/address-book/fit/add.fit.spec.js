@@ -5,6 +5,7 @@ import {
   addressFormCountryNames,
   errorLink,
   expectErrorFocusOn,
+  expectInDocumentOrder,
   openAddForm,
   openAddFormFromJourney,
   fieldLabels,
@@ -126,9 +127,15 @@ test.describe('add address uses question', () => {
     await signIn(page, { organisationId: `${organisationPrefix}-render` })
     await openAddForm(page)
 
-    await expect(page.locator('hr.govuk-section-break--visible')).toHaveCount(1)
+    const sectionBreak = page.locator('hr.govuk-section-break--visible')
+    await expect(sectionBreak).toHaveCount(1)
     const usesGroup = usesGroupOf(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
     await expect(usesGroup).toBeVisible()
+    await expectInDocumentOrder(page, [
+      page.getByLabel(fieldLabels.phone),
+      sectionBreak,
+      usesGroup
+    ])
     await expect(usesGroup).toContainText(copy.uses.hint)
     const options = usesGroup.getByRole('checkbox')
     await expect(options).toHaveCount(2)
@@ -242,11 +249,15 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
       await expect(
         page.locator('label.govuk-label:not(.govuk-checkboxes__label)')
       ).toHaveText(fieldLabelsInFormOrder)
-      await expect(page.locator('hr.govuk-section-break--visible')).toHaveCount(
-        1
-      )
+      const sectionBreak = page.locator('hr.govuk-section-break--visible')
+      await expect(sectionBreak).toHaveCount(1)
       const usesGroup = usesGroupOf(page, addressType)
       await expect(usesGroup).toBeVisible()
+      await expectInDocumentOrder(page, [
+        page.getByLabel(fieldLabels.phone),
+        sectionBreak,
+        usesGroup
+      ])
       await expect(usesGroup).toContainText(copy.uses.hint)
       await expect(usesGroup.locator('label')).toHaveText(
         offeredUses.map((use) => copy.uses.options[use].label)
