@@ -141,7 +141,7 @@ describe('#copy', () => {
     expect(copy.successBanner.deletedUnnamed).toBe('Address deleted')
   })
 
-  it('Should word the delete confirmation with its summary label, warning, fallback and Yes, delete and No, cancel', () => {
+  it('Should word the delete summary label, confirmation sentence, warning, fallback and Yes, delete and No, cancel', () => {
     expect(copy.delete.summaryAddress).toBe('Address')
     expect(copy.delete.confirmation).toBe(
       'Confirm that you want to delete this address.'
