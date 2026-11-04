@@ -172,6 +172,27 @@ describe('#addressBookListTypeFilter', () => {
     expect($('.govuk-pagination')).toHaveLength(0)
   })
 
+  test('links Clear search to the selected tab with the use kept and no search', async () => {
+    stubAddressPage(
+      {
+        page: '1',
+        q: 'green',
+        addressType: ADDRESS_TYPES.BRANCH,
+        use: 'BRANCH_ADDRESS'
+      },
+      pageOf([greenFarmAddress])
+    )
+
+    const { $ } = await readPage(
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&use=BRANCH_ADDRESS`,
+      'list-clear-search-use'
+    )
+
+    expect($('[data-testid="address-book-clear-search"]').attr('href')).toBe(
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&use=BRANCH_ADDRESS`
+    )
+  })
+
   test.each([
     ['consignor', 'CONSIGNOR'],
     ['place of origin', 'PLACE_OF_ORIGIN'],

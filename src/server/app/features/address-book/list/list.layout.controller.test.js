@@ -169,7 +169,7 @@ describe('#addressBookListLayout', () => {
     expect($('tbody b, tbody i')).toHaveLength(0)
   })
 
-  test('lists the match under the tabs with its View link as the only link there', async () => {
+  test('lists the match under the tabs with Clear search and its View link as the only links there', async () => {
     stubAddressPage({ page: '1', q: 'green' }, pageOf([greenFarmAddress]))
 
     const { $, statusCode } = await readPage(
@@ -181,13 +181,17 @@ describe('#addressBookListLayout', () => {
     expect(resultsLineOf($)).toBe('Showing 1-1 of 1')
     expect(linksAfterSubNavigation($)).toEqual([
       {
+        text: 'Clear search',
+        href: `${ADDRESS_BOOK_PATH}?addressType=ORIGIN_OR_CONSIGNOR`
+      },
+      {
         text: `View ${greenFarmAddress.name}`,
         href: `${ADDRESS_BOOK_PATH}/${greenFarmAddress.id}`
       }
     ])
   })
 
-  test('shows Showing 0 of 0, the table headings, no rows and no link under the tabs when a search matches nothing', async () => {
+  test('shows Showing 0 of 0, the table headings, no rows and Clear search as the only link under the tabs when a search matches nothing', async () => {
     stubAddressPage({ page: '1', q: 'zzznomatch' }, pageOf([]))
 
     const { $, statusCode } = await readPage(
@@ -200,6 +204,11 @@ describe('#addressBookListLayout', () => {
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
     expect($('input[name="q"]').val()).toBe('zzznomatch')
-    expect(linksAfterSubNavigation($)).toEqual([])
+    expect(linksAfterSubNavigation($)).toEqual([
+      {
+        text: 'Clear search',
+        href: `${ADDRESS_BOOK_PATH}?addressType=ORIGIN_OR_CONSIGNOR`
+      }
+    ])
   })
 })

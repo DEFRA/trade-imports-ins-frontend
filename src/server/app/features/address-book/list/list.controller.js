@@ -154,6 +154,7 @@ const get = async (request, toolkit) => {
       listLoaded: true,
       subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
       panelHeading: copy.list.tabs[selectedTab.copyKey].heading,
+      clearSearchHref: addressBookPageHref(1, { addressType, use }),
       tableRows: tableRowsOf(addresses),
       resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>

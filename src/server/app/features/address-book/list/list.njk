@@ -83,6 +83,12 @@
       {{ resultsLabel }}
     </p>
 
+    {% if searchTerm %}
+      <p class="govuk-body govuk-!-margin-bottom-4">
+        <a class="govuk-link" href="{{ clearSearchHref }}" data-testid="address-book-clear-search">{{ copy.list.search.clear }}</a>
+      </p>
+    {% endif %}
+
     {{ govukTable({
       head: [
         { text: copy.list.table.name },

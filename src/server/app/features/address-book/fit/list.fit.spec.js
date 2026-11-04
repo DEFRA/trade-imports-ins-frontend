@@ -458,20 +458,19 @@ test.describe('filter addresses', () => {
     await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
   })
 
-  test('after a search the only links below the tabs are the View links of the rows', async ({
+  test('Clear search after a search returns to the whole selected tab with an empty Search field', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
     await searchAndExpectQuery(page, 'stub', { submitWith: 'button' })
 
-    const mainLinks = page.getByRole('main').getByRole('link')
-    const tabLinks = tabLinksOf(page)
-    const rowLinks = page.getByRole('table').getByRole('link')
-    await expect(rowLinks).not.toHaveCount(0)
-    await expect(mainLinks).toHaveText([
-      ...(await tabLinks.allInnerTexts()),
-      ...(await rowLinks.allInnerTexts())
-    ])
+    await page.getByRole('link', { name: 'Clear search' }).click()
+
+    await expect(page).toHaveURL(
+      `${addressBookPath()}?addressType=${DEFAULT_ADDRESS_BOOK_TAB.addressType}`
+    )
+    await openFilterDisclosure(page)
+    await expect(searchFieldOf(page)).toHaveValue('')
   })
 
   test('has no serious or critical axe violations with the disclosure open', async ({

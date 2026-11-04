@@ -91,7 +91,7 @@ describe('#copy', () => {
     })
   })
 
-  it('Should word the list intro, filter disclosure, search field and hint, Type select label and placeholder, search button and empty results line', () => {
+  it('Should word the list intro, filter disclosure, search field and hint, Type select label and placeholder, search button, Clear search link and empty results line', () => {
     expect(copy.list.intro).toBe(
       'Manage your addresses for use across all your import notifications'
     )
@@ -100,6 +100,7 @@ describe('#copy', () => {
       label: 'Search',
       hint: 'Search by name, address or country',
       button: 'Search',
+      clear: 'Clear search',
       type: {
         label: 'Type',
         placeholder: 'Select one'
@@ -226,6 +227,7 @@ describe('#copy of the list page', () => {
       ['search.label', 'Chwilio'],
       ['search.hint', 'Chwilio yn ôl enw, cyfeiriad neu wlad'],
       ['search.button', 'Chwilio'],
+      ['search.clear', 'Clirio’r chwiliad'],
       ['search.type.label', 'Math'],
       ['search.type.placeholder', 'Dewiswch un'],
       ['add', 'Ychwanegu cyfeiriad newydd'],

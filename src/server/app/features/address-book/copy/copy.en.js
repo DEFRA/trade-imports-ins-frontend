@@ -11,6 +11,7 @@ export const copy = {
       label: 'Search',
       hint: 'Search by name, address or country',
       button: 'Search',
+      clear: 'Clear search',
       type: {
         label: 'Type',
         placeholder: 'Select one'
