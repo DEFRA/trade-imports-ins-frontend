@@ -63,7 +63,7 @@ describe('journey-registry', () => {
       ).toBe(false)
     })
 
-    test('is false for the consignment contact, which is saved as a Branch address', () => {
+    test('is false for the consignment contact', () => {
       expect(
         requiresUnitedKingdomAddress({
           journeyType: JOURNEY_TYPES.GBN_AG,
