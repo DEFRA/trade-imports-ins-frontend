@@ -4,17 +4,26 @@ export const ADDRESS_TYPES = Object.freeze({
   BRANCH: 'BRANCH'
 })
 
+export const USES = Object.freeze({
+  PLACE_OF_ORIGIN: 'PLACE_OF_ORIGIN',
+  CONSIGNOR: 'CONSIGNOR',
+  CONSIGNEE: 'CONSIGNEE',
+  IMPORTER: 'IMPORTER',
+  PLACE_OF_DESTINATION: 'PLACE_OF_DESTINATION',
+  BRANCH_ADDRESS: 'BRANCH_ADDRESS'
+})
+
 export const USES_BY_ADDRESS_TYPE = Object.freeze({
   [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: Object.freeze([
-    'PLACE_OF_ORIGIN',
-    'CONSIGNOR'
+    USES.PLACE_OF_ORIGIN,
+    USES.CONSIGNOR
   ]),
   [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: Object.freeze([
-    'CONSIGNEE',
-    'IMPORTER',
-    'PLACE_OF_DESTINATION'
+    USES.CONSIGNEE,
+    USES.IMPORTER,
+    USES.PLACE_OF_DESTINATION
   ]),
-  [ADDRESS_TYPES.BRANCH]: Object.freeze(['BRANCH_ADDRESS'])
+  [ADDRESS_TYPES.BRANCH]: Object.freeze([USES.BRANCH_ADDRESS])
 })
 
 export const keepUsesOfferedBy = (addressType, candidateUses) =>
@@ -26,8 +35,8 @@ export const addressTypeOfUse = (use) =>
   )
 
 export const PLACE_USES = Object.freeze([
-  'PLACE_OF_ORIGIN',
-  'PLACE_OF_DESTINATION'
+  USES.PLACE_OF_ORIGIN,
+  USES.PLACE_OF_DESTINATION
 ])
 
 const UNITED_KINGDOM_ADDRESS_TYPES = Object.freeze([

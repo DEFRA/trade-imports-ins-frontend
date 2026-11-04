@@ -6,6 +6,7 @@ import * as stub from './stub.js'
 export {
   ADDRESS_TYPES,
   PLACE_USES,
+  USES,
   USES_BY_ADDRESS_TYPE,
   addressTypeOfUse,
   addressTypeRequiresUnitedKingdom,

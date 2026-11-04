@@ -3,7 +3,7 @@
 `src/server/app/services/` holds one folder per upstream. Each holds
 **`index.js`** the barrel a feature imports, **`client.js`** the HTTP client
 and **`stub.js`** the in-memory stand-in, plus any module those share. The
-address book also holds **`address-types.js`** (the address type values, the
+address book also holds **`address-types.js`** (the address type values, `USES`, the use codes, the
 uses each address type lists, in the order the Type select offers them, and
 `addressTypeOfUse`, the address type that lists a use, `keepUsesOfferedBy`,
 the given uses an address type offers, kept in `USES_BY_ADDRESS_TYPE`'s

@@ -1,6 +1,7 @@
 import { SET_BASES } from '../../../common/constants/journey-set-bases.js'
 import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
 import {
+  USES,
   USES_BY_ADDRESS_TYPE,
   addressTypeOfUse,
   addressTypeRequiresUnitedKingdom,
@@ -30,12 +31,12 @@ const registry = Object.freeze({
     returnPathTemplate: RETURN_PATH_TEMPLATE,
     consignmentContactFulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID,
     useByPartyFulfilmentId: Object.freeze({
-      '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c': 'PLACE_OF_ORIGIN',
-      '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d': 'CONSIGNOR',
-      'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e': 'CONSIGNEE',
-      'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f': 'IMPORTER',
-      'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': 'PLACE_OF_DESTINATION',
-      [CONSIGNMENT_CONTACT_FULFILMENT_ID]: 'BRANCH_ADDRESS'
+      '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c': USES.PLACE_OF_ORIGIN,
+      '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d': USES.CONSIGNOR,
+      'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e': USES.CONSIGNEE,
+      'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f': USES.IMPORTER,
+      'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': USES.PLACE_OF_DESTINATION,
+      [CONSIGNMENT_CONTACT_FULFILMENT_ID]: USES.BRANCH_ADDRESS
     })
   }
 })
