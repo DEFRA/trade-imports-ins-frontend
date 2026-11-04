@@ -114,7 +114,7 @@ export const expectInDocumentOrder = async (page, locators) => {
               index === 0 ||
               Boolean(
                 candidates[index - 1].compareDocumentPosition(element) &
-                Node.DOCUMENT_POSITION_FOLLOWING
+                element.DOCUMENT_POSITION_FOLLOWING
               )
           ),
         elements
