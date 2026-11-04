@@ -17,6 +17,7 @@ import {
   expectServerErrorPage,
   getPage,
   getPageAsOtherOrganisation,
+  interceptAddressBookRequest,
   MALFORMED_ADDRESS_ID,
   ORGANISATION_ID_HEADER,
   serveAddressBookServerError,
@@ -167,6 +168,11 @@ describe('GET /address-book/{addressId}', () => {
   })
 
   test('Should redirect to the address book for a malformed address id without reaching the address book', async () => {
+    const lookup = interceptAddressBookRequest(
+      'GET',
+      addressApiPath(MALFORMED_ADDRESS_ID)
+    )
+
     const response = await getPage(
       getServer(),
       addressPath(MALFORMED_ADDRESS_ID),
@@ -174,6 +180,7 @@ describe('GET /address-book/{addressId}', () => {
     )
 
     expectRedirectTo(response, addressBookPath())
+    lookup.expectNotSent()
   })
 
   test('Should redirect to the address book for soft-deleted tombstones', async () => {

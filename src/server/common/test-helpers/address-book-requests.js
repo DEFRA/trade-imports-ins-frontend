@@ -145,6 +145,18 @@ export const serveAddressNotFoundForOtherOrganisation = (addressId) =>
     .matchHeader(ORGANISATION_ID_HEADER, OTHER_ORGANISATION_ID)
     .reply(statusCodes.notFound, { message: 'Not found' })
 
+export const interceptAddressBookRequest = (method, path) => {
+  const scope = addressBookApi()
+    .intercept(path, method)
+    .reply(statusCodes.ok, STORED_ADDRESS)
+  return {
+    expectNotSent: () =>
+      expect(scope.isDone(), `${method} ${path} reached the address book`).toBe(
+        false
+      )
+  }
+}
+
 export const expectRedirectTo = ({ statusCode, headers }, location) => {
   expect(statusCode).toBe(statusCodes.redirectFound)
   expect(headers.location).toBe(location)

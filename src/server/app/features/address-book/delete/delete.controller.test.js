@@ -17,6 +17,7 @@ import {
   expectRedirectTo,
   expectServerErrorPage,
   getPage,
+  interceptAddressBookRequest,
   MALFORMED_ADDRESS_ID,
   ORGANISATION_ID_HEADER,
   postPage,
@@ -268,27 +269,34 @@ describe('POST /address-book/{addressId}/delete', () => {
   const interceptDeleteOf = (addressId) =>
     addressBookApi().delete(addressApiPath(addressId))
 
+  const interceptUnwantedDelete = () =>
+    interceptAddressBookRequest('DELETE', addressApiPath(ADDRESS_ID))
+
   test('Should redirect to the address book without deleting a soft-deleted tombstone', async () => {
     serveStoredAddress({ ...STORED_ADDRESS, deleted: true })
+    const deletion = interceptUnwantedDelete()
 
     expectRedirectTo(
       await postDelete(getServer(), 'delete-post-tombstone'),
       addressBookPath()
     )
+    deletion.expectNotSent()
   })
 
   test('Should redirect to the address book without deleting an unknown id', async () => {
     serveAddressNotFound(ADDRESS_ID)
+    const deletion = interceptUnwantedDelete()
 
     expectRedirectTo(
       await postDelete(getServer(), 'delete-post-unknown'),
       addressBookPath()
     )
+    deletion.expectNotSent()
   })
 
   test('Should treat a 404 from the delete itself as already deleted', async () => {
     serveStoredAddress()
-    interceptDeleteOf(ADDRESS_ID).reply(statusCodes.notFound, {
+    const scope = interceptDeleteOf(ADDRESS_ID).reply(statusCodes.notFound, {
       message: 'Not found'
     })
 
@@ -296,6 +304,7 @@ describe('POST /address-book/{addressId}/delete', () => {
       await postDelete(getServer(), 'delete-post-404'),
       addressBookPath()
     )
+    expect(scope.isDone()).toBe(true)
   })
 
   test('Should return 500 when the address book rejects the delete with a server error', async () => {
@@ -393,11 +402,13 @@ describe('POST /address-book/{addressId}/delete', () => {
 
     test('Should land on an honoured return without deleting an unknown id', async () => {
       serveAddressNotFound(ADDRESS_ID)
+      const deletion = interceptUnwantedDelete()
 
       expectRedirectTo(
         await postDelete(getServer(), 'delete-post-return-unknown', '/'),
         '/'
       )
+      deletion.expectNotSent()
     })
   })
 })

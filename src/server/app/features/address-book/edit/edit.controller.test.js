@@ -16,6 +16,7 @@ import {
   expectServerErrorPage,
   getPage,
   getPageAsOtherOrganisation,
+  interceptAddressBookRequest,
   INVALID_ADDRESS_PAYLOAD,
   MALFORMED_ADDRESS_ID,
   postPage,
@@ -218,6 +219,11 @@ describe('GET /address-book/{addressId}/edit', () => {
   })
 
   test('Should redirect to the address book for a malformed address id without reaching the address book', async () => {
+    const lookup = interceptAddressBookRequest(
+      'GET',
+      addressApiPath(MALFORMED_ADDRESS_ID)
+    )
+
     const response = await getPage(
       getServer(),
       addressEditPath(MALFORMED_ADDRESS_ID),
@@ -225,6 +231,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     )
 
     expectRedirectTo(response, addressBookPath())
+    lookup.expectNotSent()
   })
 
   test('Should redirect to the page the edit was opened from when the address is unknown', async () => {
@@ -258,6 +265,9 @@ describe('GET /address-book/{addressId}/edit', () => {
 
 describe('POST /address-book/{addressId}/edit', () => {
   const getServer = startRealModeServerServingCountries(COUNTRIES)
+
+  const interceptUnwantedUpdate = () =>
+    interceptAddressBookRequest('PUT', addressApiPath(ADDRESS_ID))
 
   test('Should send the whole edited address to the address book and redirect to the address book', async () => {
     serveStoredAddress()
@@ -321,6 +331,7 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should refuse a country the reference data does not list with Select a country, sending nothing', async () => {
     const scope = serveStoredAddress()
+    const update = interceptUnwantedUpdate()
 
     const { result, statusCode } = await postEdit(
       getServer(),
@@ -330,6 +341,7 @@ describe('POST /address-book/{addressId}/edit', () => {
 
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(scope.isDone()).toBe(true)
+    update.expectNotSent()
     const $ = load(result)
     expect(textOf($, '.govuk-error-summary a[href="#countryCode"]')).toBe(
       REQUIRED_MESSAGES.countryCode
@@ -342,11 +354,13 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should redirect to the address book and send nothing when the address is not live', async () => {
     serveAddressNotFound(ADDRESS_ID)
+    const update = interceptUnwantedUpdate()
 
     expectRedirectTo(
       await postEdit(getServer(), 'edit-post-not-live', VALID_ADDRESS_PAYLOAD),
       addressBookPath()
     )
+    update.expectNotSent()
   })
 
   test('Should redirect to the page the edit was opened from when the address is not live', async () => {
@@ -365,7 +379,7 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should redirect to the address book when the address is deleted between the read and the update', async () => {
     serveStoredAddress()
-    addressBookApi()
+    const scope = addressBookApi()
       .put(addressApiPath(ADDRESS_ID))
       .reply(404, { message: 'Not found' })
 
@@ -377,6 +391,7 @@ describe('POST /address-book/{addressId}/edit', () => {
       ),
       addressBookPath()
     )
+    expect(scope.isDone()).toBe(true)
   })
 
   test('Should show the recoverable-error banner and keep the posted values when the address book rejects the update with a server error', async () => {
@@ -402,6 +417,7 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should show the recoverable-error banner, keep the posted values and send nothing when the live read fails with a server error', async () => {
     serveAddressBookServerError(addressApiPath(ADDRESS_ID))
+    const update = interceptUnwantedUpdate()
 
     const { result, statusCode } = await postEdit(
       getServer(),
@@ -413,16 +429,22 @@ describe('POST /address-book/{addressId}/edit', () => {
     expect(result).toContain('govuk-notification-banner')
     expect(result).toContain(RECOVERABLE_ERROR_MESSAGE)
     expect(load(result)('#name').val()).toBe(UPDATED_NAME)
+    update.expectNotSent()
   })
 
   test('Should go to the view page on Cancel with no return, sending nothing', async () => {
+    const update = interceptUnwantedUpdate()
+
     expectRedirectTo(
       await postEdit(getServer(), 'edit-post-cancel', { cancel: 'true' }),
       addressPath(ADDRESS_ID)
     )
+    update.expectNotSent()
   })
 
   test('Should go to the page the edit was opened from on Cancel, sending nothing', async () => {
+    const update = interceptUnwantedUpdate()
+
     expectRedirectTo(
       await postEdit(
         getServer(),
@@ -432,5 +454,6 @@ describe('POST /address-book/{addressId}/edit', () => {
       ),
       '/'
     )
+    update.expectNotSent()
   })
 })

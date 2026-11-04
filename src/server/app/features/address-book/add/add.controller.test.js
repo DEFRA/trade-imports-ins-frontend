@@ -13,6 +13,7 @@ import {
   COUNTRY_OPTIONS,
   expectRedirectTo,
   getPage,
+  interceptAddressBookRequest,
   INVALID_ADDRESS_PAYLOAD,
   postPage,
   serveAddressCreated,
@@ -269,12 +270,15 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('Cancel returns to list without creating an address', async () => {
+    const creation = interceptAddressBookRequest('POST', addressesApiPath())
+
     const response = await postAdd(getServer(), 'add-post-cancel', {
       cancel: 'true'
     })
 
     expectRedirectTo(response, addressBookPath())
     expect(response.headers['cache-control']).not.toBe('no-store')
+    creation.expectNotSent()
   })
 })
 
@@ -692,6 +696,8 @@ describe(
     ])(
       'POST from the consignor handshake with %s shows Select a country and saves nothing',
       async (_name, countryCode) => {
+        const creation = interceptAddressBookRequest('POST', addressesApiPath())
+
         const { result, statusCode } = await postAdd(
           getServer(),
           `add-post-consignor-country-${countryCode || 'blank'}`,
@@ -702,10 +708,13 @@ describe(
         expectSummaryAndFieldErrors(load(result), [
           ['countryCode', REQUIRED_MESSAGES.countryCode]
         ])
+        creation.expectNotSent()
       }
     )
 
     test('POST from the consignor handshake with a 13-character postcode and a badly formed email shows both format errors and saves nothing', async () => {
+      const creation = interceptAddressBookRequest('POST', addressesApiPath())
+
       const { result, statusCode } = await postAdd(
         getServer(),
         'add-post-consignor-formats',
@@ -722,6 +731,7 @@ describe(
         ['postcode', 'Postcode must be 12 characters or fewer'],
         ['email', EMAIL_FORMAT_ERROR]
       ])
+      creation.expectNotSent()
     })
   }
 )
