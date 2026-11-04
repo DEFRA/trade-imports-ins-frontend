@@ -181,6 +181,9 @@ describe('#countryCodesMatching', () => {
 
   test('Should return the alpha-2 code of every country whose name contains the term, ignoring case and surrounding spaces', () => {
     expect(countryCodesMatching(' FRAN ', COUNTRIES)).toEqual(['FR'])
+    expect(countryCodesMatching('Kingdom', COUNTRIES)).toEqual([
+      GB_COUNTRY.code
+    ])
     expect(countryCodesMatching('united', COUNTRIES)).toEqual([
       GB_COUNTRY.code,
       'US',
