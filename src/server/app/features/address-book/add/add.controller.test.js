@@ -68,7 +68,7 @@ const { consignor: CONSIGNOR_HANDSHAKE, consignee: CONSIGNEE_HANDSHAKE } =
 const HAND_BACK_MESSAGE = 'Address handed back to the journey'
 const CANCEL_HAND_BACK_MESSAGE = 'Cancel handed back to the journey'
 const CAPTION_SELECTOR = '.govuk-caption-l'
-const FORM_LABELS = 'form label'
+const FORM_LABEL_SELECTOR = 'form label'
 const FORM_LINK = 'form a.govuk-link'
 const ADD_TITLE = 'Add address and contact details'
 
@@ -115,7 +115,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect($(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
     expect(textsOf($, BACK_LINK)).toEqual(['Back'])
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
-    expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+    expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual(ADDRESS_FORM_LABELS)
     expect(textsOf($, '#phone-hint')).toEqual([
       'For international numbers include the country code'
     ])
@@ -378,7 +378,7 @@ describe(
       expect(textsOf($, CAPTION_SELECTOR)).toEqual(['Add new address'])
       expect(textsOf($, 'h1')).toEqual([ADD_TITLE])
       expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
-      expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+      expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual(ADDRESS_FORM_LABELS)
     })
 
     test('GET from a role handshake links Back to the journey return with no address and no landing', async () => {
@@ -597,7 +597,7 @@ describe(
         const $ = await openAddFrom(role)
 
         expectUnitedKingdomAloneSelected($)
-        expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+        expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual(ADDRESS_FORM_LABELS)
       }
     )
 
@@ -612,7 +612,7 @@ describe(
           'Switzerland',
           GB_COUNTRY.name
         ])
-        expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
+        expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual(ADDRESS_FORM_LABELS)
       }
     )
 
