@@ -22,7 +22,7 @@ describe('#copy', () => {
     }
   )
 
-  it('Should pin the English wording the controller tests and page rely on', () => {
+  it('Should word the title, form label, required-term error, returned count, failed reason, milliseconds and match line', () => {
     expect(copy.title).toBe('Address lookup spike')
     expect(copy.form.label).toBe('Postcode or address')
     expect(copy.errors.termRequired).toBe(
