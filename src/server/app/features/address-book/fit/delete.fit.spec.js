@@ -19,7 +19,7 @@ import {
   addressPath,
   dashboardPath
 } from '../../../shared/paths.js'
-import { signIn } from '../../../../../../fit/sign-in.js'
+import { signInAndOpen } from './sign-in-and-open.js'
 
 const CONFIRM_PAGE_TITLE = 'Delete this address?'
 const CANCEL_LINK = 'No, cancel'
@@ -33,20 +33,20 @@ const confirmButtonOf = (page) =>
 const backLinkOf = (page) =>
   page.getByRole('link', { name: 'Back', exact: true })
 
-const signInAndOpenSeedAddressDelete = async (
+const openDeleteConfirmation = (
   page,
   organisationId,
-  { returnTo } = {}
-) => {
-  await signIn(page, { organisationId })
-  await page.goto(withReturn(seedDeletePath, returnTo))
-}
+  { addressId = seedAddress.id, returnTo } = {}
+) =>
+  signInAndOpen(page, organisationId, addressDeletePath(addressId), {
+    returnTo
+  })
 
 test.describe('delete address', () => {
   test('summarises the address being deleted and asks for confirmation', async ({
     page
   }) => {
-    await signInAndOpenSeedAddressDelete(page, 'stub-org-delete-confirm')
+    await openDeleteConfirmation(page, 'stub-org-delete-confirm')
 
     await expect(
       page.getByRole('heading', { level: 1, name: CONFIRM_PAGE_TITLE })
@@ -68,7 +68,7 @@ test.describe('delete address', () => {
   test('No, cancel returns to the address details with nothing deleted', async ({
     page
   }) => {
-    await signInAndOpenSeedAddressDelete(page, 'stub-org-delete-cancel')
+    await openDeleteConfirmation(page, 'stub-org-delete-cancel')
 
     await page.getByRole('link', { name: CANCEL_LINK }).click()
 
@@ -87,7 +87,7 @@ test.describe('delete address', () => {
   test('confirming removes the address and confirms it on the address book', async ({
     page
   }) => {
-    await signInAndOpenSeedAddressDelete(
+    await openDeleteConfirmation(
       page,
       `stub-org-delete-save-${crypto.randomUUID()}`
     )
@@ -100,7 +100,7 @@ test.describe('delete address', () => {
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
-    await signInAndOpenSeedAddressDelete(page, 'stub-org-delete-axe')
+    await openDeleteConfirmation(page, 'stub-org-delete-axe')
 
     await expectNoSeriousOrCriticalViolations(page, CONFIRM_PAGE_TITLE)
   })
@@ -109,7 +109,7 @@ test.describe('delete address', () => {
     test('reached with a return, Back and No, cancel go to the view page still carrying it', async ({
       page
     }) => {
-      await signInAndOpenSeedAddressDelete(page, 'stub-org-delete-return', {
+      await openDeleteConfirmation(page, 'stub-org-delete-return', {
         returnTo: dashboardPath()
       })
 
@@ -128,7 +128,7 @@ test.describe('delete address', () => {
     })
 
     test('Yes, delete lands on the return page', async ({ page }) => {
-      await signInAndOpenSeedAddressDelete(
+      await openDeleteConfirmation(
         page,
         `stub-org-delete-return-land-${crypto.randomUUID()}`,
         { returnTo: dashboardPath() }
@@ -146,7 +146,7 @@ test.describe('delete address', () => {
     test("Yes, delete with a return to the deleted address's own page lands on the list", async ({
       page
     }) => {
-      await signInAndOpenSeedAddressDelete(
+      await openDeleteConfirmation(
         page,
         `stub-org-delete-return-own-${crypto.randomUUID()}`,
         { returnTo: seedViewPath }
@@ -159,7 +159,7 @@ test.describe('delete address', () => {
     })
 
     test('ignores a return on another origin', async ({ page }) => {
-      await signInAndOpenSeedAddressDelete(
+      await openDeleteConfirmation(
         page,
         `stub-org-delete-return-ignored-${crypto.randomUUID()}`,
         { returnTo: 'https://evil.example/' }
@@ -182,8 +182,9 @@ test.describe('delete address dead links', () => {
   test('an unknown address id returns to the address book', async ({
     page
   }) => {
-    await signIn(page, { organisationId: 'stub-org-delete-unknown' })
-    await page.goto(addressDeletePath(UNKNOWN_ADDRESS_ID))
+    await openDeleteConfirmation(page, 'stub-org-delete-unknown', {
+      addressId: UNKNOWN_ADDRESS_ID
+    })
 
     await expectAddressBookList(page)
   })
@@ -191,10 +192,10 @@ test.describe('delete address dead links', () => {
   test('a dead delete link carrying an honoured return lands on it', async ({
     page
   }) => {
-    await signIn(page, { organisationId: 'stub-org-delete-dead-return' })
-    await page.goto(
-      withReturn(addressDeletePath(UNKNOWN_ADDRESS_ID), dashboardPath())
-    )
+    await openDeleteConfirmation(page, 'stub-org-delete-dead-return', {
+      addressId: UNKNOWN_ADDRESS_ID,
+      returnTo: dashboardPath()
+    })
 
     await expectDashboard(page)
     await expect(page.getByText('Page not found')).toHaveCount(0)
@@ -203,8 +204,9 @@ test.describe('delete address dead links', () => {
   test('a malformed address id returns to the address book', async ({
     page
   }) => {
-    await signIn(page, { organisationId: 'stub-org-delete-malformed' })
-    await page.goto(addressDeletePath(MALFORMED_ADDRESS_ID))
+    await openDeleteConfirmation(page, 'stub-org-delete-malformed', {
+      addressId: MALFORMED_ADDRESS_ID
+    })
 
     await expectAddressBookList(page)
   })
@@ -212,7 +214,7 @@ test.describe('delete address dead links', () => {
   test('a stale delete returns to the address book without a deleted banner', async ({
     page
   }) => {
-    await signInAndOpenSeedAddressDelete(
+    await openDeleteConfirmation(
       page,
       `stub-org-delete-stale-${crypto.randomUUID()}`
     )
