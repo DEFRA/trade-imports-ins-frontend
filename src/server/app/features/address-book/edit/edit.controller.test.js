@@ -71,12 +71,12 @@ const countryValuesOf = ($) =>
     .get()
 
 describe('GET /address-book/{addressId}/edit', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should head the page and title the browser Edit address and contact details', async () => {
     serveStoredAddress()
 
-    const { result, statusCode } = await getEdit(server(), 'edit-get-title')
+    const { result, statusCode } = await getEdit(getServer(), 'edit-get-title')
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
@@ -89,7 +89,7 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should ask for exactly the nine address fields in the add form order, prefilled, under the Address and Contact details headings', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(server(), 'edit-get-labels')
+    const { result } = await getEdit(getServer(), 'edit-get-labels')
 
     const $ = load(result)
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
@@ -120,7 +120,7 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should lay out the fields at the add form widths', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(server(), 'edit-get-widths')
+    const { result } = await getEdit(getServer(), 'edit-get-widths')
 
     expectAddressFormWidths(result)
   })
@@ -128,7 +128,7 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should give each personal-data field its browser autocomplete hint and none to County or Country', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(server(), 'edit-get-autocomplete')
+    const { result } = await getEdit(getServer(), 'edit-get-autocomplete')
 
     expectAddressFormAutocomplete(result)
   })
@@ -136,7 +136,7 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should offer exactly the countries by name with no blank option and the stored country selected', async () => {
     serveStoredAddress({ ...STORED_ADDRESS, countryCode: 'FR' })
 
-    const { result } = await getEdit(server(), 'edit-get-country-offered')
+    const { result } = await getEdit(getServer(), 'edit-get-country-offered')
 
     const $ = load(result)
     expect(countryValuesOf($)).toEqual(['FR', 'DE', 'CH', GB_COUNTRY.code])
@@ -155,7 +155,7 @@ describe('GET /address-book/{addressId}/edit', () => {
       countryCode: UNOFFERED_COUNTRY_CODE
     })
 
-    const { result } = await getEdit(server(), 'edit-get-country-unoffered')
+    const { result } = await getEdit(getServer(), 'edit-get-country-unoffered')
 
     const $ = load(result)
     expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', GB_COUNTRY.code])
@@ -166,7 +166,7 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should link Back to the address view page when the edit was opened with no return', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(server(), 'edit-get-back-default')
+    const { result } = await getEdit(getServer(), 'edit-get-back-default')
 
     expect(load(result)(BACK_LINK).attr('href')).toBe(
       addressPagePath(ADDRESS_ID)
@@ -177,7 +177,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     serveStoredAddress()
 
     const { result } = await getEdit(
-      server(),
+      getServer(),
       'edit-get-back-return',
       RETURN_HOME
     )
@@ -189,7 +189,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await getEdit(server(), 'edit-get-unknown'),
+      await getEdit(getServer(), 'edit-get-unknown'),
       ADDRESS_BOOK_PATH
     )
   })
@@ -198,7 +198,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     serveStoredAddress({ ...STORED_ADDRESS, deleted: true })
 
     expectRedirectTo(
-      await getEdit(server(), 'edit-get-deleted'),
+      await getEdit(getServer(), 'edit-get-deleted'),
       ADDRESS_BOOK_PATH
     )
   })
@@ -207,7 +207,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     const scope = serveAddressNotFoundForOtherOrganisation(ADDRESS_ID)
 
     const response = await getPageAsOtherOrganisation(
-      server(),
+      getServer(),
       editAddressPagePath(ADDRESS_ID),
       'edit-get-other-organisation'
     )
@@ -218,7 +218,7 @@ describe('GET /address-book/{addressId}/edit', () => {
 
   test('Should redirect to the address book for a malformed address id without reaching the address book', async () => {
     const response = await getPage(
-      server(),
+      getServer(),
       editAddressPagePath(MALFORMED_ADDRESS_ID),
       'edit-get-malformed'
     )
@@ -230,7 +230,7 @@ describe('GET /address-book/{addressId}/edit', () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await getEdit(server(), 'edit-get-unknown-return', RETURN_HOME),
+      await getEdit(getServer(), 'edit-get-unknown-return', RETURN_HOME),
       '/'
     )
   })
@@ -240,7 +240,7 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     expectRedirectTo(
       await getEdit(
-        server(),
+        getServer(),
         'edit-get-unknown-own-page',
         `?return=${encodeURIComponent(addressPagePath(ADDRESS_ID))}`
       ),
@@ -251,12 +251,12 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should return 500 when the address book cannot be reached', async () => {
     serveAddressBookServerError(addressApiPath(ADDRESS_ID))
 
-    expectServerErrorPage(await getEdit(server(), 'edit-get-500'))
+    expectServerErrorPage(await getEdit(getServer(), 'edit-get-500'))
   })
 })
 
 describe('POST /address-book/{addressId}/edit', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should send the whole edited address to the address book and redirect to the address book', async () => {
     serveStoredAddress()
@@ -268,7 +268,7 @@ describe('POST /address-book/{addressId}/edit', () => {
       })
       .reply(200, { ...STORED_ADDRESS, name: UPDATED_NAME })
 
-    const response = await postEdit(server(), 'edit-post-success', {
+    const response = await postEdit(getServer(), 'edit-post-success', {
       ...VALID_ADDRESS_PAYLOAD,
       name: UPDATED_NAME
     })
@@ -284,13 +284,13 @@ describe('POST /address-book/{addressId}/edit', () => {
       .put(addressApiPath(ADDRESS_ID))
       .reply(200, { ...STORED_ADDRESS, name: 'GREEN VALLEY FARM' })
 
-    const { headers } = await postEdit(server(), 'edit-post-banner', {
+    const { headers } = await postEdit(getServer(), 'edit-post-banner', {
       ...VALID_ADDRESS_PAYLOAD,
       name: 'green valley farm'
     })
 
     const listResponse = await openEmptyAddressBookWithCookiesFrom(
-      server(),
+      getServer(),
       'edit-post-banner',
       headers
     )
@@ -303,7 +303,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     serveStoredAddress()
 
     const { result, statusCode } = await postEdit(
-      server(),
+      getServer(),
       'edit-post-invalid',
       INVALID_ADDRESS_PAYLOAD
     )
@@ -325,7 +325,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     const scope = serveStoredAddress()
 
     const { result, statusCode } = await postEdit(
-      server(),
+      getServer(),
       'edit-post-country-unoffered',
       { ...VALID_ADDRESS_PAYLOAD, countryCode: UNOFFERED_COUNTRY_CODE }
     )
@@ -346,7 +346,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await postEdit(server(), 'edit-post-not-live', VALID_ADDRESS_PAYLOAD),
+      await postEdit(getServer(), 'edit-post-not-live', VALID_ADDRESS_PAYLOAD),
       ADDRESS_BOOK_PATH
     )
   })
@@ -356,7 +356,7 @@ describe('POST /address-book/{addressId}/edit', () => {
 
     expectRedirectTo(
       await postEdit(
-        server(),
+        getServer(),
         'edit-post-not-live-return',
         VALID_ADDRESS_PAYLOAD,
         RETURN_HOME
@@ -372,7 +372,11 @@ describe('POST /address-book/{addressId}/edit', () => {
       .reply(404, { message: 'Not found' })
 
     expectRedirectTo(
-      await postEdit(server(), 'edit-post-update-404', VALID_ADDRESS_PAYLOAD),
+      await postEdit(
+        getServer(),
+        'edit-post-update-404',
+        VALID_ADDRESS_PAYLOAD
+      ),
       ADDRESS_BOOK_PATH
     )
   })
@@ -383,10 +387,14 @@ describe('POST /address-book/{addressId}/edit', () => {
       .put(addressApiPath(ADDRESS_ID))
       .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
 
-    const { result, statusCode } = await postEdit(server(), 'edit-post-500', {
-      ...VALID_ADDRESS_PAYLOAD,
-      name: UPDATED_NAME
-    })
+    const { result, statusCode } = await postEdit(
+      getServer(),
+      'edit-post-500',
+      {
+        ...VALID_ADDRESS_PAYLOAD,
+        name: UPDATED_NAME
+      }
+    )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(result).toContain('govuk-notification-banner')
@@ -398,7 +406,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     serveAddressBookServerError(addressApiPath(ADDRESS_ID))
 
     const { result, statusCode } = await postEdit(
-      server(),
+      getServer(),
       'edit-post-live-read-500',
       { ...VALID_ADDRESS_PAYLOAD, name: UPDATED_NAME }
     )
@@ -411,7 +419,7 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should go to the view page on Cancel with no return, sending nothing', async () => {
     expectRedirectTo(
-      await postEdit(server(), 'edit-post-cancel', { cancel: 'true' }),
+      await postEdit(getServer(), 'edit-post-cancel', { cancel: 'true' }),
       addressPagePath(ADDRESS_ID)
     )
   })
@@ -419,7 +427,7 @@ describe('POST /address-book/{addressId}/edit', () => {
   test('Should go to the page the edit was opened from on Cancel, sending nothing', async () => {
     expectRedirectTo(
       await postEdit(
-        server(),
+        getServer(),
         'edit-post-cancel-return',
         { cancel: 'true' },
         RETURN_HOME

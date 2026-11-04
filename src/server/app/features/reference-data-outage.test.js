@@ -29,7 +29,7 @@ const refuseCountries = () =>
     .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
 
 describe('#referenceDataOutage', () => {
-  const server = startRealModeServer()
+  const getServer = startRealModeServer()
 
   const expectServiceUnavailablePage = ({ result, statusCode }) => {
     expect(statusCode).toBe(statusCodes.serviceUnavailable)
@@ -42,7 +42,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), '/', 'outage-dashboard')
+      await getPage(getServer(), '/', 'outage-dashboard')
     )
   })
 
@@ -50,7 +50,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), ADDRESS_BOOK_PATH, 'outage-list')
+      await getPage(getServer(), ADDRESS_BOOK_PATH, 'outage-list')
     )
   })
 
@@ -58,7 +58,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), ADD_ADDRESS_PATH, 'outage-add')
+      await getPage(getServer(), ADD_ADDRESS_PATH, 'outage-add')
     )
   })
 
@@ -67,7 +67,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), addressPagePath(ADDRESS_ID), 'outage-view')
+      await getPage(getServer(), addressPagePath(ADDRESS_ID), 'outage-view')
     )
   })
 
@@ -77,7 +77,7 @@ describe('#referenceDataOutage', () => {
 
     expectServiceUnavailablePage(
       await postPage(
-        server(),
+        getServer(),
         editAddressPagePath(ADDRESS_ID),
         'outage-edit-save',
         INVALID_ADDRESS_PAYLOAD

@@ -102,7 +102,7 @@ describe('#buildRows', () => {
 })
 
 describe('GET /address-book/{addressId}', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test("Should show the signed-in organisation's address field by field with the country by name", async () => {
     const scope = addressBookApi()
@@ -111,7 +111,7 @@ describe('GET /address-book/{addressId}', () => {
       .reply(statusCodes.ok, STORED_ADDRESS)
 
     const { result, statusCode } = await getPage(
-      server(),
+      getServer(),
       addressPagePath(ADDRESS_ID),
       'view-get'
     )
@@ -131,7 +131,7 @@ describe('GET /address-book/{addressId}', () => {
     serveStoredAddress()
 
     const { result } = await getPage(
-      server(),
+      getServer(),
       addressPagePath(ADDRESS_ID),
       'view-get-buttons'
     )
@@ -151,7 +151,7 @@ describe('GET /address-book/{addressId}', () => {
     serveStoredAddress()
 
     const { result } = await getPage(
-      server(),
+      getServer(),
       addressPagePath(ADDRESS_ID),
       'view-get-title'
     )
@@ -165,7 +165,7 @@ describe('GET /address-book/{addressId}', () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await getPage(server(), addressPagePath(ADDRESS_ID), 'view-not-found'),
+      await getPage(getServer(), addressPagePath(ADDRESS_ID), 'view-not-found'),
       ADDRESS_BOOK_PATH
     )
   })
@@ -174,7 +174,7 @@ describe('GET /address-book/{addressId}', () => {
     const scope = serveAddressNotFoundForOtherOrganisation(ADDRESS_ID)
 
     const response = await getPageAsOtherOrganisation(
-      server(),
+      getServer(),
       addressPagePath(ADDRESS_ID),
       'view-other-org'
     )
@@ -185,7 +185,7 @@ describe('GET /address-book/{addressId}', () => {
 
   test('Should redirect to the address book for a malformed address id without reaching the address book', async () => {
     const response = await getPage(
-      server(),
+      getServer(),
       addressPagePath(MALFORMED_ADDRESS_ID),
       'view-bad-id'
     )
@@ -198,7 +198,7 @@ describe('GET /address-book/{addressId}', () => {
 
     expectRedirectTo(
       await getPage(
-        server(),
+        getServer(),
         addressPagePath(ADDRESS_ID),
         'view-get-tombstone'
       ),
@@ -210,19 +210,19 @@ describe('GET /address-book/{addressId}', () => {
     serveAddressBookServerError(addressApiPath(ADDRESS_ID))
 
     expectServerErrorPage(
-      await getPage(server(), addressPagePath(ADDRESS_ID), 'view-get-500')
+      await getPage(getServer(), addressPagePath(ADDRESS_ID), 'view-get-500')
     )
   })
 })
 
 describe('GET /address-book/{addressId} with a return', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should link Back to an INS return and carry it on Edit and Delete', async () => {
     serveStoredAddress()
 
     const { result, statusCode } = await getPage(
-      server(),
+      getServer(),
       `${addressPagePath(ADDRESS_ID)}${RETURN_HOME}`,
       'view-return-ins'
     )
@@ -243,7 +243,7 @@ describe('GET /address-book/{addressId} with a return', () => {
     serveStoredAddress()
 
     const { result, statusCode } = await getPage(
-      server(),
+      getServer(),
       `${addressPagePath(ADDRESS_ID)}?return=${encodeURIComponent(addressPagePath(ADDRESS_ID))}`,
       'view-return-own-page'
     )
@@ -257,7 +257,7 @@ describe('GET /address-book/{addressId} with a return', () => {
     serveStoredAddress()
 
     const { result, statusCode } = await getPage(
-      server(),
+      getServer(),
       `${addressPagePath(ADDRESS_ID)}?return=${encodeURIComponent(animalsUrl)}`,
       'view-return-animals'
     )
@@ -270,7 +270,7 @@ describe('GET /address-book/{addressId} with a return', () => {
     serveStoredAddress()
 
     const { result, statusCode } = await getPage(
-      server(),
+      getServer(),
       `${addressPagePath(ADDRESS_ID)}?return=https%3A%2F%2Fevil.example%2F`,
       'view-return-other-origin'
     )
@@ -286,7 +286,7 @@ describe('GET /address-book/{addressId} with a return', () => {
 
     expectRedirectTo(
       await getPage(
-        server(),
+        getServer(),
         `${addressPagePath(ADDRESS_ID)}${RETURN_HOME}`,
         'view-return-not-found'
       ),
@@ -297,7 +297,7 @@ describe('GET /address-book/{addressId} with a return', () => {
   test('Should redirect to an honoured return for a malformed address id', async () => {
     expectRedirectTo(
       await getPage(
-        server(),
+        getServer(),
         `${addressPagePath(MALFORMED_ADDRESS_ID)}${RETURN_HOME}`,
         'view-return-bad-id'
       ),
@@ -313,7 +313,7 @@ describe('GET /address-book/{addressId} with a return', () => {
     async (encoded, location) => {
       expectRedirectTo(
         await getPage(
-          server(),
+          getServer(),
           `${addressPagePath(MALFORMED_ADDRESS_ID)}?return=${encoded}`,
           'view-return-encoded'
         ),
