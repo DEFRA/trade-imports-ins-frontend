@@ -46,7 +46,7 @@ export const useLabelsOf = (uses, copyByUse) =>
   (uses ?? []).map((use) => copyByUse[use]?.columnLabel ?? use).join(', ')
 
 export const usesWhoseLabelContains = (searchTerm, copyByUse) => {
-  const term = searchTerm?.trim().toLowerCase()
+  const term = searchTerm.toLowerCase()
   if (!term) {
     return []
   }
@@ -59,7 +59,7 @@ export const usesWhoseLabelContains = (searchTerm, copyByUse) => {
     .map(([use]) => use)
 }
 
-export const mapAddressRows = (addresses, countries = [], copyByUse = {}) =>
+export const mapAddressRows = (addresses, countries, copyByUse) =>
   addresses.map((address) => ({
     id: address.id,
     name: address.name,

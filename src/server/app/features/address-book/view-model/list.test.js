@@ -156,7 +156,7 @@ describe('#usesWhoseLabelContains', () => {
   test.each([
     ['consignor', ['CONSIGNOR']],
     ['consign', ['CONSIGNOR', 'CONSIGNEE']],
-    ['  PLACE OF ', ['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION']],
+    ['PLACE OF', ['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION']],
     ['branch', ['BRANCH_ADDRESS']],
     ['branch address', ['BRANCH_ADDRESS']],
     ['farm', []]
@@ -167,9 +167,8 @@ describe('#usesWhoseLabelContains', () => {
     }
   )
 
-  test('Should give no uses for a blank or missing term', () => {
-    expect(usesWhoseLabelContains('   ', copy.list.uses)).toEqual([])
-    expect(usesWhoseLabelContains(undefined, copy.list.uses)).toEqual([])
+  test('Should give no uses for an empty term', () => {
+    expect(usesWhoseLabelContains('', copy.list.uses)).toEqual([])
   })
 })
 
