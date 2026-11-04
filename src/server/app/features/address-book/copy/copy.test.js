@@ -41,7 +41,7 @@ describe('#copy', () => {
     expect(copy.add.caption).toBe('Add new address')
   })
 
-  it('Should word the journey-mode add actions', () => {
+  it('Should word Save and select, Save and return to address page and Cancel and return to hub', () => {
     expect(copy.add.saveAndSelect).toBe('Save and select')
     expect(copy.add.saveAndReturnToAddressPage).toBe(
       'Save and return to address page'
@@ -49,7 +49,7 @@ describe('#copy', () => {
     expect(copy.add.cancelAndReturnToHub).toBe('Cancel and return to hub')
   })
 
-  it('Should word the Welsh add page title, caption and journey-mode actions', () => {
+  it('Should word the Welsh add page title, caption, Save and select, Save and return to address page and Cancel and return to hub', () => {
     const {
       title,
       caption,
