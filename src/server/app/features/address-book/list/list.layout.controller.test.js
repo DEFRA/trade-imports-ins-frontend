@@ -184,9 +184,19 @@ describe('#addressBookListLayout', () => {
     expect(resultsLineOf($)).toBe(NO_RESULTS_LINE)
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
-    expect($('input[name="q"]').val()).toBe('zzznomatch')
     expect(linksAfterFilterForm($)).toEqual([
       { text: 'Clear search', href: ADDRESS_BOOK_PATH }
     ])
+  })
+
+  test('keeps the search term in the Search box', async () => {
+    stubAddressPage({ page: '1', q: 'green' }, pageOf([greenFarmAddress]))
+
+    const { $ } = await readPage(
+      `${ADDRESS_BOOK_PATH}?q=green`,
+      'list-search-term-kept'
+    )
+
+    expect(contentOf($).find('form input[name="q"]').val()).toBe('green')
   })
 })
