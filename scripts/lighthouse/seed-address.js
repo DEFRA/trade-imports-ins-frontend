@@ -1,4 +1,4 @@
-import { ADDRESS_TYPES } from '../../src/server/app/services/address-book/address-types.js'
+import { ADDRESS_TYPES } from '../../src/server/app/services/address-book/index.js'
 import { addressBookPageHref } from '../../src/server/app/features/address-book/view-model/list.js'
 import {
   addressAddPath,
