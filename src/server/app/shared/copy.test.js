@@ -59,7 +59,7 @@ describe('error-page copy', () => {
 })
 
 describe('layout copy', () => {
-  it('Should name the service and the four navigation items the fit specs click', () => {
+  it('Should name the service, menu button, dashboard, address book, manage account and log out in English', () => {
     expect(sharedEn.layout.serviceName).toBe('Import notification service')
     expect(sharedEn.layout.serviceNavigation).toEqual({
       menuButton: 'Menu',
