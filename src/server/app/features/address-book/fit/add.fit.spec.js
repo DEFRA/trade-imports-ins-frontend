@@ -693,19 +693,18 @@ test.describe('save and confirm', () => {
   test('lists the saved address first, ahead of the seeded address, with a View link to its own details page', async ({
     page
   }) => {
-    const nameAfterSeedAlphabetically = LATE_ALPHABETICAL_NAME
     await addValidAddressToFreshOrganisation(page, {
       organisationPrefix,
-      overrides: { name: nameAfterSeedAlphabetically }
+      overrides: { name: LATE_ALPHABETICAL_NAME }
     })
 
     await expect(resultsLineOf(page)).toHaveText('Showing 1-2 of 2')
     await expect(page.getByRole('link', { name: /^View / })).toHaveText([
-      `View ${nameAfterSeedAlphabetically}`,
+      `View ${LATE_ALPHABETICAL_NAME}`,
       `View ${seedAddress.name}`
     ])
     const viewLink = page.getByRole('link', {
-      name: `View ${nameAfterSeedAlphabetically}`
+      name: `View ${LATE_ALPHABETICAL_NAME}`
     })
     await expect(viewLink).toHaveAttribute(
       'href',
@@ -715,7 +714,7 @@ test.describe('save and confirm', () => {
     await expect(
       page.getByRole('heading', {
         level: 1,
-        name: nameAfterSeedAlphabetically
+        name: LATE_ALPHABETICAL_NAME
       })
     ).toBeVisible()
   })
