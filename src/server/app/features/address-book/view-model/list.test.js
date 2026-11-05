@@ -8,7 +8,7 @@ import {
   mapAddressRows,
   nameLinesOf,
   resultsLabelOf,
-  roleLabelsOf,
+  roleLabelsTextOf,
   rolesWhoseLabelContains
 } from './list.js'
 
@@ -128,7 +128,7 @@ describe('#addressBookPageHref', () => {
   })
 })
 
-describe('#roleLabelsOf', () => {
+describe('#roleLabelsTextOf', () => {
   test.each([
     ['PLACE_OF_ORIGIN', 'Place of origin'],
     ['CONSIGNOR', 'Consignor'],
@@ -137,24 +137,23 @@ describe('#roleLabelsOf', () => {
     ['PLACE_OF_DESTINATION', 'Place of destination'],
     ['BRANCH_ADDRESS', 'Branch']
   ])('Should label the %s role alone as %s', (role, label) => {
-    expect(roleLabelsOf([role], copy.list.roles)).toBe(label)
+    expect(roleLabelsTextOf([role], copy.list.roles)).toBe(label)
   })
 
   test('Should join the labels of several roles with a comma in the order stored', () => {
     expect(
-      roleLabelsOf(['CONSIGNOR', 'PLACE_OF_ORIGIN'], copy.list.roles)
+      roleLabelsTextOf(['CONSIGNOR', 'PLACE_OF_ORIGIN'], copy.list.roles)
     ).toBe('Consignor, Place of origin')
   })
 
   test('Should show the code of a role the copy has no label for', () => {
-    expect(roleLabelsOf(['CONSIGNOR', 'TRANSPORTER'], copy.list.roles)).toBe(
-      'Consignor, TRANSPORTER'
-    )
+    expect(
+      roleLabelsTextOf(['CONSIGNOR', 'TRANSPORTER'], copy.list.roles)
+    ).toBe('Consignor, TRANSPORTER')
   })
 
   test('Should give an empty label for an address with no roles', () => {
-    expect(roleLabelsOf([], copy.list.roles)).toBe('')
-    expect(roleLabelsOf(undefined, copy.list.roles)).toBe('')
+    expect(roleLabelsTextOf([], copy.list.roles)).toBe('')
   })
 })
 
@@ -203,7 +202,7 @@ describe('#mapAddressRows', () => {
         id: '1',
         name: 'Green Farm',
         nameLines: ['Green', 'Farm'],
-        roleLabels: 'Place of origin, Consignor',
+        roleLabelsText: 'Place of origin, Consignor',
         postalLines: ['1 Road', 'Town', 'AB1 2CD'],
         countryLabel: 'United Kingdom'
       }

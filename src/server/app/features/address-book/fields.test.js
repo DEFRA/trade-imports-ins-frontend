@@ -13,7 +13,6 @@ import {
   isRequiredField,
   postalLinesOf,
   postedRolesOf,
-  storedRolesOf,
   rolesErrorsOf
 } from './fields.js'
 import { copy } from './copy/copy.en.js'
@@ -246,13 +245,5 @@ describe('#rolesErrorsOf', () => {
 
   test('Should give no errors when a role is kept', () => {
     expect(rolesErrorsOf(['CONSIGNOR'])).toBeNull()
-  })
-})
-
-describe('#storedRolesOf', () => {
-  test('Should give every role a stored address holds, and nothing else', () => {
-    expect(storedRolesOf(STORED_ADDRESS)).toEqual({
-      roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
-    })
   })
 })

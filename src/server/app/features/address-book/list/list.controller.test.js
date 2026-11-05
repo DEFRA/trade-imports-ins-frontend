@@ -53,7 +53,15 @@ describe('#addressBookListController', () => {
     stubAddressPage(
       { page: '2' },
       pageOf(
-        [{ id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }],
+        [
+          {
+            id: '1',
+            name: 'Farm',
+            addressLine1: '1 Road',
+            countryCode: 'GB',
+            roles: []
+          }
+        ],
         { page: 2, totalItems: 30, totalPages: 4 }
       )
     )

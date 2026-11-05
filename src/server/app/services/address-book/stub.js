@@ -70,7 +70,7 @@ const notFound = () =>
 const isLive = (address) => !address.deleted
 
 const holdsAnyOf = (address, roles) =>
-  (address.roles ?? []).some((role) => roles.includes(role))
+  address.roles.some((role) => roles.includes(role))
 
 const passesRoleFilter = (address, roles) =>
   roles.length === 0 || holdsAnyOf(address, roles)

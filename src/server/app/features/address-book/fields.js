@@ -50,8 +50,6 @@ export const postalLinesOf = (address) =>
 export const formValuesOf = (address = {}) =>
   Object.fromEntries(FIELDS.map((field) => [field, address[field] ?? '']))
 
-export const storedRolesOf = ({ roles }) => ({ roles })
-
 export const postedRolesOf = (payload) => [payload.roles ?? []].flat()
 
 const { errors } = copyFor({ en, cy })

@@ -155,7 +155,8 @@ describe('#addressBookListLayout', () => {
           addressLine1: "1 <i>Lane</i>'s End",
           townOrCity: 'Inverness',
           postcode: 'IV2 3JH',
-          countryCode: 'GB'
+          countryCode: 'GB',
+          roles: []
         }
       ])
     )

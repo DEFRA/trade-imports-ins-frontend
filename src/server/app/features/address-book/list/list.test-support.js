@@ -26,7 +26,8 @@ export const highlandAddress = {
   addressLine1: STORED_ADDRESS.addressLine1,
   townOrCity: STORED_ADDRESS.townOrCity,
   postcode: STORED_ADDRESS.postcode,
-  countryCode: STORED_ADDRESS.countryCode
+  countryCode: STORED_ADDRESS.countryCode,
+  roles: []
 }
 
 export const parisDepotAddress = {
@@ -35,7 +36,8 @@ export const parisDepotAddress = {
   addressLine1: '1 Rue de Rivoli',
   townOrCity: 'Paris',
   postcode: '75001',
-  countryCode: 'FR'
+  countryCode: 'FR',
+  roles: []
 }
 
 export const greenFarmAddress = {
@@ -44,7 +46,8 @@ export const greenFarmAddress = {
   addressLine1: '1 Road',
   townOrCity: 'Inverness',
   postcode: 'IV2 3JH',
-  countryCode: 'GB'
+  countryCode: 'GB',
+  roles: []
 }
 
 export const fullAddress = {
@@ -55,7 +58,8 @@ export const fullAddress = {
   townOrCity: 'Inverness',
   county: 'Highland',
   postcode: 'IV2 3JH',
-  countryCode: 'GB'
+  countryCode: 'GB',
+  roles: []
 }
 
 export const contentOf = ($) => $('.govuk-grid-column-full')

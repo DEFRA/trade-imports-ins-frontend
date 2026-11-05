@@ -49,7 +49,7 @@ const viewLink = (address) =>
 const tableRowsOf = (addresses) =>
   addresses.map((address) => [
     { html: linesHtml(address.nameLines) },
-    { text: address.roleLabels },
+    { text: address.roleLabelsText },
     { html: linesHtml(address.postalLines, { lineEnding: ',' }) },
     { text: address.countryLabel },
     { html: viewLink(address) }

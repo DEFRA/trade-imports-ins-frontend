@@ -42,8 +42,8 @@ export const nameLinesOf = (name) => {
 export const resultsLabelOf = (pagination, listCopy) =>
   buildResultsLabel(pagination, listCopy.results) ?? listCopy.noResults
 
-export const roleLabelsOf = (roles, copyByRole) =>
-  (roles ?? []).map((role) => copyByRole[role]?.columnLabel ?? role).join(', ')
+export const roleLabelsTextOf = (roles, copyByRole) =>
+  roles.map((role) => copyByRole[role]?.columnLabel ?? role).join(', ')
 
 export const rolesWhoseLabelContains = (searchTerm, copyByRole) => {
   const term = searchTerm.toLowerCase()
@@ -64,7 +64,7 @@ export const mapAddressRows = (addresses, countries, copyByRole) =>
     id: address.id,
     name: address.name,
     nameLines: nameLinesOf(address.name),
-    roleLabels: roleLabelsOf(address.roles, copyByRole),
+    roleLabelsText: roleLabelsTextOf(address.roles, copyByRole),
     postalLines: postalLinesOf(address),
     countryLabel: countryLabelOf(countries, address.countryCode)
   }))

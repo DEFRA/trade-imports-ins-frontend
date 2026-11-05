@@ -126,12 +126,12 @@ describe('#addressBookListTabs', () => {
     ['no roles', null, '']
   ])(
     'shows the labels of the roles of an address holding %s in its Type cell',
-    async (_description, roles, roleLabels) => {
+    async (_description, roles, roleLabelsText) => {
       stubAddressPage({ page: '1' }, pageOf([{ ...highlandAddress, roles }]))
 
       const { $ } = await readPage(addressBookPath(), 'list-type-cell')
 
-      expect(textOf($, rowCellsOf($, 0).eq(1))).toBe(roleLabels)
+      expect(textOf($, rowCellsOf($, 0).eq(1))).toBe(roleLabelsText)
     }
   )
 
