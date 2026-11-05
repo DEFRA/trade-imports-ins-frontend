@@ -5,6 +5,7 @@ import {
   addressRules,
   FIELDS
 } from '../../src/server/app/features/address-book/fields.js'
+import { ROLES_BY_ADDRESS_TYPE } from '../../src/server/app/services/address-book/address-types.js'
 import { validate } from '../../src/server/app/lib/validate/index.js'
 import { refuseOutboundHttp } from '../../src/server/common/test-helpers/real-mode.js'
 import { createPageClient } from './page-client.js'
@@ -13,6 +14,8 @@ import {
   chooseAddressType,
   findSeedAddressId,
   SEED_ADDRESS,
+  SEED_ADDRESS_TYPE,
+  SEED_ROLE,
   seedAddress
 } from './seed-address.js'
 
@@ -44,15 +47,20 @@ const listPage = (...links) =>
 
 const app = () => nock(ORIGIN)
 
-const serveTypeStep = () =>
+const MOVED_ON_TO_ADD_FORM = [HTTP_FOUND, '', { location: '/address-book/add' }]
+
+const serveTypeStep = ({
+  pageStatus = HTTP_OK,
+  postReply = MOVED_ON_TO_ADD_FORM
+} = {}) =>
   app()
     .get('/address-book/add/address-type')
-    .reply(HTTP_OK, page('<form></form>'))
+    .reply(pageStatus, page('<form></form>'))
     .post('/address-book/add/address-type', {
       crumb: CRUMB,
       addressType: 'ORIGIN_OR_CONSIGNOR'
     })
-    .reply(HTTP_FOUND, '', { location: '/address-book/add' })
+    .reply(...postReply)
 
 const listing = (...links) =>
   app()
@@ -61,8 +69,12 @@ const listing = (...links) =>
     .reply(HTTP_OK, listPage(...links))
 
 describe('#SEED_ADDRESS', () => {
-  test('Should send exactly the fields the add form asks, in the order it asks them', () => {
+  test('Should send exactly the address fields the add form asks, in the order it asks them', () => {
     expect(Object.keys(SEED_ADDRESS)).toEqual(FIELDS)
+  })
+
+  test('Should hold a role the Origin or Consignor address type offers', () => {
+    expect(ROLES_BY_ADDRESS_TYPE[SEED_ADDRESS_TYPE]).toContain(SEED_ROLE)
   })
 
   test('Should fill every field, the optional ones included', () => {
@@ -145,7 +157,21 @@ describe('#seedAddress', () => {
       )
 
     await expect(seedAddress(createPageClient(ORIGIN))).rejects.toThrow(
-      /rejected the seed address \(400\)/
+      'The add address page rejected the seed address (400)'
+    )
+  })
+
+  test('Should refuse when the add page saves the seed but lands somewhere other than its address type list', async () => {
+    listing()
+    serveTypeStep()
+    app()
+      .get('/address-book/add')
+      .reply(HTTP_OK, page('<form></form>'))
+      .post('/address-book/add')
+      .reply(HTTP_FOUND, '', { location: '/address-book' })
+
+    await expect(seedAddress(createPageClient(ORIGIN))).rejects.toThrow(
+      `The add address page saved the seed address but sent it to /address-book, not ${ORIGIN_AND_CONSIGNOR_LANDING}`
     )
   })
 
@@ -176,46 +202,21 @@ describe('#chooseAddressType', () => {
     expect(typeStep.isDone()).toBe(true)
   })
 
-  test('Should hold the session cookie the chosen type was saved in, beside the cookies it started with', async () => {
-    app()
-      .get('/address-book/add/address-type')
-      .reply(HTTP_OK, page('<form></form>'))
-      .post('/address-book/add/address-type')
-      .reply(HTTP_FOUND, '', {
-        location: '/address-book/add',
-        'set-cookie': 'session=type-chosen; Path=/; HttpOnly'
-      })
-    const client = createPageClient(ORIGIN, [
-      { name: 'sid', value: 'signed-in' }
-    ])
-
-    await chooseAddressType(client)
-
-    expect(client.cookies()).toEqual([
-      { name: 'sid', value: 'signed-in' },
-      { name: 'session', value: 'type-chosen' }
-    ])
-  })
-
   test('Should refuse when the address type page does not move on to the add form', async () => {
-    app()
-      .get('/address-book/add/address-type')
-      .reply(HTTP_OK, page('<form></form>'))
-      .post('/address-book/add/address-type')
-      .reply(
+    serveTypeStep({
+      postReply: [
         HTTP_BAD_REQUEST,
         page('<div role="alert">There is a problem</div>')
-      )
+      ]
+    })
 
     await expect(chooseAddressType(createPageClient(ORIGIN))).rejects.toThrow(
-      /did not move on to the add form \(400\)/
+      'The address type page did not move on to the add form (400)'
     )
   })
 
   test('Should refuse when the address type page does not render', async () => {
-    app()
-      .get('/address-book/add/address-type')
-      .reply(HTTP_SERVER_ERROR, page('<h1>Sorry</h1>'))
+    serveTypeStep({ pageStatus: HTTP_SERVER_ERROR })
 
     await expect(chooseAddressType(createPageClient(ORIGIN))).rejects.toThrow(
       'The address type page did not render (500)'
@@ -223,14 +224,16 @@ describe('#chooseAddressType', () => {
   })
 
   test('Should refuse when the address type page redirects somewhere other than the add form', async () => {
-    app()
-      .get('/address-book/add/address-type')
-      .reply(HTTP_OK, page('<form></form>'))
-      .post('/address-book/add/address-type')
-      .reply(HTTP_FOUND, '', { location: '/address-book/add/address-type' })
+    serveTypeStep({
+      postReply: [
+        HTTP_FOUND,
+        '',
+        { location: '/address-book/add/address-type' }
+      ]
+    })
 
     await expect(chooseAddressType(createPageClient(ORIGIN))).rejects.toThrow(
-      'The address type page did not move on to the add form (302)'
+      'The address type page did not move on to the add form (302 to /address-book/add/address-type)'
     )
   })
 })

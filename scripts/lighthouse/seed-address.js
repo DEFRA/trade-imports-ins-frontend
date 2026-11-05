@@ -1,4 +1,7 @@
-import { ADDRESS_TYPES } from '../../src/server/app/services/address-book/index.js'
+import {
+  ADDRESS_TYPES,
+  ROLES
+} from '../../src/server/app/services/address-book/address-types.js'
 import { addressBookPageHref } from '../../src/server/app/features/address-book/view-model/list.js'
 import {
   addressAddPath,
@@ -8,6 +11,10 @@ import {
 
 const HTTP_OK = 200
 const HTTP_FOUND = 302
+
+export const SEED_ADDRESS_TYPE = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+
+export const SEED_ROLE = ROLES.PLACE_OF_ORIGIN
 
 export const SEED_ADDRESS = {
   name: 'Lighthouse seed address',
@@ -20,6 +27,9 @@ export const SEED_ADDRESS = {
   email: 'lighthouse@example.com',
   phone: '01632 960000'
 }
+
+const outcomeOf = ({ status, location }) =>
+  location ? `${status} to ${location}` : `${status}`
 
 const seedSearchPath = () =>
   `${addressBookPath()}?q=${encodeURIComponent(SEED_ADDRESS.name)}`
@@ -52,12 +62,12 @@ export const chooseAddressType = async (client) => {
   }
   const posted = await client.submit(
     addressTypePath(),
-    { addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR },
+    { addressType: SEED_ADDRESS_TYPE },
     typePage.crumb
   )
   if (posted.status !== HTTP_FOUND || posted.location !== addressAddPath()) {
     throw new Error(
-      `The address type page did not move on to the add form (${posted.status})`
+      `The address type page did not move on to the add form (${outcomeOf(posted)})`
     )
   }
 }
@@ -70,16 +80,21 @@ export const createSeedAddress = async (client) => {
   }
   const posted = await client.submit(
     addressAddPath(),
-    { ...SEED_ADDRESS, roles: 'PLACE_OF_ORIGIN' },
+    { ...SEED_ADDRESS, roles: SEED_ROLE },
     form.crumb
   )
   const savedAddressLanding = addressBookPageHref(1, {
-    addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+    addressType: SEED_ADDRESS_TYPE
   })
-  if (posted.status !== HTTP_FOUND || posted.location !== savedAddressLanding) {
+  if (posted.status !== HTTP_FOUND) {
     throw new Error(
-      `The add address page rejected the seed address (${posted.status}) — its ` +
+      `The add address page rejected the seed address (${outcomeOf(posted)}) — its ` +
         'fields have moved on from what this seed sends'
+    )
+  }
+  if (posted.location !== savedAddressLanding) {
+    throw new Error(
+      `The add address page saved the seed address but sent it to ${posted.location}, not ${savedAddressLanding}`
     )
   }
 }

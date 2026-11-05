@@ -1,6 +1,9 @@
 const { TimeoutError } = require('puppeteer')
 
-const { createPageClient } = require('../../scripts/lighthouse/page-client.js')
+const {
+  appCookiesOf,
+  createPageClient
+} = require('../../scripts/lighthouse/page-client.js')
 const {
   chooseAddressType
 } = require('../../scripts/lighthouse/seed-address.js')
@@ -29,7 +32,7 @@ const signInForm = (page, url) => {
 }
 
 const chooseAddressTypeInBrowser = async (browser, url) => {
-  const client = createPageClient(url, await browser.cookies())
+  const client = createPageClient(url, await appCookiesOf(browser, url))
   await chooseAddressType(client)
   await browser.setCookie(
     ...client.cookies().map(({ name, value }) => ({
@@ -40,7 +43,7 @@ const chooseAddressTypeInBrowser = async (browser, url) => {
   )
 }
 
-module.exports = async (browser, { url }) => {
+const signInAndChooseAddressType = async (browser, { url }) => {
   const page = await browser.newPage()
   await page.goto(url, { waitUntil: 'domcontentloaded' })
 
@@ -60,3 +63,7 @@ module.exports = async (browser, { url }) => {
 
   await page.close()
 }
+
+module.exports = signInAndChooseAddressType
+module.exports.chooseAddressTypeInBrowser = chooseAddressTypeInBrowser
+module.exports.waitForSignInForm = waitForSignInForm
