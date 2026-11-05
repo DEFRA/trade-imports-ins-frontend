@@ -17,7 +17,8 @@ describe('in stub mode, listing by role', () => {
   const DEFAULT_ORGANISATION_ID = 'stub-org-default-roles'
   const {
     originAndConsignor,
-    mixedOriginAndConsignee,
+    placeOfOrigin,
+    consigneeAndDestination,
     importer,
     branch,
     branchDepot
@@ -32,7 +33,8 @@ describe('in stub mode, listing by role', () => {
       items.map(({ name, addressType, roles }) => [name, addressType, roles])
     ).toEqual([
       ['Stub Origin Farm', undefined, ['PLACE_OF_ORIGIN', 'CONSIGNOR']],
-      ['Stub Mixed Farm', undefined, ['PLACE_OF_ORIGIN', 'CONSIGNEE']],
+      ['Stub Pasture Farm', undefined, ['PLACE_OF_ORIGIN']],
+      ['Stub Consignee Farm', undefined, ['CONSIGNEE', 'PLACE_OF_DESTINATION']],
       ['Stub Importer Farm', undefined, ['IMPORTER']],
       ['Stub Branch Farm', undefined, ['BRANCH_ADDRESS']],
       ['Stub Branch Depot', undefined, ['BRANCH_ADDRESS']]
@@ -49,21 +51,21 @@ describe('in stub mode, listing by role', () => {
     ])
   })
 
-  test('Should list exactly the addresses holding any Origin or Consignor role, the place of origin and consignee address included', async () => {
+  test('Should list exactly the addresses holding any Origin or Consignor role', async () => {
     expect(
       await listedStubNames(TYPED_ORGANISATION_ID, {
         roles: ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]
       })
-    ).toEqual([originAndConsignor.name, mixedOriginAndConsignee.name])
+    ).toEqual([originAndConsignor.name, placeOfOrigin.name])
   })
 
-  test('Should list exactly the addresses holding any Destination, Consignee or Importer role, the place of origin and consignee address included', async () => {
+  test('Should list exactly the addresses holding any Destination, Consignee or Importer role', async () => {
     expect(
       await listedStubNames(TYPED_ORGANISATION_ID, {
         roles:
           ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
       })
-    ).toEqual([mixedOriginAndConsignee.name, importer.name])
+    ).toEqual([consigneeAndDestination.name, importer.name])
   })
 
   test('Should list exactly the addresses holding the branch address role', async () => {
@@ -77,7 +79,8 @@ describe('in stub mode, listing by role', () => {
   test('Should list every live address when no role is given', async () => {
     expect(await listedStubNames(TYPED_ORGANISATION_ID, {})).toEqual([
       originAndConsignor.name,
-      mixedOriginAndConsignee.name,
+      placeOfOrigin.name,
+      consigneeAndDestination.name,
       importer.name,
       branch.name,
       branchDepot.name
@@ -105,7 +108,7 @@ describe('in stub mode, listing by role', () => {
     ).toEqual([originAndConsignor.name])
     expect(
       await listedStubNames(TYPED_ORGANISATION_ID, { roles: ['CONSIGNEE'] })
-    ).toEqual([mixedOriginAndConsignee.name])
+    ).toEqual([consigneeAndDestination.name])
   })
 
   test('Should count and page over every address holding the role', async () => {

@@ -5,9 +5,13 @@ export const TYPED_SEED = Object.freeze({
     name: 'Stub Origin Farm',
     roles: [ROLES.PLACE_OF_ORIGIN, ROLES.CONSIGNOR]
   },
-  mixedOriginAndConsignee: {
-    name: 'Stub Mixed Farm',
-    roles: [ROLES.PLACE_OF_ORIGIN, ROLES.CONSIGNEE]
+  placeOfOrigin: {
+    name: 'Stub Pasture Farm',
+    roles: [ROLES.PLACE_OF_ORIGIN]
+  },
+  consigneeAndDestination: {
+    name: 'Stub Consignee Farm',
+    roles: [ROLES.CONSIGNEE, ROLES.PLACE_OF_DESTINATION]
   },
   importer: {
     name: 'Stub Importer Farm',

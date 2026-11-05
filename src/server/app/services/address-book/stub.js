@@ -127,15 +127,15 @@ const RECEIVING_ROLES =
 
 const refusalsOf = ({ roles = [], countryCode }) => {
   if (roles.length === 0) {
-    return { roles: ['Give the address at least one role'] }
+    return { roles: ['Select what this address can be used for'] }
   }
   if (new Set(roles.map(addressTypeOfRole)).size > 1) {
-    return { roles: ['An address cannot hold roles from more than one group'] }
+    return { roles: ['An address can only have roles from one group'] }
   }
   if (holdsAnyOf({ roles }, RECEIVING_ROLES) && countryCode !== 'GB') {
     return {
       countryCode: [
-        'An address holding a receiving role must be in the United Kingdom'
+        'A consignee, importer or place of destination must be in the United Kingdom'
       ]
     }
   }

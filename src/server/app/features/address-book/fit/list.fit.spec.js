@@ -202,16 +202,13 @@ const TABS = [
     label: 'Origin and Consignor',
     addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
     heading: 'Origin and Consignor addresses',
-    names: [
-      TYPED_SEED.originAndConsignor.name,
-      TYPED_SEED.mixedOriginAndConsignee.name
-    ]
+    names: [TYPED_SEED.originAndConsignor.name, TYPED_SEED.placeOfOrigin.name]
   },
   {
     label: 'Destination, Consignee and Importer',
     addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
     heading: 'Destination, Consignee and Importer addresses',
-    names: [TYPED_SEED.mixedOriginAndConsignee.name, TYPED_SEED.importer.name]
+    names: [TYPED_SEED.consigneeAndDestination.name, TYPED_SEED.importer.name]
   },
   {
     label: 'Branch',
@@ -277,17 +274,23 @@ test.describe('address type tabs', () => {
         .getByRole('cell')
         .nth(1)
     ).toHaveText('Place of origin, Consignor')
+
+    await openAddressBookList(page, {
+      organisationId: ORG_TYPED,
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+    })
+
     await expect(
       page
         .getByRole('row', {
-          name: new RegExp(TYPED_SEED.mixedOriginAndConsignee.name)
+          name: new RegExp(TYPED_SEED.consigneeAndDestination.name)
         })
         .getByRole('cell')
         .nth(1)
-    ).toHaveText('Place of origin, Consignee')
+    ).toHaveText('Consignee, Place of destination')
   })
 
-  test('lists an address with no roles on the Origin and Consignor tab only', async ({
+  test('lists the default seed address on the Origin and Consignor tab only', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
@@ -552,7 +555,7 @@ test.describe('type filter', () => {
       resultsLine: ONE_MATCH_LINE
     })
 
-    await expectNamesListed(page, [TYPED_SEED.mixedOriginAndConsignee.name])
+    await expectNamesListed(page, [TYPED_SEED.consigneeAndDestination.name])
   })
 
   test('leaves the URL and the whole tab listed when a Type is chosen and not submitted', async ({
