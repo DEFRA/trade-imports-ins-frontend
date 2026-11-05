@@ -1,36 +1,25 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 
-const configState = vi.hoisted(() => {
-  const defaultAnimalsBaseUrl = 'http://localhost:3000'
-  return { defaultAnimalsBaseUrl, animalsBaseUrl: defaultAnimalsBaseUrl }
-})
-
-vi.mock('../../../../../config/config.js', () => ({
-  config: {
-    get: vi.fn((key) => {
-      if (key === 'tradeImportsAnimalsFrontend.baseUrl') {
-        return configState.animalsBaseUrl
-      }
-      return undefined
-    })
-  }
-}))
-
-const REFERENCE_NUMBER = 'GBN-AG-26-000001'
-const LAST_UPDATED_OLDEST_FIRST = 'lastUpdated,asc'
-
-afterEach(() => {
-  configState.animalsBaseUrl = configState.defaultAnimalsBaseUrl
-})
-
-const {
+import { config } from '../../../../../config/config.js'
+import { restoreConfigAfterEach } from '../../../../common/test-helpers/restore-config-after-each.js'
+import {
   buildDashboardQueryString,
   buildNotificationLink,
-  buildStartNewNotificationLink,
   dashboardPageHref,
   formatDisplayDate,
   mapNotificationRows
-} = await import('./list.js')
+} from './list.js'
+
+const ANIMALS_BASE_URL_KEY = 'tradeImportsAnimalsFrontend.baseUrl'
+const ANIMALS_BASE_URL = 'http://localhost:3000'
+const REFERENCE_NUMBER = 'GBN-AG-26-000001'
+const LAST_UPDATED_OLDEST_FIRST = 'lastUpdated,asc'
+
+restoreConfigAfterEach([ANIMALS_BASE_URL_KEY])
+
+beforeEach(() => {
+  config.set(ANIMALS_BASE_URL_KEY, ANIMALS_BASE_URL)
+})
 
 describe('#buildDashboardQueryString', () => {
   test('is empty with no arguments', () => {
@@ -97,26 +86,10 @@ describe('#buildNotificationLink', () => {
   })
 
   test('does not double the slash when the configured base URL ends in one', () => {
-    configState.animalsBaseUrl = 'http://localhost:3000/'
+    config.set(ANIMALS_BASE_URL_KEY, `${ANIMALS_BASE_URL}/`)
 
     expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
       `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
-    )
-  })
-})
-
-describe('#buildStartNewNotificationLink', () => {
-  test("links to the live-animals set's base, not the journey frontend root", () => {
-    expect(buildStartNewNotificationLink()).toBe(
-      'http://localhost:3000/live-animals'
-    )
-  })
-
-  test('does not double the slash when the configured base URL ends in one', () => {
-    configState.animalsBaseUrl = 'http://localhost:3000/'
-
-    expect(buildStartNewNotificationLink()).toBe(
-      'http://localhost:3000/live-animals'
     )
   })
 })

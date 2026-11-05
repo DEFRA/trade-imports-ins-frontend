@@ -14,7 +14,7 @@ feature spec.
 - [`features/address-book/add/add.controller.test.js`](../features/address-book/add/add.controller.test.js)
 - [`features/address-book/fit/add.fit.spec.js`](../features/address-book/fit/add.fit.spec.js)
 - [`features/address-book/fit/address-form.js`](../features/address-book/fit/address-form.js)
-- [`features/address-book/fit/axe.js`](../features/address-book/fit/axe.js)
+- [`fit/axe.js`](../../../../fit/axe.js)
 - [`features/address-book/copy/copy.en.js`](../features/address-book/copy/copy.en.js)
 - [`features/address-book/copy/copy.cy.js`](../features/address-book/copy/copy.cy.js)
 - [`features/address-book/copy/copy.test.js`](../features/address-book/copy/copy.test.js)
@@ -147,14 +147,12 @@ Cover: initial render, happy-path save and redirect, each validation rule
 
 Check the initial render and the validation-error state (`await
 expect(page.getByRole('alert')).toBeVisible()` first). For a page joining
-`address-book`, import `expectNoSeriousOrCriticalViolations` from the group's
-[`fit/axe.js`](../features/address-book/fit/axe.js) and call it with
-`(page, name)`. For a new single-page feature, define
-`expectNoSeriousOrCriticalViolations` inline at the top of
-`features/<name>/<name>.fit.spec.js`, the way
+`address-book`, or a new single-page feature, import
+`expectNoSeriousOrCriticalViolations` from the repo's one axe helper,
+[`fit/axe.js`](../../../../fit/axe.js), and call it with `(page, name)`, the way
 [`features/dashboard/dashboard.fit.spec.js`](../features/dashboard/dashboard.fit.spec.js)
-does. Either way it checks `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` and
-`wcag22aa`, and fails on a serious or critical violation.
+does. It checks `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` and `wcag22aa`, and
+fails on a serious or critical violation. Never define a second copy inline.
 
 ## 9. Run every check
 

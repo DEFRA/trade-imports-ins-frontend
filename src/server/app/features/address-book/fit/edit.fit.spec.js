@@ -6,7 +6,7 @@ import {
   expectErrorFocusOn,
   setFieldValue
 } from './address-form.js'
-import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import { expectDashboard } from './dashboard.js'
 import { withReturn } from './return-query.js'
 import {

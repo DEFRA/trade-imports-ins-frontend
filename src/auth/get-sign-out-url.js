@@ -1,17 +1,8 @@
 import { config } from '../config/config.js'
+import { getBrowserFacingDiscoveryUrl } from './get-browser-facing-discovery-url.js'
 
 async function getSignOutUrl(_request, _token) {
-  const oidcBaseUrl = new URL(config.get('defraId.oidcDiscoveryUrl'))
-  const rewriteEnabled = config.get('defraId.signOutHostnameRewrite.enabled')
-  const rewriteHosts = new Set(
-    config.get('defraId.signOutHostnameRewrite.from')
-  )
-  const rewriteTarget = config.get('defraId.signOutHostnameRewrite.to')
-
-  if (rewriteEnabled && rewriteHosts.has(oidcBaseUrl.hostname)) {
-    oidcBaseUrl.hostname = rewriteTarget
-  }
-
+  const oidcBaseUrl = getBrowserFacingDiscoveryUrl()
   const basePath = oidcBaseUrl.pathname.replace(
     '/.well-known/openid-configuration',
     ''

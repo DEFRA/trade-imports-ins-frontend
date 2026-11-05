@@ -96,10 +96,16 @@ temporary dev/local `address-lookup-spike` page.
 | `tradeImportsAnimalsFrontend.baseUrl`  | `TRADE_IMPORTS_ANIMALS_FRONTEND_URL` | `http://localhost:3000` |
 | `tradeImportsPlantsFrontend.baseUrl`   | `TRADE_IMPORTS_PLANTS_FRONTEND_URL`  | `http://localhost:3003` |
 
-The last two are browser-visible (the dashboard's row links, and the journey
-origins the content-security-policy trusts for the handshake's form-action),
-so under the workspace stack they stay `localhost` while the three API URLs
-use `host.docker.internal`.
+The last two are browser-visible (the dashboard's row links, the notification
+type question's hand-over to `<base><set>/start`, and the journey origins the
+content-security-policy trusts for the handshake's form-action), so under the
+workspace stack they stay `localhost` while the three API URLs use
+`host.docker.internal`.
+
+The form-action also trusts the origin of the browser-facing Defra ID URL, so
+a hand-over to a journey frontend can pass through sign-in. That origin is
+derived from `defraId.oidcDiscoveryUrl` with the `defraId.browserFacingHostnameRewrite`
+rewrite applied; it needs no key of its own.
 
 ## Shared HTTP helpers
 

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 import { addValidAddressToFreshOrganisation } from './address-form.js'
-import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import {
   expectEmptyAddressBookList,
   openFilterDisclosure,

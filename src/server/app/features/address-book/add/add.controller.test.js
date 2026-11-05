@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -21,7 +21,6 @@ import {
   STORED_ADDRESS,
   VALID_ADDRESS_PAYLOAD
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { expectDraftJourneyStrip } from '../../../../common/test-helpers/expect-draft-journey-strip.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
@@ -35,7 +34,7 @@ import {
   returnUrlFor,
   UNITED_KINGDOM_ROLES
 } from '../../../../common/test-helpers/journey-handshake.js'
-import { createLogger } from '../../../../common/helpers/logging/logger.js'
+import { recordModuleLoggerInfo } from '../../../../common/test-helpers/module-logger-lines.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
@@ -56,10 +55,6 @@ import {
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { config } from '../../../../../config/config.js'
-
-vi.mock('../../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
@@ -401,24 +396,7 @@ describe(
   { concurrent: false },
   () => {
     const server = startRealModeServerServingCountries(COUNTRIES)
-    const loggedEntries = []
-    let infoSpy
-
-    beforeEach(() => {
-      loggedEntries.length = 0
-      infoSpy = vi
-        .spyOn(createLogger(), 'info')
-        .mockImplementation((fields, message) => {
-          loggedEntries.push({ fields, message })
-        })
-    })
-
-    afterEach(() => {
-      infoSpy.mockRestore()
-    })
-
-    const loggedWith = (message) =>
-      loggedEntries.filter((entry) => entry.message === message)
+    const { entriesWith: loggedWith } = recordModuleLoggerInfo()
 
     test('GET refuses an unrecognised journey type', async () => {
       const { statusCode } = await getAdd(server(), 'add-get-unknown-journey', {

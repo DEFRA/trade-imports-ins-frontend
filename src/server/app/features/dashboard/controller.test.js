@@ -1,19 +1,15 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { load } from 'cheerio'
+import { describe, expect, test } from 'vitest'
 
-import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { mockOidcConfig } from '../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../common/test-helpers/session-auth.js'
-import {
-  insBackendApi,
-  runInRealMode,
-  serveCountries
-} from '../../../common/test-helpers/real-mode.js'
+import { insBackendApi } from '../../../common/test-helpers/real-mode.js'
+import { startRealModeServerServingCountries } from '../../../common/test-helpers/test-server.js'
 
-vi.mock('../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
-
+const COUNTRIES = [
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'FR', name: 'France' }
+]
 const NOTIFICATIONS_PATH = '/notifications'
 const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
@@ -31,25 +27,7 @@ const pageOf = (content, overrides = {}) => ({
 })
 
 describe('#dashboard', () => {
-  let server
-
-  runInRealMode()
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  beforeEach(() => {
-    serveCountries([
-      { code: 'GB', name: 'United Kingdom' },
-      { code: 'FR', name: 'France' }
-    ])
-  })
+  const server = startRealModeServerServingCountries(COUNTRIES)
 
   test('renders notifications with reference, status, origin, commodity and arrival date', async () => {
     insBackendApi()
@@ -68,7 +46,7 @@ describe('#dashboard', () => {
         ])
       )
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-with-notifications')
@@ -85,7 +63,7 @@ describe('#dashboard', () => {
     expect(result).toContain('Showing 1-1 of 1')
   })
 
-  test('notifications from more than one status all appear in the same list (AC2)', async () => {
+  test('notifications from more than one status all appear in the same list', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -110,7 +88,7 @@ describe('#dashboard', () => {
         )
       )
 
-    const { result } = await server.inject({
+    const { result } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-two-statuses')
@@ -120,7 +98,7 @@ describe('#dashboard', () => {
     expect(result).toContain(OTHER_REFERENCE_NUMBER)
   })
 
-  test('selecting a submitted notification links into the notification-view page (AC3)', async () => {
+  test('selecting a submitted notification links into the notification-view page', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -136,7 +114,7 @@ describe('#dashboard', () => {
         ])
       )
 
-    const { result } = await server.inject({
+    const { result } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-submitted-link')
@@ -147,7 +125,7 @@ describe('#dashboard', () => {
     )
   })
 
-  test('selecting a draft notification links back into the journey hub, not notification-view (AC3)', async () => {
+  test('selecting a draft notification links back into the journey hub, not notification-view', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
@@ -163,7 +141,7 @@ describe('#dashboard', () => {
         ])
       )
 
-    const { result } = await server.inject({
+    const { result } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-draft-link')
@@ -177,27 +155,9 @@ describe('#dashboard', () => {
 })
 
 describe('#dashboard — search, sort and errors', () => {
-  let server
+  const server = startRealModeServerServingCountries(COUNTRIES)
 
-  runInRealMode()
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  beforeEach(() => {
-    serveCountries([
-      { code: 'GB', name: 'United Kingdom' },
-      { code: 'FR', name: 'France' }
-    ])
-  })
-
-  test('searching by complete reference returns only the matching notification (AC4)', async () => {
+  test('searching by complete reference returns only the matching notification', async () => {
     const scope = insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query({ ...DEFAULT_QUERY, referenceNumber: REFERENCE_NUMBER })
@@ -213,7 +173,7 @@ describe('#dashboard — search, sort and errors', () => {
         ])
       )
 
-    const { result } = await server.inject({
+    const { result } = await server().inject({
       method: 'GET',
       url: `/?referenceNumber=${REFERENCE_NUMBER}`,
       auth: sessionAuth('dashboard-search-match')
@@ -223,13 +183,13 @@ describe('#dashboard — search, sort and errors', () => {
     expect(result).toContain(REFERENCE_NUMBER)
   })
 
-  test('no matching notification shows "No notifications found" (AC5)', async () => {
+  test('no matching notification shows "No notifications found"', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query({ ...DEFAULT_QUERY, referenceNumber: 'GBN-AG-26-999999' })
       .reply(200, pageOf([]))
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: '/?referenceNumber=GBN-AG-26-999999',
       auth: sessionAuth('dashboard-search-no-match')
@@ -239,13 +199,13 @@ describe('#dashboard — search, sort and errors', () => {
     expect(result).toContain('No notifications found')
   })
 
-  test('empty aggregated store shows an empty state with a way to start a new notification (AC6)', async () => {
+  test('empty aggregated store shows an empty state with a way to start a new notification', async () => {
     insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query(DEFAULT_QUERY)
       .reply(200, pageOf([]))
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-empty-store')
@@ -254,7 +214,9 @@ describe('#dashboard — search, sort and errors', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('There are no notifications yet.')
     expect(result).toContain('Start a new notification')
-    expect(result).toContain('href="http://localhost:3000/live-animals"')
+    expect(load(result)('a.govuk-button').attr('href')).toBe(
+      '/notification-type'
+    )
     expect(result).not.toContain('No notifications found')
   })
 
@@ -268,7 +230,7 @@ describe('#dashboard — search, sort and errors', () => {
       })
       .reply(200, pageOf([]))
 
-    await server.inject({
+    await server().inject({
       method: 'GET',
       url: `/?sort=lastUpdated,asc&referenceNumber=${REFERENCE_NUMBER}`,
       auth: sessionAuth('dashboard-sort-forward')
@@ -283,7 +245,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query(DEFAULT_QUERY)
       .reply(200, pageOf([]))
 
-    await server.inject({
+    await server().inject({
       method: 'GET',
       url: '/?sort=not-a-real-option',
       auth: sessionAuth('dashboard-sort-invalid')
@@ -298,7 +260,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query(DEFAULT_QUERY)
       .reply(500, { title: 'Internal Server Error' })
 
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-error')

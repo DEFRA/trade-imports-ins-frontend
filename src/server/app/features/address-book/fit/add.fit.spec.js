@@ -14,7 +14,7 @@ import {
   resultsLineOf,
   searchAndExpectSingleMatch
 } from './address-book-list.js'
-import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'

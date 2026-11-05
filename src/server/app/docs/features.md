@@ -15,6 +15,12 @@ below.
 `controller.test.js`, `copy/`, `view-model/list.js` (plus its test), and
 `dashboard.fit.spec.js` beside the controller.
 
+**`notification-type/`** is also a single-page feature: `controller.js`,
+`template.njk`, `controller.test.js`, `copy/` and
+`notification-type.fit.spec.js`, with `destinations.js` (and its test) in place
+of a view model. `destinations.js` owns which notification types the question
+offers, in what order, and the start URL each hands over to.
+
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
 `add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
 `<page>.njk` and `<page>.controller.test.js`. Group-wide modules sit at the
@@ -78,7 +84,7 @@ root:
   yar-backed, read-once.
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
-specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
+specs plus the fixtures `address-book-list.js`, `address-form.js`,
 `dashboard.js` and `seed-address.js`. `view-model/list.js` owns the list's
 name lines, postal lines and results line, which the list controller builds
 into table cells.
@@ -88,7 +94,7 @@ into table cells.
 [`shared/paths.js`](../shared/paths.js) is the only module that writes a
 URL, with one exception: the temporary `address-lookup-spike` feature
 keeps its own `'/address-lookup-spike'` literal in its controller (see
-below). Each public URL has a builder (`dashboardPath()`, `addressBookPath()`,
+below). Each public URL has a builder (`dashboardPath()`, `notificationTypePath()`, `addressBookPath()`,
 `addressAddPath()`, `addressPath(id)`, `addressEditPath(id)`,
 `addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin
 carrying the Hapi `{id}` placeholder. Ids are `encodeURIComponent`ed.
@@ -184,7 +190,8 @@ non-empty string or a string-returning function (parameterised copy, for
 example `successBanner.added(name)`); `cy` must have the same paths, leaf
 kinds and function arities as `en`, and every string leaf must differ from
 its English counterpart unless listed in
-`copy-parity.test.js`'s `IDENTICAL_ALLOWLIST`, which is empty; no copy file
+`copy-parity.test.js`'s `IDENTICAL_ALLOWLIST`, which holds one entry,
+`shared:layout.govukSuffix`; no copy file
 may sit at a feature root.
 
 The controller resolves `const copy = copyFor({ en, cy })` from

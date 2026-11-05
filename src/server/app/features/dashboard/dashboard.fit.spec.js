@@ -1,26 +1,12 @@
-import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from '@playwright/test'
 
+import { expectNoSeriousOrCriticalViolations } from '../../../../../fit/axe.js'
 import { signIn } from '../../../../../fit/sign-in.js'
 
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 
-const expectNoSeriousOrCriticalViolations = async (page, subject) => {
-  const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-    .analyze()
-  const seriousOrCritical = results.violations.filter(({ impact }) =>
-    ['serious', 'critical'].includes(impact)
-  )
-
-  expect(
-    seriousOrCritical,
-    `${subject} has serious/critical accessibility violations.\nFull axe violations:\n${JSON.stringify(results.violations, null, 2)}`
-  ).toEqual([])
-}
-
 test.describe('dashboard', () => {
-  test('shows notifications from every status with enough to identify the consignment (AC1, AC2)', async ({
+  test('shows notifications from every status with enough to identify the consignment', async ({
     page
   }) => {
     await signIn(page)
@@ -30,8 +16,6 @@ test.describe('dashboard', () => {
       page.getByRole('heading', { name: 'Dashboard', exact: true })
     ).toBeVisible()
 
-    // Stub dataset spans SUBMITTED, DRAFT and AMEND — all three must appear
-    // in the same list (AC2), each with enough to identify the consignment.
     await expect(
       page.getByRole('cell', { name: REFERENCE_NUMBER, exact: true })
     ).toBeVisible()
@@ -45,7 +29,6 @@ test.describe('dashboard', () => {
     await expect(page.getByRole('cell', { name: 'DRAFT' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'AMEND' })).toBeVisible()
 
-    // The soft-deleted stub notification must never appear.
     await expect(
       page.getByRole('cell', { name: 'GBN-AG-26-000004', exact: true })
     ).toHaveCount(0)
@@ -58,7 +41,7 @@ test.describe('dashboard', () => {
     await expectNoSeriousOrCriticalViolations(page, 'dashboard')
   })
 
-  test('opening a submitted notification links into the read-only notification-view page (AC3)', async ({
+  test('opening a submitted notification links into the read-only notification-view page', async ({
     page
   }) => {
     await signIn(page)
@@ -71,7 +54,7 @@ test.describe('dashboard', () => {
     )
   })
 
-  test('opening a draft notification links back to the journey hub, not notification-view (AC3)', async ({
+  test('opening a draft notification links back to the journey hub, not notification-view', async ({
     page
   }) => {
     await signIn(page)
@@ -84,7 +67,7 @@ test.describe('dashboard', () => {
     )
   })
 
-  test('searching by complete reference returns only the matching notification (AC4)', async ({
+  test('searching by complete reference returns only the matching notification', async ({
     page
   }) => {
     await signIn(page)
@@ -103,7 +86,7 @@ test.describe('dashboard', () => {
     ).toHaveCount(0)
   })
 
-  test('no matching notification shows "No notifications found" (AC5)', async ({
+  test('no matching notification shows "No notifications found"', async ({
     page
   }) => {
     await signIn(page)

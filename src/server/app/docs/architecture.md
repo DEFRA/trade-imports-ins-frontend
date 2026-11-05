@@ -24,8 +24,9 @@ static files.
   Bell entirely.
 - [`src/plugins/csrf.js`](../../../plugins/csrf.js) — CSRF protection via
   `@hapi/crumb`, disabled during test runs.
-- [`src/auth/`](../../../auth/) — token verification, permissions lookup and
-  safe-redirect checking.
+- [`src/auth/`](../../../auth/) — token verification, permissions lookup,
+  safe-redirect checking and the browser-facing Defra ID URL that the sign-out
+  URL and the content-security-policy form-action share.
 - [`src/config/config.js`](../../../config/config.js) — convict
   configuration, validated strict at boot.
 - [`src/config/nunjucks/`](../../../config/nunjucks/nunjucks.js) — the
@@ -61,8 +62,8 @@ barrel.
 
 Four directories:
 
-- `features/` — one folder per feature: `dashboard/`, `address-book/`,
-  `address-lookup-spike/` (temporary, dev/local only).
+- `features/` — one folder per feature: `dashboard/`, `notification-type/`,
+  `address-book/`, `address-lookup-spike/` (temporary, dev/local only).
 - `services/` — one folder per upstream: `address-book/`, `countries/`,
   `ins-backend/`, `address-lookup/`, each `index.js` + `client.js` +
   `stub.js`.

@@ -1,6 +1,9 @@
 import Blankie from 'blankie'
 
+import { getBrowserFacingDiscoveryUrl } from '../../../auth/get-browser-facing-discovery-url.js'
 import { siblingFrontendBaseUrls } from '../../../config/config.js'
+
+const defraIdOrigin = getBrowserFacingDiscoveryUrl().origin
 
 const siblingFrontendOrigins = siblingFrontendBaseUrls.map(
   (baseUrl) => new URL(baseUrl).origin
@@ -22,7 +25,7 @@ const contentSecurityPolicy = {
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],
     frameAncestors: ['none'],
-    formAction: ['self', ...siblingFrontendOrigins],
+    formAction: ['self', ...siblingFrontendOrigins, defraIdOrigin],
     manifestSrc: ['self'],
     generateNonces: false
   }

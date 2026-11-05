@@ -32,7 +32,9 @@ for the pattern, and the helpers in
 [`common/test-helpers/`](../../common/test-helpers/): `real-mode.js`
 (`runInRealMode()`, `refuseOutboundHttp()`, `addressBookApi()`,
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
-`address-book-requests.js`, the one owner of the address book tests'
+`module-logger-lines.js` (`recordModuleLoggerInfo()`, which records the info
+lines the module-level logger writes during each test of the enclosing
+`describe`), `address-book-requests.js`, the one owner of the address book tests'
 set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
 `addressPagePath(addressId)`, `editAddressPagePath(addressId)`,
 `deleteAddressPagePath(addressId)`, `RETURN_HOME`), address book API paths
@@ -152,6 +154,8 @@ playwright:install` once (Chromium).
 
 Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
 `signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
+[`fit/axe.js`](../../../../fit/axe.js) — the repo's one axe helper beside it,
+`expectNoSeriousOrCriticalViolations`, used by every FIT spec that runs axe.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
 `fieldLabels`, `addressFormCountryNames` (the captured countries fixture's
 names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
@@ -165,8 +169,6 @@ validation tables.
 `resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
 [`dashboard.js`](../features/address-book/fit/dashboard.js) —
 `expectDashboard`.
-[`axe.js`](../features/address-book/fit/axe.js) — the address-book group's
-shared axe helper, `expectNoSeriousOrCriticalViolations`.
 [`seed-address.js`](../features/address-book/fit/seed-address.js) —
 `seedAddress`, the address the stub seeds for an ordinary organisation,
 its `seedAddressLines`, and the unknown and malformed ids.

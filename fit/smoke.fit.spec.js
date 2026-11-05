@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { signIn } from './sign-in.js'
-import { expectNoSeriousOrCriticalViolations } from '../src/server/app/features/address-book/fit/axe.js'
+import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import {
   fillValidAddress,
   validAddress
