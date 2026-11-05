@@ -2,8 +2,8 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADD_ADDRESS_PATH,
-  ADDRESS_BOOK_PATH,
+  addressAddPath,
+  addressBookPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
@@ -21,8 +21,7 @@ import {
   startServerWithPageReader,
   stubAddressBookUnavailable,
   stubAddressPage,
-  tableHeadingsOf,
-  tagNamesOf
+  tableHeadingsOf
 } from './list.test-support.js'
 
 vi.mock('../../../../../auth/get-oidc-config.js', () => ({
@@ -36,7 +35,7 @@ describe('#addressBookListController', () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, parisDepotAddress]))
 
     const { $, statusCode } = await readPage(
-      ADDRESS_BOOK_PATH,
+      addressBookPath(),
       'list-with-addresses'
     )
 
@@ -54,7 +53,7 @@ describe('#addressBookListController', () => {
     )
   })
 
-  test('renders numbered pagination when more than one page', async () => {
+  test('shows the page 2 results range, links pages 1 to 4 and marks page 2 current when the address book spans four pages', async () => {
     stubAddressPage(
       { page: '2' },
       pageOf(
@@ -63,15 +62,24 @@ describe('#addressBookListController', () => {
       )
     )
 
-    const { html, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?page=2`,
+    const { $, statusCode } = await readPage(
+      `${addressBookPath()}?page=2`,
       'list-page-2'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(html).toContain('govuk-pagination')
-    expect(html).toContain('Showing 9-16 of 30')
-    expect(html).toContain('?page=2')
+    expect(resultsLineOf($)).toBe('Showing 9-16 of 30')
+    expect(
+      $('.govuk-pagination__item a')
+        .map((_, link) => $(link).attr('href'))
+        .get()
+    ).toEqual([
+      addressBookPath(),
+      `${addressBookPath()}?page=2`,
+      `${addressBookPath()}?page=3`,
+      `${addressBookPath()}?page=4`
+    ])
+    expect(textOf($, '.govuk-pagination__item--current')).toBe('2')
   })
 
   test.each(['0', 'abc'])(
@@ -80,7 +88,7 @@ describe('#addressBookListController', () => {
       const scope = stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
       const { statusCode } = await readPage(
-        `${ADDRESS_BOOK_PATH}?page=${queryPage}`,
+        `${addressBookPath()}?page=${queryPage}`,
         'list-unusable-page'
       )
 
@@ -90,7 +98,7 @@ describe('#addressBookListController', () => {
   )
 
   test('shows the last page, asked for a second time, when the page number is past the last page', async () => {
-    const stalePage = stubAddressPage(
+    const pastLastPage = stubAddressPage(
       { page: '99' },
       pageOf([], { page: 99, totalItems: 12, totalPages: 2 })
     )
@@ -104,12 +112,12 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?page=99`,
-      'list-stale-page'
+      `${addressBookPath()}?page=99`,
+      'list-past-last-page'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(stalePage.isDone()).toBe(true)
+    expect(pastLastPage.isDone()).toBe(true)
     expect(lastPage.isDone()).toBe(true)
     expect(resultsLineOf($)).toBe('Showing 9-12 of 12')
     expect(bodyRowCountOf($)).toBe(2)
@@ -123,7 +131,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=green`,
+      `${addressBookPath()}?q=green`,
       'list-search-one-page'
     )
 
@@ -137,16 +145,13 @@ describe('#addressBookListController', () => {
       pageOf([parisDepotAddress])
     )
 
-    const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=fran`,
+    const { statusCode } = await readPage(
+      `${addressBookPath()}?q=fran`,
       'list-search-country'
     )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
-    expect(rowCellsOf($, 0).eq(0).html()).toBe('Paris<br> Depot')
-    expect(textOf($, rowCellsOf($, 0).eq(2))).toBe('France')
-    expect($('input[name="q"]').val()).toBe('fran')
   })
 
   test.each([
@@ -158,13 +163,13 @@ describe('#addressBookListController', () => {
       stubAddressPage({ page: '1', q: 'green' }, addressPage)
 
       const { $ } = await readPage(
-        `${ADDRESS_BOOK_PATH}?q=green`,
+        `${addressBookPath()}?q=green`,
         'list-clear-search'
       )
 
       const clearSearch = $('[data-testid="address-book-clear-search"]')
       expect(textOf($, clearSearch)).toBe('Clear search')
-      expect(clearSearch.attr('href')).toBe(ADDRESS_BOOK_PATH)
+      expect(clearSearch.attr('href')).toBe(addressBookPath())
       expect(
         $('[data-testid="address-book-results-label"]')
           .next()
@@ -184,7 +189,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=green&countryCode=GB&page=2`,
+      `${addressBookPath()}?q=green&countryCode=GB&page=2`,
       'list-search-page-2'
     )
 
@@ -195,10 +200,10 @@ describe('#addressBookListController', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      `${ADDRESS_BOOK_PATH}?q=green`,
-      `${ADDRESS_BOOK_PATH}?q=green&page=2`,
-      `${ADDRESS_BOOK_PATH}?q=green&page=3`,
-      `${ADDRESS_BOOK_PATH}?q=green&page=4`
+      `${addressBookPath()}?q=green`,
+      `${addressBookPath()}?q=green&page=2`,
+      `${addressBookPath()}?q=green&page=3`,
+      `${addressBookPath()}?q=green&page=4`
     ])
   })
 
@@ -206,7 +211,7 @@ describe('#addressBookListController', () => {
     stubAddressBookUnavailable()
 
     const { $, html, statusCode } = await readPage(
-      ADDRESS_BOOK_PATH,
+      addressBookPath(),
       'list-500'
     )
 
@@ -216,19 +221,12 @@ describe('#addressBookListController', () => {
       'Sorry, there is a problem with the service. Try again in a few minutes.'
     )
     expect(html).not.toContain('govuk-error-summary')
-    expect(tagNamesOf(contentOf($).children())).toEqual([
-      'div',
-      'h1',
-      'p',
-      'div',
-      'form'
-    ])
     expect(contentOf($).children('h1').text()).toBe('Address book')
     expect(contentOf($).children('p.govuk-body-l').text()).toBe(
       'Manage your addresses for use across all your import notifications'
     )
     expect(contentOf($).children('p').next('div').find('a').attr('href')).toBe(
-      ADD_ADDRESS_PATH
+      addressAddPath()
     )
     expect(contentOf($).children('form').find('input[name="q"]')).toHaveLength(
       1

@@ -27,7 +27,7 @@ describe('#addressIdParams', () => {
 })
 
 describe('#redirectingAddressIdRouteOptions', () => {
-  test('Should redirect a request that fails id validation to the path fallbackPathOf gives', () => {
+  test('Should redirect from failAction to the path fallbackPathOf gives', () => {
     const fallbackPath = '/address-book'
     const options = redirectingAddressIdRouteOptions(
       (request) => request.query.returnTo

@@ -76,7 +76,7 @@ describe('#errorSummary', () => {
     })
   })
 
-  it('Should link through a supplied href builder and keep the caret where it is when asked', () => {
+  it('Should use a supplied href builder and pass disableAutoFocus through when set', () => {
     const summary = errorSummary(
       { name: ENTER_A_NAME },
       { href: (field) => `${ADD_PATH}#${field}`, disableAutoFocus: true }
@@ -145,7 +145,12 @@ describe('#pageRoutes', () => {
   })
 
   it('Should name the session strategy on every route', () => {
-    expect(routeOptions).toEqual({ auth: 'session' })
+    const routes = pageRoutes(ADD_PATH, { get, post })
+
+    expect(routes.map((route) => route.options.auth)).toEqual([
+      'session',
+      'session'
+    ])
   })
 })
 

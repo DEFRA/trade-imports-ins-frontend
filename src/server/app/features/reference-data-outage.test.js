@@ -2,11 +2,11 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { statusCodes } from '../../common/constants/status-codes.js'
 import {
-  ADD_ADDRESS_PATH,
-  ADDRESS_BOOK_PATH,
+  addressAddPath,
+  addressBookPath,
   ADDRESS_ID,
-  addressPagePath,
-  editAddressPagePath,
+  addressPath,
+  addressEditPath,
   getPage,
   INVALID_ADDRESS_PAYLOAD,
   postPage,
@@ -29,7 +29,7 @@ const refuseCountries = () =>
     .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
 
 describe('#referenceDataOutage', () => {
-  const server = startRealModeServer()
+  const getServer = startRealModeServer()
 
   const expectServiceUnavailablePage = ({ result, statusCode }) => {
     expect(statusCode).toBe(statusCodes.serviceUnavailable)
@@ -42,7 +42,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), '/', 'outage-dashboard')
+      await getPage(getServer(), '/', 'outage-dashboard')
     )
   })
 
@@ -50,7 +50,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), ADDRESS_BOOK_PATH, 'outage-list')
+      await getPage(getServer(), addressBookPath(), 'outage-list')
     )
   })
 
@@ -58,7 +58,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), ADD_ADDRESS_PATH, 'outage-add')
+      await getPage(getServer(), addressAddPath(), 'outage-add')
     )
   })
 
@@ -67,7 +67,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), addressPagePath(ADDRESS_ID), 'outage-view')
+      await getPage(getServer(), addressPath(ADDRESS_ID), 'outage-view')
     )
   })
 
@@ -77,8 +77,8 @@ describe('#referenceDataOutage', () => {
 
     expectServiceUnavailablePage(
       await postPage(
-        server(),
-        editAddressPagePath(ADDRESS_ID),
+        getServer(),
+        addressEditPath(ADDRESS_ID),
         'outage-edit-save',
         INVALID_ADDRESS_PAYLOAD
       )

@@ -183,6 +183,10 @@ const submitAddress = async (
         landing
       })
     }
+    logger.info(
+      { organisationId, addressId: createdAddress.id },
+      'Address created'
+    )
     setSuccessMessage(request, copy.successBanner.added(createdAddress.name))
     return toolkit.redirect(addressBookPath())
   } catch (err) {

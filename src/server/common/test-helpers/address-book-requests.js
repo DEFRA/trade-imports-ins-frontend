@@ -12,20 +12,13 @@ export const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
 export const OTHER_ORGANISATION_ID = '0c4e7a92-3b1d-4f58-a6e2-9d8b5c1f7a34'
 
-export const ADDRESS_BOOK_PATH = '/address-book'
-
-export const ADD_ADDRESS_PATH = `${ADDRESS_BOOK_PATH}/add`
-
-export const RETURN_HOME = '?return=%2F'
-
-export const addressPagePath = (addressId) =>
-  `${ADDRESS_BOOK_PATH}/${addressId}`
-
-export const editAddressPagePath = (addressId) =>
-  `${addressPagePath(addressId)}/edit`
-
-export const deleteAddressPagePath = (addressId) =>
-  `${addressPagePath(addressId)}/delete`
+export {
+  addressAddPath,
+  addressBookPath,
+  addressDeletePath,
+  addressEditPath,
+  addressPath
+} from '../../app/shared/paths.js'
 
 export const addressesApiPath = (organisationId = ORGANISATION_ID) =>
   `/organisation/${organisationId}/addresses`
@@ -37,7 +30,7 @@ export const BACK_LINK = 'a.govuk-back-link'
 
 export const COUNTRY_OPTIONS = '#countryCode option'
 
-export const SELECTED_COUNTRY = '#countryCode option[selected]'
+export const SELECTED_COUNTRY_OPTION = '#countryCode option[selected]'
 
 export const ADDRESS_FORM_LABELS = [
   'Name or organisation',
@@ -151,6 +144,18 @@ export const serveAddressNotFoundForOtherOrganisation = (addressId) =>
     .get(addressApiPath(addressId, OTHER_ORGANISATION_ID))
     .matchHeader(ORGANISATION_ID_HEADER, OTHER_ORGANISATION_ID)
     .reply(statusCodes.notFound, { message: 'Not found' })
+
+export const interceptAddressBookRequest = (method, path) => {
+  const scope = addressBookApi()
+    .intercept(path, method)
+    .reply(statusCodes.ok, STORED_ADDRESS)
+  return {
+    expectNotSent: () =>
+      expect(scope.isDone(), `${method} ${path} reached the address book`).toBe(
+        false
+      )
+  }
+}
 
 export const expectRedirectTo = ({ statusCode, headers }, location) => {
   expect(statusCode).toBe(statusCodes.redirectFound)

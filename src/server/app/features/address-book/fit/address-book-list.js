@@ -1,15 +1,14 @@
 import { expect } from '@playwright/test'
 
 import { addressBookPath } from '../../../shared/paths.js'
-import { signIn } from '../../../../../../fit/sign-in.js'
+import { signInAndOpen } from './sign-in-and-open.js'
 
 export const openAddressBookList = async (
   page,
   { organisationId, pageNumber }
 ) => {
-  await signIn(page, { organisationId })
   const query = pageNumber === undefined ? '' : `?page=${pageNumber}`
-  await page.goto(`${addressBookPath()}${query}`)
+  await signInAndOpen(page, organisationId, `${addressBookPath()}${query}`)
 }
 
 export const expectAddressBookList = async (page) => {

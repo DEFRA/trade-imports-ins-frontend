@@ -5,7 +5,7 @@ import { FIELD_RULES } from '../fields.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { countries } from '../../../services/_capture/fixtures.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
-import { signIn } from '../../../../../../fit/sign-in.js'
+import { signInAndOpen } from './sign-in-and-open.js'
 
 export const fieldLabels = copy.form.fields
 
@@ -46,10 +46,11 @@ export const addValidAddressToFreshOrganisation = async (
   page,
   { organisationPrefix, overrides = {} }
 ) => {
-  await signIn(page, {
-    organisationId: `${organisationPrefix}-${crypto.randomUUID()}`
-  })
-  await page.goto(addressAddPath())
+  await signInAndOpen(
+    page,
+    `${organisationPrefix}-${crypto.randomUUID()}`,
+    addressAddPath()
+  )
   await fillValidAddress(page, overrides)
   await page.getByRole('button', { name: 'Save and continue' }).click()
   await expect(page).toHaveURL(addressBookPath())
@@ -125,7 +126,7 @@ export const maxLengthValidations = [
     'phone',
     fieldLabels.phone,
     FIELD_RULES.phone.maxLength,
-    'Telephone number must be 20 characters or fewer'
+    'Phone number must be 20 characters or fewer'
   ],
   [
     'email',

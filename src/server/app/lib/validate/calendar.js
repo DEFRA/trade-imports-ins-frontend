@@ -1,14 +1,11 @@
 import { addDays, addMonths, isValid, parse } from 'date-fns'
 
-const DATE_TEXT_FORMAT = 'd/M/yyyy'
-const DATE_TEXT_SHAPE = /^\d{1,2}\/\d{1,2}\/\d{4}$/
-const MONTHS_IN_YEAR = 12
-
 export const isRealDate = (year, month, day) => {
+  const monthsInYear = 12
   if (![year, month, day].every(Number.isInteger)) {
     return false
   }
-  if (month < 1 || month > MONTHS_IN_YEAR) {
+  if (month < 1 || month > monthsInYear) {
     return false
   }
   if (day < 1) {
@@ -27,7 +24,7 @@ export const startOfUtcDay = (date) =>
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
   )
 
-export const startOfDayInZone = (date, timeZone) => {
+export const utcMidnightOfDayInZone = (date, timeZone) => {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',
@@ -47,12 +44,13 @@ export const addUtcMonths = (date, months) =>
   addMonths(startOfUtcDay(date), months)
 
 export const parseDateText = (raw) => {
+  const dateTextFormat = 'd/M/yyyy'
+  const fourDigitYearDateText = /^\d{1,2}\/\d{1,2}\/\d{4}$/
   const text = String(raw ?? '').trim()
-  // date-fns reads `yyyy` as one to four digits, so without this guard `27/3/26` parses as year 26 and slips under a `max` bound.
-  if (!DATE_TEXT_SHAPE.test(text)) {
+  if (!fourDigitYearDateText.test(text)) {
     return null
   }
-  const parsed = parse(text, DATE_TEXT_FORMAT, new Date())
+  const parsed = parse(text, dateTextFormat, new Date())
   return isValid(parsed)
     ? new Date(
         Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
@@ -62,3 +60,29 @@ export const parseDateText = (raw) => {
 
 export const formatDateText = (date) =>
   `${date.getUTCDate()}/${date.getUTCMonth() + 1}/${date.getUTCFullYear()}`
+
+export const formatDisplayCalendarDate = (calendarDate) => {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(calendarDate ?? '')
+  if (!parts) {
+    return ''
+  }
+  const [year, month, day] = parts.slice(1).map(Number)
+  if (!isRealDate(year, month, day)) {
+    return ''
+  }
+  const monthAbbreviations = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ]
+  return `${day} ${monthAbbreviations[month - 1]} ${year}`
+}

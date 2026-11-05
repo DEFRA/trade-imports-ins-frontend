@@ -79,7 +79,9 @@ root:
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
 specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
-`dashboard.js` and `seed-address.js`. `view-model/list.js` owns the list's
+`dashboard.js`, `return-query.js` (`withReturn`), `seed-address.js` and
+`sign-in-and-open.js` (`signInAndOpen`, which every spec's open helper is
+built on). `view-model/list.js` owns the list's
 name lines, postal lines and results line, which the list controller builds
 into table cells.
 
@@ -153,10 +155,10 @@ adds to that shape for a journey:
   goes: the address book, a role's journey with the `cancel` landing, or the
   consignment contact's journey with no landing.
 - `add.njk` renders Cancel by `addMode` and picks each label: from the address
-  book, a link labelled `copy.add.cancel`; from a role's journey, a link
-  labelled `copy.add.cancelToHub`; from the consignment contact's journey, a
-  `cancel` button labelled `copy.add.cancelAndReturnToAddressPage`. Both links go to
-  `cancelHref`.
+  book, a link labelled `copy.add.cancelAndReturnToAddressBook`; from a role's
+  journey, a link labelled `copy.add.cancelAndReturnToHub`; from the
+  consignment contact's journey, a `cancel` button labelled
+  `copy.add.cancelAndReturnToAddressPage`. Both links go to `cancelHref`.
 - The POST honours `cancel` for every mode, redirecting to `cancelUrlFor`, and
   logs the hand-back at info when the page came from a journey.
 - From a role's journey, the chosen `action` (Save and select, or Save and
@@ -206,8 +208,9 @@ The add and edit forms render their Address and Contact details fields
 through the one `addressFields` macro in
 [`address-fields.njk`](../features/address-book/address-fields.njk), passed
 its copy, form values, country items and errors in a single params
-object, and it sets each personal-data field's browser `autocomplete`
-hint.
+object. It sets a browser `autocomplete` hint on the two address lines,
+town or city, postcode, email and phone; name, county and country have
+none.
 Input `name`, `id` and the error-map key stay identical so the summary
 link focuses the control. Stay inside the govuk-frontend toolbox.
 

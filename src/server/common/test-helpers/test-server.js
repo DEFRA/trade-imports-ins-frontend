@@ -30,11 +30,11 @@ export const startRealModeServer = () => {
 }
 
 export const startRealModeServerServingCountries = (countries) => {
-  const startedServer = startRealModeServer()
+  const getServer = startRealModeServer()
 
   beforeEach(() => {
     serveCountries(countries)
   })
 
-  return startedServer
+  return getServer
 }
