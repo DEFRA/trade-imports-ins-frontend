@@ -7,7 +7,7 @@ export const buildAddressBookQueryString = ({
   addressType,
   page,
   searchTerm,
-  use
+  role
 } = {}) => {
   const params = new URLSearchParams()
   if (addressType) {
@@ -16,8 +16,8 @@ export const buildAddressBookQueryString = ({
   if (searchTerm) {
     params.set('q', searchTerm)
   }
-  if (use) {
-    params.set('use', use)
+  if (role) {
+    params.set('role', role)
   }
   if (page && page > 1) {
     params.set('page', String(page))
@@ -28,9 +28,9 @@ export const buildAddressBookQueryString = ({
 
 export const addressBookPageHref = (
   page,
-  { addressType, searchTerm, use } = {}
+  { addressType, searchTerm, role } = {}
 ) =>
-  `${addressBookPath()}${buildAddressBookQueryString({ addressType, searchTerm, use, page })}`
+  `${addressBookPath()}${buildAddressBookQueryString({ addressType, searchTerm, role, page })}`
 
 export const nameLinesOf = (name) => {
   const [firstWord, ...otherWords] = (name ?? '').split(/\s+/).filter(Boolean)
@@ -42,29 +42,29 @@ export const nameLinesOf = (name) => {
 export const resultsLabelOf = (pagination, listCopy) =>
   buildResultsLabel(pagination, listCopy.results) ?? listCopy.noResults
 
-export const useLabelsOf = (uses, copyByUse) =>
-  (uses ?? []).map((use) => copyByUse[use]?.columnLabel ?? use).join(', ')
+export const roleLabelsOf = (roles, copyByRole) =>
+  (roles ?? []).map((role) => copyByRole[role]?.columnLabel ?? role).join(', ')
 
-export const usesWhoseLabelContains = (searchTerm, copyByUse) => {
+export const rolesWhoseLabelContains = (searchTerm, copyByRole) => {
   const term = searchTerm.toLowerCase()
   if (!term) {
     return []
   }
-  return Object.entries(copyByUse)
+  return Object.entries(copyByRole)
     .filter(([, { columnLabel, optionLabel }]) =>
       [columnLabel, optionLabel].some((label) =>
         label.toLowerCase().includes(term)
       )
     )
-    .map(([use]) => use)
+    .map(([role]) => role)
 }
 
-export const mapAddressRows = (addresses, countries, copyByUse) =>
+export const mapAddressRows = (addresses, countries, copyByRole) =>
   addresses.map((address) => ({
     id: address.id,
     name: address.name,
     nameLines: nameLinesOf(address.name),
-    useLabels: useLabelsOf(address.uses, copyByUse),
+    roleLabels: roleLabelsOf(address.roles, copyByRole),
     postalLines: postalLinesOf(address),
     countryLabel: countryLabelOf(countries, address.countryCode)
   }))

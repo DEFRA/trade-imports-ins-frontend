@@ -32,20 +32,20 @@ import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/e
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import {
   ANIMALS_BASE_URL,
-  ANY_COUNTRY_ROLES,
+  ANY_COUNTRY_PARTIES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
-  JOURNEY_HANDSHAKES_BY_ROLE,
-  journeyUsesHintFor,
+  JOURNEY_HANDSHAKES_BY_PARTY,
+  journeyRolesHintFor,
   returnUrlFor,
-  UNITED_KINGDOM_ROLES,
+  UNITED_KINGDOM_PARTIES,
   UNREGISTERED_JOURNEY_TYPE,
-  USES_BY_ROLE
+  ROLES_BY_PARTY
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
 import {
   addressTypeRequiresUnitedKingdom,
   ADDRESS_TYPES,
-  USES_BY_ADDRESS_TYPE
+  ROLES_BY_ADDRESS_TYPE
 } from '../../../services/address-book/index.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { copy } from '../copy/copy.en.js'
@@ -78,7 +78,7 @@ const SERVED_COUNTRY_NAMES = [
 const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 
 const { consignor: CONSIGNOR_HANDSHAKE, consignee: CONSIGNEE_HANDSHAKE } =
-  JOURNEY_HANDSHAKES_BY_ROLE
+  JOURNEY_HANDSHAKES_BY_PARTY
 const HAND_BACK_MESSAGE = 'Address handed back to the journey'
 const CANCEL_HAND_BACK_MESSAGE = 'Cancel handed back to the journey'
 const CAPTION_SELECTOR = '.govuk-caption-l'
@@ -124,13 +124,13 @@ const postAddWithTypeChosen = async (
 
 const ORIGIN_OR_CONSIGNOR_LIST_PATH = `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR}`
 const ERROR_SUMMARY_LINKS = '.govuk-error-summary a'
-const USES_ERROR = 'Select what this address can be used for'
-const USES_LEGEND = 'What can this address be used for?'
+const ROLES_ERROR = 'Select what this address can be used for'
+const ROLES_LEGEND = 'What can this address be used for?'
 const ADDRESS_TYPE_LEGEND = 'Address type'
 const UNITED_KINGDOM_ADDRESS_TYPES = Object.values(ADDRESS_TYPES).filter(
   addressTypeRequiresUnitedKingdom
 )
-const USES_HINT = 'Select where this address can be used'
+const ROLES_HINT = 'Select where this address can be used'
 
 const SUCCESS_BANNER = '.govuk-notification-banner--success'
 
@@ -143,27 +143,27 @@ const expectNamePostcodeAndPhoneErrorsOnly = ($) => {
   expectUnitedKingdomAloneSelected($)
 }
 
-const ORIGIN_USE_LABELS = ['Place of origin', 'Consignor']
+const ORIGIN_ROLE_LABELS = ['Place of origin', 'Consignor']
 const PLACE_OF_DESTINATION_LABEL = 'Place of destination'
-const USES_LEGEND_SELECTOR =
+const ROLES_LEGEND_SELECTOR =
   'hr.govuk-section-break--visible + .govuk-form-group legend'
-const USES_HINT_SELECTOR = '#uses-hint'
-const USE_LABEL_SELECTOR = '.govuk-checkboxes__label'
-const JOURNEY_USES_LEGEND = 'What else should this address be used for?'
+const ROLES_HINT_SELECTOR = '#roles-hint'
+const ROLE_LABEL_SELECTOR = '.govuk-checkboxes__label'
+const JOURNEY_ROLES_LEGEND = 'What else should this address be used for?'
 const DISCARDED_MESSAGE =
-  'Posted uses the address page does not offer were not saved'
-const otherUseQuestionOf = (role) => {
-  const { otherUses } = USES_BY_ROLE[role]
+  'Posted roles the address page does not offer were not saved'
+const otherRolesQuestionOf = (party) => {
+  const { otherRoles } = ROLES_BY_PARTY[party]
   return {
-    hint: journeyUsesHintFor(role),
-    labels: otherUses.map((use) => copy.uses.options[use].label)
+    hint: journeyRolesHintFor(party),
+    labels: otherRoles.map((role) => copy.roles.options[role].label)
   }
 }
 const VALIDATION_PROBLEM_TYPE =
   'https://api.cdp.defra.cloud/problems/validation-error'
 
-const tickedUsesOf = ($) =>
-  $('input[name="uses"]:checked')
+const tickedRolesOf = ($) =>
+  $('input[name="roles"]:checked')
     .map((_, input) => $(input).attr('value'))
     .get()
 
@@ -206,7 +206,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
     expect(textsOf($, FORM_LABELS)).toEqual([
       ...ADDRESS_FORM_LABELS,
-      ...ORIGIN_USE_LABELS
+      ...ORIGIN_ROLE_LABELS
     ])
     expect(textsOf($, '#phone-hint')).toEqual([
       'For international numbers include the country code'
@@ -310,7 +310,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     expect(headers['cache-control']).toBe('no-store')
   })
 
-  test('POST sends the trimmed form fields, the chosen address type and the ticked uses, and nothing else, to the address book', async () => {
+  test('POST sends the trimmed form fields and the ticked roles, and no address type or anything else, to the address book', async () => {
     const { scope, captured } = serveAddressCreationCapturingBody()
 
     const { addressLine2, county, ...requiredFields } = VALID_ADDRESS_FIELDS
@@ -321,7 +321,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
       {
         ...requiredFields,
         name: `  ${STORED_ADDRESS.name}  `,
-        uses: 'PLACE_OF_ORIGIN',
+        roles: 'PLACE_OF_ORIGIN',
         crumb: 'not-for-the-api'
       }
     )
@@ -332,8 +332,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
       ...requiredFields,
       addressLine2: '',
       county: '',
-      addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-      uses: ['PLACE_OF_ORIGIN']
+      roles: ['PLACE_OF_ORIGIN']
     })
   })
 
@@ -443,18 +442,18 @@ describe(
 )
 
 describe(
-  '#addressBookAddController — uses question',
+  '#addressBookAddController — roles question',
   { concurrent: false },
   () => {
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
-    const FIRST_USE_OF = (addressType) => USES_BY_ADDRESS_TYPE[addressType][0]
-    const USE_CHECKBOXES = 'input[name="uses"]'
+    const FIRST_ROLE_OF = (addressType) => ROLES_BY_ADDRESS_TYPE[addressType][0]
+    const ROLE_CHECKBOXES = 'input[name="roles"]'
 
-    test('GET after Origin or Consignor is chosen shows a section break after the contact fields, then the uses question with Place of origin and Consignor unticked and without hints', async () => {
+    test('GET after Origin or Consignor is chosen shows a section break after the contact fields, then the roles question with Place of origin and Consignor unticked and without hints', async () => {
       const { result, statusCode } = await getAddWithTypeChosen(
         server(),
-        'add-get-uses'
+        'add-get-roles'
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -462,20 +461,20 @@ describe(
       expect(result.indexOf('id="phone"')).toBeLessThan(
         result.indexOf('govuk-section-break--visible')
       )
-      expect(textsOf($, USES_LEGEND_SELECTOR)).toEqual([USES_LEGEND])
-      expect(textsOf($, USES_HINT_SELECTOR)).toEqual([USES_HINT])
-      expect(textsOf($, USE_LABEL_SELECTOR)).toEqual(ORIGIN_USE_LABELS)
+      expect(textsOf($, ROLES_LEGEND_SELECTOR)).toEqual([ROLES_LEGEND])
+      expect(textsOf($, ROLES_HINT_SELECTOR)).toEqual([ROLES_HINT])
+      expect(textsOf($, ROLE_LABEL_SELECTOR)).toEqual(ORIGIN_ROLE_LABELS)
       expect($('.govuk-checkboxes__hint')).toHaveLength(0)
-      expect(tickedUsesOf($)).toEqual([])
-      expect($(USE_CHECKBOXES).first().attr('id')).toBe('uses')
+      expect(tickedRolesOf($)).toEqual([])
+      expect($(ROLE_CHECKBOXES).first().attr('id')).toBe('roles')
     })
 
     test.each([
       [
         ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-        USES_LEGEND,
+        ROLES_LEGEND,
         ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
-        ORIGIN_USE_LABELS
+        ORIGIN_ROLE_LABELS
       ],
       [
         ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
@@ -490,65 +489,65 @@ describe(
         ['Branch address']
       ]
     ])(
-      'GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the uses that type holds, the place uses first',
+      'GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the roles that type holds, the place roles first',
       async (addressType, legend, values, labels) => {
         const { result } = await getAddWithTypeChosen(
           server(),
-          `add-get-uses-${addressType}`,
+          `add-get-roles-${addressType}`,
           { addressType }
         )
 
         const $ = load(result)
-        expect(textsOf($, USES_LEGEND_SELECTOR)).toEqual([legend])
-        expect(textsOf($, USES_HINT_SELECTOR)).toEqual([USES_HINT])
+        expect(textsOf($, ROLES_LEGEND_SELECTOR)).toEqual([legend])
+        expect(textsOf($, ROLES_HINT_SELECTOR)).toEqual([ROLES_HINT])
         expect(
-          $(USE_CHECKBOXES)
+          $(ROLE_CHECKBOXES)
             .map((_, input) => $(input).attr('value'))
             .get()
         ).toEqual(values)
-        expect(textsOf($, USE_LABEL_SELECTOR)).toEqual(labels)
+        expect(textsOf($, ROLE_LABEL_SELECTOR)).toEqual(labels)
         expect($('.govuk-checkboxes__hint')).toHaveLength(0)
-        expect(tickedUsesOf($)).toEqual([])
+        expect(tickedRolesOf($)).toEqual([])
         expect([...values].sort()).toEqual(
-          [...USES_BY_ADDRESS_TYPE[addressType]].sort()
+          [...ROLES_BY_ADDRESS_TYPE[addressType]].sort()
         )
       }
     )
 
     test.each(Object.values(ADDRESS_TYPES))(
-      'POST after %s is chosen with valid fields and no use ticked shows the uses error inline and as the summary link to the first option, and sends nothing',
+      'POST after %s is chosen with valid fields and no role ticked shows the roles error inline and as the summary link to the first option, and sends nothing',
       async (addressType) => {
-        const { uses: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
+        const { roles: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
 
         const { result, statusCode } = await postAddWithTypeChosen(
           server(),
-          `add-post-no-use-${addressType}`,
+          `add-post-no-role-${addressType}`,
           fieldsOnly,
           { addressType }
         )
 
         expect(statusCode).toBe(statusCodes.badRequest)
         const $ = load(result)
-        expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([USES_ERROR])
-        expect($(ERROR_SUMMARY_LINKS).attr('href')).toBe('#uses')
-        expect(textsOf($, '#uses-error')).toEqual([`Error: ${USES_ERROR}`])
-        expect($(USE_CHECKBOXES).first().attr('id')).toBe('uses')
+        expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([ROLES_ERROR])
+        expect($(ERROR_SUMMARY_LINKS).attr('href')).toBe('#roles')
+        expect(textsOf($, '#roles-error')).toEqual([`Error: ${ROLES_ERROR}`])
+        expect($(ROLE_CHECKBOXES).first().attr('id')).toBe('roles')
       }
     )
 
-    test('POST with an invalid field and no use ticked shows only the field error', async () => {
-      const { uses: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
+    test('POST with an invalid field and no role ticked shows only the field error', async () => {
+      const { roles: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
 
       const { result, statusCode } = await postAddWithTypeChosen(
         server(),
-        'add-post-invalid-no-use',
+        'add-post-invalid-no-role',
         { ...fieldsOnly, name: '' }
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
       const $ = load(result)
       expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([REQUIRED_MESSAGES.name])
-      expect($('#uses-error')).toHaveLength(0)
+      expect($('#roles-error')).toHaveLength(0)
     })
 
     test('POST with an invalid field keeps the ticks the user made', async () => {
@@ -558,64 +557,61 @@ describe(
         {
           ...VALID_ADDRESS_PAYLOAD,
           name: '',
-          uses: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
+          roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
         }
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
-      expect(tickedUsesOf(load(result))).toEqual([
+      expect(tickedRolesOf(load(result))).toEqual([
         'PLACE_OF_ORIGIN',
         'CONSIGNOR'
       ])
     })
 
-    test('POST with Consignor ticked and a use the type does not offer saves only Consignor, logs the discarded use and lands on the Origin and Consignor list', async () => {
+    test('POST with Consignor ticked and a role the type does not offer saves only Consignor, logs the discarded role and lands on the Origin and Consignor list', async () => {
       const { scope, captured } = serveAddressCreationCapturingBody()
 
       const response = await postAddWithTypeChosen(
         server(),
-        'add-post-foreign-use',
-        { ...VALID_ADDRESS_PAYLOAD, uses: ['CONSIGNOR', 'IMPORTER'] }
+        'add-post-foreign-role',
+        { ...VALID_ADDRESS_PAYLOAD, roles: ['CONSIGNOR', 'IMPORTER'] }
       )
 
       expectRedirectTo(response, ORIGIN_OR_CONSIGNOR_LIST_PATH)
       expect(scope.isDone()).toBe(true)
-      expect(captured.body).toMatchObject({
-        addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-        uses: ['CONSIGNOR']
-      })
+      expect(captured.body).toMatchObject({ roles: ['CONSIGNOR'] })
       expect(loggedWith(DISCARDED_MESSAGE)).toEqual([
         {
           fields: {
             organisationId: ORGANISATION_ID,
             addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-            discardedUses: ['IMPORTER']
+            discardedRoles: ['IMPORTER']
           },
           message: DISCARDED_MESSAGE
         }
       ])
     })
 
-    test('POST with only a use the type does not offer shows the uses error', async () => {
+    test('POST with only a role the type does not offer shows the roles error', async () => {
       const { result, statusCode } = await postAddWithTypeChosen(
         server(),
-        'add-post-only-foreign-use',
-        { ...VALID_ADDRESS_PAYLOAD, uses: 'IMPORTER' }
+        'add-post-only-foreign-role',
+        { ...VALID_ADDRESS_PAYLOAD, roles: 'IMPORTER' }
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
-      expect(textsOf(load(result), ERROR_SUMMARY_LINKS)).toEqual([USES_ERROR])
+      expect(textsOf(load(result), ERROR_SUMMARY_LINKS)).toEqual([ROLES_ERROR])
     })
 
     test.each(Object.values(ADDRESS_TYPES))(
-      'POST after %s is chosen saves that type with the ticked use and lands on that type of the list',
+      'POST after %s is chosen saves the ticked role and lands on that type of the list',
       async (addressType) => {
         const { scope, captured } = serveAddressCreationCapturingBody()
 
         const response = await postAddWithTypeChosen(
           server(),
-          `add-post-uses-${addressType}`,
-          { ...VALID_ADDRESS_PAYLOAD, uses: FIRST_USE_OF(addressType) },
+          `add-post-roles-${addressType}`,
+          { ...VALID_ADDRESS_PAYLOAD, roles: FIRST_ROLE_OF(addressType) },
           { addressType }
         )
 
@@ -625,8 +621,7 @@ describe(
         )
         expect(scope.isDone()).toBe(true)
         expect(captured.body).toMatchObject({
-          addressType,
-          uses: [FIRST_USE_OF(addressType)]
+          roles: [FIRST_ROLE_OF(addressType)]
         })
       }
     )
@@ -663,7 +658,7 @@ describe(
           {
             ...VALID_ADDRESS_PAYLOAD,
             countryCode: 'FR',
-            uses: USES_BY_ADDRESS_TYPE[addressType][0]
+            roles: ROLES_BY_ADDRESS_TYPE[addressType][0]
           },
           { addressType }
         )
@@ -716,7 +711,7 @@ describe(
           {
             ...VALID_ADDRESS_PAYLOAD,
             countryCode: 'FR',
-            uses: USES_BY_ADDRESS_TYPE[addressType][0]
+            roles: ROLES_BY_ADDRESS_TYPE[addressType][0]
           },
           { addressType }
         )
@@ -742,7 +737,7 @@ describe(
         'add-log-not-replaced-gb',
         {
           ...VALID_ADDRESS_PAYLOAD,
-          uses: 'CONSIGNEE'
+          roles: 'CONSIGNEE'
         },
         { addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER }
       )
@@ -780,10 +775,10 @@ describe(
       ])
     })
 
-    test('POST with France posted that is refused for a field error, a missing use or the address book logs nothing and shows each refusal', async () => {
+    test('POST with France posted that is refused for a field error, a missing role or the address book logs nothing and shows each refusal', async () => {
       const destination = ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
       const france = { ...VALID_ADDRESS_PAYLOAD, countryCode: 'FR' }
-      const { uses: _noUse, ...franceWithoutUse } = france
+      const { roles: _noUse, ...franceWithoutRole } = france
 
       const fieldError = await postAddWithTypeChosen(
         server(),
@@ -793,8 +788,8 @@ describe(
       )
       const usesError = await postAddWithTypeChosen(
         server(),
-        'add-log-refused-uses',
-        franceWithoutUse,
+        'add-log-refused-roles',
+        franceWithoutRole,
         { addressType: destination }
       )
       addressBookApi()
@@ -806,7 +801,7 @@ describe(
       const refusedByAddressBook = await postAddWithTypeChosen(
         server(),
         'add-log-refused-address-book',
-        { ...france, uses: 'CONSIGNEE' },
+        { ...france, roles: 'CONSIGNEE' },
         { addressType: destination }
       )
 
@@ -814,7 +809,7 @@ describe(
         REQUIRED_MESSAGES.name
       ])
       expect(textsOf(load(usesError.result), ERROR_SUMMARY_LINKS)).toEqual([
-        USES_ERROR
+        ROLES_ERROR
       ])
       expect(
         textsOf(load(refusedByAddressBook.result), ERROR_SUMMARY_LINKS)
@@ -851,11 +846,11 @@ describe(
         TEXT_FIELDS.map((field) => [field, $(`#${field}`).val()])
       )
 
-    const postRefusedAddFor = async (sessionId, addressType, use) => {
+    const postRefusedAddFor = async (sessionId, addressType, role) => {
       const refused = await postAddWithTypeChosen(
         server(),
         sessionId,
-        { ...ENTERED_FIELDS, uses: use },
+        { ...ENTERED_FIELDS, roles: role },
         { addressType }
       )
       expect(refused.statusCode).toBe(statusCodes.badRequest)
@@ -867,10 +862,10 @@ describe(
       [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, 'CONSIGNEE'],
       [ADDRESS_TYPES.BRANCH, 'BRANCH_ADDRESS']
     ])(
-      'GET after a refused save of %s and choosing it again shows every field entered and the ticked use %s',
-      async (addressType, use) => {
+      'GET after a refused save of %s and choosing it again shows every field entered and the ticked role %s',
+      async (addressType, role) => {
         const sessionId = `add-kept-${addressType}`
-        const cookie = await postRefusedAddFor(sessionId, addressType, use)
+        const cookie = await postRefusedAddFor(sessionId, addressType, role)
 
         const { result } = await getAddWithTypeChosen(server(), sessionId, {
           addressType,
@@ -883,7 +878,7 @@ describe(
             TEXT_FIELDS.map((field) => [field, ENTERED_FIELDS[field]])
           )
         )
-        expect(tickedUsesOf($)).toEqual([use])
+        expect(tickedRolesOf($)).toEqual([role])
       }
     )
 
@@ -933,7 +928,7 @@ describe(
         $,
         SERVED_COUNTRY_NAMES
       )
-      expect(tickedUsesOf($)).toEqual([])
+      expect(tickedRolesOf($)).toEqual([])
     })
 
     test('GET after a refused save, a successful save and choosing a type again opens empty text fields', async () => {
@@ -964,43 +959,40 @@ describe(
 )
 
 describe(
-  '#addressBookAddController — journey handshake type and use',
+  '#addressBookAddController — journey handshake role',
   { concurrent: false },
   () => {
     const server = startRealModeServerServingCountries(COUNTRIES)
     const loggedWith = captureInfoLogs()
 
-    test.each(Object.entries(USES_BY_ROLE))(
-      'POST from the %s handshake saves the address with its type and only its own use when the posted use is from outside its side',
-      async (role, { addressType, ownUse }) => {
+    test.each(Object.entries(ROLES_BY_PARTY))(
+      'POST from the %s handshake saves the address with only its own role when the posted role is from outside its side',
+      async (party, { ownRole }) => {
         const { scope, captured } = serveAddressCreationCapturingBody()
 
-        await postAdd(server(), `add-post-handshake-type-${role}`, {
-          ...JOURNEY_HANDSHAKES_BY_ROLE[role],
+        await postAdd(server(), `add-post-handshake-type-${party}`, {
+          ...JOURNEY_HANDSHAKES_BY_PARTY[party],
           ...VALID_ADDRESS_FIELDS,
-          uses: ['BRANCH_ADDRESS']
+          roles: ['BRANCH_ADDRESS']
         })
 
         expect(scope.isDone()).toBe(true)
-        expect(captured.body).toMatchObject({ addressType, uses: [ownUse] })
+        expect(captured.body).toMatchObject({ roles: [ownRole] })
       }
     )
 
-    test('POST from the consignee handshake with Importer ticked saves the consignee and importer uses and hands back with the select landing', async () => {
+    test('POST from the consignee handshake with Importer ticked saves the consignee and importer roles and hands back with the select landing', async () => {
       const { scope, captured } = serveAddressCreationCapturingBody()
 
       const response = await postAdd(server(), 'add-post-handshake-ticked', {
         ...CONSIGNEE_HANDSHAKE,
         ...VALID_ADDRESS_FIELDS,
-        uses: 'IMPORTER',
+        roles: 'IMPORTER',
         action: ADDRESS_LANDING.SELECT
       })
 
       expect(scope.isDone()).toBe(true)
-      expect(captured.body).toMatchObject({
-        addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-        uses: ['CONSIGNEE', 'IMPORTER']
-      })
+      expect(captured.body).toMatchObject({ roles: ['CONSIGNEE', 'IMPORTER'] })
       expectRedirectTo(
         response,
         returnUrlFor(CONSIGNEE_HANDSHAKE, {
@@ -1010,13 +1002,13 @@ describe(
       )
     })
 
-    test('POST from the consignee handshake with a use from outside its side logs the discarded use against the notification and fulfilment', async () => {
+    test('POST from the consignee handshake with a role from outside its side logs the discarded role against the notification and fulfilment', async () => {
       serveAddressCreated()
 
       await postAdd(server(), 'add-post-handshake-discard', {
         ...CONSIGNEE_HANDSHAKE,
         ...VALID_ADDRESS_FIELDS,
-        uses: ['IMPORTER', 'CONSIGNOR']
+        roles: ['IMPORTER', 'CONSIGNOR']
       })
 
       expect(loggedWith(DISCARDED_MESSAGE)).toEqual([
@@ -1025,14 +1017,14 @@ describe(
             organisationId: ORGANISATION_ID,
             notificationId: CONSIGNEE_HANDSHAKE['notification-id'],
             fulfilmentId: CONSIGNEE_HANDSHAKE['fulfilment-id'],
-            discardedUses: ['CONSIGNOR']
+            discardedRoles: ['CONSIGNOR']
           },
           message: DISCARDED_MESSAGE
         }
       ])
     })
 
-    test('POST from the consignee handshake with a field error re-renders with exactly the offered use ticked', async () => {
+    test('POST from the consignee handshake with a field error re-renders with exactly the offered role ticked', async () => {
       const { result, statusCode } = await postAdd(
         server(),
         'add-post-handshake-ticks-kept',
@@ -1040,12 +1032,12 @@ describe(
           ...CONSIGNEE_HANDSHAKE,
           ...VALID_ADDRESS_FIELDS,
           postcode: '',
-          uses: ['IMPORTER', 'PLACE_OF_ORIGIN']
+          roles: ['IMPORTER', 'PLACE_OF_ORIGIN']
         }
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
-      expect(tickedUsesOf(load(result))).toEqual(['IMPORTER'])
+      expect(tickedRolesOf(load(result))).toEqual(['IMPORTER'])
     })
 
     test.each([ADDRESS_LANDING.SELECT, ADDRESS_LANDING.RETURN])(
@@ -1060,7 +1052,7 @@ describe(
             ...CONSIGNEE_HANDSHAKE,
             name: 'Highland Livestock Ltd',
             countryCode: 'GB',
-            uses: 'IMPORTER',
+            roles: 'IMPORTER',
             action
           }
         )
@@ -1075,7 +1067,7 @@ describe(
           ['phone', REQUIRED_MESSAGES.phone]
         ])
         expect($('#name').val()).toBe('Highland Livestock Ltd')
-        expect(tickedUsesOf($)).toEqual(['IMPORTER'])
+        expect(tickedRolesOf($)).toEqual(['IMPORTER'])
         expect(createRequested.isDone()).toBe(false)
       }
     )
@@ -1089,41 +1081,40 @@ describe(
       })
 
       expect(scope.isDone()).toBe(true)
-      expect(captured.body).toMatchObject({
-        addressType: ADDRESS_TYPES.BRANCH,
-        uses: ['BRANCH_ADDRESS']
-      })
+      expect(captured.body).toMatchObject({ roles: ['BRANCH_ADDRESS'] })
     })
 
-    test.each(Object.keys(USES_BY_ROLE))(
-      'GET from the %s handshake asks what else the address should be used for after a section break, naming the role and offering only the other uses on its side, unticked',
-      async (role) => {
-        const { hint, labels } = otherUseQuestionOf(role)
+    test.each(Object.keys(ROLES_BY_PARTY))(
+      'GET from the %s handshake asks what else the address should be used for after a section break, naming the role and offering only the other roles on its side, unticked',
+      async (party) => {
+        const { hint, labels } = otherRolesQuestionOf(party)
         const { result } = await getAdd(
           server(),
-          `add-get-handshake-uses-${role}`,
-          JOURNEY_HANDSHAKES_BY_ROLE[role]
+          `add-get-handshake-roles-${party}`,
+          JOURNEY_HANDSHAKES_BY_PARTY[party]
         )
 
         const $ = load(result)
-        expect(textsOf($, USES_LEGEND_SELECTOR)).toEqual([JOURNEY_USES_LEGEND])
-        expect(textsOf($, USES_HINT_SELECTOR)).toEqual([hint])
-        expect(textsOf($, USE_LABEL_SELECTOR)).toEqual(labels)
-        expect(tickedUsesOf($)).toEqual([])
+        expect(textsOf($, ROLES_LEGEND_SELECTOR)).toEqual([
+          JOURNEY_ROLES_LEGEND
+        ])
+        expect(textsOf($, ROLES_HINT_SELECTOR)).toEqual([hint])
+        expect(textsOf($, ROLE_LABEL_SELECTOR)).toEqual(labels)
+        expect(tickedRolesOf($)).toEqual([])
       }
     )
 
-    test('GET from the consignment contact handshake shows the address fields and no uses question', async () => {
+    test('GET from the consignment contact handshake shows the address fields and no roles question', async () => {
       const { result } = await getAdd(
         server(),
-        'add-get-handshake-no-uses',
+        'add-get-handshake-no-roles',
         CONSIGNMENT_CONTACT_HANDSHAKE
       )
 
       const $ = load(result)
       expect(textsOf($, 'form legend')).toEqual([])
       expect(textsOf($, FORM_LABELS)).toEqual(ADDRESS_FORM_LABELS)
-      expect($('input[name="uses"]')).toHaveLength(0)
+      expect($('input[name="roles"]')).toHaveLength(0)
     })
   }
 )
@@ -1229,7 +1220,7 @@ describe(
       expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
       expect(textsOf($, FORM_LABELS)).toEqual([
         ...ADDRESS_FORM_LABELS,
-        ...otherUseQuestionOf('consignor').labels
+        ...otherRolesQuestionOf('consignor').labels
       ])
     })
 
@@ -1322,7 +1313,7 @@ describe(
         ...CONSIGNOR_HANDSHAKE,
         'fulfilment-id': 'not-a-fulfilment-id',
         ...VALID_ADDRESS_PAYLOAD,
-        uses: 'CONSIGNOR',
+        roles: 'CONSIGNOR',
         action: ADDRESS_LANDING.SELECT
       })
 
@@ -1431,38 +1422,38 @@ describe(
   { concurrent: false },
   () => {
     const server = startRealModeServerServingCountries(COUNTRIES)
-    const openAddFrom = async (role) => {
+    const openAddFrom = async (party) => {
       const { result, statusCode } = await getAdd(
         server(),
-        `add-get-handshake-${role}`,
-        JOURNEY_HANDSHAKES_BY_ROLE[role]
+        `add-get-handshake-${party}`,
+        JOURNEY_HANDSHAKES_BY_PARTY[party]
       )
       expect(statusCode).toBe(statusCodes.ok)
       return load(result)
     }
 
-    test.each(UNITED_KINGDOM_ROLES)(
+    test.each(UNITED_KINGDOM_PARTIES)(
       'GET from the %s handshake offers United Kingdom alone, selected, with every field shown',
-      async (role) => {
-        const $ = await openAddFrom(role)
+      async (party) => {
+        const $ = await openAddFrom(party)
 
         expectUnitedKingdomAloneSelected($)
         expect(textsOf($, FORM_LABELS)).toEqual([
           ...ADDRESS_FORM_LABELS,
-          ...otherUseQuestionOf(role).labels
+          ...otherRolesQuestionOf(party).labels
         ])
       }
     )
 
-    test.each(ANY_COUNTRY_ROLES)(
+    test.each(ANY_COUNTRY_PARTIES)(
       'GET from the %s handshake opens the Country select on Select a country, offers every served country and shows every field',
-      async (role) => {
-        const $ = await openAddFrom(role)
+      async (party) => {
+        const $ = await openAddFrom(party)
 
         expectPlaceholderThenCountriesNoneSelected($, SERVED_COUNTRY_NAMES)
         expect(textsOf($, FORM_LABELS)).toEqual([
           ...ADDRESS_FORM_LABELS,
-          ...otherUseQuestionOf(role).labels
+          ...otherRolesQuestionOf(party).labels
         ])
       }
     )

@@ -1,7 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { createLogger } from '../../../common/helpers/logging/logger.js'
-import { isKnownJourneyType, useOfParty } from './journey-registry.js'
+import { isKnownJourneyType, roleOfParty } from './journey-registry.js'
 
 const SESSION_KEY = 'addressBookHandshake'
 
@@ -38,7 +38,7 @@ const buildHandshakeContext = ({
     throw Boom.badRequest('Incomplete journey handshake')
   }
 
-  if (!useOfParty({ journeyType, fulfilmentId })) {
+  if (!roleOfParty({ journeyType, fulfilmentId })) {
     logRefusedHandshake({ journeyType, notificationId, fulfilmentId })
     throw Boom.notFound()
   }

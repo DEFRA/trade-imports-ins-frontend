@@ -38,7 +38,7 @@ set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
 `deleteAddressPagePath(addressId)`, `RETURN_HOME`), address book API paths
 (`addressesApiPath(organisationId)`, `addressApiPath(addressId,
 organisationId)`, both defaulting to the session organisation), fixtures
-(`ADDRESS_ID`, `STORED_ADDRESS` (with an address type and two uses),
+(`ADDRESS_ID`, `STORED_ADDRESS` (with two roles),
 `VALID_ADDRESS_FIELDS` (the nine address fields), `VALID_ADDRESS_PAYLOAD` (the
 fields with Place of origin ticked), `INVALID_ADDRESS_PAYLOAD`, `ADDRESS_FORM_LABELS` (the add and edit forms'
 field labels in page order, written out as literals), `COUNTRIES`,
@@ -66,16 +66,16 @@ autocomplete hints, read from `address-form-autocomplete.js`'s
 `AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
 `journey-handshake.js` (`handshakeContextOf(handshake)`, the handshake
 context the app builds from a handshake's query or form fields,
-`JOURNEY_HANDSHAKES_BY_ROLE`, one complete journey
+`JOURNEY_HANDSHAKES_BY_PARTY`, one complete journey
 handshake for each of the place of origin, consignor, consignee, importer and
 place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's
 handshake, `ANIMALS_BASE_URL`, the animals frontend's base URL the return
 URLs start with, and `returnUrlFor(handshake, { addressId, landing })`, the
 return URL a test expects for a handshake, built from that handshake's own
 ids and token; the Vitest tests and the fit specs both use these;
-`USES_BY_ROLE`, each role's address type, own use and the other uses on its
-side, `journeyUsesHintFor(role)`, the uses question's hint naming that
-role's own use, and `UNREGISTERED_JOURNEY_TYPE`, a journey type the
+`ROLES_BY_PARTY`, each party's own role and the other roles on its
+side, `journeyRolesHintFor(party)`, the roles question's hint naming that
+party's own role, and `UNREGISTERED_JOURNEY_TYPE`, a journey type the
 registry does not list),
 `answer-oidc-discovery.js` (`answerOidcDiscovery()`, which answers the Defra
 ID OIDC discovery request once with `mockOidcConfig`; `startRealModeServer()`
@@ -115,8 +115,8 @@ holds the list's fixtures, nock stubs and Cheerio readers:
 `TABLE_HEADINGS` (the list table's column headings in order),
 `NO_RESULTS_LINE` (the results line for no matches),
 `startServerWithPageReader()`, `stubAddressPage(query, addressPage)` (which
-stubs the Origin and Consignor tab unless the query names another
-`addressType`), `stubAddressBookUnavailable()`, `contentOf`,
+stubs the request for the Origin and Consignor tab's roles unless the query names another
+`addressType` or one `role`), `stubAddressBookUnavailable()`, `contentOf`,
 `tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`, `typeSelectStateOf`
 (the Type select's label, option texts, options with an empty value and chosen
 options), `panelHeadingTextOf`, `resultsLineOf`,
@@ -180,8 +180,8 @@ names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
 `saveAndContinueButton`,
 `chooseAddressType` (chooses a type on the 'Choose an address type' page and
 continues), `openAddForm` (opens the address form through the type page with
-a type chosen), `useCheckbox` (the checkbox for one use), `tickUses` (ticks the
-uses checkboxes it is given),
+a type chosen), `roleCheckbox` (the checkbox for one role), `tickRoles` (ticks the
+roles checkboxes it is given),
 `openAddFormFromJourney` (signs in and opens the add form with a journey
 handshake, the consignor's by default), `addressTypeListUrl` (an address
 type's list URL, written out rather than built by the list view model),
@@ -221,7 +221,7 @@ its `seedAddressLines`, and the unknown and malformed ids.
 Every test signs in with its own organisation id, because the
 address-book stub keys its data by organisation; the `-empty`,
 `-paginated` and `-typed` suffixes select those seeds (thirty addresses,
-four pages of eight; five addresses holding uses of all three address
+four pages of eight; five addresses holding roles of all three address
 types). No sleeps, no page objects, and
 `exact: true` on "Back". On failure read
 `test-results/<spec>/error-context.md` and the HTML report in

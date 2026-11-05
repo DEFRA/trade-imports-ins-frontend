@@ -50,17 +50,14 @@ export const postalLinesOf = (address) =>
 export const formValuesOf = (address = {}) =>
   Object.fromEntries(FIELDS.map((field) => [field, address[field] ?? '']))
 
-export const storedTypeAndUsesOf = ({ addressType, uses }) => ({
-  addressType,
-  uses
-})
+export const storedRolesOf = ({ roles }) => ({ roles })
 
-export const postedUsesOf = (payload) => [payload.uses ?? []].flat()
+export const postedRolesOf = (payload) => [payload.roles ?? []].flat()
 
 const { errors } = copyFor({ en, cy })
 
-export const usesErrorsOf = (keptUses) =>
-  keptUses.length > 0 ? null : { uses: errors.uses.required }
+export const rolesErrorsOf = (keptRoles) =>
+  keptRoles.length > 0 ? null : { roles: errors.roles.required }
 
 const maxLengthOf = (field) => FIELD_RULES[field].maxLength
 

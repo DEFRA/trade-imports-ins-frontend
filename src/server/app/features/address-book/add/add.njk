@@ -25,21 +25,21 @@
       errors: errors
     }) }}
 
-    {% if usesQuestion %}
+    {% if rolesQuestion %}
       <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
 
       {{ govukCheckboxes({
-        name: "uses",
-        idPrefix: "uses",
+        name: "roles",
+        idPrefix: "roles",
         fieldset: {
           legend: {
-            text: usesQuestion.legend,
+            text: rolesQuestion.legend,
             classes: "govuk-fieldset__legend--m"
           }
         },
-        hint: { text: usesQuestion.hint },
-        items: usesQuestion.items,
-        errorMessage: errors.uses and { text: errors.uses }
+        hint: { text: rolesQuestion.hint },
+        items: rolesQuestion.items,
+        errorMessage: errors.roles and { text: errors.roles }
       }) }}
     {% endif %}
 

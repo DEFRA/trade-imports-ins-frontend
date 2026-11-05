@@ -53,15 +53,15 @@ describe('#addressBookListTypeFilter', () => {
     }
   )
 
-  test('asks the address book for the use the tab offers and shows it chosen', async () => {
+  test('asks the address book for the role the tab offers and shows it chosen', async () => {
     const scope = stubAddressPage(
-      { page: '1', addressType: ADDRESS_TYPES.BRANCH, use: 'BRANCH_ADDRESS' },
+      { page: '1', addressType: ADDRESS_TYPES.BRANCH, role: 'BRANCH_ADDRESS' },
       pageOf([highlandAddress])
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.BRANCH}&use=BRANCH_ADDRESS`,
-      'list-use-honoured'
+      `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.BRANCH}&role=BRANCH_ADDRESS`,
+      'list-role-honoured'
     )
 
     expect(scope.isDone()).toBe(true)
@@ -69,17 +69,17 @@ describe('#addressBookListTypeFilter', () => {
   })
 
   test.each([
-    ['a use another tab offers', '?use=IMPORTER'],
-    ['an unknown use', '?use=TRANSPORTER'],
-    ['an empty use', '?use=']
+    ['a role another tab offers', '?role=IMPORTER'],
+    ['an unknown role', '?role=TRANSPORTER'],
+    ['an empty role', '?role=']
   ])(
-    'asks the address book for no use and shows Select one for %s',
+    'asks the address book for no role and shows Select one for %s',
     async (_description, query) => {
       const scope = stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
       const { $ } = await readPage(
         `${ADDRESS_BOOK_PATH}${query}`,
-        'list-use-not-honoured'
+        'list-role-not-honoured'
       )
 
       expect(scope.isDone()).toBe(true)
@@ -87,15 +87,15 @@ describe('#addressBookListTypeFilter', () => {
     }
   )
 
-  test('lists the whole Branch tab with no Type selected for a use the Branch tab does not offer', async () => {
+  test('lists the whole Branch tab with no Type selected for a role the Branch tab does not offer', async () => {
     const scope = stubAddressPage(
       { page: '1', addressType: ADDRESS_TYPES.BRANCH },
       pageOf([highlandAddress])
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&use=CONSIGNOR`,
-      'list-use-of-another-tab'
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&role=CONSIGNOR`,
+      'list-role-of-another-tab'
     )
 
     expect(scope.isDone()).toBe(true)
@@ -106,12 +106,12 @@ describe('#addressBookListTypeFilter', () => {
   test('offers the Type select of the tab, with the chosen Type selected, on the page shown when the address book cannot be reached', async () => {
     const scope = stubAddressBookUnavailable({
       addressType: ADDRESS_TYPES.BRANCH,
-      use: 'BRANCH_ADDRESS'
+      role: 'BRANCH_ADDRESS'
     })
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&use=BRANCH_ADDRESS`,
-      'list-use-address-book-unavailable'
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&role=BRANCH_ADDRESS`,
+      'list-role-address-book-unavailable'
     )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
@@ -124,13 +124,13 @@ describe('#addressBookListTypeFilter', () => {
     })
   })
 
-  test('links every page with the selected tab, the search term, the use and the page number only', async () => {
+  test('links every page with the selected tab, the search term, the role and the page number only', async () => {
     const scope = stubAddressPage(
       {
         page: '2',
         q: 'green',
         addressType: ADDRESS_TYPES.BRANCH,
-        use: 'BRANCH_ADDRESS'
+        role: 'BRANCH_ADDRESS'
       },
       pageOf([greenFarmAddress], {
         page: 2,
@@ -140,8 +140,8 @@ describe('#addressBookListTypeFilter', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&use=BRANCH_ADDRESS&page=2`,
-      'list-use-page-2'
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=2`,
+      'list-role-page-2'
     )
 
     expect(scope.isDone()).toBe(true)
@@ -150,46 +150,46 @@ describe('#addressBookListTypeFilter', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&use=BRANCH_ADDRESS`,
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&use=BRANCH_ADDRESS&page=2`,
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&use=BRANCH_ADDRESS&page=3`,
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&use=BRANCH_ADDRESS&page=4`
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS`,
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=2`,
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=3`,
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=4`
     ])
   })
 
-  test('counts the matches of a use and shows no pagination when they fit on one page', async () => {
+  test('counts the matches of a role and shows no pagination when they fit on one page', async () => {
     stubAddressPage(
-      { page: '1', use: 'CONSIGNOR' },
+      { page: '1', role: 'CONSIGNOR' },
       pageOf([greenFarmAddress, highlandAddress])
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?use=CONSIGNOR`,
-      'list-use-one-page'
+      `${ADDRESS_BOOK_PATH}?role=CONSIGNOR`,
+      'list-role-one-page'
     )
 
     expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
     expect($('.govuk-pagination')).toHaveLength(0)
   })
 
-  test('links Clear search to the selected tab with the use kept and no search', async () => {
+  test('links Clear search to the selected tab with the role kept and no search', async () => {
     stubAddressPage(
       {
         page: '1',
         q: 'green',
         addressType: ADDRESS_TYPES.BRANCH,
-        use: 'BRANCH_ADDRESS'
+        role: 'BRANCH_ADDRESS'
       },
       pageOf([greenFarmAddress])
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&use=BRANCH_ADDRESS`,
-      'list-clear-search-use'
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS`,
+      'list-clear-search-role'
     )
 
     expect($('[data-testid="address-book-clear-search"]').attr('href')).toBe(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&use=BRANCH_ADDRESS`
+      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&role=BRANCH_ADDRESS`
     )
   })
 
@@ -198,16 +198,16 @@ describe('#addressBookListTypeFilter', () => {
     ['place of origin', 'PLACE_OF_ORIGIN'],
     ['  BRANCH ', 'BRANCH_ADDRESS']
   ])(
-    'asks the address book to match the use whose label contains %j beside the search term',
-    async (term, searchUse) => {
+    'asks the address book to match the role whose label contains %j beside the search term',
+    async (term, searchRole) => {
       const scope = stubAddressPage(
-        { page: '1', q: term.trim(), searchUse },
+        { page: '1', q: term.trim(), searchRole },
         pageOf([greenFarmAddress])
       )
 
       const { statusCode } = await readPage(
         `${ADDRESS_BOOK_PATH}?q=${encodeURIComponent(term)}`,
-        'list-search-uses'
+        'list-search-roles'
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -215,15 +215,15 @@ describe('#addressBookListTypeFilter', () => {
     }
   )
 
-  test('lists the address holding a Branch Address use when the Branch tab is searched for branch address', async () => {
+  test('lists the address holding a Branch Address role when the Branch tab is searched for branch address', async () => {
     const scope = stubAddressPage(
       {
         page: '1',
         q: 'branch address',
         addressType: ADDRESS_TYPES.BRANCH,
-        searchUse: 'BRANCH_ADDRESS'
+        searchRole: 'BRANCH_ADDRESS'
       },
-      pageOf([{ ...parisDepotAddress, uses: ['BRANCH_ADDRESS'] }])
+      pageOf([{ ...parisDepotAddress, roles: ['BRANCH_ADDRESS'] }])
     )
 
     const { $ } = await readPage(
@@ -236,13 +236,16 @@ describe('#addressBookListTypeFilter', () => {
     expect(resultsLineOf($)).toBe('Showing 1-1 of 1')
   })
 
-  test('asks the address book to match every use whose label contains the search term', async () => {
+  test('asks the address book to match every role whose label contains the search term', async () => {
     const scope = stubAddressPage(
-      { page: '1', q: 'consign', searchUse: ['CONSIGNOR', 'CONSIGNEE'] },
+      { page: '1', q: 'consign', searchRole: ['CONSIGNOR', 'CONSIGNEE'] },
       pageOf([greenFarmAddress])
     )
 
-    await readPage(`${ADDRESS_BOOK_PATH}?q=consign`, 'list-search-several-uses')
+    await readPage(
+      `${ADDRESS_BOOK_PATH}?q=consign`,
+      'list-search-several-roles'
+    )
 
     expect(scope.isDone()).toBe(true)
   })

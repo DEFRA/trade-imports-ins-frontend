@@ -37,7 +37,7 @@ export const copy = {
         heading: 'Cyfeiriadau cangen'
       }
     },
-    uses: {
+    roles: {
       PLACE_OF_ORIGIN: {
         columnLabel: 'Man tarddiad',
         optionLabel: 'Man Tarddiad'
@@ -104,7 +104,7 @@ export const copy = {
     },
     continue: 'Parhau'
   },
-  uses: {
+  roles: {
     journeyLegend: 'Ar gyfer beth arall y dylid defnyddio’r cyfeiriad hwn?',
     journeyHint: (roleLabel) =>
       `Mae’r cyfeiriad hwn yn cael ei ychwanegu fel cyfeiriad ${roleLabel}. Dewiswch unrhyw rolau neu gyfeiriadau eraill y dylid defnyddio’r cyfeiriad hwn ar eu cyfer.`,
@@ -155,7 +155,7 @@ export const copy = {
     addressType: {
       required: 'Dewiswch fath o gyfeiriad'
     },
-    uses: {
+    roles: {
       required: 'Dewiswch ar gyfer beth y gellir defnyddio’r cyfeiriad hwn'
     },
     name: {

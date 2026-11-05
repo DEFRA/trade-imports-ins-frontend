@@ -7,11 +7,11 @@ import {
 import { COUNTRY_PLACEHOLDER } from '../../../common/test-helpers/country-placeholder.js'
 import { ADDRESS_TYPES } from '../../services/address-book/index.js'
 import {
-  ANY_COUNTRY_ROLES,
+  ANY_COUNTRY_PARTIES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   handshakeContextOf,
-  JOURNEY_HANDSHAKES_BY_ROLE,
-  UNITED_KINGDOM_ROLES
+  JOURNEY_HANDSHAKES_BY_PARTY,
+  UNITED_KINGDOM_PARTIES
 } from '../../../common/test-helpers/journey-handshake.js'
 import {
   buildCountryItems,
@@ -33,9 +33,9 @@ const GB_AND_FRANCE_ITEMS = [
 ]
 
 const anyCountryContexts = [
-  ...ANY_COUNTRY_ROLES.map((role) => [
-    `the ${role} handshake`,
-    handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
+  ...ANY_COUNTRY_PARTIES.map((party) => [
+    `the ${party} handshake`,
+    handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]),
     undefined
   ]),
   [
@@ -104,9 +104,9 @@ describe('#addFormCountryOffer', () => {
   const postedValues = { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
 
   test.each([
-    ...UNITED_KINGDOM_ROLES.map((role) => [
-      `the ${role} handshake`,
-      handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
+    ...UNITED_KINGDOM_PARTIES.map((party) => [
+      `the ${party} handshake`,
+      handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]),
       undefined
     ]),
     [
@@ -141,7 +141,7 @@ describe('#addFormCountryOffer', () => {
 
     const offer = await addFormCountryOffer({
       handshakeContext: handshakeContextOf(
-        JOURNEY_HANDSHAKES_BY_ROLE.consignor
+        JOURNEY_HANDSHAKES_BY_PARTY.consignor
       ),
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       placeholder: COUNTRY_PLACEHOLDER,

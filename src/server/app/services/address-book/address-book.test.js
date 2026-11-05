@@ -99,41 +99,41 @@ describe('listing against the real address book', () => {
       expect(scope.isDone()).toBe(true)
     })
 
-    test('Should forward the address type as the addressType query parameter', async () => {
+    test('Should forward each role as a role query parameter', async () => {
       const scope = addressBookApi()
         .get(addressesApiPath())
         .query({
           page: '1',
           pageSize: String(PAGE_SIZE),
-          addressType: addressBook.ADDRESS_TYPES.BRANCH
+          role: ['CONSIGNEE', 'IMPORTER', 'PLACE_OF_DESTINATION']
         })
         .reply(200, pageOf([], { pageSize: PAGE_SIZE }))
 
       await addressBook.listAddresses(ORGANISATION_ID, {
         page: 1,
         pageSize: PAGE_SIZE,
-        addressType: addressBook.ADDRESS_TYPES.BRANCH
+        roles: ['CONSIGNEE', 'IMPORTER', 'PLACE_OF_DESTINATION']
       })
 
       expect(scope.isDone()).toBe(true)
     })
 
-    test('Should forward the use as the use query parameter and each search use as a searchUse query parameter', async () => {
+    test('Should forward one role as the role query parameter and each search role as a searchRole query parameter', async () => {
       const scope = addressBookApi()
         .get(addressesApiPath())
         .query({
           page: '1',
           pageSize: String(PAGE_SIZE),
-          use: 'CONSIGNOR',
-          searchUse: ['CONSIGNOR', 'CONSIGNEE']
+          role: 'CONSIGNOR',
+          searchRole: ['CONSIGNOR', 'CONSIGNEE']
         })
         .reply(200, pageOf([], { pageSize: PAGE_SIZE }))
 
       await addressBook.listAddresses(ORGANISATION_ID, {
         page: 1,
         pageSize: PAGE_SIZE,
-        use: 'CONSIGNOR',
-        searchUses: ['CONSIGNOR', 'CONSIGNEE']
+        roles: ['CONSIGNOR'],
+        searchRoles: ['CONSIGNOR', 'CONSIGNEE']
       })
 
       expect(scope.isDone()).toBe(true)
@@ -331,20 +331,20 @@ describe('#mapApiErrorsToFormErrors', () => {
 })
 
 describe('the public surface', () => {
-  test('Should expose the five address operations, the error mapper, the validation-failure predicate, the address types, the use codes, the uses each type lists, the place uses, the type that lists a use, the uses a type offers, the rule of which types must be in the United Kingdom and the typed seed, nothing else', () => {
+  test('Should expose the five address operations, the error mapper, the validation-failure predicate, the address types, the role codes, the roles each type lists, the place roles, the type that lists a role, the roles a type offers, the rule of which types must be in the United Kingdom and the typed seed, nothing else', () => {
     expect(Object.keys(addressBook).sort()).toEqual([
       'ADDRESS_TYPES',
-      'PLACE_USES',
+      'PLACE_ROLES',
+      'ROLES',
+      'ROLES_BY_ADDRESS_TYPE',
       'TYPED_SEED',
-      'USES',
-      'USES_BY_ADDRESS_TYPE',
-      'addressTypeOfUse',
+      'addressTypeOfRole',
       'addressTypeRequiresUnitedKingdom',
       'createAddress',
       'deleteAddress',
       'getAddress',
       'isValidationFailure',
-      'keepUsesOfferedBy',
+      'keepRolesOfferedBy',
       'listAddresses',
       'mapApiErrorsToFormErrors',
       'updateAddress'

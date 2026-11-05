@@ -118,20 +118,20 @@ describe('#addressBookListTabs', () => {
 
   test.each([
     [
-      'place of origin and consignor uses',
+      'place of origin and consignor roles',
       ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
       'Place of origin, Consignor'
     ],
-    ['a branch address use', ['BRANCH_ADDRESS'], 'Branch'],
-    ['no uses', null, '']
+    ['a branch address role', ['BRANCH_ADDRESS'], 'Branch'],
+    ['no roles', null, '']
   ])(
-    'shows the labels of the uses of an address holding %s in its Type cell',
-    async (_description, uses, useLabels) => {
-      stubAddressPage({ page: '1' }, pageOf([{ ...highlandAddress, uses }]))
+    'shows the labels of the roles of an address holding %s in its Type cell',
+    async (_description, roles, roleLabels) => {
+      stubAddressPage({ page: '1' }, pageOf([{ ...highlandAddress, roles }]))
 
       const { $ } = await readPage(ADDRESS_BOOK_PATH, 'list-type-cell')
 
-      expect(textOf($, rowCellsOf($, 0).eq(1))).toBe(useLabels)
+      expect(textOf($, rowCellsOf($, 0).eq(1))).toBe(roleLabels)
     }
   )
 
@@ -221,14 +221,14 @@ describe('#addressBookListTabs', () => {
     expect(hiddenInput.attr('value')).toBe(ADDRESS_TYPES.BRANCH)
   })
 
-  test('links each tab, from a page after the first, with the current search and no use or page', async () => {
+  test('links each tab, from a page after the first, with the current search and no role or page', async () => {
     stubAddressPage(
-      { page: '2', q: 'farm', use: 'CONSIGNOR' },
+      { page: '2', q: 'farm', role: 'CONSIGNOR' },
       pageOf([highlandAddress], { page: 2, totalItems: 30, totalPages: 2 })
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=farm&use=CONSIGNOR&page=2`,
+      `${ADDRESS_BOOK_PATH}?q=farm&role=CONSIGNOR&page=2`,
       'list-tab-links-with-search'
     )
 

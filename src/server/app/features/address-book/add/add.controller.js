@@ -1,11 +1,11 @@
 import Boom from '@hapi/boom'
 
 import {
-  PLACE_USES,
-  USES_BY_ADDRESS_TYPE,
+  PLACE_ROLES,
+  ROLES_BY_ADDRESS_TYPE,
   createAddress,
   isValidationFailure,
-  keepUsesOfferedBy,
+  keepRolesOfferedBy,
   mapApiErrorsToFormErrors
 } from '../../../services/address-book/index.js'
 import {
@@ -31,8 +31,8 @@ import { addFormCountryOffer, GB_COUNTRY } from '../address-countries.js'
 import {
   addressRules,
   formValuesOf,
-  postedUsesOf,
-  usesErrorsOf
+  postedRolesOf,
+  rolesErrorsOf
 } from '../fields.js'
 import { setSuccessMessage } from '../success-message.js'
 import {
@@ -41,10 +41,10 @@ import {
 } from '../handshake-context.js'
 import {
   ADDRESS_LANDING,
-  addressTypeAndUsesOfParty,
+  rolesOfParty,
   buildReturnUrl,
   isConsignmentContact,
-  ownAndOtherUsesOfParty
+  ownAndOtherRolesOfParty
 } from '../journey-registry.js'
 import { addressBookPageHref } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -76,12 +76,12 @@ const backHrefFor = (addMode, handshakeContext) =>
 
 const openingEntryFor = (request, addMode) => {
   if (addMode !== ADD_MODES.ADDRESS_BOOK) {
-    return { formValues: formValuesOf(), tickedUses: [] }
+    return { formValues: formValuesOf(), tickedRoles: [] }
   }
-  const { formValues, tickedUses } = storedEnteredAddress(request)
+  const { formValues, tickedRoles } = storedEnteredAddress(request)
   return {
     formValues: formValues ?? formValuesOf({ countryCode: GB_COUNTRY.code }),
-    tickedUses
+    tickedRoles
   }
 }
 
@@ -92,12 +92,12 @@ const addressBookAddressTypeOf = (request, addMode) =>
 
 const storeAddressBookEntry = (
   request,
-  { addMode, addressType, postedValues, postedUses }
+  { addMode, addressType, postedValues, postedRoles }
 ) => {
   if (addMode === ADD_MODES.ADDRESS_BOOK) {
     storeEnteredAddress(request, {
       formValues: postedValues,
-      tickedUses: keepUsesOfferedBy(addressType, postedUses)
+      tickedRoles: keepRolesOfferedBy(addressType, postedRoles)
     })
   }
 }
@@ -120,41 +120,41 @@ const landingChosenBy = (payload) =>
     ? ADDRESS_LANDING.RETURN
     : ADDRESS_LANDING.SELECT
 
-const placeUsesFirst = (uses) => [
-  ...uses.filter((use) => PLACE_USES.includes(use)),
-  ...uses.filter((use) => !PLACE_USES.includes(use))
+const placeRolesFirst = (roles) => [
+  ...roles.filter((role) => PLACE_ROLES.includes(role)),
+  ...roles.filter((role) => !PLACE_ROLES.includes(role))
 ]
 
-const useItemsOf = (uses, tickedUses) =>
-  uses.map((use) => ({
-    value: use,
-    text: copy.uses.options[use].label,
-    checked: tickedUses.includes(use)
+const roleItemsOf = (roles, tickedRoles) =>
+  roles.map((role) => ({
+    value: role,
+    text: copy.roles.options[role].label,
+    checked: tickedRoles.includes(role)
   }))
 
-const usesQuestionFor = (
+const rolesQuestionFor = (
   addMode,
   handshakeContext,
-  { addressType, tickedUses }
+  { addressType, tickedRoles }
 ) => {
   if (addMode === ADD_MODES.ADDRESS_BOOK) {
     return {
-      legend: copy.uses.legendByAddressType[addressType],
-      hint: copy.uses.hint,
-      items: useItemsOf(
-        placeUsesFirst(USES_BY_ADDRESS_TYPE[addressType]),
-        tickedUses
+      legend: copy.roles.legendByAddressType[addressType],
+      hint: copy.roles.hint,
+      items: roleItemsOf(
+        placeRolesFirst(ROLES_BY_ADDRESS_TYPE[addressType]),
+        tickedRoles
       )
     }
   }
-  const { ownUse, otherUses } = ownAndOtherUsesOfParty(handshakeContext)
-  if (otherUses.length === 0) {
+  const { ownRole, otherRoles } = ownAndOtherRolesOfParty(handshakeContext)
+  if (otherRoles.length === 0) {
     return null
   }
   return {
-    legend: copy.uses.journeyLegend,
-    hint: copy.uses.journeyHint(copy.uses.options[ownUse].label),
-    items: useItemsOf(otherUses, tickedUses)
+    legend: copy.roles.journeyLegend,
+    hint: copy.roles.journeyHint(copy.roles.options[ownRole].label),
+    items: roleItemsOf(otherRoles, tickedRoles)
   }
 }
 
@@ -168,7 +168,7 @@ const buildView = (
     recoverableError = false,
     handshakeContext = null,
     addressType,
-    tickedUses = []
+    tickedRoles = []
   }
 ) =>
   toolkit
@@ -184,9 +184,9 @@ const buildView = (
       copy,
       formValues,
       countryItems,
-      usesQuestion: usesQuestionFor(addMode, handshakeContext, {
+      rolesQuestion: rolesQuestionFor(addMode, handshakeContext, {
         addressType,
-        tickedUses
+        tickedRoles
       }),
       errors,
       errorSummary: kit.errorSummary(errors),
@@ -259,7 +259,7 @@ const get = async (request, toolkit) => {
   }
 
   const addressType = addressBookAddressTypeOf(request, addMode)
-  const { formValues: openingFormValues, tickedUses } = openingEntryFor(
+  const { formValues: openingFormValues, tickedRoles } = openingEntryFor(
     request,
     addMode
   )
@@ -276,7 +276,7 @@ const get = async (request, toolkit) => {
     countryItems,
     handshakeContext,
     addressType,
-    tickedUses
+    tickedRoles
   })
 }
 
@@ -313,43 +313,43 @@ const logReplacedCountry = ({
   )
 }
 
-const logDiscardedUses = ({
+const logDiscardedRoles = ({
   handshakeContext,
   organisationId,
   addressType,
-  postedUses,
-  keptUses
+  postedRoles,
+  keptRoles
 }) => {
-  const discardedUses = postedUses.filter((use) => !keptUses.includes(use))
-  if (discardedUses.length > 0) {
+  const discardedRoles = postedRoles.filter((role) => !keptRoles.includes(role))
+  if (discardedRoles.length > 0) {
     logger.info(
       {
         organisationId,
         ...addIdsForLog(handshakeContext, addressType),
-        discardedUses
+        discardedRoles
       },
-      'Posted uses the address page does not offer were not saved'
+      'Posted roles the address page does not offer were not saved'
     )
   }
 }
 
-const rerenderIfUsesInvalid = ({ addMode, keptUses, rerender }) => {
+const rerenderIfRolesInvalid = ({ addMode, keptRoles, rerender }) => {
   if (addMode !== ADD_MODES.ADDRESS_BOOK) {
     return undefined
   }
-  const errors = usesErrorsOf(keptUses)
+  const errors = rolesErrorsOf(keptRoles)
   return errors ? rerender({ errors }).code(HTTP_STATUS_BAD_REQUEST) : undefined
 }
 
-const typeAndUsesToSave = ({
+const rolesToSave = ({
   addMode,
   handshakeContext,
   addressType,
-  postedUses
+  postedRoles
 }) =>
   addMode === ADD_MODES.ADDRESS_BOOK
-    ? { addressType, uses: keepUsesOfferedBy(addressType, postedUses) }
-    : addressTypeAndUsesOfParty(handshakeContext, postedUses)
+    ? keepRolesOfferedBy(addressType, postedRoles)
+    : rolesOfParty(handshakeContext, postedRoles)
 
 const finishAddressBookAdd = (
   request,
@@ -425,7 +425,7 @@ const submitAddress = async (
     handshakeContext,
     organisationId,
     postedValues,
-    postedUses,
+    postedRoles,
     addressType,
     landing
   }
@@ -443,7 +443,7 @@ const submitAddress = async (
       countryItems,
       handshakeContext,
       addressType,
-      tickedUses: postedUses,
+      tickedRoles: postedRoles,
       ...model
     })
   try {
@@ -454,26 +454,26 @@ const submitAddress = async (
     if (errors) {
       return rerender({ errors }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    const typeAndUses = typeAndUsesToSave({
+    const savedRoles = rolesToSave({
       addMode,
       handshakeContext,
       addressType,
-      postedUses
+      postedRoles
     })
-    logDiscardedUses({
+    logDiscardedRoles({
       handshakeContext,
       organisationId,
       addressType,
-      postedUses,
-      keptUses: typeAndUses.uses
+      postedRoles,
+      keptRoles: savedRoles
     })
-    const usesRefusal = rerenderIfUsesInvalid({
+    const rolesRefusal = rerenderIfRolesInvalid({
       addMode,
-      keptUses: typeAndUses.uses,
+      keptRoles: savedRoles,
       rerender
     })
-    if (usesRefusal) {
-      return usesRefusal
+    if (rolesRefusal) {
+      return rolesRefusal
     }
     return await createAddressAndRespond(request, toolkit, {
       handshakeContext,
@@ -481,7 +481,7 @@ const submitAddress = async (
       addressType,
       landing,
       addMode,
-      addressToCreate: { ...validatedAddress, ...typeAndUses },
+      addressToCreate: { ...validatedAddress, roles: savedRoles },
       postedCountryCode: postedValues.countryCode,
       storedCountryCode: formValues.countryCode
     })
@@ -507,13 +507,13 @@ const post = async (request, toolkit) => {
   }
   const organisationId = kit.requireOrganisationId(request)
   const postedValues = formValuesOf(payload)
-  const postedUses = postedUsesOf(payload)
+  const postedRoles = postedRolesOf(payload)
   const addressType = addressBookAddressTypeOf(request, addMode)
   storeAddressBookEntry(request, {
     addMode,
     addressType,
     postedValues,
-    postedUses
+    postedRoles
   })
 
   return submitAddress(request, toolkit, {
@@ -521,7 +521,7 @@ const post = async (request, toolkit) => {
     handshakeContext,
     organisationId,
     postedValues,
-    postedUses,
+    postedRoles,
     addressType,
     landing: landingChosenBy(payload)
   })

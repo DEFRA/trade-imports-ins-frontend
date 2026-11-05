@@ -12,9 +12,9 @@ import {
   formValuesOf,
   isRequiredField,
   postalLinesOf,
-  postedUsesOf,
-  storedTypeAndUsesOf,
-  usesErrorsOf
+  postedRolesOf,
+  storedRolesOf,
+  rolesErrorsOf
 } from './fields.js'
 import { copy } from './copy/copy.en.js'
 
@@ -225,35 +225,34 @@ describe('#postalLinesOf', () => {
   })
 })
 
-describe('#postedUsesOf', () => {
+describe('#postedRolesOf', () => {
   test.each([
     ['nothing posted', {}, []],
-    ['one value', { uses: 'CONSIGNOR' }, ['CONSIGNOR']],
+    ['one value', { roles: 'CONSIGNOR' }, ['CONSIGNOR']],
     [
       'many values',
-      { uses: ['PLACE_OF_ORIGIN', 'CONSIGNOR'] },
+      { roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'] },
       ['PLACE_OF_ORIGIN', 'CONSIGNOR']
     ]
   ])('Should give a list for %s', (_name, payload, expected) => {
-    expect(postedUsesOf(payload)).toEqual(expected)
+    expect(postedRolesOf(payload)).toEqual(expected)
   })
 })
 
-describe('#usesErrorsOf', () => {
-  test('Should give the uses error when no use is kept', () => {
-    expect(usesErrorsOf([])).toEqual({ uses: copy.errors.uses.required })
+describe('#rolesErrorsOf', () => {
+  test('Should give the roles error when no role is kept', () => {
+    expect(rolesErrorsOf([])).toEqual({ roles: copy.errors.roles.required })
   })
 
-  test('Should give no errors when a use is kept', () => {
-    expect(usesErrorsOf(['CONSIGNOR'])).toBeNull()
+  test('Should give no errors when a role is kept', () => {
+    expect(rolesErrorsOf(['CONSIGNOR'])).toBeNull()
   })
 })
 
-describe('#storedTypeAndUsesOf', () => {
-  test('Should give the address type and every use a stored address holds, and nothing else', () => {
-    expect(storedTypeAndUsesOf(STORED_ADDRESS)).toEqual({
-      addressType: 'ORIGIN_OR_CONSIGNOR',
-      uses: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
+describe('#storedRolesOf', () => {
+  test('Should give every role a stored address holds, and nothing else', () => {
+    expect(storedRolesOf(STORED_ADDRESS)).toEqual({
+      roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
     })
   })
 })

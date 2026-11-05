@@ -4,28 +4,28 @@ import { config } from '../../../../config/config.js'
 import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
 import {
   ANIMALS_BASE_URL,
-  ANY_COUNTRY_ROLES,
+  ANY_COUNTRY_PARTIES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   handshakeContextOf,
-  JOURNEY_HANDSHAKES_BY_ROLE,
+  JOURNEY_HANDSHAKES_BY_PARTY,
   returnUrlFor,
-  UNITED_KINGDOM_ROLES,
+  UNITED_KINGDOM_PARTIES,
   UNREGISTERED_JOURNEY_TYPE,
-  USES_BY_ROLE
+  ROLES_BY_PARTY
 } from '../../../common/test-helpers/journey-handshake.js'
 import {
   ADDRESS_LANDING,
   CONSIGNMENT_CONTACT_FULFILMENT_ID,
-  addressTypeAndUsesOfParty,
+  rolesOfParty,
   buildReturnUrl,
   isConsignmentContact,
   isKnownJourneyType,
   JOURNEY_TYPES,
   requiresUnitedKingdomAddress,
-  ownAndOtherUsesOfParty
+  ownAndOtherRolesOfParty
 } from './journey-registry.js'
 
-const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_ROLE.consignor
+const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_PARTY.consignor
 
 const CONSIGNOR_CONTEXT = handshakeContextOf(CONSIGNOR_HANDSHAKE)
 
@@ -60,18 +60,21 @@ describe('journey-registry', () => {
   })
 
   describe('requiresUnitedKingdomAddress', () => {
-    test.each(UNITED_KINGDOM_ROLES)('is true for the %s handshake', (role) => {
-      expect(
-        requiresUnitedKingdomAddress(
-          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
-        )
-      ).toBe(true)
-    })
+    test.each(UNITED_KINGDOM_PARTIES)(
+      'is true for the %s handshake',
+      (party) => {
+        expect(
+          requiresUnitedKingdomAddress(
+            handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party])
+          )
+        ).toBe(true)
+      }
+    )
 
-    test.each(ANY_COUNTRY_ROLES)('is false for the %s handshake', (role) => {
+    test.each(ANY_COUNTRY_PARTIES)('is false for the %s handshake', (party) => {
       expect(
         requiresUnitedKingdomAddress(
-          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+          handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party])
         )
       ).toBe(false)
     })
@@ -98,7 +101,7 @@ describe('journey-registry', () => {
       expect(
         requiresUnitedKingdomAddress({
           journeyType: UNREGISTERED_JOURNEY_TYPE,
-          fulfilmentId: JOURNEY_HANDSHAKES_BY_ROLE.consignee['fulfilment-id']
+          fulfilmentId: JOURNEY_HANDSHAKES_BY_PARTY.consignee['fulfilment-id']
         })
       ).toBe(false)
       expect(requiresUnitedKingdomAddress(null)).toBe(false)
@@ -112,7 +115,7 @@ describe('journey-registry', () => {
       ).toBe(true)
     })
 
-    test.each(Object.entries(JOURNEY_HANDSHAKES_BY_ROLE))(
+    test.each(Object.entries(JOURNEY_HANDSHAKES_BY_PARTY))(
       'is false for the %s handshake',
       (_role, handshake) => {
         expect(isConsignmentContact(handshakeContextOf(handshake))).toBe(false)
@@ -215,44 +218,41 @@ describe('journey-registry', () => {
   })
 })
 
-describe('ownAndOtherUsesOfParty', () => {
-  test.each(Object.entries(USES_BY_ROLE))(
-    'gives the %s handshake its own use and the other uses on its side',
-    (role, { ownUse, otherUses }) => {
+describe('ownAndOtherRolesOfParty', () => {
+  test.each(Object.entries(ROLES_BY_PARTY))(
+    'gives the %s handshake its own role and the other roles on its side',
+    (party, { ownRole, otherRoles }) => {
       expect(
-        ownAndOtherUsesOfParty(
-          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role])
+        ownAndOtherRolesOfParty(
+          handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party])
         )
-      ).toEqual({ ownUse, otherUses })
+      ).toEqual({ ownRole, otherRoles })
     }
   )
 
-  test('gives the consignment contact its own use and no other uses', () => {
+  test('gives the consignment contact its own role and no other roles', () => {
     expect(
-      ownAndOtherUsesOfParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE))
-    ).toEqual({ ownUse: 'BRANCH_ADDRESS', otherUses: [] })
+      ownAndOtherRolesOfParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE))
+    ).toEqual({ ownRole: 'BRANCH_ADDRESS', otherRoles: [] })
   })
 
   test.each(UNRESOLVABLE_PARTY_CASES)(
-    'gives no own use and no other uses for %s',
+    'gives no own role and no other roles for %s',
     (_name, overrides) => {
       const context = overrides && { ...CONSIGNOR_CONTEXT, ...overrides }
 
-      expect(ownAndOtherUsesOfParty(context)).toEqual({ otherUses: [] })
+      expect(ownAndOtherRolesOfParty(context)).toEqual({ otherRoles: [] })
     }
   )
 })
 
-describe('addressTypeAndUsesOfParty', () => {
-  test.each(Object.entries(USES_BY_ROLE))(
-    'gives the %s handshake its type and its one use',
-    (role, { addressType, ownUse }) => {
+describe('rolesOfParty', () => {
+  test.each(Object.entries(ROLES_BY_PARTY))(
+    'gives the %s handshake its one role',
+    (party, { ownRole }) => {
       expect(
-        addressTypeAndUsesOfParty(
-          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
-          []
-        )
-      ).toEqual({ addressType, uses: [ownUse] })
+        rolesOfParty(handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]), [])
+      ).toEqual([ownRole])
     }
   )
 
@@ -272,23 +272,22 @@ describe('addressTypeAndUsesOfParty', () => {
     ],
     ['consignee', ['BRANCH_ADDRESS', 'CONSIGNOR'], ['CONSIGNEE']]
   ])(
-    'gives the %s handshake its own use and the posted %j its side offers, in the type order',
-    (role, postedUses, uses) => {
+    'gives the %s handshake its own role and the posted %j its side offers, in the type order',
+    (party, postedRoles, roles) => {
       expect(
-        addressTypeAndUsesOfParty(
-          handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
-          postedUses
-        ).uses
-      ).toEqual(uses)
+        rolesOfParty(
+          handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]),
+          postedRoles
+        )
+      ).toEqual(roles)
     }
   )
 
-  test('gives the consignment contact only its own use whatever is posted', () => {
+  test('gives the consignment contact only its own role whatever is posted', () => {
     expect(
-      addressTypeAndUsesOfParty(
-        handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE),
-        ['CONSIGNOR']
-      )
-    ).toEqual({ addressType: 'BRANCH', uses: ['BRANCH_ADDRESS'] })
+      rolesOfParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE), [
+        'CONSIGNOR'
+      ])
+    ).toEqual(['BRANCH_ADDRESS'])
   })
 })

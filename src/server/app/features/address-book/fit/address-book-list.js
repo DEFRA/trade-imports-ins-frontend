@@ -90,12 +90,12 @@ export const typeSelectOf = (page) =>
 export const followTab = (page, label) =>
   tabsNavOf(page).getByRole('link', { name: label, exact: true }).click()
 
-const submitSearch = async (page, term, { submitWith, use }) => {
+const submitSearch = async (page, term, { submitWith, role }) => {
   await openFilterDisclosure(page)
   const searchField = searchFieldOf(page)
   await searchField.fill(term)
-  if (use) {
-    await typeSelectOf(page).selectOption({ label: use.label })
+  if (role) {
+    await typeSelectOf(page).selectOption({ label: role.label })
   }
   if (submitWith === 'enter') {
     await searchField.press('Enter')
@@ -107,13 +107,13 @@ const submitSearch = async (page, term, { submitWith, use }) => {
 export const searchAndExpectQuery = async (
   page,
   term,
-  { submitWith, addressType = DEFAULT_ADDRESS_BOOK_TAB.addressType, use }
+  { submitWith, addressType = DEFAULT_ADDRESS_BOOK_TAB.addressType, role }
 ) => {
-  await submitSearch(page, term, { submitWith, use })
+  await submitSearch(page, term, { submitWith, role })
   const submittedQuery = new URLSearchParams({
     addressType,
     q: term,
-    use: use?.value ?? ''
+    role: role?.value ?? ''
   })
   await expect(page).toHaveURL(`${addressBookPath()}?${submittedQuery}`)
 }
@@ -121,22 +121,22 @@ export const searchAndExpectQuery = async (
 export const searchAndExpectMatches = async (
   page,
   term,
-  { submitWith, resultsLine, addressType, use }
+  { submitWith, resultsLine, addressType, role }
 ) => {
-  await searchAndExpectQuery(page, term, { submitWith, addressType, use })
+  await searchAndExpectQuery(page, term, { submitWith, addressType, role })
   await expect(resultsLineOf(page)).toHaveText(resultsLine)
 }
 
 export const searchAndExpectSingleMatch = async (
   page,
   term,
-  { submitWith = 'button', matchedCellText, addressType, use }
+  { submitWith = 'button', matchedCellText, addressType, role }
 ) => {
   await searchAndExpectMatches(page, term, {
     submitWith,
     resultsLine: ONE_MATCH_LINE,
     addressType,
-    use
+    role
   })
   await expect(
     page.getByRole('cell', { name: matchedCellText, exact: true })

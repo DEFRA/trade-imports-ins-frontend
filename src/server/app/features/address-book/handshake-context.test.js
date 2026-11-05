@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import Boom from '@hapi/boom'
 
 import {
-  JOURNEY_HANDSHAKES_BY_ROLE,
+  JOURNEY_HANDSHAKES_BY_PARTY,
   UNREGISTERED_JOURNEY_TYPE
 } from '../../../common/test-helpers/journey-handshake.js'
 import {
@@ -15,7 +15,7 @@ import {
 } from './handshake-context.js'
 
 const SESSION_KEY = 'addressBookHandshake'
-const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_ROLE.consignor
+const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_PARTY.consignor
 const PADDED_CONSIGNOR_HANDSHAKE = Object.fromEntries(
   Object.entries(CONSIGNOR_HANDSHAKE).map(([field, value]) => [
     field,

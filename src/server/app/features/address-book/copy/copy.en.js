@@ -35,7 +35,7 @@ export const copy = {
         heading: 'Branch addresses'
       }
     },
-    uses: {
+    roles: {
       PLACE_OF_ORIGIN: {
         columnLabel: 'Place of origin',
         optionLabel: 'Place of Origin'
@@ -101,7 +101,7 @@ export const copy = {
     },
     continue: 'Continue'
   },
-  uses: {
+  roles: {
     journeyLegend: 'What else should this address be used for?',
     journeyHint: (roleLabel) =>
       `This address is being added as ${/^[AEIOU]/.test(roleLabel) ? 'an' : 'a'} ${roleLabel} address. Select any other roles or addresses this address should be used for.`,
@@ -152,7 +152,7 @@ export const copy = {
     addressType: {
       required: 'Select an address type'
     },
-    uses: {
+    roles: {
       required: 'Select what this address can be used for'
     },
     name: {

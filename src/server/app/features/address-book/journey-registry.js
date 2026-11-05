@@ -1,11 +1,11 @@
 import { SET_BASES } from '../../../common/constants/journey-set-bases.js'
 import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
 import {
-  USES,
-  USES_BY_ADDRESS_TYPE,
-  addressTypeOfUse,
+  ROLES,
+  ROLES_BY_ADDRESS_TYPE,
+  addressTypeOfRole,
   addressTypeRequiresUnitedKingdom,
-  keepUsesOfferedBy
+  keepRolesOfferedBy
 } from '../../services/address-book/index.js'
 
 export const JOURNEY_TYPES = Object.freeze({
@@ -30,13 +30,13 @@ const registry = Object.freeze({
     setBase: SET_BASES.LIVE_ANIMALS,
     returnPathTemplate: RETURN_PATH_TEMPLATE,
     consignmentContactFulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID,
-    useByPartyFulfilmentId: Object.freeze({
-      '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c': USES.PLACE_OF_ORIGIN,
-      '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d': USES.CONSIGNOR,
-      'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e': USES.CONSIGNEE,
-      'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f': USES.IMPORTER,
-      'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': USES.PLACE_OF_DESTINATION,
-      [CONSIGNMENT_CONTACT_FULFILMENT_ID]: USES.BRANCH_ADDRESS
+    roleByPartyFulfilmentId: Object.freeze({
+      '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c': ROLES.PLACE_OF_ORIGIN,
+      '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d': ROLES.CONSIGNOR,
+      'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e': ROLES.CONSIGNEE,
+      'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f': ROLES.IMPORTER,
+      'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': ROLES.PLACE_OF_DESTINATION,
+      [CONSIGNMENT_CONTACT_FULFILMENT_ID]: ROLES.BRANCH_ADDRESS
     })
   }
 })
@@ -44,12 +44,12 @@ const registry = Object.freeze({
 export const isKnownJourneyType = (journeyType) =>
   Object.hasOwn(registry, journeyType)
 
-export const useOfParty = (context) => {
-  const useByFulfilmentId =
-    registry[context?.journeyType]?.useByPartyFulfilmentId
-  return useByFulfilmentId &&
-    Object.hasOwn(useByFulfilmentId, context.fulfilmentId)
-    ? useByFulfilmentId[context.fulfilmentId]
+export const roleOfParty = (context) => {
+  const roleByFulfilmentId =
+    registry[context?.journeyType]?.roleByPartyFulfilmentId
+  return roleByFulfilmentId &&
+    Object.hasOwn(roleByFulfilmentId, context.fulfilmentId)
+    ? roleByFulfilmentId[context.fulfilmentId]
     : undefined
 }
 
@@ -64,28 +64,27 @@ export const isConsignmentContact = (context) => {
 
 export const requiresUnitedKingdomAddress = (context) =>
   !isConsignmentContact(context) &&
-  addressTypeRequiresUnitedKingdom(addressTypeOfUse(useOfParty(context)))
+  addressTypeRequiresUnitedKingdom(addressTypeOfRole(roleOfParty(context)))
 
-export const ownAndOtherUsesOfParty = (context) => {
-  const ownUse = useOfParty(context)
-  if (!ownUse) {
-    return { otherUses: [] }
+export const ownAndOtherRolesOfParty = (context) => {
+  const ownRole = roleOfParty(context)
+  if (!ownRole) {
+    return { otherRoles: [] }
   }
   return {
-    ownUse,
-    otherUses: USES_BY_ADDRESS_TYPE[addressTypeOfUse(ownUse)].filter(
-      (use) => use !== ownUse
+    ownRole,
+    otherRoles: ROLES_BY_ADDRESS_TYPE[addressTypeOfRole(ownRole)].filter(
+      (role) => role !== ownRole
     )
   }
 }
 
-export const addressTypeAndUsesOfParty = (context, postedUses) => {
-  const ownUse = useOfParty(context)
-  const addressType = addressTypeOfUse(ownUse)
-  return {
-    addressType,
-    uses: keepUsesOfferedBy(addressType, [ownUse, ...postedUses])
-  }
+export const rolesOfParty = (context, postedRoles) => {
+  const ownRole = roleOfParty(context)
+  return keepRolesOfferedBy(addressTypeOfRole(ownRole), [
+    ownRole,
+    ...postedRoles
+  ])
 }
 
 const assertHandshakeIds = (context) => {

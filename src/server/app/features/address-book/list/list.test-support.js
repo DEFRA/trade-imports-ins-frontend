@@ -13,6 +13,7 @@ import {
   textsOf
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
+import { ROLES_BY_ADDRESS_TYPE } from '../../../services/address-book/index.js'
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { LIST_PAGE_SIZE } from './list.controller.js'
 
@@ -79,7 +80,7 @@ export const subNavigationLinksOf = ($) =>
     .get()
 
 export const typeSelectStateOf = ($) => {
-  const select = $('select[name="use"]')
+  const select = $('select[name="role"]')
   const options = select.find('option')
   return {
     label: textOf($, $(`label[for="${select.attr('id')}"]`)),
@@ -110,12 +111,18 @@ export const startServerWithPageReader = () => {
   }
 }
 
-const interceptListRequest = (query) =>
+const roleQueryValueOf = (roles) => (roles.length === 1 ? roles[0] : roles)
+
+const interceptListRequest = ({
+  addressType = DEFAULT_ADDRESS_BOOK_TAB.addressType,
+  role,
+  ...query
+}) =>
   addressBookApi()
     .get(addressesApiPath())
     .query({
       pageSize: String(LIST_PAGE_SIZE),
-      addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType,
+      role: role ?? roleQueryValueOf(ROLES_BY_ADDRESS_TYPE[addressType]),
       ...query
     })
 

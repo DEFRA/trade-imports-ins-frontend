@@ -17,8 +17,8 @@ import {
   requiredValidations,
   saveAndContinueButton,
   setFieldValue,
-  tickUses,
-  useCheckbox,
+  tickRoles,
+  roleCheckbox,
   validAddress
 } from './address-form.js'
 import {
@@ -42,10 +42,10 @@ import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-f
 import {
   ANIMALS_BASE_URL,
   CONSIGNMENT_CONTACT_HANDSHAKE,
-  JOURNEY_HANDSHAKES_BY_ROLE,
-  journeyUsesHintFor,
+  JOURNEY_HANDSHAKES_BY_PARTY,
+  journeyRolesHintFor,
   returnUrlFor,
-  USES_BY_ROLE
+  ROLES_BY_PARTY
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
@@ -55,7 +55,7 @@ const LATE_ALPHABETICAL_NAME = 'Zetland Livestock Ltd'
 
 const usesGroupOf = (page, addressType) =>
   page.getByRole('group', {
-    name: copy.uses.legendByAddressType[addressType]
+    name: copy.roles.legendByAddressType[addressType]
   })
 
 test.describe('add address', () => {
@@ -120,8 +120,8 @@ test.describe('add address', () => {
   })
 })
 
-test.describe('add address uses question', () => {
-  const organisationPrefix = 'stub-org-add-uses'
+test.describe('add address roles question', () => {
+  const organisationPrefix = 'stub-org-add-roles'
 
   test('follows the contact fields with a section break, the legend, the hint and Place of origin then Consignor, unticked', async ({
     page
@@ -138,19 +138,19 @@ test.describe('add address uses question', () => {
       sectionBreak,
       usesGroup
     ])
-    await expect(usesGroup).toContainText(copy.uses.hint)
+    await expect(usesGroup).toContainText(copy.roles.hint)
     const options = usesGroup.getByRole('checkbox')
     await expect(options).toHaveCount(2)
     await expect(usesGroup.locator('label')).toHaveText([
-      copy.uses.options.PLACE_OF_ORIGIN.label,
-      copy.uses.options.CONSIGNOR.label
+      copy.roles.options.PLACE_OF_ORIGIN.label,
+      copy.roles.options.CONSIGNOR.label
     ])
     await expect(
       usesGroup.getByRole('checkbox', { checked: true })
     ).toHaveCount(0)
   })
 
-  test('saving valid fields with no use shows the uses error, whose summary link focuses Place of origin, and the error page has no serious or critical axe violations', async ({
+  test('saving valid fields with no role shows the roles error, whose summary link focuses Place of origin, and the error page has no serious or critical axe violations', async ({
     page
   }) => {
     await signIn(page, { organisationId: `${organisationPrefix}-error` })
@@ -163,10 +163,10 @@ test.describe('add address uses question', () => {
     await expect(page.getByRole('alert')).toContainText('There is a problem')
     await expect(
       usesGroupOf(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
-    ).toContainText(copy.errors.uses.required)
-    await errorLink(page, copy.errors.uses.required).click()
-    await expect(useCheckbox(page, 'PLACE_OF_ORIGIN')).toBeFocused()
-    await expectNoSeriousOrCriticalViolations(page, 'Add address uses error')
+    ).toContainText(copy.errors.roles.required)
+    await errorLink(page, copy.errors.roles.required).click()
+    await expect(roleCheckbox(page, 'PLACE_OF_ORIGIN')).toBeFocused()
+    await expectNoSeriousOrCriticalViolations(page, 'Add address roles error')
   })
 
   test('saving with Place of origin ticked lands on the Origin and Consignor list with the new address first', async ({
@@ -188,10 +188,12 @@ test.describe('add address uses question', () => {
   test('finds an address saved with Consignor ticked by searching Consignor', async ({
     page
   }) => {
-    await signIn(page, { organisationId: `${organisationPrefix}-search` })
+    await signIn(page, {
+      organisationId: `${organisationPrefix}-search-empty`
+    })
     await openAddForm(page)
     await fillValidAddress(page)
-    await tickUses(page, ['CONSIGNOR'])
+    await tickRoles(page, ['CONSIGNOR'])
     await saveAndContinueButton(page).click()
     await expect(page).toHaveURL(originOrConsignorListUrl)
 
@@ -201,14 +203,14 @@ test.describe('add address uses question', () => {
   })
 })
 
-test.describe('add address uses question without JavaScript', () => {
+test.describe('add address roles question without JavaScript', () => {
   test.use({ javaScriptEnabled: false })
 
-  test('saves with a use ticked and lands on the Origin and Consignor list with the address listed', async ({
+  test('saves with a role ticked and lands on the Origin and Consignor list with the address listed', async ({
     page
   }) => {
     await addValidAddressToFreshOrganisation(page, {
-      organisationPrefix: 'stub-org-add-uses-no-js'
+      organisationPrefix: 'stub-org-add-roles-no-js'
     })
 
     await expect(selectedTabOf(page)).toHaveText(
@@ -223,21 +225,21 @@ test.describe('add address uses question without JavaScript', () => {
 test.describe('add address of a type that must be in the United Kingdom', () => {
   const organisationPrefix = 'stub-org-add-uk-only'
 
-  for (const { addressType, offeredUses, tab } of [
+  for (const { addressType, offeredRoles, tab } of [
     {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      offeredUses: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
+      offeredRoles: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
       tab: copy.list.tabs.destinationConsigneeOrImporter.label
     },
     {
       addressType: ADDRESS_TYPES.BRANCH,
-      offeredUses: ['BRANCH_ADDRESS'],
+      offeredRoles: ['BRANCH_ADDRESS'],
       tab: copy.list.tabs.branch.label
     }
   ]) {
     const typeLabel = copy.addressType.options[addressType].label
 
-    test(`${typeLabel} opens with the address and contact fields, a section break, then the uses question, and United Kingdom alone selected`, async ({
+    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question, and United Kingdom alone selected`, async ({
       page
     }) => {
       await signIn(page, { organisationId: `${organisationPrefix}-render` })
@@ -255,9 +257,9 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
         sectionBreak,
         usesGroup
       ])
-      await expect(usesGroup).toContainText(copy.uses.hint)
+      await expect(usesGroup).toContainText(copy.roles.hint)
       await expect(usesGroup.locator('label')).toHaveText(
-        offeredUses.map((use) => copy.uses.options[use].label)
+        offeredRoles.map((role) => copy.roles.options[role].label)
       )
       await expect(
         usesGroup.getByRole('checkbox', { checked: true })
@@ -267,14 +269,14 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
       await expect(country).toHaveValue(GB_COUNTRY.code)
     })
 
-    test(`${typeLabel} saved with every offered use ticked lands on its tab with the new address first`, async ({
+    test(`${typeLabel} saved with every offered role ticked lands on its tab with the new address first`, async ({
       page
     }) => {
       await addValidAddressToFreshOrganisation(page, {
         organisationPrefix,
         overrides: { name: LATE_ALPHABETICAL_NAME },
         addressType,
-        uses: offeredUses
+        roles: offeredRoles
       })
 
       await expect(selectedTabOf(page)).toHaveText(tab)
@@ -283,20 +285,20 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
       ).toHaveText(`View ${LATE_ALPHABETICAL_NAME}`)
     })
 
-    test(`${typeLabel} saved with no use shows the uses error, whose summary link focuses the first option`, async ({
+    test(`${typeLabel} saved with no role shows the roles error, whose summary link focuses the first option`, async ({
       page
     }) => {
-      await signIn(page, { organisationId: `${organisationPrefix}-no-use` })
+      await signIn(page, { organisationId: `${organisationPrefix}-no-role` })
       await openAddForm(page, addressType)
 
       await fillValidAddress(page)
       await saveAndContinueButton(page).click()
 
       await expect(usesGroupOf(page, addressType)).toContainText(
-        copy.errors.uses.required
+        copy.errors.roles.required
       )
-      await errorLink(page, copy.errors.uses.required).click()
-      await expect(useCheckbox(page, offeredUses[0])).toBeFocused()
+      await errorLink(page, copy.errors.roles.required).click()
+      await expect(roleCheckbox(page, offeredRoles[0])).toBeFocused()
     })
   }
 
@@ -323,7 +325,7 @@ test.describe('add address reached from a notification journey', () => {
     await expect(journeyStrip.getByText('Draft', { exact: true })).toBeVisible()
     await expect(
       journeyStrip.getByText(
-        JOURNEY_HANDSHAKES_BY_ROLE.consignor['notification-id'],
+        JOURNEY_HANDSHAKES_BY_PARTY.consignor['notification-id'],
         { exact: true }
       )
     ).toBeVisible()
@@ -386,7 +388,7 @@ test.describe('add address reached from a notification journey', () => {
     await openAddFormFromJourney(
       page,
       'stub-org-add-journey-consignee',
-      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+      JOURNEY_HANDSHAKES_BY_PARTY.consignee
     )
 
     const country = page.getByLabel('Country')
@@ -397,7 +399,7 @@ test.describe('add address reached from a notification journey', () => {
     }
   })
 
-  for (const [role, roleName] of [
+  for (const [party, roleName] of [
     ['placeOfOrigin', 'place of origin'],
     ['consignor', 'consignor']
   ]) {
@@ -406,8 +408,8 @@ test.describe('add address reached from a notification journey', () => {
     }) => {
       await openAddFormFromJourney(
         page,
-        `stub-org-add-journey-countries-${role}`,
-        JOURNEY_HANDSHAKES_BY_ROLE[role]
+        `stub-org-add-journey-countries-${party}`,
+        JOURNEY_HANDSHAKES_BY_PARTY[party]
       )
 
       const country = page.getByLabel('Country')
@@ -426,7 +428,7 @@ test.describe('add address reached from a notification journey', () => {
     await openAddFormFromJourney(
       page,
       'stub-org-add-journey-consignee-name',
-      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+      JOURNEY_HANDSHAKES_BY_PARTY.consignee
     )
 
     await fillValidAddress(page, { name: '' })
@@ -453,7 +455,7 @@ test.describe('add address reached from a notification journey', () => {
       page.getByRole('link', { name: 'Back', exact: true })
     ).toHaveAttribute(
       'href',
-      returnUrlFor(JOURNEY_HANDSHAKES_BY_ROLE.consignor)
+      returnUrlFor(JOURNEY_HANDSHAKES_BY_PARTY.consignor)
     )
     await expect(page.locator('form button')).toHaveText([
       copy.add.saveAndSelect,
@@ -463,7 +465,7 @@ test.describe('add address reached from a notification journey', () => {
       page.getByRole('link', { name: 'Cancel and return to hub' })
     ).toHaveAttribute(
       'href',
-      returnUrlFor(JOURNEY_HANDSHAKES_BY_ROLE.consignor, {
+      returnUrlFor(JOURNEY_HANDSHAKES_BY_PARTY.consignor, {
         landing: ADDRESS_LANDING.CANCEL
       })
     )
@@ -488,25 +490,25 @@ test.describe('add address reached from a notification journey', () => {
   })
 })
 
-test.describe('add address uses question reached from a notification journey', () => {
-  for (const [role, { otherUses }] of Object.entries(USES_BY_ROLE)) {
-    test(`from the ${role} handshake asks what else the address should be used for, naming the role and offering only the other uses on its side, unticked`, async ({
+test.describe('add address roles question reached from a notification journey', () => {
+  for (const [party, { otherRoles }] of Object.entries(ROLES_BY_PARTY)) {
+    test(`from the ${party} handshake asks what else the address should be used for, naming the party and offering only the other roles on its side, unticked`, async ({
       page
     }) => {
       await openAddFormFromJourney(
         page,
-        `stub-org-add-journey-uses-${role}`,
-        JOURNEY_HANDSHAKES_BY_ROLE[role]
+        `stub-org-add-journey-roles-${party}`,
+        JOURNEY_HANDSHAKES_BY_PARTY[party]
       )
 
       const usesGroup = page.getByRole('group', {
-        name: copy.uses.journeyLegend
+        name: copy.roles.journeyLegend
       })
       await expect(usesGroup).toHaveAccessibleDescription(
-        journeyUsesHintFor(role)
+        journeyRolesHintFor(party)
       )
       await expect(usesGroup.locator('label')).toHaveText(
-        otherUses.map((use) => copy.uses.options[use].label)
+        otherRoles.map((role) => copy.roles.options[role].label)
       )
       for (const checkbox of await usesGroup.getByRole('checkbox').all()) {
         await expect(checkbox).not.toBeChecked()
@@ -520,11 +522,11 @@ test.describe('add address uses question reached from a notification journey', (
     await openAddFormFromJourney(
       page,
       'stub-org-add-journey-return-blank',
-      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+      JOURNEY_HANDSHAKES_BY_PARTY.consignee
     )
 
     await setFieldValue(page, 'name', validAddress.name)
-    await tickUses(page, ['IMPORTER'])
+    await tickRoles(page, ['IMPORTER'])
     await page
       .getByRole('button', { name: copy.add.saveAndReturnToAddressPage })
       .click()
@@ -540,24 +542,24 @@ test.describe('add address uses question reached from a notification journey', (
     await expect(page.getByLabel(fieldLabels.name)).toHaveValue(
       validAddress.name
     )
-    await expect(useCheckbox(page, 'IMPORTER')).toBeChecked()
+    await expect(roleCheckbox(page, 'IMPORTER')).toBeChecked()
   })
 })
 
 test.describe('add address reached from a notification journey with JavaScript off', () => {
   test.use({ javaScriptEnabled: false })
 
-  test('Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer uses', async ({
+  test('Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer roles', async ({
     page
   }) => {
     await page.route(`${ANIMALS_BASE_URL}/**`, (route) => route.abort())
     await openAddFormFromJourney(
       page,
       `stub-org-add-journey-ticked-${crypto.randomUUID()}`,
-      JOURNEY_HANDSHAKES_BY_ROLE.consignee
+      JOURNEY_HANDSHAKES_BY_PARTY.consignee
     )
     await fillValidAddress(page)
-    await tickUses(page, ['IMPORTER'])
+    await tickRoles(page, ['IMPORTER'])
     const journeyReturn = page.waitForRequest((request) =>
       request.url().includes('/address-return')
     )

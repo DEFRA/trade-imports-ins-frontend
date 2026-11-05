@@ -2,16 +2,16 @@ import { describe, expect, test } from 'vitest'
 
 import {
   ADDRESS_TYPES,
-  PLACE_USES,
-  USES_BY_ADDRESS_TYPE,
-  addressTypeOfUse,
+  PLACE_ROLES,
+  ROLES_BY_ADDRESS_TYPE,
+  addressTypeOfRole,
   addressTypeRequiresUnitedKingdom,
-  keepUsesOfferedBy
+  keepRolesOfferedBy
 } from './address-types.js'
 
-describe('the uses each address type lists', () => {
+describe('the roles each address type lists', () => {
   test('Should list them in the order the Type select offers them', () => {
-    expect(USES_BY_ADDRESS_TYPE).toEqual({
+    expect(ROLES_BY_ADDRESS_TYPE).toEqual({
       ORIGIN_OR_CONSIGNOR: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
       DESTINATION_CONSIGNEE_OR_IMPORTER: [
         'CONSIGNEE',
@@ -23,38 +23,41 @@ describe('the uses each address type lists', () => {
   })
 })
 
-describe('the uses an address type offers', () => {
-  test('Should keep the given uses the address type offers, in USES_BY_ADDRESS_TYPE order', () => {
+describe('the roles an address type offers', () => {
+  test('Should keep the given roles the address type offers, in ROLES_BY_ADDRESS_TYPE order', () => {
     expect(
-      keepUsesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'PLACE_OF_ORIGIN'])
+      keepRolesOfferedBy('ORIGIN_OR_CONSIGNOR', [
+        'CONSIGNOR',
+        'PLACE_OF_ORIGIN'
+      ])
     ).toEqual(['PLACE_OF_ORIGIN', 'CONSIGNOR'])
     expect(
-      keepUsesOfferedBy('DESTINATION_CONSIGNEE_OR_IMPORTER', [
+      keepRolesOfferedBy('DESTINATION_CONSIGNEE_OR_IMPORTER', [
         'PLACE_OF_DESTINATION',
         'CONSIGNEE'
       ])
     ).toEqual(['CONSIGNEE', 'PLACE_OF_DESTINATION'])
   })
 
-  test('Should drop a given use the address type does not offer', () => {
+  test('Should drop a given role the address type does not offer', () => {
     expect(
-      keepUsesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'IMPORTER'])
+      keepRolesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'IMPORTER'])
     ).toEqual(['CONSIGNOR'])
-    expect(keepUsesOfferedBy('BRANCH', ['CONSIGNOR'])).toEqual([])
+    expect(keepRolesOfferedBy('BRANCH', ['CONSIGNOR'])).toEqual([])
   })
 })
 
-describe('the address type that holds a use', () => {
+describe('the address type that holds a role', () => {
   test.each(
-    Object.entries(USES_BY_ADDRESS_TYPE).flatMap(([addressType, uses]) =>
-      uses.map((use) => [use, addressType])
+    Object.entries(ROLES_BY_ADDRESS_TYPE).flatMap(([addressType, roles]) =>
+      roles.map((role) => [role, addressType])
     )
-  )('Should give the type %s is listed under', (use, addressType) => {
-    expect(addressTypeOfUse(use)).toBe(addressType)
+  )('Should give the type %s is listed under', (role, addressType) => {
+    expect(addressTypeOfRole(role)).toBe(addressType)
   })
 
-  test('Should give no type for a use no type holds', () => {
-    expect(addressTypeOfUse('TRANSPORTER')).toBeUndefined()
+  test('Should give no type for a role no type holds', () => {
+    expect(addressTypeOfRole('TRANSPORTER')).toBeUndefined()
   })
 })
 
@@ -75,8 +78,8 @@ describe('the address types that must be in the United Kingdom', () => {
   })
 })
 
-describe('the place uses', () => {
+describe('the place roles', () => {
   test('Should be exactly the place of origin and the place of destination, in that order', () => {
-    expect(PLACE_USES).toEqual(['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION'])
+    expect(PLACE_ROLES).toEqual(['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION'])
   })
 })

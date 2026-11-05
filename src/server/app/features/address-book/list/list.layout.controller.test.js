@@ -96,7 +96,7 @@ describe('#addressBookListLayout', () => {
     expect(input.attr('name')).toBe('q')
     expect(controls.find('label').first().attr('for')).toBe(input.attr('id'))
     const select = controls.find('select')
-    expect(select.attr('name')).toBe('use')
+    expect(select.attr('name')).toBe('role')
     expect(controls.find('label').last().attr('for')).toBe(select.attr('id'))
     expect(input.attr('aria-describedby')).toBe(
       controls.find('.govuk-hint').attr('id')

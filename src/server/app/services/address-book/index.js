@@ -5,12 +5,12 @@ import * as stub from './stub.js'
 
 export {
   ADDRESS_TYPES,
-  PLACE_USES,
-  USES,
-  USES_BY_ADDRESS_TYPE,
-  addressTypeOfUse,
+  PLACE_ROLES,
+  ROLES,
+  ROLES_BY_ADDRESS_TYPE,
+  addressTypeOfRole,
   addressTypeRequiresUnitedKingdom,
-  keepUsesOfferedBy
+  keepRolesOfferedBy
 } from './address-types.js'
 export { TYPED_SEED } from './typed-seed.js'
 

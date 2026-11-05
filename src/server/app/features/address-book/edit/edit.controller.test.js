@@ -256,7 +256,7 @@ describe('GET /address-book/{addressId}/edit', () => {
 describe('POST /address-book/{addressId}/edit', () => {
   const server = startRealModeServerServingCountries(COUNTRIES)
 
-  test('Should send the edited fields with the stored address type and uses, ignoring any posted uses, and redirect to the address book', async () => {
+  test('Should send the edited fields with the stored roles and no address type, ignoring any posted roles, and redirect to the address book', async () => {
     serveStoredAddress()
     let sent
     const scope = addressBookApi()
@@ -269,7 +269,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     const response = await postEdit(server(), 'edit-post-success', {
       ...VALID_ADDRESS_FIELDS,
       name: UPDATED_NAME,
-      uses: 'IMPORTER'
+      roles: 'IMPORTER'
     })
 
     expectRedirectTo(response, ADDRESS_BOOK_PATH)
@@ -277,8 +277,7 @@ describe('POST /address-book/{addressId}/edit', () => {
     expect(sent).toEqual({
       ...VALID_ADDRESS_FIELDS,
       name: UPDATED_NAME,
-      addressType: STORED_ADDRESS.addressType,
-      uses: STORED_ADDRESS.uses
+      roles: STORED_ADDRESS.roles
     })
   })
 

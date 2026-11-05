@@ -15,16 +15,16 @@ export const storedChosenAddressType = (request) => {
   return isAddressType(stored) ? stored : undefined
 }
 
-export const storeEnteredAddress = (request, { formValues, tickedUses }) =>
+export const storeEnteredAddress = (request, { formValues, tickedRoles }) =>
   request.yar.set(SESSION_KEY, {
     ...request.yar.get(SESSION_KEY),
     formValues,
-    tickedUses
+    tickedRoles
   })
 
 export const storedEnteredAddress = (request) => {
-  const { formValues, tickedUses = [] } = request.yar.get(SESSION_KEY) ?? {}
-  return { formValues, tickedUses }
+  const { formValues, tickedRoles = [] } = request.yar.get(SESSION_KEY) ?? {}
+  return { formValues, tickedRoles }
 }
 
 export const clearAddInProgress = (request) => request.yar.clear(SESSION_KEY)

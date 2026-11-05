@@ -8,8 +8,8 @@ import {
   mapAddressRows,
   nameLinesOf,
   resultsLabelOf,
-  useLabelsOf,
-  usesWhoseLabelContains
+  roleLabelsOf,
+  rolesWhoseLabelContains
 } from './list.js'
 
 describe('#nameLinesOf', () => {
@@ -68,15 +68,15 @@ describe('#buildAddressBookQueryString', () => {
     ).toBe('?addressType=BRANCH&q=green&page=2')
   })
 
-  test('Should carry the use after q and before the page param', () => {
+  test('Should carry the role after q and before the page param', () => {
     expect(
       buildAddressBookQueryString({
         addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
         searchTerm: 'green',
-        use: 'CONSIGNOR',
+        role: 'CONSIGNOR',
         page: 2
       })
-    ).toBe('?addressType=ORIGIN_OR_CONSIGNOR&q=green&use=CONSIGNOR&page=2')
+    ).toBe('?addressType=ORIGIN_OR_CONSIGNOR&q=green&role=CONSIGNOR&page=2')
   })
 
   test('Should carry the address type alone on the first page with no search', () => {
@@ -112,23 +112,23 @@ describe('#addressBookPageHref', () => {
     )
   })
 
-  test('Should link to the address type carrying q, the use and the page', () => {
+  test('Should link to the address type carrying q, the role and the page', () => {
     const filters = {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       searchTerm: 'green',
-      use: 'IMPORTER'
+      role: 'IMPORTER'
     }
 
     expect(addressBookPageHref(1, filters)).toBe(
-      '/address-book?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&use=IMPORTER'
+      '/address-book?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&role=IMPORTER'
     )
     expect(addressBookPageHref(2, filters)).toBe(
-      '/address-book?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&use=IMPORTER&page=2'
+      '/address-book?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&role=IMPORTER&page=2'
     )
   })
 })
 
-describe('#useLabelsOf', () => {
+describe('#roleLabelsOf', () => {
   test.each([
     ['PLACE_OF_ORIGIN', 'Place of origin'],
     ['CONSIGNOR', 'Consignor'],
@@ -136,29 +136,29 @@ describe('#useLabelsOf', () => {
     ['IMPORTER', 'Importer'],
     ['PLACE_OF_DESTINATION', 'Place of destination'],
     ['BRANCH_ADDRESS', 'Branch']
-  ])('Should label the %s use alone as %s', (use, label) => {
-    expect(useLabelsOf([use], copy.list.uses)).toBe(label)
+  ])('Should label the %s role alone as %s', (role, label) => {
+    expect(roleLabelsOf([role], copy.list.roles)).toBe(label)
   })
 
-  test('Should join the labels of several uses with a comma in the order stored', () => {
-    expect(useLabelsOf(['CONSIGNOR', 'PLACE_OF_ORIGIN'], copy.list.uses)).toBe(
-      'Consignor, Place of origin'
-    )
+  test('Should join the labels of several roles with a comma in the order stored', () => {
+    expect(
+      roleLabelsOf(['CONSIGNOR', 'PLACE_OF_ORIGIN'], copy.list.roles)
+    ).toBe('Consignor, Place of origin')
   })
 
-  test('Should show the code of a use the copy has no label for', () => {
-    expect(useLabelsOf(['CONSIGNOR', 'TRANSPORTER'], copy.list.uses)).toBe(
+  test('Should show the code of a role the copy has no label for', () => {
+    expect(roleLabelsOf(['CONSIGNOR', 'TRANSPORTER'], copy.list.roles)).toBe(
       'Consignor, TRANSPORTER'
     )
   })
 
-  test('Should give an empty label for an address with no uses', () => {
-    expect(useLabelsOf([], copy.list.uses)).toBe('')
-    expect(useLabelsOf(undefined, copy.list.uses)).toBe('')
+  test('Should give an empty label for an address with no roles', () => {
+    expect(roleLabelsOf([], copy.list.roles)).toBe('')
+    expect(roleLabelsOf(undefined, copy.list.roles)).toBe('')
   })
 })
 
-describe('#usesWhoseLabelContains', () => {
+describe('#rolesWhoseLabelContains', () => {
   test.each([
     ['consignor', ['CONSIGNOR']],
     ['consign', ['CONSIGNOR', 'CONSIGNEE']],
@@ -167,19 +167,21 @@ describe('#usesWhoseLabelContains', () => {
     ['branch address', ['BRANCH_ADDRESS']],
     ['farm', []]
   ])(
-    'Should give the uses whose Type column label or Type option label contains %j, ignoring case',
-    (searchTerm, uses) => {
-      expect(usesWhoseLabelContains(searchTerm, copy.list.uses)).toEqual(uses)
+    'Should give the roles whose Type column label or Type option label contains %j, ignoring case',
+    (searchTerm, roles) => {
+      expect(rolesWhoseLabelContains(searchTerm, copy.list.roles)).toEqual(
+        roles
+      )
     }
   )
 
-  test('Should give no uses for an empty term', () => {
-    expect(usesWhoseLabelContains('', copy.list.uses)).toEqual([])
+  test('Should give no roles for an empty term', () => {
+    expect(rolesWhoseLabelContains('', copy.list.roles)).toEqual([])
   })
 })
 
 describe('#mapAddressRows', () => {
-  test('Should map each address to a row with its name lines, use labels, postal lines and country label', () => {
+  test('Should map each address to a row with its name lines, role labels, postal lines and country label', () => {
     expect(
       mapAddressRows(
         [
@@ -190,18 +192,18 @@ describe('#mapAddressRows', () => {
             townOrCity: 'Town',
             postcode: 'AB1 2CD',
             countryCode: 'GB',
-            uses: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
+            roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
           }
         ],
         [{ code: 'GB', name: 'United Kingdom' }],
-        copy.list.uses
+        copy.list.roles
       )
     ).toEqual([
       {
         id: '1',
         name: 'Green Farm',
         nameLines: ['Green', 'Farm'],
-        useLabels: 'Place of origin, Consignor',
+        roleLabels: 'Place of origin, Consignor',
         postalLines: ['1 Road', 'Town', 'AB1 2CD'],
         countryLabel: 'United Kingdom'
       }

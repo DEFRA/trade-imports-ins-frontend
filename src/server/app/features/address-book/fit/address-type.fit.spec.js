@@ -21,7 +21,7 @@ import {
   malformedEmail,
   openAddForm,
   refuseSaveThenReopenAddForm,
-  useCheckbox,
+  roleCheckbox,
   validAddress
 } from './address-form.js'
 import { openAddressBookList } from './address-book-list.js'
@@ -186,18 +186,18 @@ test.describe('choose an address type', () => {
   })
 })
 
-const USE_TO_TICK_BY_ADDRESS_TYPE = {
+const ROLE_TO_TICK_BY_ADDRESS_TYPE = {
   [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: 'PLACE_OF_ORIGIN',
   [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: 'CONSIGNEE',
   [ADDRESS_TYPES.BRANCH]: 'BRANCH_ADDRESS'
 }
 
-const expectEnteredAddressKept = async (page, use) => {
+const expectEnteredAddressKept = async (page, role) => {
   const entered = { ...validAddress, email: malformedEmail }
   for (const [field, value] of Object.entries(entered)) {
     await expect(page.getByLabel(fieldLabels[field])).toHaveValue(value)
   }
-  await expect(useCheckbox(page, use)).toBeChecked()
+  await expect(roleCheckbox(page, role)).toBeChecked()
 }
 
 const expectRefusedEntryKeptOnReturn = async (
@@ -205,17 +205,17 @@ const expectRefusedEntryKeptOnReturn = async (
   addressType,
   organisationId
 ) => {
-  const use = USE_TO_TICK_BY_ADDRESS_TYPE[addressType]
+  const role = ROLE_TO_TICK_BY_ADDRESS_TYPE[addressType]
   await signIn(page, { organisationId })
 
-  await refuseSaveThenReopenAddForm(page, { addressType, use })
+  await refuseSaveThenReopenAddForm(page, { addressType, role })
 
-  await expectEnteredAddressKept(page, use)
+  await expectEnteredAddressKept(page, role)
 }
 
 test.describe('going back from the address form to choose an address type', () => {
-  for (const addressType of Object.keys(USE_TO_TICK_BY_ADDRESS_TYPE)) {
-    test(`after a refused save of ${typeCopy.options[addressType].label}, choosing it again shows the address, the contact details and the ticked use entered`, async ({
+  for (const addressType of Object.keys(ROLE_TO_TICK_BY_ADDRESS_TYPE)) {
+    test(`after a refused save of ${typeCopy.options[addressType].label}, choosing it again shows the address, the contact details and the ticked role entered`, async ({
       page
     }) => {
       await expectRefusedEntryKeptOnReturn(
@@ -230,7 +230,7 @@ test.describe('going back from the address form to choose an address type', () =
 test.describe('choose an address type without JavaScript', () => {
   test.use({ javaScriptEnabled: false })
 
-  test('after a refused save of Branch, choosing it again shows the address, the contact details and the ticked use entered', async ({
+  test('after a refused save of Branch, choosing it again shows the address, the contact details and the ticked role entered', async ({
     page
   }) => {
     await expectRefusedEntryKeptOnReturn(

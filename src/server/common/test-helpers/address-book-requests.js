@@ -74,8 +74,7 @@ export const STORED_ADDRESS = {
   countryCode: 'GB',
   phone: '+44 1463 234567',
   email: 'exports@example.com',
-  addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-  uses: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
+  roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
   deleted: false
 }
 
@@ -93,13 +92,12 @@ export const VALID_ADDRESS_FIELDS = {
 
 export const VALID_ADDRESS_RECORD = {
   ...VALID_ADDRESS_FIELDS,
-  addressType: STORED_ADDRESS.addressType,
-  uses: STORED_ADDRESS.uses
+  roles: STORED_ADDRESS.roles
 }
 
 export const VALID_ADDRESS_PAYLOAD = {
   ...VALID_ADDRESS_FIELDS,
-  uses: 'PLACE_OF_ORIGIN'
+  roles: 'PLACE_OF_ORIGIN'
 }
 
 export const INVALID_ADDRESS_PAYLOAD = {
@@ -112,10 +110,10 @@ export const INVALID_ADDRESS_PAYLOAD = {
   email: 'bad'
 }
 
-const carriesAddressTypeAndUses = (body) =>
-  Boolean(body.addressType) && body.uses?.length > 0
+const carriesRoles = (body) =>
+  body.roles?.length > 0 && !Object.hasOwn(body, 'addressType')
 
-export const serveAddressCreated = (matchBody = carriesAddressTypeAndUses) =>
+export const serveAddressCreated = (matchBody = carriesRoles) =>
   addressBookApi()
     .post(addressesApiPath(), matchBody)
     .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)

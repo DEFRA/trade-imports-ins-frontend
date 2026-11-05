@@ -49,19 +49,15 @@ export const listAddresses = async (
     pageSize,
     searchTerm,
     countryCodes = [],
-    addressType,
-    use,
-    searchUses = []
+    roles = [],
+    searchRoles = []
   } = {}
 ) => {
   const url = new URL(addressesUrl(organisationId))
   url.searchParams.set('page', String(page))
   url.searchParams.set('pageSize', String(pageSize))
-  if (addressType) {
-    url.searchParams.set('addressType', addressType)
-  }
-  if (use) {
-    url.searchParams.set('use', use)
+  for (const role of roles) {
+    url.searchParams.append('role', role)
   }
   if (searchTerm) {
     url.searchParams.set('q', searchTerm)
@@ -69,8 +65,8 @@ export const listAddresses = async (
   for (const countryCode of countryCodes) {
     url.searchParams.append('countryCode', countryCode)
   }
-  for (const searchUse of searchUses) {
-    url.searchParams.append('searchUse', searchUse)
+  for (const searchRole of searchRoles) {
+    url.searchParams.append('searchRole', searchRole)
   }
 
   const response = await fetch(url.toString(), {

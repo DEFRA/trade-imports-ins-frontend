@@ -39,14 +39,14 @@ describe('#copy', () => {
     expect(copy.add.caption).toBe('Add new address')
   })
 
-  it('Should word the uses question with its legend per address type, hint, one label per use and error', () => {
-    expect(copy.uses.legendByAddressType).toEqual({
+  it('Should word the roles question with its legend per address type, hint, one label per role and error', () => {
+    expect(copy.roles.legendByAddressType).toEqual({
       ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
       DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',
       BRANCH: 'Address type'
     })
-    expect(copy.uses.hint).toBe('Select where this address can be used')
-    expect(copy.uses.options).toEqual({
+    expect(copy.roles.hint).toBe('Select where this address can be used')
+    expect(copy.roles.options).toEqual({
       PLACE_OF_ORIGIN: { label: 'Place of origin' },
       CONSIGNOR: { label: 'Consignor' },
       CONSIGNEE: { label: 'Consignee' },
@@ -54,7 +54,7 @@ describe('#copy', () => {
       PLACE_OF_DESTINATION: { label: 'Place of destination' },
       BRANCH_ADDRESS: { label: 'Branch address' }
     })
-    expect(copy.errors.uses.required).toBe(
+    expect(copy.errors.roles.required).toBe(
       'Select what this address can be used for'
     )
   })
@@ -214,7 +214,7 @@ describe('#copy', () => {
 })
 
 describe('#copy of the list page', () => {
-  it('Should word the Welsh list title, intro, search, add link, results lines, tabs, use labels, table headings and View link', () => {
+  it('Should word the Welsh list title, intro, search, add link, results lines, tabs, role labels, table headings and View link', () => {
     expect(
       leaves(cy.list).map(({ path, value }) => [path, textOf(value)])
     ).toEqual([
@@ -246,18 +246,18 @@ describe('#copy of the list page', () => {
       ],
       ['tabs.branch.label', 'Cangen'],
       ['tabs.branch.heading', 'Cyfeiriadau cangen'],
-      ['uses.PLACE_OF_ORIGIN.columnLabel', 'Man tarddiad'],
-      ['uses.PLACE_OF_ORIGIN.optionLabel', 'Man Tarddiad'],
-      ['uses.CONSIGNOR.columnLabel', 'Anfonwr'],
-      ['uses.CONSIGNOR.optionLabel', 'Anfonwr'],
-      ['uses.CONSIGNEE.columnLabel', 'Derbynnydd'],
-      ['uses.CONSIGNEE.optionLabel', 'Derbynnydd'],
-      ['uses.IMPORTER.columnLabel', 'Mewnforiwr'],
-      ['uses.IMPORTER.optionLabel', 'Mewnforiwr'],
-      ['uses.PLACE_OF_DESTINATION.columnLabel', 'Man cyrchfan'],
-      ['uses.PLACE_OF_DESTINATION.optionLabel', 'Man Cyrchfan'],
-      ['uses.BRANCH_ADDRESS.columnLabel', 'Cangen'],
-      ['uses.BRANCH_ADDRESS.optionLabel', 'Cyfeiriad Cangen'],
+      ['roles.PLACE_OF_ORIGIN.columnLabel', 'Man tarddiad'],
+      ['roles.PLACE_OF_ORIGIN.optionLabel', 'Man Tarddiad'],
+      ['roles.CONSIGNOR.columnLabel', 'Anfonwr'],
+      ['roles.CONSIGNOR.optionLabel', 'Anfonwr'],
+      ['roles.CONSIGNEE.columnLabel', 'Derbynnydd'],
+      ['roles.CONSIGNEE.optionLabel', 'Derbynnydd'],
+      ['roles.IMPORTER.columnLabel', 'Mewnforiwr'],
+      ['roles.IMPORTER.optionLabel', 'Mewnforiwr'],
+      ['roles.PLACE_OF_DESTINATION.columnLabel', 'Man cyrchfan'],
+      ['roles.PLACE_OF_DESTINATION.optionLabel', 'Man Cyrchfan'],
+      ['roles.BRANCH_ADDRESS.columnLabel', 'Cangen'],
+      ['roles.BRANCH_ADDRESS.optionLabel', 'Cyfeiriad Cangen'],
       ['table.name', 'Enw'],
       ['table.type', 'Math'],
       ['table.address', 'Cyfeiriad'],
@@ -267,7 +267,7 @@ describe('#copy of the list page', () => {
     ])
   })
 
-  it('Should word the tab labels, panel headings, Type heading and use labels', () => {
+  it('Should word the tab labels, panel headings, Type heading and role labels', () => {
     expect(copy.list.tabs).toEqual({
       originOrConsignor: {
         label: 'Origin and Consignor',
@@ -280,7 +280,7 @@ describe('#copy of the list page', () => {
       branch: { label: 'Branch', heading: 'Branch addresses' }
     })
     expect(copy.list.table.type).toBe('Type')
-    expect(copy.list.uses).toEqual({
+    expect(copy.list.roles).toEqual({
       PLACE_OF_ORIGIN: {
         columnLabel: 'Place of origin',
         optionLabel: 'Place of Origin'
@@ -322,12 +322,12 @@ describe('#copy of the address type page', () => {
   })
 })
 
-describe('#copy.uses journey question', () => {
+describe('#copy.roles journey question', () => {
   const HINT_TAIL =
     'Select any other roles or addresses this address should be used for.'
 
   it('Should word the legend', () => {
-    expect(copy.uses.journeyLegend).toBe(
+    expect(copy.roles.journeyLegend).toBe(
       'What else should this address be used for?'
     )
   })
@@ -338,17 +338,17 @@ describe('#copy.uses journey question', () => {
   ])(
     'Should word the hint for the %s role with the article %s',
     (roleLabel, article) => {
-      expect(copy.uses.journeyHint(roleLabel)).toBe(
+      expect(copy.roles.journeyHint(roleLabel)).toBe(
         `This address is being added as ${article} ${roleLabel} address. ${HINT_TAIL}`
       )
     }
   )
 
   it('Should word the Welsh legend and a hint naming the Welsh role', () => {
-    expect(cy.uses.journeyLegend).toBe(
+    expect(cy.roles.journeyLegend).toBe(
       'Ar gyfer beth arall y dylid defnyddio’r cyfeiriad hwn?'
     )
-    expect(cy.uses.journeyHint('Mewnforiwr')).toBe(
+    expect(cy.roles.journeyHint('Mewnforiwr')).toBe(
       'Mae’r cyfeiriad hwn yn cael ei ychwanegu fel cyfeiriad Mewnforiwr. Dewiswch unrhyw rolau neu gyfeiriadau eraill y dylid defnyddio’r cyfeiriad hwn ar eu cyfer.'
     )
   })

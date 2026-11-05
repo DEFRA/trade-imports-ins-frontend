@@ -11,7 +11,7 @@ import {
   addressTypePath
 } from '../../../shared/paths.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
-import { JOURNEY_HANDSHAKES_BY_ROLE } from '../../../../common/test-helpers/journey-handshake.js'
+import { JOURNEY_HANDSHAKES_BY_PARTY } from '../../../../common/test-helpers/journey-handshake.js'
 
 export const fieldLabels = copy.form.fields
 
@@ -89,15 +89,15 @@ export const openAddForm = async (
   await expect(page).toHaveURL(addressAddPath())
 }
 
-export const useCheckbox = (page, use) =>
+export const roleCheckbox = (page, role) =>
   page.getByRole('checkbox', {
-    name: copy.uses.options[use].label,
+    name: copy.roles.options[role].label,
     exact: true
   })
 
-export const tickUses = async (page, uses) => {
-  for (const use of uses) {
-    await useCheckbox(page, use).check()
+export const tickRoles = async (page, roles) => {
+  for (const role of roles) {
+    await roleCheckbox(page, role).check()
   }
 }
 
@@ -127,11 +127,11 @@ export const malformedEmail = 'not-an-email'
 
 export const refuseSaveThenReopenAddForm = async (
   page,
-  { addressType, use }
+  { addressType, role }
 ) => {
   await openAddForm(page, addressType)
   await fillValidAddress(page, { email: malformedEmail })
-  await tickUses(page, [use])
+  await tickRoles(page, [role])
   await saveAndContinueButton(page).click()
   await expect(page.getByRole('alert')).toBeVisible()
   await backLink(page).click()
@@ -153,7 +153,7 @@ export const addValidAddressToFreshOrganisation = async (
     organisationPrefix,
     overrides = {},
     addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-    uses = ['PLACE_OF_ORIGIN']
+    roles = ['PLACE_OF_ORIGIN']
   }
 ) => {
   await signIn(page, {
@@ -161,7 +161,7 @@ export const addValidAddressToFreshOrganisation = async (
   })
   await openAddForm(page, addressType)
   await fillValidAddress(page, overrides)
-  await tickUses(page, uses)
+  await tickRoles(page, roles)
   await saveAndContinueButton(page).click()
   await expect(page).toHaveURL(addressTypeListUrl(addressType))
 }
@@ -249,7 +249,7 @@ export const maxLengthValidations = [
 export const openAddFormFromJourney = async (
   page,
   organisationId,
-  handshake = JOURNEY_HANDSHAKES_BY_ROLE.consignor
+  handshake = JOURNEY_HANDSHAKES_BY_PARTY.consignor
 ) => {
   await signIn(page, { organisationId })
   await page.goto(`${addressAddPath()}?${new URLSearchParams(handshake)}`)

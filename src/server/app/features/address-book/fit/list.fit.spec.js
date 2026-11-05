@@ -264,7 +264,7 @@ test.describe('address type tabs', () => {
     })
   }
 
-  test('shows each address with the labels of its uses in the Type column', async ({
+  test('shows each address with the labels of its roles in the Type column', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
@@ -287,7 +287,7 @@ test.describe('address type tabs', () => {
     ).toHaveText('Place of origin, Consignee')
   })
 
-  test('lists an address with no uses on the Origin and Consignor tab only', async ({
+  test('lists an address with no roles on the Origin and Consignor tab only', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
@@ -509,9 +509,9 @@ test.describe('filter addresses without JavaScript', () => {
   }
 })
 
-const CONSIGNOR_USE = { label: 'Consignor', value: 'CONSIGNOR' }
-const CONSIGNEE_USE = { label: 'Consignee', value: 'CONSIGNEE' }
-const IMPORTER_USE = { label: 'Importer', value: 'IMPORTER' }
+const CONSIGNOR_ROLE = { label: 'Consignor', value: 'CONSIGNOR' }
+const CONSIGNEE_ROLE = { label: 'Consignee', value: 'CONSIGNEE' }
+const IMPORTER_ROLE = { label: 'Importer', value: 'IMPORTER' }
 const NO_TYPE_VALUE = ''
 
 const expectTypeChosen = (page, value) =>
@@ -526,7 +526,7 @@ test.describe('type filter', () => {
 
       await searchAndExpectMatches(page, '', {
         submitWith,
-        use: CONSIGNOR_USE,
+        role: CONSIGNOR_ROLE,
         resultsLine: ONE_MATCH_LINE
       })
 
@@ -534,7 +534,7 @@ test.describe('type filter', () => {
       await expect(paginationOf(page)).toHaveCount(0)
       await expectTabsInOrderWithSelected(page, ORIGIN_TAB.label)
       await openFilterDisclosure(page)
-      await expectTypeChosen(page, CONSIGNOR_USE.value)
+      await expectTypeChosen(page, CONSIGNOR_ROLE.value)
     })
   }
 
@@ -548,7 +548,7 @@ test.describe('type filter', () => {
 
     await searchAndExpectMatches(page, '', {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      use: CONSIGNEE_USE,
+      role: CONSIGNEE_ROLE,
       resultsLine: ONE_MATCH_LINE
     })
 
@@ -561,7 +561,7 @@ test.describe('type filter', () => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
     await openFilterDisclosure(page)
 
-    await typeSelectOf(page).selectOption({ label: CONSIGNOR_USE.label })
+    await typeSelectOf(page).selectOption({ label: CONSIGNOR_ROLE.label })
 
     await expect(page).toHaveURL(addressBookPath())
     await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
@@ -577,7 +577,7 @@ test.describe('type filter', () => {
     })
     await searchAndExpectSingleMatch(page, 'Stub', {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      use: IMPORTER_USE,
+      role: IMPORTER_ROLE,
       matchedCellText: TYPED_SEED.importer.name
     })
 
@@ -590,7 +590,9 @@ test.describe('type filter', () => {
     await expectTypeChosen(page, NO_TYPE_VALUE)
   })
 
-  test('finds an address by the label of one of its uses', async ({ page }) => {
+  test('finds an address by the label of one of its roles', async ({
+    page
+  }) => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
 
     await searchAndExpectSingleMatch(page, 'consignor', {
@@ -616,7 +618,7 @@ test.describe('type filter', () => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
     await searchAndExpectQuery(page, '', {
       submitWith: 'button',
-      use: CONSIGNOR_USE
+      role: CONSIGNOR_ROLE
     })
     await openFilterDisclosure(page)
 
@@ -637,7 +639,7 @@ test.describe('type filter without JavaScript', () => {
 
     await searchAndExpectMatches(page, '', {
       submitWith: 'button',
-      use: CONSIGNOR_USE,
+      role: CONSIGNOR_ROLE,
       resultsLine: ONE_MATCH_LINE
     })
 

@@ -19,7 +19,7 @@ import {
   getAddressFormCountries
 } from '../address-countries.js'
 import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
-import { addressRules, formValuesOf, storedTypeAndUsesOf } from '../fields.js'
+import { addressRules, formValuesOf, storedRolesOf } from '../fields.js'
 import { boomFor, findLiveAddress, isNotFound } from '../stored-address.js'
 import {
   deadLinkDestination,
@@ -155,7 +155,7 @@ const submitEdit = async (
     }
     const updatedAddress = await updateAddress(organisationId, addressId, {
       ...validatedAddress,
-      ...storedTypeAndUsesOf(address)
+      ...storedRolesOf(address)
     })
     setSuccessMessage(request, copy.successBanner.updated(updatedAddress.name))
     return toolkit.redirect(addressBookPath())

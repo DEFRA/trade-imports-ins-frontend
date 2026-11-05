@@ -4,7 +4,7 @@ export const ADDRESS_TYPES = Object.freeze({
   BRANCH: 'BRANCH'
 })
 
-export const USES = Object.freeze({
+export const ROLES = Object.freeze({
   PLACE_OF_ORIGIN: 'PLACE_OF_ORIGIN',
   CONSIGNOR: 'CONSIGNOR',
   CONSIGNEE: 'CONSIGNEE',
@@ -13,30 +13,32 @@ export const USES = Object.freeze({
   BRANCH_ADDRESS: 'BRANCH_ADDRESS'
 })
 
-export const USES_BY_ADDRESS_TYPE = Object.freeze({
+export const ROLES_BY_ADDRESS_TYPE = Object.freeze({
   [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: Object.freeze([
-    USES.PLACE_OF_ORIGIN,
-    USES.CONSIGNOR
+    ROLES.PLACE_OF_ORIGIN,
+    ROLES.CONSIGNOR
   ]),
   [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: Object.freeze([
-    USES.CONSIGNEE,
-    USES.IMPORTER,
-    USES.PLACE_OF_DESTINATION
+    ROLES.CONSIGNEE,
+    ROLES.IMPORTER,
+    ROLES.PLACE_OF_DESTINATION
   ]),
-  [ADDRESS_TYPES.BRANCH]: Object.freeze([USES.BRANCH_ADDRESS])
+  [ADDRESS_TYPES.BRANCH]: Object.freeze([ROLES.BRANCH_ADDRESS])
 })
 
-export const keepUsesOfferedBy = (addressType, candidateUses) =>
-  USES_BY_ADDRESS_TYPE[addressType].filter((use) => candidateUses.includes(use))
-
-export const addressTypeOfUse = (use) =>
-  Object.values(ADDRESS_TYPES).find((addressType) =>
-    USES_BY_ADDRESS_TYPE[addressType].includes(use)
+export const keepRolesOfferedBy = (addressType, candidateRoles) =>
+  ROLES_BY_ADDRESS_TYPE[addressType].filter((role) =>
+    candidateRoles.includes(role)
   )
 
-export const PLACE_USES = Object.freeze([
-  USES.PLACE_OF_ORIGIN,
-  USES.PLACE_OF_DESTINATION
+export const addressTypeOfRole = (role) =>
+  Object.values(ADDRESS_TYPES).find((addressType) =>
+    ROLES_BY_ADDRESS_TYPE[addressType].includes(role)
+  )
+
+export const PLACE_ROLES = Object.freeze([
+  ROLES.PLACE_OF_ORIGIN,
+  ROLES.PLACE_OF_DESTINATION
 ])
 
 export const addressTypeRequiresUnitedKingdom = (addressType) =>

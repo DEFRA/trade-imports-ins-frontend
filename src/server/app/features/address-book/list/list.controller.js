@@ -24,7 +24,7 @@ import {
   ADDRESS_BOOK_TABS,
   DEFAULT_ADDRESS_BOOK_TAB,
   resolveTab,
-  resolveUse
+  resolveRole
 } from '../address-book-tabs.js'
 import { linesHtml } from '../lines-html.js'
 import { takeSuccessMessage } from '../success-message.js'
@@ -32,7 +32,7 @@ import {
   addressBookPageHref,
   mapAddressRows,
   resultsLabelOf,
-  usesWhoseLabelContains
+  rolesWhoseLabelContains
 } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
@@ -49,7 +49,7 @@ const viewLink = (address) =>
 const tableRowsOf = (addresses) =>
   addresses.map((address) => [
     { html: linesHtml(address.nameLines) },
-    { text: address.useLabels },
+    { text: address.roleLabels },
     { html: linesHtml(address.postalLines, { lineEnding: ',' }) },
     { text: address.countryLabel },
     { html: viewLink(address) }
@@ -69,12 +69,12 @@ const subNavigationItemsOf = (selectedTab, searchTerm) =>
     active: tab === selectedTab
   }))
 
-const useItemsOf = (selectedTab, selectedUse) => [
+const roleItemsOf = (selectedTab, selectedRole) => [
   { value: '', text: copy.list.search.type.placeholder },
-  ...selectedTab.uses.map((use) => ({
-    value: use,
-    text: copy.list.uses[use].optionLabel,
-    selected: use === selectedUse
+  ...selectedTab.roles.map((role) => ({
+    value: role,
+    text: copy.list.roles[role].optionLabel,
+    selected: role === selectedRole
   }))
 ]
 
@@ -102,8 +102,7 @@ const loadAddressPage = async (organisationId, { page, ...listFilters }) => {
   logger.info(
     {
       organisationId,
-      addressType: listFilters.addressType,
-      use: listFilters.use,
+      roles: listFilters.roles,
       requestedPage: page,
       servedPage
     },
@@ -140,12 +139,12 @@ const get = async (request, toolkit) => {
   const searchTerm = request.query.q?.trim() ?? ''
   const selectedTab = selectTab(organisationId, request.query.addressType)
   const { addressType } = selectedTab
-  const requestedUse = request.query.use
-  const use = resolveUse(selectedTab, requestedUse)
-  if (requestedUse && !use) {
+  const requestedRole = request.query.role
+  const role = resolveRole(selectedTab, requestedRole)
+  if (requestedRole && !role) {
     logger.info(
-      { organisationId, addressType, requestedUse },
-      'Address book list ignored a use the tab does not offer'
+      { organisationId, addressType, requestedRole },
+      'Address book list ignored a role the tab does not offer'
     )
   }
   const successMessage = takeSuccessMessage(request)
@@ -153,38 +152,37 @@ const get = async (request, toolkit) => {
   try {
     const countries = await getAddressFormCountries()
     const countryCodes = countryCodesMatching(searchTerm, countries)
-    const searchUses = usesWhoseLabelContains(searchTerm, copy.list.uses)
+    const searchRoles = rolesWhoseLabelContains(searchTerm, copy.list.roles)
     const addressPage = await loadAddressPage(organisationId, {
       page,
       searchTerm,
       countryCodes,
-      searchUses,
-      addressType,
-      use
+      searchRoles,
+      roles: role ? [role] : selectedTab.roles
     })
     const pagination = paginationOf(addressPage)
     const addresses = mapAddressRows(
       addressPage.items ?? [],
       countries,
-      copy.list.uses
+      copy.list.roles
     )
 
     return buildView(toolkit, {
       listLoaded: true,
       subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
       panelHeading: copy.list.tabs[selectedTab.copyKey].heading,
-      clearSearchHref: addressBookPageHref(1, { addressType, use }),
+      clearSearchHref: addressBookPageHref(1, { addressType, role }),
       tableRows: tableRowsOf(addresses),
       resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
         addressBookPageHref(targetPage, {
           addressType,
           searchTerm,
-          use
+          role
         })
       ),
       addressType,
-      useItems: useItemsOf(selectedTab, use),
+      roleItems: roleItemsOf(selectedTab, role),
       searchTerm,
       successMessage
     })
@@ -193,13 +191,13 @@ const get = async (request, toolkit) => {
       throw err
     }
     logger.error(
-      { err, organisationId, addressType, use },
+      { err, organisationId, addressType, role },
       'Failed to load address book'
     )
     return buildView(toolkit, {
       listLoaded: false,
       addressType,
-      useItems: useItemsOf(selectedTab, use),
+      roleItems: roleItemsOf(selectedTab, role),
       searchTerm,
       successMessage,
       recoverableError: true

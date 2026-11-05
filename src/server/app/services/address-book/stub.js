@@ -1,5 +1,13 @@
-import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
-import { ADDRESS_TYPES, USES_BY_ADDRESS_TYPE } from './address-types.js'
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_NOT_FOUND
+} from '../../lib/http-status.js'
+import {
+  ADDRESS_TYPES,
+  ROLES,
+  ROLES_BY_ADDRESS_TYPE,
+  addressTypeOfRole
+} from './address-types.js'
 import { TYPED_SEED } from './typed-seed.js'
 
 const OBJECT_ID_LENGTH = 24
@@ -20,6 +28,7 @@ const buildSeedAddress = (index, details = {}) => ({
   countryCode: 'GB',
   email: `stub-farm-${index}@example.com`,
   phone: '01234567890',
+  roles: [ROLES.PLACE_OF_ORIGIN, ROLES.CONSIGNOR],
   deleted: false,
   ...details
 })
@@ -60,27 +69,18 @@ const notFound = () =>
 
 const isLive = (address) => !address.deleted
 
-const passesAddressTypeFilter = (address, addressType) => {
-  if (!addressType) {
-    return true
-  }
-  const uses = address.uses ?? []
-  if (uses.length === 0) {
-    return addressType === ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
-  }
-  const usesListed = USES_BY_ADDRESS_TYPE[addressType] ?? []
-  return uses.some((use) => usesListed.includes(use))
-}
+const holdsAnyOf = (address, roles) =>
+  (address.roles ?? []).some((role) => roles.includes(role))
 
-const passesUseFilter = (address, use) =>
-  !use || (address.uses ?? []).includes(use)
+const passesRoleFilter = (address, roles) =>
+  roles.length === 0 || holdsAnyOf(address, roles)
 
 const matchesSearch = (
   address,
-  { searchTerm, countryCodes = [], searchUses = [] }
+  { searchTerm, countryCodes = [], searchRoles = [] }
 ) => {
   const term = searchTerm?.trim().toLowerCase()
-  if (!term && countryCodes.length === 0 && searchUses.length === 0) {
+  if (!term && countryCodes.length === 0 && searchRoles.length === 0) {
     return true
   }
   const textSearchFields = [
@@ -99,7 +99,7 @@ const matchesSearch = (
   return (
     textMatches ||
     countryCodes.includes(address.countryCode) ||
-    (address.uses ?? []).some((use) => searchUses.includes(use))
+    holdsAnyOf(address, searchRoles)
   )
 }
 
@@ -113,17 +113,47 @@ const pageOfMatches = (matches, { page, pageSize }) => ({
 
 export const listAddresses = async (
   organisationId,
-  { page = 1, pageSize, addressType, use, ...search } = {}
+  { page = 1, pageSize, roles = [], ...search } = {}
 ) => {
   const matches = addressesOf(organisationId)
     .filter(isLive)
-    .filter((address) => passesAddressTypeFilter(address, addressType))
-    .filter((address) => passesUseFilter(address, use))
+    .filter((address) => passesRoleFilter(address, roles))
     .filter((address) => matchesSearch(address, search))
   return pageOfMatches(matches, { page, pageSize })
 }
 
+const RECEIVING_ROLES =
+  ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
+
+const refusalsOf = ({ roles = [], countryCode }) => {
+  if (roles.length === 0) {
+    return { roles: ['Give the address at least one role'] }
+  }
+  if (new Set(roles.map(addressTypeOfRole)).size > 1) {
+    return { roles: ['An address cannot hold roles from more than one group'] }
+  }
+  if (holdsAnyOf({ roles }, RECEIVING_ROLES) && countryCode !== 'GB') {
+    return {
+      countryCode: [
+        'An address holding a receiving role must be in the United Kingdom'
+      ]
+    }
+  }
+  return null
+}
+
+const refuseInvalid = (address) => {
+  const errors = refusalsOf(address)
+  if (errors) {
+    throw Object.assign(new Error('Validation failed'), {
+      status: HTTP_STATUS_BAD_REQUEST,
+      body: { errors }
+    })
+  }
+}
+
 export const createAddress = async (organisationId, address) => {
+  refuseInvalid(address)
   const created = { id: newObjectId(), ...address, deleted: false }
   addressesOf(organisationId).unshift(created)
   return created
@@ -147,6 +177,7 @@ export const updateAddress = async (organisationId, addressId, address) => {
   if (index === -1) {
     throw notFound()
   }
+  refuseInvalid(address)
   addresses[index] = { ...addresses[index], ...address }
   return addresses[index]
 }

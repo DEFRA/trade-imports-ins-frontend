@@ -24,7 +24,7 @@ through the app's own address type page and add page, named
 rather than adding another. The add page sends a user with no address type
 chosen to the type page, so the seed walk and the sign-in set-up each choose
 Origin or Consignor through `chooseAddressType` before they open the add form. The seed walk ticks
-Place of origin, as the add page requires a use, and expects the save to land
+Place of origin, as the add page requires a role, and expects the save to land
 on the Origin and Consignor tab of the list.
 
 `scripts/lighthouse/audit-targets.js` (with `audit-targets.test.js`) holds
