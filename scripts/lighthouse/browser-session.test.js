@@ -3,7 +3,10 @@ import { TimeoutError } from 'puppeteer'
 import { describe, expect, test } from 'vitest'
 
 import { refuseOutboundHttp } from '../../src/server/common/test-helpers/real-mode.js'
-import { chooseAddressTypeInBrowser, waitForSignInForm } from './auth-setup.cjs'
+import {
+  chooseAddressTypeInBrowser,
+  waitForSignInForm
+} from './browser-session.js'
 
 const ORIGIN = 'http://localhost:3002'
 const CRUMB = 'crumb-token'
