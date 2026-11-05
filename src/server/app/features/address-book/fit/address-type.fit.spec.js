@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 import { signIn } from '../../../../../../fit/sign-in.js'
+import { signInAndOpen } from './sign-in-and-open.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
   addressAddPath,
@@ -81,8 +82,7 @@ test.describe('choose an address type', () => {
   test('Continue with nothing chosen shows the problem summary and the inline error, and the summary link focuses the first type', async ({
     page
   }) => {
-    await signIn(page, { organisationId: 'stub-org-type-error' })
-    await page.goto(addressTypePath())
+    await signInAndOpen(page, 'stub-org-type-error', addressTypePath())
 
     await continueButton(page).click()
 
@@ -142,8 +142,11 @@ test.describe('choose an address type', () => {
     test(`${typeCopy.options[addressType].label} opens the address form and Back shows it chosen`, async ({
       page
     }) => {
-      await signIn(page, { organisationId: `stub-org-type-${addressType}` })
-      await page.goto(addressTypePath())
+      await signInAndOpen(
+        page,
+        `stub-org-type-${addressType}`,
+        addressTypePath()
+      )
 
       await chooseAddressType(page, addressType)
 
@@ -159,9 +162,7 @@ test.describe('choose an address type', () => {
   test('opening the address form with no type chosen lands on Choose an address type', async ({
     page
   }) => {
-    await signIn(page, { organisationId: 'stub-org-type-guard' })
-
-    await page.goto(addressAddPath())
+    await signInAndOpen(page, 'stub-org-type-guard', addressAddPath())
 
     await expect(page).toHaveURL(addressTypePath())
     await expect(typePageHeading(page)).toBeVisible()
@@ -199,29 +200,19 @@ const expectEnteredAddressKept = async (page, role) => {
   await expect(roleCheckbox(page, role)).toBeChecked()
 }
 
-const expectRefusedEntryKeptOnReturn = async (
-  page,
-  addressType,
-  organisationId
-) => {
-  const role = ROLE_TO_TICK_BY_ADDRESS_TYPE[addressType]
-  await signIn(page, { organisationId })
-
-  await refuseSaveThenReopenAddForm(page, { addressType, role })
-
-  await expectEnteredAddressKept(page, role)
-}
-
 test.describe('going back from the address form to choose an address type', () => {
   for (const addressType of Object.keys(ROLE_TO_TICK_BY_ADDRESS_TYPE)) {
     test(`after a refused save of ${typeCopy.options[addressType].label}, choosing it again shows the address, the contact details and the ticked role entered`, async ({
       page
     }) => {
-      await expectRefusedEntryKeptOnReturn(
-        page,
-        addressType,
-        `stub-org-type-kept-${addressType}`
-      )
+      const role = ROLE_TO_TICK_BY_ADDRESS_TYPE[addressType]
+      await signIn(page, {
+        organisationId: `stub-org-type-kept-${addressType}`
+      })
+
+      await refuseSaveThenReopenAddForm(page, { addressType, role })
+
+      await expectEnteredAddressKept(page, role)
     })
   }
 })
@@ -232,11 +223,13 @@ test.describe('choose an address type without JavaScript', () => {
   test('after a refused save of Branch, choosing it again shows the address, the contact details and the ticked role entered', async ({
     page
   }) => {
-    await expectRefusedEntryKeptOnReturn(
-      page,
-      ADDRESS_TYPES.BRANCH,
-      'stub-org-type-kept-no-js'
-    )
+    const addressType = ADDRESS_TYPES.BRANCH
+    const role = ROLE_TO_TICK_BY_ADDRESS_TYPE[addressType]
+    await signIn(page, { organisationId: 'stub-org-type-kept-no-js' })
+
+    await refuseSaveThenReopenAddForm(page, { addressType, role })
+
+    await expectEnteredAddressKept(page, role)
   })
 
   test('refuses Continue with nothing chosen, then opens the address form and Back shows the type chosen', async ({

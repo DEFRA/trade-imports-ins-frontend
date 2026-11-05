@@ -4,6 +4,7 @@ import {
   addValidAddressToFreshOrganisation,
   addressFormCountryNames,
   addressTypeListUrl,
+  backLink,
   errorLink,
   expectErrorFocusOn,
   expectInDocumentOrder,
@@ -12,8 +13,8 @@ import {
   fieldLabels,
   fieldLabelsInFormOrder,
   fillValidAddress,
+  malformedEmail,
   maxLengthValidations,
-  originOrConsignorListUrl,
   requiredValidations,
   saveAndContinueButton,
   setFieldValue,
@@ -96,9 +97,7 @@ test.describe('add address', () => {
   test('has a Back link to Choose an address type', async ({ page }) => {
     await signInAndOpenAddForm(page, 'stub-org-add-back')
 
-    await expect(
-      page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', addressTypePath())
+    await expect(backLink(page)).toHaveAttribute('href', addressTypePath())
   })
 
   test('groups fields under Address and Contact details', async ({ page }) => {
@@ -121,74 +120,14 @@ test.describe('add address', () => {
 test.describe('add address roles question', () => {
   const organisationPrefix = 'stub-org-add-roles'
 
-  test('follows the contact fields with a section break, the legend, the hint and Place of origin then Consignor, unticked', async ({
-    page
-  }) => {
-    await signInAndOpenAddForm(page, `${organisationPrefix}-render`)
-
-    const sectionBreak = page.locator('hr.govuk-section-break--visible')
-    await expect(sectionBreak).toHaveCount(1)
-    const rolesGroup = rolesGroupOf(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
-    await expect(rolesGroup).toBeVisible()
-    await expectInDocumentOrder(page, [
-      page.getByLabel(fieldLabels.phone),
-      sectionBreak,
-      rolesGroup
-    ])
-    await expect(rolesGroup).toContainText(copy.roles.hint)
-    const options = rolesGroup.getByRole('checkbox')
-    await expect(options).toHaveCount(2)
-    await expect(rolesGroup.locator('label')).toHaveText([
-      copy.roles.options.PLACE_OF_ORIGIN.label,
-      copy.roles.options.CONSIGNOR.label
-    ])
-    await expect(
-      rolesGroup.getByRole('checkbox', { checked: true })
-    ).toHaveCount(0)
-  })
-
-  test('saving valid fields with no role shows the roles error, whose summary link focuses Place of origin, and the error page has no serious or critical axe violations', async ({
-    page
-  }) => {
-    await signInAndOpenAddForm(page, `${organisationPrefix}-error`)
-
-    await fillValidAddress(page)
-    await saveAndContinueButton(page).click()
-
-    await expect(page).toHaveTitle(/^Error: /)
-    await expect(page.getByRole('alert')).toContainText('There is a problem')
-    await expect(
-      rolesGroupOf(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
-    ).toContainText(copy.errors.roles.required)
-    await errorLink(page, copy.errors.roles.required).click()
-    await expect(roleCheckbox(page, 'PLACE_OF_ORIGIN')).toBeFocused()
-    await expectNoSeriousOrCriticalViolations(page, 'Add address roles error')
-  })
-
-  test('saving with Place of origin ticked lands on the Origin and Consignor list with the new address first', async ({
-    page
-  }) => {
-    await addValidAddressToFreshOrganisation(page, {
-      organisationPrefix,
-      overrides: { name: LATE_ALPHABETICAL_NAME }
-    })
-
-    await expect(selectedTabOf(page)).toHaveText(
-      copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label
-    )
-    await expect(page.getByRole('link', { name: /^View / }).first()).toHaveText(
-      `View ${LATE_ALPHABETICAL_NAME}`
-    )
-  })
-
   test('finds an address saved with Consignor ticked by searching Consignor', async ({
     page
   }) => {
-    await signInAndOpenAddForm(page, `${organisationPrefix}-search-empty`)
-    await fillValidAddress(page)
-    await tickRoles(page, ['CONSIGNOR'])
-    await saveAndContinueButton(page).click()
-    await expect(page).toHaveURL(originOrConsignorListUrl)
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix: `${organisationPrefix}-search`,
+      emptyBook: true,
+      roles: ['CONSIGNOR']
+    })
 
     await searchAndExpectSingleMatch(page, 'Consignor', {
       matchedCellText: validAddress.name
@@ -215,24 +154,36 @@ test.describe('add address roles question without JavaScript', () => {
   })
 })
 
-test.describe('add address of a type that must be in the United Kingdom', () => {
-  const organisationPrefix = 'stub-org-add-uk-only'
+test.describe('add address of each type', () => {
+  const organisationPrefix = 'stub-org-add-type'
 
-  for (const { addressType, offeredRoles, tab } of [
+  for (const { addressType, offeredRoles, tab, unitedKingdomOnly } of [
+    {
+      addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+      offeredRoles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
+      tab: copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label,
+      unitedKingdomOnly: false
+    },
     {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       offeredRoles: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
-      tab: copy.list.tabs[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER].label
+      tab: copy.list.tabs[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
+        .label,
+      unitedKingdomOnly: true
     },
     {
       addressType: ADDRESS_TYPES.BRANCH,
       offeredRoles: ['BRANCH_ADDRESS'],
-      tab: copy.list.tabs[ADDRESS_TYPES.BRANCH].label
+      tab: copy.list.tabs[ADDRESS_TYPES.BRANCH].label,
+      unitedKingdomOnly: true
     }
   ]) {
     const typeLabel = copy.addressType.options[addressType].label
+    const countryOffered = unitedKingdomOnly
+      ? 'United Kingdom alone selected'
+      : 'United Kingdom selected'
 
-    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question, and United Kingdom alone selected`, async ({
+    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}`, async ({
       page
     }) => {
       await signInAndOpenAddForm(
@@ -241,28 +192,28 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
         addressType
       )
 
-      await expect(
-        page.locator('label.govuk-label:not(.govuk-checkboxes__label)')
-      ).toHaveText(fieldLabelsInFormOrder)
-      const sectionBreak = page.locator('hr.govuk-section-break--visible')
+      const main = page.getByRole('main')
+      await expect(main.locator('label')).toHaveText([
+        ...fieldLabelsInFormOrder,
+        ...offeredRoles.map((role) => copy.roles.options[role].label)
+      ])
+      const sectionBreak = main.getByRole('separator')
       await expect(sectionBreak).toHaveCount(1)
       const rolesGroup = rolesGroupOf(page, addressType)
-      await expect(rolesGroup).toBeVisible()
       await expectInDocumentOrder(page, [
         page.getByLabel(fieldLabels.phone),
         sectionBreak,
         rolesGroup
       ])
       await expect(rolesGroup).toContainText(copy.roles.hint)
-      await expect(rolesGroup.locator('label')).toHaveText(
-        offeredRoles.map((role) => copy.roles.options[role].label)
-      )
       await expect(
         rolesGroup.getByRole('checkbox', { checked: true })
       ).toHaveCount(0)
       const country = page.getByLabel(fieldLabels.countryCode)
-      await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
       await expect(country).toHaveValue(GB_COUNTRY.code)
+      if (unitedKingdomOnly) {
+        await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
+      }
     })
 
     test(`${typeLabel} saved with every offered role ticked lands on its tab with the new address first`, async ({
@@ -281,7 +232,7 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
       ).toHaveText(`View ${LATE_ALPHABETICAL_NAME}`)
     })
 
-    test(`${typeLabel} saved with no role shows the roles error, whose summary link focuses the first option`, async ({
+    test(`${typeLabel} saved with no role shows the roles error, whose summary link focuses the first option, with no serious or critical axe violations`, async ({
       page
     }) => {
       await signInAndOpenAddForm(
@@ -293,11 +244,16 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
       await fillValidAddress(page)
       await saveAndContinueButton(page).click()
 
+      await expect(page).toHaveTitle(/^Error: /)
       await expect(rolesGroupOf(page, addressType)).toContainText(
         copy.errors.roles.required
       )
       await errorLink(page, copy.errors.roles.required).click()
       await expect(roleCheckbox(page, offeredRoles[0])).toBeFocused()
+      await expectNoSeriousOrCriticalViolations(
+        page,
+        `Add ${typeLabel} address roles error`
+      )
     })
   }
 
@@ -458,9 +414,7 @@ test.describe('add address reached from a notification journey', () => {
   }) => {
     await openAddFormFromJourney(page, 'stub-org-add-journey-actions')
 
-    await expect(
-      page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute(
+    await expect(backLink(page)).toHaveAttribute(
       'href',
       returnUrlFor(JOURNEY_HANDSHAKES_BY_PARTY.consignor)
     )
@@ -487,9 +441,10 @@ test.describe('add address reached from a notification journey', () => {
       CONSIGNMENT_CONTACT_HANDSHAKE
     )
 
-    await expect(
-      page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE))
+    await expect(backLink(page)).toHaveAttribute(
+      'href',
+      returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
+    )
     await expect(page.locator('form button')).toHaveText([
       'Save and continue',
       'Cancel and return to address page'
@@ -633,13 +588,13 @@ test.describe('add address validation', () => {
   test('rejects a malformed email address', async ({ page }) => {
     await signInAndOpenAddForm(page, 'stub-org-add-email')
 
-    await fillValidAddress(page, { email: 'not-an-email' })
+    await fillValidAddress(page, { email: malformedEmail })
     await saveAndContinueButton(page).click()
 
     await expectErrorFocusOn(page, {
       message: 'Enter an email address in the correct format',
       label: fieldLabels.email,
-      expectedValue: 'not-an-email',
+      expectedValue: malformedEmail,
       url: addressAddPath()
     })
   })

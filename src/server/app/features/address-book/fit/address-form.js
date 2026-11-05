@@ -4,7 +4,10 @@ import { copy } from '../copy/copy.en.js'
 import { FIELD_RULES } from '../fields.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { countries } from '../../../services/_capture/fixtures.js'
-import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
+import {
+  ADDRESS_TYPES,
+  ROLES_BY_ADDRESS_TYPE
+} from '../../../services/address-book/index.js'
 import {
   addressAddPath,
   addressBookPath,
@@ -166,12 +169,13 @@ export const addValidAddressToFreshOrganisation = async (
     organisationPrefix,
     overrides = {},
     addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
-    roles = ['PLACE_OF_ORIGIN']
+    roles = [ROLES_BY_ADDRESS_TYPE[addressType][0]],
+    emptyBook = false
   }
 ) => {
   await signInAndOpenAddForm(
     page,
-    `${organisationPrefix}-${crypto.randomUUID()}`,
+    `${organisationPrefix}-${crypto.randomUUID()}${emptyBook ? '-empty' : ''}`,
     addressType
   )
   await fillValidAddress(page, overrides)
