@@ -7,6 +7,10 @@
 
   <form method="post" novalidate>
     <input type="hidden" name="crumb" value="{{ crumb }}" />
+    {% if returningNotification %}
+      <input type="hidden" name="notification-id" value="{{ returningNotification.reference }}" />
+      <input type="hidden" name="current-notification-type" value="{{ returningNotification.type }}" />
+    {% endif %}
 
     {% set legendHtml %}<span class="govuk-caption-l">{{ copy.caption }}</span> {{ copy.title }}{% endset %}
 

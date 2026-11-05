@@ -22,3 +22,8 @@ export const expectUnselectedNotificationType = async (page) => {
     await expect(radios.nth(index)).not.toBeChecked()
   }
 }
+
+export const expectOnlyNotificationTypeChecked = async (page, label) => {
+  await expect(page.getByRole('radio', { checked: true })).toHaveCount(1)
+  await expect(page.getByRole('radio', { name: label })).toBeChecked()
+}

@@ -15,3 +15,15 @@ export function buildSetBaseUrl(baseUrlConfigKey, setBase) {
   const baseUrl = config.get(baseUrlConfigKey).replace(/\/$/, '')
   return `${baseUrl}${setBase}`
 }
+
+/**
+ * Builds the URL of one notification on a journey frontend.
+ *
+ * @param {string} baseUrlConfigKey - config key holding the frontend base URL
+ * @param {string} setBase - the set base, e.g. '/live-animals'
+ * @param {string} reference - the notification's reference number
+ * @returns {string} the notification's URL, with the reference encoded as one path segment
+ */
+export function buildNotificationUrl(baseUrlConfigKey, setBase, reference) {
+  return `${buildSetBaseUrl(baseUrlConfigKey, setBase)}/notifications/${encodeURIComponent(reference)}`
+}

@@ -1,7 +1,7 @@
 import { format, isValid, parseISO } from 'date-fns'
 
 import { SET_BASES } from '../../../../common/constants/journey-set-bases.js'
-import { buildSetBaseUrl } from '../../../../common/helpers/set-base-url.js'
+import { buildNotificationUrl } from '../../../../common/helpers/set-base-url.js'
 import { dashboardPath } from '../../../shared/paths.js'
 
 const LIST_DATE_FORMAT = 'd MMM yyyy'
@@ -49,15 +49,15 @@ export const dashboardPageHref = (page, { sort, referenceNumber } = {}) =>
   `${dashboardPath()}${buildDashboardQueryString({ sort, referenceNumber, page })}`
 
 export function buildNotificationLink(status, referenceNumber) {
-  const setUrl = buildLiveAnimalsSetUrl()
-  const encodedReference = encodeURIComponent(referenceNumber)
+  const notificationUrl = buildNotificationUrl(
+    'tradeImportsAnimalsFrontend.baseUrl',
+    SET_BASES.LIVE_ANIMALS,
+    referenceNumber
+  )
   return status === 'SUBMITTED'
-    ? `${setUrl}/notifications/${encodedReference}/notification-view`
-    : `${setUrl}/notifications/${encodedReference}`
+    ? `${notificationUrl}/notification-view`
+    : notificationUrl
 }
-
-const buildLiveAnimalsSetUrl = () =>
-  buildSetBaseUrl('tradeImportsAnimalsFrontend.baseUrl', SET_BASES.LIVE_ANIMALS)
 
 export function mapNotificationRows(notifications, countryNames = {}) {
   return notifications.map((notification) => ({

@@ -174,6 +174,8 @@ validation tables.
 [`notification-type.js`](../features/notification-type/fit/notification-type.js) —
 `expectUnselectedNotificationType`: the browser is on the type question, with
 its five options in order and none chosen.
+`expectOnlyNotificationTypeChecked`: the browser is on the type question with
+the one named option chosen.
 [`seed-address.js`](../features/address-book/fit/seed-address.js) —
 `seedAddress`, the address the stub seeds for an ordinary organisation,
 its `seedAddressLines`, and the unknown and malformed ids.

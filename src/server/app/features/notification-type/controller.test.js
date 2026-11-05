@@ -6,22 +6,29 @@ import { startRealModeServer } from '../../../common/test-helpers/test-server.js
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { recordModuleLoggerInfo } from '../../../common/test-helpers/module-logger-lines.js'
 import { restoreConfigAfterEach } from '../../../common/test-helpers/restore-config-after-each.js'
-import {
-  ORGANISATION_ID,
-  sessionAuth
-} from '../../../common/test-helpers/session-auth.js'
+import { ORGANISATION_ID } from '../../../common/test-helpers/session-auth.js'
 import { config } from '../../../../config/config.js'
-import { handOversFor } from './hand-overs.test-support.js'
+import { expectedReturnUrl, handOversFor } from './hand-overs.test-support.js'
+import { CRN, requestsTo } from './requests.test-support.js'
 
-const NOTIFICATION_TYPE_URL = '/notification-type'
 const TITLE = 'What are you importing?'
 const TITLE_SUFFIX = ' - Import notification service - GOV.UK'
 const ERROR_MESSAGE = 'Select what you are importing'
 const ANIMALS_BASE_URL = 'http://localhost:3000'
 const PLANTS_BASE_URL = 'http://localhost:3003'
-const CRN = '1100598138'
 const HAND_OVER_MESSAGE =
   'Notification type chosen, handing over to the journey frontend'
+const RETURN_MESSAGE = 'Notification type kept, returning to the notification'
+const REFERENCE = 'DRAFT.IMP.2026.1'
+const CHECKED_OPTION = '.govuk-radios__input:checked'
+const ID_FIELD = 'input[name="notification-id"]'
+const TYPE_FIELD = 'input[name="current-notification-type"]'
+const LIVE_ANIMALS = 'live-animals'
+const RETURNING_QUERY = `notification-id=${REFERENCE}&current-notification-type=${LIVE_ANIMALS}`
+const RETURNING_PAYLOAD = {
+  'notification-id': REFERENCE,
+  'current-notification-type': LIVE_ANIMALS
+}
 const LABELS_IN_ORDER = [
   'Live animals',
   'Germinal products (semen, ova, embryos)',
@@ -55,20 +62,7 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     config.set('tradeImportsPlantsFrontend.baseUrl', PLANTS_BASE_URL)
   })
 
-  const getPage = (user) =>
-    server().inject({
-      method: 'GET',
-      url: NOTIFICATION_TYPE_URL,
-      auth: sessionAuth(user, { crn: CRN })
-    })
-
-  const postType = (user, payload) =>
-    server().inject({
-      method: 'POST',
-      url: NOTIFICATION_TYPE_URL,
-      auth: sessionAuth(user, { crn: CRN }),
-      payload
-    })
+  const { getPage, postType } = requestsTo(server)
 
   test('GET titles the page and puts the caption and question in the heading legend', async () => {
     const { result, statusCode, headers } = await getPage('type-get')
@@ -92,8 +86,97 @@ describe('#notificationTypeController', { concurrent: false }, () => {
         .map((_index, label) => $(label).text().trim())
         .get()
     ).toEqual(LABELS_IN_ORDER)
-    expect($('.govuk-radios__input:checked')).toHaveLength(0)
+    expect($(CHECKED_OPTION)).toHaveLength(0)
     expect($('.govuk-radios__input').attr('name')).toBe('notificationType')
+  })
+
+  test('GET with a live animals notification checks Live animals alone and carries the reference and type in hidden fields', async () => {
+    const { result } = await getPage('type-returning', RETURNING_QUERY)
+
+    const $ = load(result)
+    expect($(CHECKED_OPTION)).toHaveLength(1)
+    expect($(CHECKED_OPTION).attr('value')).toBe(LIVE_ANIMALS)
+    expect($(ID_FIELD).attr('value')).toBe(REFERENCE)
+    expect($(TYPE_FIELD).attr('value')).toBe(LIVE_ANIMALS)
+  })
+
+  test.each([
+    [
+      'a type INS does not offer',
+      `notification-id=${REFERENCE}&current-notification-type=cattle`
+    ],
+    [
+      'a type that takes no notification back',
+      `notification-id=${REFERENCE}&current-notification-type=potatoes`
+    ],
+    ['no reference', 'current-notification-type=live-animals']
+  ])(
+    'GET with %s shows nothing selected and no hidden fields',
+    async (_name, query) => {
+      const { result } = await getPage('type-ignored', query)
+
+      const $ = load(result)
+      expect($(CHECKED_OPTION)).toHaveLength(0)
+      expect($(ID_FIELD)).toHaveLength(0)
+      expect($(TYPE_FIELD)).toHaveLength(0)
+    }
+  )
+
+  test('POST with the notification type kept returns to that notification and logs it once', async () => {
+    const { statusCode, headers } = await postType('type-post-return', {
+      notificationType: LIVE_ANIMALS,
+      ...RETURNING_PAYLOAD
+    })
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe(
+      expectedReturnUrl({
+        animalsBaseUrl: ANIMALS_BASE_URL,
+        reference: REFERENCE
+      })
+    )
+    expect(loggedWith(RETURN_MESSAGE)).toEqual([
+      {
+        fields: {
+          organisationId: ORGANISATION_ID,
+          crn: CRN,
+          notificationReference: REFERENCE,
+          notificationType: LIVE_ANIMALS,
+          destination: expectedReturnUrl({
+            animalsBaseUrl: ANIMALS_BASE_URL,
+            reference: REFERENCE
+          })
+        },
+        message: RETURN_MESSAGE
+      }
+    ])
+    expect(loggedInfo).toHaveLength(1)
+  })
+
+  test.each(HAND_OVERS.filter(([value]) => value !== LIVE_ANIMALS))(
+    'POST %s chosen for a live animals notification hands over to %s',
+    async (value, location) => {
+      const { statusCode, headers } = await postType(`type-other-${value}`, {
+        notificationType: value,
+        ...RETURNING_PAYLOAD
+      })
+
+      expect(statusCode).toBe(statusCodes.redirectFound)
+      expect(headers.location).toBe(location)
+      expect(loggedWith(RETURN_MESSAGE)).toEqual([])
+    }
+  )
+
+  test('POST with nothing chosen keeps the notification in hidden fields and checks no option', async () => {
+    const { result, statusCode } = await postType(
+      'type-refused-returning',
+      RETURNING_PAYLOAD
+    )
+
+    const $ = load(result)
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect($(ID_FIELD).attr('value')).toBe(REFERENCE)
+    expect($(CHECKED_OPTION)).toHaveLength(0)
   })
 
   test('GET ends with one Continue button', async () => {
@@ -175,13 +258,18 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     nock.emitter.on('no match', recordUnmatched)
 
     try {
-      const page = await getPage('type-no-upstream-get')
+      const page = await getPage('type-no-upstream-get', RETURNING_QUERY)
       const chosen = await postType('type-no-upstream-post', {
-        notificationType: 'live-animals'
+        notificationType: LIVE_ANIMALS
+      })
+      const returned = await postType('type-no-upstream-return', {
+        notificationType: LIVE_ANIMALS,
+        ...RETURNING_PAYLOAD
       })
 
       expect(page.statusCode).toBe(statusCodes.ok)
       expect(chosen.statusCode).toBe(statusCodes.redirectFound)
+      expect(returned.statusCode).toBe(statusCodes.redirectFound)
       expect(unmatchedRequests).toEqual([])
     } finally {
       nock.emitter.removeListener('no match', recordUnmatched)

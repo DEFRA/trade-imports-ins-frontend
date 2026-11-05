@@ -5,3 +5,6 @@ export const handOversFor = ({ animalsBaseUrl, plantsBaseUrl }) => [
   ['potatoes', `${plantsBaseUrl}/high-risk-plants/start`],
   ['wood-products', `${plantsBaseUrl}/high-risk-plants/start`]
 ]
+
+export const expectedReturnUrl = ({ animalsBaseUrl, reference }) =>
+  `${animalsBaseUrl}/live-animals/notifications/${encodeURIComponent(reference)}/origin`

@@ -1,5 +1,8 @@
 import { SET_BASES } from '../../../common/constants/journey-set-bases.js'
-import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
+import {
+  buildNotificationUrl,
+  buildSetBaseUrl
+} from '../../../common/helpers/set-base-url.js'
 
 const ANIMALS_FRONTEND = 'tradeImportsAnimalsFrontend.baseUrl'
 const PLANTS_FRONTEND = 'tradeImportsPlantsFrontend.baseUrl'
@@ -12,7 +15,8 @@ export const NOTIFICATION_TYPES = Object.freeze([
     value: 'live-animals',
     copyKey: 'liveAnimals',
     setBase: SET_BASES.LIVE_ANIMALS,
-    frontend: ANIMALS_FRONTEND
+    frontend: ANIMALS_FRONTEND,
+    returnPage: 'origin'
   },
   {
     value: 'germinal-products',
@@ -52,4 +56,29 @@ export const startUrlFor = (value) => {
     (type) => type.value === value
   )
   return `${buildSetBaseUrl(frontend, setBase)}${START_ENTRY}`
+}
+
+/**
+ * Whether a notification of this type can be taken back to its own journey.
+ *
+ * @param {string} value - a notification type value
+ * @returns {boolean} true when the type has a page a returning notification lands on
+ */
+export const takesNotificationBack = (value) =>
+  NOTIFICATION_TYPES.some(
+    (type) => type.value === value && type.returnPage !== undefined
+  )
+
+/**
+ * Builds the URL that returns a notification to its journey frontend.
+ *
+ * @param {string} value - a `NOTIFICATION_TYPES` value for which `takesNotificationBack` is true
+ * @param {string} reference - the notification's reference number
+ * @returns {string} absolute URL of the page a returning notification lands on
+ */
+export const returnUrlFor = (value, reference) => {
+  const { frontend, setBase, returnPage } = NOTIFICATION_TYPES.find(
+    (type) => type.value === value
+  )
+  return `${buildNotificationUrl(frontend, setBase, reference)}/${returnPage}`
 }

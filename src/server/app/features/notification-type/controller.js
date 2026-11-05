@@ -4,7 +4,13 @@ import * as kit from '../../shared/kit.js'
 import { copyFor } from '../../shared/copy.js'
 import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
-import { NOTIFICATION_TYPES, startUrlFor } from './destinations.js'
+import { trimmedField } from '../../../common/helpers/trimmed-field.js'
+import {
+  NOTIFICATION_TYPES,
+  returnUrlFor,
+  startUrlFor,
+  takesNotificationBack
+} from './destinations.js'
 import { copy as en } from './copy/copy.en.js'
 import { copy as cy } from './copy/copy.cy.js'
 
@@ -19,6 +25,14 @@ const rules = requiredOneOf(
   copy.errors.notificationType
 )
 
+const readReturningNotification = (source) => {
+  const reference = trimmedField(source, 'notification-id')
+  const type = trimmedField(source, 'current-notification-type')
+  return reference && takesNotificationBack(type)
+    ? { reference, type }
+    : undefined
+}
+
 const itemsOf = (selected) =>
   NOTIFICATION_TYPES.map(({ value, copyKey }) => ({
     value,
@@ -26,36 +40,75 @@ const itemsOf = (selected) =>
     checked: value === selected
   }))
 
-const buildView = (h, { selected, errors = {} } = {}) =>
+const buildView = (h, { selected, returningNotification, errors = {} } = {}) =>
   h
     .view(view, {
       ...kit.base(copy.title, { backLink: dashboardPath() }),
       copy,
       errors,
       errorSummary: kit.errorSummary(errors),
+      returningNotification,
       items: itemsOf(selected)
     })
     .header('Cache-Control', 'no-store')
 
-const get = (_request, h) => buildView(h)
+const get = (request, h) => {
+  const returningNotification = readReturningNotification(request.query)
+  return buildView(h, {
+    selected: returningNotification?.type,
+    returningNotification
+  })
+}
 
-const post = (request, h) => {
-  const selected = request.payload?.[FIELD]
-  const { errors, value } = validate(rules, { [FIELD]: selected })
-  if (errors) {
-    return buildView(h, { selected, errors }).code(HTTP_STATUS_BAD_REQUEST)
-  }
-  const destination = startUrlFor(value[FIELD])
+const logDestination = (request, fields, message) =>
   logger.info(
     {
       organisationId: kit.requireOrganisationId(request),
       crn: request.auth.credentials.crn,
-      notificationType: value[FIELD],
+      ...fields
+    },
+    message
+  )
+
+const returnToNotification = (request, h, returningNotification) => {
+  const destination = returnUrlFor(
+    returningNotification.type,
+    returningNotification.reference
+  )
+  logDestination(
+    request,
+    {
+      notificationReference: returningNotification.reference,
+      notificationType: returningNotification.type,
       destination
     },
+    'Notification type kept, returning to the notification'
+  )
+  return h.redirect(destination)
+}
+
+const handOverToJourney = (request, h, notificationType) => {
+  const destination = startUrlFor(notificationType)
+  logDestination(
+    request,
+    { notificationType, destination },
     'Notification type chosen, handing over to the journey frontend'
   )
   return h.redirect(destination)
+}
+
+const post = (request, h) => {
+  const selected = request.payload?.[FIELD]
+  const returningNotification = readReturningNotification(request.payload)
+  const { errors, value } = validate(rules, { [FIELD]: selected })
+  if (errors) {
+    return buildView(h, { selected, returningNotification, errors }).code(
+      HTTP_STATUS_BAD_REQUEST
+    )
+  }
+  return value[FIELD] === returningNotification?.type
+    ? returnToNotification(request, h, returningNotification)
+    : handOverToJourney(request, h, value[FIELD])
 }
 
 export const routes = kit.pageRoutes(notificationTypePath(), { get, post })

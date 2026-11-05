@@ -3,7 +3,10 @@ import { test, expect } from '@playwright/test'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../fit/axe.js'
 import { signIn } from '../../../../../fit/sign-in.js'
 import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
-import { expectUnselectedNotificationType } from './fit/notification-type.js'
+import {
+  expectOnlyNotificationTypeChecked,
+  expectUnselectedNotificationType
+} from './fit/notification-type.js'
 
 const continueButton = (page) =>
   page.getByRole('button', { name: 'Continue', exact: true })
@@ -81,6 +84,39 @@ test.describe('notification type question', () => {
     expect(await response.headerValue('location')).toBe(
       `${PLANTS_ORIGIN}/high-risk-plants/start`
     )
+  })
+
+  test.describe('opened for a live animals notification', () => {
+    const ANIMALS_ORIGIN = 'http://localhost:3000'
+    const REFERENCE = 'DRAFT.IMP.2026.1'
+
+    test.beforeEach(async ({ page }) => {
+      await page.goto(
+        `${notificationTypePath()}?notification-id=${REFERENCE}&current-notification-type=live-animals`
+      )
+    })
+
+    test('shows Live animals checked and no other option', async ({ page }) => {
+      await expectOnlyNotificationTypeChecked(page, 'Live animals')
+    })
+
+    test("returns to the notification's origin page when Live animals stays chosen", async ({
+      page
+    }) => {
+      const returned = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'POST' &&
+          new URL(response.url()).pathname === notificationTypePath()
+      )
+
+      await continueButton(page).click()
+
+      const response = await returned
+      expect(response.status()).toBe(302)
+      expect(await response.headerValue('location')).toBe(
+        `${ANIMALS_ORIGIN}/live-animals/notifications/${REFERENCE}/origin`
+      )
+    })
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {

@@ -20,9 +20,12 @@ below.
 `template.njk`, `controller.test.js`, `copy/` and
 `notification-type.fit.spec.js` and `fit/notification-type.js`
 (`expectUnselectedNotificationType`, the FIT check of the question that the
-dashboard and question specs share), with `destinations.js` (and its test) in place
-of a view model. `destinations.js` owns which notification types the question
-offers, in what order, and the start URL each hands over to.
+dashboard and question specs share, and `expectOnlyNotificationTypeChecked`,
+the FIT check of the question opened for a returning notification), with
+`destinations.js` (and its test) in place of a view model. `destinations.js`
+owns which notification types the question offers, in what order, the start URL
+each hands over to, which types take a notification back, and the URL that
+returns one to its origin page.
 
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
 `add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,

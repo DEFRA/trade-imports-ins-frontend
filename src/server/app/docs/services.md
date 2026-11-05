@@ -97,7 +97,8 @@ temporary dev/local `address-lookup-spike` page.
 | `tradeImportsPlantsFrontend.baseUrl`   | `TRADE_IMPORTS_PLANTS_FRONTEND_URL`  | `http://localhost:3003` |
 
 The last two are browser-visible (the dashboard's row links, the notification
-type question's hand-over to `<base><set>/start`, and the journey origins the
+type question's hand-over to `<base><set>/start` and its return to a
+notification's origin page, and the journey origins the
 content-security-policy trusts for the handshake's form-action), so under the
 workspace stack they stay `localhost` while the three API URLs use
 `host.docker.internal`.
