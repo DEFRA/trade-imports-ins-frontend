@@ -1,5 +1,6 @@
 export const copy = {
   title: 'Dashboard',
+  createNew: 'Create new',
   search: {
     label: 'Search by notification reference',
     button: 'Search',
@@ -28,7 +29,6 @@ export const copy = {
     view: 'View'
   },
   empty: {
-    text: 'There are no notifications yet.',
-    startButton: 'Start a new notification'
+    text: 'There are no notifications yet.'
   }
 }

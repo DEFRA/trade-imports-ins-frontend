@@ -169,6 +169,11 @@ validation tables.
 `resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
 [`dashboard.js`](../features/address-book/fit/dashboard.js) —
 `expectDashboard`.
+[`dashboard.js`](../features/dashboard/fit/dashboard.js) —
+`dashboardSearchField`, `searchDashboardFor`.
+[`notification-type.js`](../features/notification-type/fit/notification-type.js) —
+`expectUnselectedNotificationType`: the browser is on the type question, with
+its five options in order and none chosen.
 [`seed-address.js`](../features/address-book/fit/seed-address.js) —
 `seedAddress`, the address the stub seeds for an ordinary organisation,
 its `seedAddressLines`, and the unknown and malformed ids.

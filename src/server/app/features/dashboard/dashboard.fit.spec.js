@@ -2,41 +2,61 @@ import { test, expect } from '@playwright/test'
 
 import { expectNoSeriousOrCriticalViolations } from '../../../../../fit/axe.js'
 import { signIn } from '../../../../../fit/sign-in.js'
+import { expectDashboard } from '../address-book/fit/dashboard.js'
+import { dashboardSearchField, searchDashboardFor } from './fit/dashboard.js'
+import { expectUnselectedNotificationType } from '../notification-type/fit/notification-type.js'
+import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
 
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
+const referenceCells = (page) =>
+  page.getByRole('cell', { name: /^GBN-AG-26-\d{6}$/ })
+const createNewButton = (page) =>
+  page.getByRole('button', { name: 'Create new', exact: true })
 
 test.describe('dashboard', () => {
-  test('shows notifications from every status with enough to identify the consignment', async ({
+  test('shows the three visible notifications, in the default sort order, with enough to identify the consignment', async ({
     page
   }) => {
     await signIn(page)
-    await page.goto('/')
+    await page.goto(dashboardPath())
 
-    await expect(
-      page.getByRole('heading', { name: 'Dashboard', exact: true })
-    ).toBeVisible()
-
-    await expect(
-      page.getByRole('cell', { name: REFERENCE_NUMBER, exact: true })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('cell', { name: 'GBN-AG-26-000002', exact: true })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('cell', { name: 'GBN-AG-26-000003', exact: true })
-    ).toBeVisible()
+    await expectDashboard(page)
+    await expect(referenceCells(page)).toHaveText([
+      'GBN-AG-26-000002',
+      REFERENCE_NUMBER,
+      'GBN-AG-26-000003'
+    ])
     await expect(page.getByRole('cell', { name: 'SUBMITTED' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'DRAFT' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'AMEND' })).toBeVisible()
+  })
 
-    await expect(
-      page.getByRole('cell', { name: 'GBN-AG-26-000004', exact: true })
-    ).toHaveCount(0)
+  test('offers Create new under the heading and above the search, and opens the question with nothing chosen', async ({
+    page
+  }) => {
+    await signIn(page)
+    await page.goto(dashboardPath())
+
+    await expectDashboard(page)
+    const button = createNewButton(page)
+    await expect(button).toBeVisible()
+    await expect(button).toHaveAttribute('href', notificationTypePath())
+    const buttonBox = await button.boundingBox()
+    const headingBox = await page
+      .getByRole('heading', { level: 1, name: 'Dashboard' })
+      .boundingBox()
+    const searchBox = await dashboardSearchField(page).boundingBox()
+    expect(headingBox.y).toBeLessThan(buttonBox.y)
+    expect(buttonBox.y).toBeLessThan(searchBox.y)
+
+    await button.click()
+
+    await expectUnselectedNotificationType(page)
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
     await signIn(page)
-    await page.goto('/')
+    await page.goto(dashboardPath())
 
     await expectNoSeriousOrCriticalViolations(page, 'dashboard')
   })
@@ -45,7 +65,7 @@ test.describe('dashboard', () => {
     page
   }) => {
     await signIn(page)
-    await page.goto('/')
+    await page.goto(dashboardPath())
 
     const link = page.getByRole('link', { name: /View.*GBN-AG-26-000001/s })
     await expect(link).toHaveAttribute(
@@ -58,7 +78,7 @@ test.describe('dashboard', () => {
     page
   }) => {
     await signIn(page)
-    await page.goto('/')
+    await page.goto(dashboardPath())
 
     const link = page.getByRole('link', { name: /View.*GBN-AG-26-000002/s })
     await expect(link).toHaveAttribute(
@@ -71,32 +91,24 @@ test.describe('dashboard', () => {
     page
   }) => {
     await signIn(page)
-    await page.goto('/')
+    await page.goto(dashboardPath())
 
-    await page
-      .getByLabel('Search by notification reference')
-      .fill(REFERENCE_NUMBER)
-    await page.getByRole('button', { name: 'Search' }).click()
+    await searchDashboardFor(page, REFERENCE_NUMBER)
 
-    await expect(
-      page.getByRole('cell', { name: REFERENCE_NUMBER, exact: true })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('cell', { name: 'GBN-AG-26-000002', exact: true })
-    ).toHaveCount(0)
+    await expect(referenceCells(page)).toHaveText([REFERENCE_NUMBER])
   })
 
-  test('no matching notification shows "No notifications found"', async ({
+  test('no matching notification shows "No notifications found" and still offers Create new, opening the question with nothing chosen', async ({
     page
   }) => {
     await signIn(page)
-    await page.goto('/')
+    await page.goto(dashboardPath())
 
-    await page
-      .getByLabel('Search by notification reference')
-      .fill('GBN-AG-26-999999')
-    await page.getByRole('button', { name: 'Search' }).click()
+    await searchDashboardFor(page, 'GBN-AG-26-999999')
 
     await expect(page.getByText('No notifications found')).toBeVisible()
+    await createNewButton(page).click()
+
+    await expectUnselectedNotificationType(page)
   })
 })

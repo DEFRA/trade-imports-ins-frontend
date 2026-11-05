@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test'
 
 import { expectNoSeriousOrCriticalViolations } from '../../../../../fit/axe.js'
 import { signIn } from '../../../../../fit/sign-in.js'
-
-const PAGE_URL = '/notification-type'
+import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
+import { expectUnselectedNotificationType } from './fit/notification-type.js'
 
 const continueButton = (page) =>
   page.getByRole('button', { name: 'Continue', exact: true })
@@ -11,30 +11,13 @@ const continueButton = (page) =>
 test.describe('notification type question', () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page)
-    await page.goto(PAGE_URL)
+    await page.goto(notificationTypePath())
   })
 
   test('asks what you are importing with five unselected options and a single Continue button', async ({
     page
   }) => {
-    const HEADING = /What are you importing\?/
-    const LABELS_IN_ORDER = [
-      'Live animals',
-      'Germinal products (semen, ova, embryos)',
-      'Plants for planting',
-      'Potatoes (seed and ware)',
-      'Wood products'
-    ]
-    await expect(
-      page.getByRole('heading', { level: 1, name: HEADING })
-    ).toBeVisible()
-
-    const radios = page.getByRole('radio')
-    await expect(radios).toHaveCount(LABELS_IN_ORDER.length)
-    for (const [index, label] of LABELS_IN_ORDER.entries()) {
-      await expect(radios.nth(index)).toHaveAccessibleName(label)
-      await expect(radios.nth(index)).not.toBeChecked()
-    }
+    await expectUnselectedNotificationType(page)
     await expect(page.locator('main').getByRole('button')).toHaveCount(1)
     await expect(continueButton(page)).toBeVisible()
   })
@@ -44,7 +27,7 @@ test.describe('notification type question', () => {
   }) => {
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', '/')
+    ).toHaveAttribute('href', dashboardPath())
     await expect(
       page.getByRole('link', { name: 'Dashboard', exact: true })
     ).toHaveAttribute('aria-current')
@@ -87,7 +70,7 @@ test.describe('notification type question', () => {
     const handOver = page.waitForResponse(
       (response) =>
         response.request().method() === 'POST' &&
-        response.url().endsWith(PAGE_URL)
+        response.url().endsWith(notificationTypePath())
     )
 
     await page.getByRole('radio', { name: 'Plants for planting' }).check()

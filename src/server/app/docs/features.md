@@ -13,11 +13,14 @@ below.
 
 **`dashboard/`** is the single-page shape: `controller.js`, `template.njk`,
 `controller.test.js`, `copy/`, `view-model/list.js` (plus its test), and
-`dashboard.fit.spec.js` beside the controller.
+`dashboard.fit.spec.js` beside the controller, and `fit/dashboard.js`
+(`dashboardSearchField`, `searchDashboardFor`).
 
 **`notification-type/`** is also a single-page feature: `controller.js`,
 `template.njk`, `controller.test.js`, `copy/` and
-`notification-type.fit.spec.js`, with `destinations.js` (and its test) in place
+`notification-type.fit.spec.js` and `fit/notification-type.js`
+(`expectUnselectedNotificationType`, the FIT check of the question that the
+dashboard and question specs share), with `destinations.js` (and its test) in place
 of a view model. `destinations.js` owns which notification types the question
 offers, in what order, and the start URL each hands over to.
 

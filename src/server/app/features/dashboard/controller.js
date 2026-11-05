@@ -74,7 +74,7 @@ const buildView = (
     sortOptions: sortOptionsOf(sort),
     referenceNumber,
     hasSearch,
-    startNewNotificationHref: notificationTypePath(),
+    createNewHref: notificationTypePath(),
     ...model
   })
 

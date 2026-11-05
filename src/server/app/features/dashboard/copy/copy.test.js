@@ -20,17 +20,21 @@ describe('#copy', () => {
     }
   )
 
-  it('Should describe the results range the way the page always has', () => {
+  it('Should show the results range as from-to of total', () => {
     expect(copy.results(26, 40, 40)).toBe('Showing 26-40 of 40')
   })
 
-  it('Should carry the search and empty-state wording the fit specs pin', () => {
+  it('Should carry the title, search wording and empty-state text', () => {
     expect(copy.title).toBe('Dashboard')
     expect(copy.search.label).toBe('Search by notification reference')
     expect(copy.search.noResults).toBe('No notifications found')
-    expect(copy.empty).toEqual({
-      text: 'There are no notifications yet.',
-      startButton: 'Start a new notification'
-    })
+    expect(copy.empty).toEqual({ text: 'There are no notifications yet.' })
+  })
+
+  it.each([
+    ['en', copy, 'Create new'],
+    ['cy', cy, 'Creu newydd']
+  ])('Should label the Create new button in %s', (_locale, bundle, label) => {
+    expect(bundle.createNew).toBe(label)
   })
 })
