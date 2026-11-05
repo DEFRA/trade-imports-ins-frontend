@@ -25,8 +25,10 @@ static files.
 - [`src/plugins/csrf.js`](../../../plugins/csrf.js) — CSRF protection via
   `@hapi/crumb`, disabled during test runs.
 - [`src/auth/`](../../../auth/) — token verification, permissions lookup,
-  safe-redirect checking and the browser-facing Defra ID URL that the sign-out
-  URL and the content-security-policy form-action share.
+  safe-redirect checking and the one Defra ID hostname rewrite
+  ([`defra-id-hostnames.js`](../../../auth/defra-id-hostnames.js)), shared by
+  the sign-in token and key endpoints, the sign-out URL and the
+  content-security-policy form-action.
 - [`src/config/config.js`](../../../config/config.js) — convict
   configuration, validated strict at boot.
 - [`src/config/nunjucks/`](../../../config/nunjucks/nunjucks.js) — the

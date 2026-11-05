@@ -98,9 +98,16 @@ read the banner),
 `startRealModeServerServingCountries(countries)`, which returns a getter
 for the started server), `restore-config-after-each.js`
 (`restoreConfigAfterEach(keys)`, which restores the named config keys after
-each test) and `serve-oidc-discovery.js` (`serveOidcDiscovery()`, which serves
-the OIDC discovery document at the network boundary; `startRealModeServer()`
-calls it).
+each test) and `serve-oidc-discovery.js`. That file exports
+`serveOidcDiscovery()`, which serves the OIDC discovery document at the
+network boundary, and `startRealModeServer()` calls it. It also exports
+`discoveryUrlRequest({ persist, ...scopeOptions })`, the nock interceptor at
+the configured discovery URL, for a test that matches a header, delays the
+reply or fails it. The last file, `stack-defra-id-rewrite.js`, exports
+`setStackDefraIdRewrite()`, which sets the workspace stack's Defra ID
+hostname rewrite (enabled, from `host.docker.internal` and
+`trade-imports-defra-id-stub`, to `localhost`), and
+`STACK_DEFRA_ID_REWRITE_KEYS`, the three config keys to restore.
 
 [`shared/copy-leaves.test-support.js`](../shared/copy-leaves.test-support.js)
 holds `itHoldsTextAtEveryLeaf({ en, cy })`, which every copy bundle test calls,

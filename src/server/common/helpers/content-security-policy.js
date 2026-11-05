@@ -1,6 +1,6 @@
 import Blankie from 'blankie'
 
-import { getBrowserFacingDiscoveryUrl } from '../../../auth/get-browser-facing-discovery-url.js'
+import { getBrowserFacingDiscoveryUrl } from '../../../auth/defra-id-hostnames.js'
 import { siblingFrontendBaseUrls } from '../../../config/config.js'
 
 const defraIdOrigin = getBrowserFacingDiscoveryUrl().origin

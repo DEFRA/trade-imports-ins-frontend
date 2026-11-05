@@ -236,18 +236,18 @@ export const config = convict({
     },
     browserFacingHostnameRewrite: {
       enabled: {
-        doc: 'Rewrite internal OIDC hostnames in every browser-facing Defra ID URL the service builds, for local environments',
+        doc: 'Rewrite internal OIDC hostnames in Defra ID URLs, for local environments',
         format: STRICT_BOOLEAN,
         default: !isProduction,
         env: 'DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_ENABLED'
       },
       from: {
-        doc: 'OIDC hostnames rewritten in every browser-facing Defra ID URL the service builds',
+        doc: 'Internal OIDC hostnames covered by the rewrite',
         format: Array,
         default: ['host.docker.internal', 'trade-imports-defra-id-stub']
       },
       to: {
-        doc: 'Target hostname used for the rewrite of every browser-facing Defra ID URL the service builds',
+        doc: 'Hostname the rewrite produces',
         format: String,
         default: 'localhost',
         env: 'DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_TO'

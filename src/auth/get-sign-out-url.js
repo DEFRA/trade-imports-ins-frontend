@@ -1,13 +1,13 @@
 import { config } from '../config/config.js'
-import { getBrowserFacingDiscoveryUrl } from './get-browser-facing-discovery-url.js'
+import { getBrowserFacingDiscoveryUrl } from './defra-id-hostnames.js'
 
 async function getSignOutUrl(_request, _token) {
-  const oidcBaseUrl = getBrowserFacingDiscoveryUrl()
-  const basePath = oidcBaseUrl.pathname.replace(
+  const discoveryUrl = getBrowserFacingDiscoveryUrl()
+  const issuerPath = discoveryUrl.pathname.replace(
     '/.well-known/openid-configuration',
     ''
   )
-  const signOutUrl = new URL(`${oidcBaseUrl.origin}${basePath}/signout`)
+  const signOutUrl = new URL(`${discoveryUrl.origin}${issuerPath}/signout`)
   signOutUrl.searchParams.set(
     'post_logout_redirect_uri',
     config.get('defraId.signOutRedirectUrl')

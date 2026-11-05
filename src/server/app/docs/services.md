@@ -108,6 +108,10 @@ a hand-over to a journey frontend can pass through sign-in. That origin is
 derived from `defraId.oidcDiscoveryUrl` with the `defraId.browserFacingHostnameRewrite`
 rewrite applied; it needs no key of its own.
 
+The rewrite settings also decide when the server-side `token_endpoint` and
+`jwks_uri` are moved to the discovery hostname: when that hostname is one of
+`from` or equal to `to`.
+
 ## Shared HTTP helpers
 
 [`lib/http-client.js`](../lib/http-client.js): `throwOnError(response)`
