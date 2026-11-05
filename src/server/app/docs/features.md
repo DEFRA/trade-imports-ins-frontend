@@ -344,7 +344,7 @@ characters, which is how the lookup returns and expects it, so `sw1a1aa`
 still finds a match.
 
 `map-to-address-fields.js` maps one lookup result onto the address
-book's fields in `address-book/address-schema.js`. Nothing is saved; the
+book's fields in `features/address-book/fields.js`. Nothing is saved; the
 mapping is a proposal for the permanent build. The lookup returns
 nothing shaped like the form, and the spike shows three gaps:
 

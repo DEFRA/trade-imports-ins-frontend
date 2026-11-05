@@ -94,7 +94,7 @@ To audit the app the way CI does, start the workspace stack instead
 this frontend on 3002 against the real address book and the Defra ID stub,
 and run `npm run lighthouse` from this repository. The sign-in script
 fills the Defra ID stub's form as a single-organisation user; in stub mode
-there is no form and it has nothing to do.
+there is no form to fill, and it only chooses the address type.
 
 ## Passing scores
 

@@ -3,16 +3,23 @@
 `src/server/app/services/` holds one folder per upstream. Each holds
 **`index.js`** the barrel a feature imports, **`client.js`** the HTTP client
 and **`stub.js`** the in-memory stand-in, plus any module those share. The
-address book also holds **`address-types.js`** (the address type values, `ROLES`, the role codes, the
-roles each address type groups, in the order the Type select offers them, and
-`addressTypeOfRole`, the address type that groups a role, `keepRolesOfferedBy`,
-the given roles an address type offers, kept in `ROLES_BY_ADDRESS_TYPE`'s
-order, which is not the order the roles question shows them,
-`addressTypeRequiresUnitedKingdom`, whether an address type must be in the
-United Kingdom, and `PLACE_ROLES`, the roles that name a place) and
-**`typed-seed.js`** (the stub's typed seed addresses, each with its roles), which the barrel
-exports. A feature imports only the barrel, and nothing imports any other file
-from outside its folder.
+address book also holds **`typed-seed.js`** (the stub's typed seed addresses,
+each with its roles) and **`address-types.js`**, which exports:
+
+- `ADDRESS_TYPES`, the address type values;
+- `ROLES`, the role codes;
+- `ROLES_BY_ADDRESS_TYPE`, the roles each address type groups, in the order
+  the Type select offers them;
+- `addressTypeOfRole`, the address type that groups a role;
+- `keepRolesOfferedBy`, the given roles an address type offers, kept in
+  `ROLES_BY_ADDRESS_TYPE`'s order, which is not the order the roles question
+  shows them;
+- `addressTypeRequiresUnitedKingdom`, whether an address type must be in the
+  United Kingdom;
+- `PLACE_ROLES`, the roles that name a place.
+
+The barrel exports both. A feature imports only the barrel, and nothing
+imports any other file from outside its folder.
 
 The address book itself holds roles only. An address type is this service's
 grouping of roles for its screens (the add flow's first step, the list's tabs
@@ -56,7 +63,7 @@ A save sends the address's `roles` and no address type.
 
 The [stub](../services/address-book/stub.js) keeps a `Map` per
 organisation, seeded by the id's suffix (`-empty`, `-paginated` for 30
-addresses, `-typed` for five addresses holding roles of all three address
+addresses, `-typed` for addresses holding roles of all three address
 types, otherwise `Stub Farm 1` at `000000000000000000000001`); an untyped
 seed address is a place of origin and consignor. It mints 24-character hex
 ids because the `{id}` routes validate an ObjectId. It lists newest first, a

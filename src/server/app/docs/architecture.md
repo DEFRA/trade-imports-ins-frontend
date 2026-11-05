@@ -126,13 +126,11 @@ govuk-frontend's assets to `/public/assets`, and writes the manifest
 `getAssetPath()` reads. Run `npm run build:frontend` once; `npm run dev`
 watches. A missing webpack entry is a silent 404 — the template renders,
 the bundle does not. `_govuk-frontend.scss` configures GOV.UK Frontend
-with this service's asset path and global styles. The MoJ sub navigation
-stylesheet is copied to `_sub-navigation.scss` rather than imported from
-`@ministryofjustice/frontend`: the package stylesheet loads its own vendored
-GOV.UK Frontend, which forwards `govuk-frontend/dist/govuk/base` with
-`$govuk-suppressed-warnings`, and Sass refuses with "This module was already
-loaded, so it can't be configured using \"with\"" whichever of the two is
-`@use`d first.
+through the vendored module of `@ministryofjustice/frontend`
+(`moj/vendor/govuk-frontend`), with this service's asset path and global
+styles, so GOV.UK Frontend is configured once. `application.scss` then
+`@use`s the package's own sub navigation component
+(`moj/components/sub-navigation/sub-navigation`).
 
 ## Enforced boundaries
 

@@ -59,7 +59,8 @@ set-up: page paths (`addressBookPath()`, `addressAddPath()`,
 (`addressesApiPath(organisationId)`, `addressApiPath(addressId,
 organisationId)`, both defaulting to the session organisation), fixtures
 (`ADDRESS_ID`, `STORED_ADDRESS` (with two roles),
-`VALID_ADDRESS_FIELDS` (the nine address fields), `VALID_ADDRESS_PAYLOAD` (the
+`VALID_ADDRESS_FIELDS` (the nine address fields), `VALID_ADDRESS_RECORD` (those
+fields with the stored address's roles), `VALID_ADDRESS_PAYLOAD` (the
 fields with Place of origin ticked), `INVALID_ADDRESS_PAYLOAD`, `ADDRESS_FORM_LABELS` (the add and edit forms'
 field labels in page order, written out as literals), `COUNTRIES`,
 `MALFORMED_ADDRESS_ID`,
@@ -73,7 +74,8 @@ the add form's GET needs, `cookieHeaderOf()`, which turns a response's
 `serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
 `serveAddressNotFoundForOtherOrganisation(addressId)`,
 `serveAddressCreated(matchBody)`, which stubs a successful create call whose
-body matches `matchBody`, and
+body matches `matchBody`, by default any body that carries roles and no
+address type, and
 `serveAddressCreationCapturingBody()`, which stubs it and
 returns the body it received alongside the scope) and checks
 (`expectRedirectTo()`, `expectServerErrorPage()`), which every address
@@ -97,7 +99,9 @@ ids and token; the Vitest tests and the fit specs both use these;
 `ROLES_BY_PARTY`, each party's own role and the other roles on its
 side, `journeyRolesHintFor(party)`, the roles question's hint naming that
 party's own role, and `UNREGISTERED_JOURNEY_TYPE`, a journey type the
-registry does not list),
+registry does not list, `UNITED_KINGDOM_PARTIES`, the parties whose address
+must be in the United Kingdom, and `ANY_COUNTRY_PARTIES`, the parties whose
+address may be in any country),
 `answer-oidc-discovery.js` (`answerOidcDiscovery()`, which answers the Defra
 ID OIDC discovery request once with `mockOidcConfig`; `startRealModeServer()`
 calls it before each server start, so no test calls it itself),
@@ -117,8 +121,9 @@ shows),
 and `normalisedText(text)`, a rendered element's text trimmed with its
 whitespace collapsed to single spaces, which every Vitest test reads text
 through),
-`capture-info-logs.js` (`captureInfoLogs()`, which records the logger's
-info entries for a describe block and returns a function that reads those
+`capture-info-logs.js` (`captureInfoLogs()`, `captureWarnLogs()` and
+`captureErrorLogs()`, each of which records the logger's
+entries at its level for a describe block and returns a function that reads those
 logged with a message),
 `open-empty-address-book-with-cookies.js`
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
@@ -126,6 +131,10 @@ opens the address book list with the cookies a POST set so a test can
 read the banner),
 `session-auth.js` (`sessionAuth(sessionId, overrides)` and
 `ORGANISATION_ID`, the one test organisation id),
+`address-book-stub.js` (`STUB_SEED_ADDRESS_NAME`, the name of the address the
+stub seeds for an ordinary organisation, `STUB_LIST_PAGE_SIZE`, the page size
+the list asks the stub for, and `listedStubNames(organisationId, query)`, the
+names the stub lists at that page size),
 `mock-oidc-config.js` (`mockOidcConfig`), `mock-auth-config.js`
 (`mockAuthConfig(importOriginal)`), `test-server.js`
 (`startTestServer()`, `stopTestServer(server)`, `startRealModeServer()`,
@@ -135,9 +144,12 @@ for the started server).
 [`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
 holds the list's fixtures, nock stubs and Cheerio readers:
 `TABLE_HEADINGS` (the list table's column headings in order),
-`NO_RESULTS_LINE` (the results line for no matches),
+`NO_RESULTS_LINE` (the results line for no matches; both come from
+[`fit/address-book-list-text.js`](../features/address-book/fit/address-book-list-text.js),
+which the fit specs read too),
 `startServerWithPageReader()`, `stubAddressPage(query, addressPage)` (which
-stubs the request for the Origin and Consignor tab's roles unless the query names another
+stubs the request for the Origin and Consignor tab's roles unless the query's
+`tabAddressType`, the tab the page shows and never a value it sends, names another
 `addressType` or one `role`), `stubAddressBookUnavailable()`, `contentOf`,
 `tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`, `typeSelectStateOf`
 (the Type select's label, option texts, options with an empty value and chosen
@@ -202,31 +214,37 @@ names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
 `saveAndContinueButton`,
 `chooseAddressType` (chooses a type on the 'Choose an address type' page and
 continues), `openAddForm` (opens the address form through the type page with
-a type chosen), `roleCheckbox` (the checkbox for one role), `tickRoles` (ticks the
-roles checkboxes it is given),
+a type chosen), `signInAndOpenAddForm` (signs in with an organisation id and
+opens the address form through the type page), `roleCheckbox` (the checkbox for one role), `tickRoles` (ticks the
+roles checkboxes it is given), `expectInDocumentOrder` (the locators it is given
+appear in that order in the page),
 `openAddFormFromJourney` (signs in and opens the add form with a journey
 handshake, the consignor's by default), `addressTypeListUrl` (an address
 type's list URL, written out rather than built by the list view model),
 `originOrConsignorListUrl` (the
-Origin or Consignor tab's list URL, where a save of that type lands), `addValidAddressToFreshOrganisation` (signs in to a fresh
+Origin and Consignor tab's list URL, where a save of that type lands), `addValidAddressToFreshOrganisation` (signs in to a fresh
 organisation, goes through the type page, then saves a valid address of the
-given type with the uses the caller passes, Origin or Consignor with Place of
-origin by default, and lands on that type's list), `refuseSaveThenReopenAddForm`
+given type with the roles the caller passes, by default Origin or Consignor
+with the type's first role, Place of
+origin, and lands on that type's list; `emptyBook: true` signs in to an
+organisation the stub seeds no address for), `refuseSaveThenReopenAddForm`
 (saves a form with a malformed email, follows Back and chooses the type again), `malformedEmail` (an email value the form refuses as malformed),
 `validAddressViewLink`,
 `expectErrorFocusOn`, the two
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
-`UNKNOWN_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE`,
-`ONE_MATCH_LINE` (the results line for a single match),
+`UNKNOWN_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE` and
+`TABLE_HEADINGS` (from `address-book-list-text.js`),
+`ONE_MATCH_LINE` (the results line for a single match), `typeCellOf` (the Type
+cell of the row naming an address),
 `openAddressBookList`, `tabLinksOf` (the address type tabs'
 links), `selectedTabOf` (the tab marked current), `tabPanelHeadingOf`
 (the selected tab's panel heading), `expectNamesListed`
 (the names in the list's Name column), `expectAddressBookList`,
 `expectEmptyAddressBookList`, `searchFieldOf`, `typeSelectOf` (the
-Playwright locator for the Type select; the jsdom and Cheerio reader in
-`list.test-support.js` is `typeSelectStateOf`), `followTab` (follows a
-address type tab's link), `openFilterDisclosure`,
+Playwright locator for the Type select; the Cheerio reader in
+`list.test-support.js` is `typeSelectStateOf`), `followTab` (follows
+an address type tab's link), `openFilterDisclosure`,
 `expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery`,
 `resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
 [`dashboard.js`](../features/address-book/fit/dashboard.js) —
@@ -243,7 +261,7 @@ its `seedAddressLines`, and the unknown and malformed ids.
 Every test signs in with its own organisation id, because the
 address-book stub keys its data by organisation; the `-empty`,
 `-paginated` and `-typed` suffixes select those seeds (thirty addresses,
-four pages of eight; five addresses holding roles of all three address
+four pages of eight; addresses holding roles of all three address
 types). No sleeps, no page objects, and
 `exact: true` on "Back". On failure read
 `test-results/<spec>/error-context.md` and the HTML report in
