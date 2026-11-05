@@ -1,17 +1,17 @@
 import Boom from '@hapi/boom'
 
 import { createLogger } from '../../../common/helpers/logging/logger.js'
-import { isKnownJourneyType, roleOfParty } from './journey-registry.js'
+import { isResolvableHandshake } from './journey-registry.js'
 
 const SESSION_KEY = 'addressBookHandshake'
 
 const logger = createLogger()
 
-const logRefusedHandshake = ({ journeyType, notificationId, fulfilmentId }) => {
-  logger.warn(
-    { journeyType, notificationId, fulfilmentId },
-    'Journey handshake refused, the journey type or fulfilment id is not listed'
-  )
+const logHandshakeIds = (
+  { journeyType, notificationId, fulfilmentId },
+  message
+) => {
+  logger.warn({ journeyType, notificationId, fulfilmentId }, message)
 }
 
 const queryValue = (request, name) => {
@@ -35,11 +35,18 @@ const buildHandshakeContext = ({
   }
 
   if (!journeyType || !notificationId || !fulfilmentId || !handshakeToken) {
+    logHandshakeIds(
+      { journeyType, notificationId, fulfilmentId },
+      'Journey handshake refused, it is missing an id or its token'
+    )
     throw Boom.badRequest('Incomplete journey handshake')
   }
 
-  if (!roleOfParty({ journeyType, fulfilmentId })) {
-    logRefusedHandshake({ journeyType, notificationId, fulfilmentId })
+  if (!isResolvableHandshake({ journeyType, fulfilmentId })) {
+    logHandshakeIds(
+      { journeyType, notificationId, fulfilmentId },
+      'Journey handshake refused, the journey type or fulfilment id is not listed'
+    )
     throw Boom.notFound()
   }
 
@@ -82,7 +89,11 @@ const validatedSessionContext = (request) => {
   if (!fromSession) {
     return null
   }
-  if (!isKnownJourneyType(fromSession.journeyType)) {
+  if (!isResolvableHandshake(fromSession)) {
+    logHandshakeIds(
+      fromSession,
+      'Session journey handshake discarded, the journey type or fulfilment id is not listed'
+    )
     storeHandshakeContext(request, null)
     return null
   }

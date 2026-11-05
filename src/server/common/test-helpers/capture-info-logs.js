@@ -2,22 +2,26 @@ import { afterEach, beforeEach, vi } from 'vitest'
 
 import { createLogger } from '../helpers/logging/logger.js'
 
-export const captureInfoLogs = () => {
+const captureLogsAt = (level) => {
   const entries = []
-  let infoSpy
+  let spy
 
   beforeEach(() => {
     entries.length = 0
-    infoSpy = vi
-      .spyOn(createLogger(), 'info')
+    spy = vi
+      .spyOn(createLogger(), level)
       .mockImplementation((fields, message) => {
         entries.push({ fields, message })
       })
   })
 
   afterEach(() => {
-    infoSpy.mockRestore()
+    spy.mockRestore()
   })
 
   return (message) => entries.filter((entry) => entry.message === message)
 }
+
+export const captureInfoLogs = () => captureLogsAt('info')
+
+export const captureWarnLogs = () => captureLogsAt('warn')

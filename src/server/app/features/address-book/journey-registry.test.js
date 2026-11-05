@@ -16,10 +16,10 @@ import {
 import {
   ADDRESS_LANDING,
   CONSIGNMENT_CONTACT_FULFILMENT_ID,
-  rolesOfParty,
+  rolesToSaveForParty,
   buildReturnUrl,
   isConsignmentContact,
-  isKnownJourneyType,
+  isResolvableHandshake,
   JOURNEY_TYPES,
   requiresUnitedKingdomAddress,
   ownAndOtherRolesOfParty
@@ -52,11 +52,22 @@ describe('journey-registry', () => {
     config.set(BASE_URL_CONFIG_KEY, ANIMALS_BASE_URL)
   })
 
-  describe('isKnownJourneyType', () => {
-    test('recognises the live-animals journey type', () => {
-      expect(isKnownJourneyType(JOURNEY_TYPES.GBN_AG)).toBe(true)
-      expect(isKnownJourneyType(UNREGISTERED_JOURNEY_TYPE)).toBe(false)
-    })
+  describe('isResolvableHandshake', () => {
+    test.each(Object.entries(JOURNEY_HANDSHAKES_BY_PARTY))(
+      'is true for the %s handshake',
+      (_party, handshake) => {
+        expect(isResolvableHandshake(handshakeContextOf(handshake))).toBe(true)
+      }
+    )
+
+    test.each(UNRESOLVABLE_PARTY_CASES)(
+      'is false for %s',
+      (_name, overrides) => {
+        const context = overrides && { ...CONSIGNOR_CONTEXT, ...overrides }
+
+        expect(isResolvableHandshake(context)).toBe(false)
+      }
+    )
   })
 
   describe('requiresUnitedKingdomAddress', () => {
@@ -88,24 +99,17 @@ describe('journey-registry', () => {
       ).toBe(false)
     })
 
-    test('is false for a fulfilment id the registry does not list', () => {
-      expect(
-        requiresUnitedKingdomAddress({
-          journeyType: JOURNEY_TYPES.GBN_AG,
-          fulfilmentId: 'not-a-fulfilment-id'
-        })
-      ).toBe(false)
-    })
+    test.each(UNRESOLVABLE_PARTY_CASES)(
+      'is false for %s',
+      (_name, overrides) => {
+        const context = overrides && {
+          ...handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY.consignee),
+          ...overrides
+        }
 
-    test('is false for a consignee fulfilment id under an unregistered journey type, and for no context', () => {
-      expect(
-        requiresUnitedKingdomAddress({
-          journeyType: UNREGISTERED_JOURNEY_TYPE,
-          fulfilmentId: JOURNEY_HANDSHAKES_BY_PARTY.consignee['fulfilment-id']
-        })
-      ).toBe(false)
-      expect(requiresUnitedKingdomAddress(null)).toBe(false)
-    })
+        expect(requiresUnitedKingdomAddress(context)).toBe(false)
+      }
+    )
   })
 
   describe('isConsignmentContact', () => {
@@ -117,7 +121,7 @@ describe('journey-registry', () => {
 
     test.each(Object.entries(JOURNEY_HANDSHAKES_BY_PARTY))(
       'is false for the %s handshake',
-      (_role, handshake) => {
+      (_party, handshake) => {
         expect(isConsignmentContact(handshakeContextOf(handshake))).toBe(false)
       }
     )
@@ -255,12 +259,15 @@ describe('ownAndOtherRolesOfParty', () => {
   )
 })
 
-describe('rolesOfParty', () => {
+describe('rolesToSaveForParty', () => {
   test.each(Object.entries(ROLES_BY_PARTY))(
     'gives the %s handshake its one role',
     (party, { ownRole }) => {
       expect(
-        rolesOfParty(handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]), [])
+        rolesToSaveForParty(
+          handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]),
+          []
+        )
       ).toEqual([ownRole])
     }
   )
@@ -284,7 +291,7 @@ describe('rolesOfParty', () => {
     'gives the %s handshake its own role and the posted %j its side offers, in the type order',
     (party, postedRoles, roles) => {
       expect(
-        rolesOfParty(
+        rolesToSaveForParty(
           handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]),
           postedRoles
         )
@@ -294,7 +301,7 @@ describe('rolesOfParty', () => {
 
   test('gives the consignment contact only its own role whatever is posted', () => {
     expect(
-      rolesOfParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE), [
+      rolesToSaveForParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE), [
         'CONSIGNOR'
       ])
     ).toEqual(['BRANCH_ADDRESS'])

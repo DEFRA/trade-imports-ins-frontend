@@ -55,13 +55,15 @@ root:
 - [`journey-registry.js`](../features/address-book/journey-registry.js) —
   `JOURNEY_TYPES` (the registered journey types), `ADDRESS_LANDING` (select,
   return and cancel, the page the journey opens on return),
-  `isKnownJourneyType`, `requiresUnitedKingdomAddress`
+  `isResolvableHandshake` (whether a handshake's journey type and fulfilment id
+  resolve to a party's role: the one check the query, payload and session
+  handshakes all pass), `requiresUnitedKingdomAddress`
   (whether the role's address must be in the United Kingdom: the address type
   of its role is one `addressTypeRequiresUnitedKingdom` holds, and the party is
   not the consignment contact), `ownAndOtherRolesOfParty` (the party's own role and the
   other roles on its side, in `ROLES_BY_ADDRESS_TYPE` order, which feeds the add
   page's checkboxes; no own role and no other roles for a fulfilment id the map
-  does not list), `rolesOfParty`
+  does not list), `rolesToSaveForParty`
   (the roles a journey-mode save carries: the party's own
   role (`roleOfParty`) plus the posted roles its address type offers, through
   the address book's `keepRolesOfferedBy`), `isConsignmentContact` (whether a
@@ -73,7 +75,7 @@ root:
   from each party's fulfilment id, the five roles and the consignment contact,
   to the party's own role, which its address is always saved with alongside any
   ticked roles its side offers; `ownAndOtherRolesOfParty`,
-  `rolesOfParty` and `requiresUnitedKingdomAddress` read it.
+  `rolesToSaveForParty` and `requiresUnitedKingdomAddress` read it.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
   `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address
   type, the roles its Type select offers in order, and the copy key of its label
@@ -224,7 +226,7 @@ adds to that shape for a journey:
   address is being added as a <Role> address…") and checkboxes for the other
   roles on its side, all unticked and optional: no error is raised for it, the
   ticked roles stay ticked when the page is shown again with errors, and the
-  save carries `rolesOfParty`: the party's own role and the
+  save carries `rolesToSaveForParty`: the party's own role and the
   ticked roles the party's page offers (logging any it discards at info, with
   the notification and fulfilment ids). The consignment contact's form has no
   roles question.

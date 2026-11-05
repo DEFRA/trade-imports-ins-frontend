@@ -6,6 +6,7 @@ import {
   UNREGISTERED_JOURNEY_TYPE,
   handshakeContextOf
 } from '../../../common/test-helpers/journey-handshake.js'
+import { captureWarnLogs } from '../../../common/test-helpers/capture-info-logs.js'
 import {
   loadHandshakeContext,
   readHandshakePayload,
@@ -24,6 +25,12 @@ const PADDED_CONSIGNOR_HANDSHAKE = Object.fromEntries(
   ])
 )
 const INCOMPLETE_HANDSHAKE_ERROR = 'Incomplete journey handshake'
+const INCOMPLETE_MESSAGE =
+  'Journey handshake refused, it is missing an id or its token'
+const SESSION_DISCARDED_MESSAGE =
+  'Session journey handshake discarded, the journey type or fulfilment id is not listed'
+
+const warnedWith = captureWarnLogs()
 
 const validContext = handshakeContextOf(CONSIGNOR_HANDSHAKE)
 
@@ -203,20 +210,59 @@ describe('resolveHandshakeContext', () => {
     expect(resolveHandshakeContext(request)).toEqual(validContext)
   })
 
-  test('clears and ignores a session whose journey type is no longer registered', () => {
+  test.each([
+    [
+      'whose journey type is no longer registered',
+      { journeyType: 'retired-journey' }
+    ],
+    [
+      'whose fulfilment id is not listed',
+      { fulfilmentId: 'not-a-fulfilment-id' }
+    ]
+  ])(
+    'clears and ignores a session handshake %s, and logs it once at warn',
+    (_name, overrides) => {
+      const sessionContext = { ...validContext, ...overrides }
+      const request = mockRequest(
+        {},
+        { name: 'Farm' },
+        { [SESSION_KEY]: sessionContext }
+      )
+
+      expect(resolveHandshakeContext(request)).toBeNull()
+      expect(loadHandshakeContext(request)).toBeNull()
+      expect(warnedWith(SESSION_DISCARDED_MESSAGE)).toEqual([
+        {
+          fields: {
+            journeyType: sessionContext.journeyType,
+            notificationId: sessionContext.notificationId,
+            fulfilmentId: sessionContext.fulfilmentId
+          },
+          message: SESSION_DISCARDED_MESSAGE
+        }
+      ])
+    }
+  )
+
+  test('logs an incomplete payload handshake once at warn before refusing it', () => {
     const request = mockRequest(
       {},
-      { name: 'Farm' },
-      {
-        [SESSION_KEY]: {
-          ...validContext,
-          journeyType: 'retired-journey'
-        }
-      }
+      { 'journey-type': CONSIGNOR_HANDSHAKE['journey-type'], name: 'Farm' }
     )
 
-    expect(resolveHandshakeContext(request)).toBeNull()
-    expect(loadHandshakeContext(request)).toBeNull()
+    expect(() => resolveHandshakeContext(request)).toThrow(
+      Boom.badRequest(INCOMPLETE_HANDSHAKE_ERROR)
+    )
+    expect(warnedWith(INCOMPLETE_MESSAGE)).toEqual([
+      {
+        fields: {
+          journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
+          notificationId: '',
+          fulfilmentId: ''
+        },
+        message: INCOMPLETE_MESSAGE
+      }
+    ])
   })
 })
 

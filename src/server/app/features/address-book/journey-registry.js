@@ -41,9 +41,6 @@ const registry = Object.freeze({
   }
 })
 
-export const isKnownJourneyType = (journeyType) =>
-  Object.hasOwn(registry, journeyType)
-
 export const roleOfParty = (context) => {
   const roleByFulfilmentId =
     registry[context?.journeyType]?.roleByPartyFulfilmentId
@@ -52,6 +49,9 @@ export const roleOfParty = (context) => {
     ? roleByFulfilmentId[context.fulfilmentId]
     : undefined
 }
+
+export const isResolvableHandshake = (context) =>
+  roleOfParty(context) !== undefined
 
 export const isConsignmentContact = (context) => {
   const contactFulfilmentId =
@@ -79,7 +79,7 @@ export const ownAndOtherRolesOfParty = (context) => {
   }
 }
 
-export const rolesOfParty = (context, postedRoles) => {
+export const rolesToSaveForParty = (context, postedRoles) => {
   const ownRole = roleOfParty(context)
   return keepRolesOfferedBy(addressTypeOfRole(ownRole), [
     ownRole,

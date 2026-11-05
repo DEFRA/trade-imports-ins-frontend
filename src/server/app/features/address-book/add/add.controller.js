@@ -41,7 +41,7 @@ import {
 } from '../handshake-context.js'
 import {
   ADDRESS_LANDING,
-  rolesOfParty,
+  rolesToSaveForParty,
   buildReturnUrl,
   isConsignmentContact,
   ownAndOtherRolesOfParty
@@ -316,7 +316,7 @@ const rolesToSave = ({
 }) =>
   addMode === ADD_MODES.ADDRESS_BOOK
     ? keepRolesOfferedBy(addressType, postedRoles)
-    : rolesOfParty(handshakeContext, postedRoles)
+    : rolesToSaveForParty(handshakeContext, postedRoles)
 
 const finishAddressBookAdd = (
   request,

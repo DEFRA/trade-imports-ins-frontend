@@ -405,11 +405,11 @@ test.describe('add address reached from a notification journey', () => {
     }
   })
 
-  for (const [party, roleName] of [
+  for (const [party, partyName] of [
     ['placeOfOrigin', 'place of origin'],
     ['consignor', 'consignor']
   ]) {
-    test(`from the ${roleName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
+    test(`from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
       page
     }) => {
       await openAddFormFromJourney(
