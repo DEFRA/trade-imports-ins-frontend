@@ -90,17 +90,14 @@ const addressBookAddressTypeOf = (request, addMode) =>
     ? storedChosenAddressType(request)
     : undefined
 
-const storeAddressBookEntry = (
-  request,
-  { addMode, addressType, postedValues, postedRoles }
-) => {
-  if (addMode === ADD_MODES.ADDRESS_BOOK) {
-    storeEnteredAddress(request, {
-      formValues: postedValues,
-      tickedRoles: keepRolesOfferedBy(addressType, postedRoles)
-    })
-  }
-}
+const addLogContextOf = ({ organisationId, handshakeContext, addressType }) =>
+  handshakeContext
+    ? {
+        organisationId,
+        notificationId: handshakeContext.notificationId,
+        fulfilmentId: handshakeContext.fulfilmentId
+      }
+    : { organisationId, addressType }
 
 const cancelUrlFor = (addMode, handshakeContext) => {
   switch (addMode) {
@@ -205,10 +202,8 @@ const handBackAddress = (
 ) => {
   logger.info(
     {
-      organisationId,
+      ...addLogContextOf({ organisationId, handshakeContext }),
       addressId,
-      notificationId: handshakeContext.notificationId,
-      fulfilmentId: handshakeContext.fulfilmentId,
       landing
     },
     'Address handed back to the journey'
@@ -218,13 +213,13 @@ const handBackAddress = (
   )
 }
 
-const redirectAfterCancel = (toolkit, { addMode, handshakeContext }) => {
+const redirectAfterCancel = (
+  toolkit,
+  { addMode, handshakeContext, organisationId }
+) => {
   if (addMode !== ADD_MODES.ADDRESS_BOOK) {
     logger.info(
-      {
-        notificationId: handshakeContext.notificationId,
-        fulfilmentId: handshakeContext.fulfilmentId
-      },
+      addLogContextOf({ organisationId, handshakeContext }),
       'Cancel handed back to the journey'
     )
   }
@@ -280,66 +275,38 @@ const get = async (request, toolkit) => {
   })
 }
 
-const addIdsForLog = (handshakeContext, addressType) =>
-  handshakeContext
-    ? {
-        notificationId: handshakeContext.notificationId,
-        fulfilmentId: handshakeContext.fulfilmentId
-      }
-    : { addressType }
-
 const logReplacedCountry = ({
-  handshakeContext,
-  organisationId,
+  logContext,
   addressId,
-  addressType,
   postedCountryCode,
-  storedCountryCode
+  countryCodeToSave
 }) => {
   if (
     String(postedCountryCode).trim() === '' ||
-    postedCountryCode === storedCountryCode
+    postedCountryCode === countryCodeToSave
   ) {
     return
   }
   logger.info(
-    {
-      organisationId,
-      addressId,
-      ...addIdsForLog(handshakeContext, addressType),
-      postedCountryCode
-    },
+    { ...logContext, addressId, postedCountryCode },
     'Posted country was replaced with the country the address must be in'
   )
 }
 
-const logDiscardedRoles = ({
-  handshakeContext,
-  organisationId,
-  addressType,
-  postedRoles,
-  keptRoles
-}) => {
-  const discardedRoles = postedRoles.filter((role) => !keptRoles.includes(role))
+const logDiscardedRoles = ({ logContext, postedRoles, savedRoles }) => {
+  const discardedRoles = postedRoles.filter(
+    (role) => !savedRoles.includes(role)
+  )
   if (discardedRoles.length > 0) {
     logger.info(
-      {
-        organisationId,
-        ...addIdsForLog(handshakeContext, addressType),
-        discardedRoles
-      },
+      { ...logContext, discardedRoles },
       'Posted roles the address page does not offer were not saved'
     )
   }
 }
 
-const rerenderIfRolesInvalid = ({ addMode, keptRoles, rerender }) => {
-  if (addMode !== ADD_MODES.ADDRESS_BOOK) {
-    return undefined
-  }
-  const errors = rolesErrorsOf(keptRoles)
-  return errors ? rerender({ errors }).code(HTTP_STATUS_BAD_REQUEST) : undefined
-}
+const rolesErrorsFor = (addMode, savedRoles) =>
+  addMode === ADD_MODES.ADDRESS_BOOK ? rolesErrorsOf(savedRoles) : undefined
 
 const rolesToSave = ({
   addMode,
@@ -365,17 +332,17 @@ const finishAddressBookAdd = (
   return toolkit.redirect(addressBookPageHref(1, { addressType }))
 }
 
-const rerenderAfterCreateFailure = (err, { organisationId, rerender }) => {
+const rerenderAfterCreateFailure = (err, { logContext, rerender }) => {
   if (Boom.isBoom(err)) {
     throw err
   }
   if (isValidationFailure(err)) {
-    logger.warn({ err, organisationId }, 'Address book refused the new address')
+    logger.warn({ err, ...logContext }, 'Address book refused the new address')
     return rerender({ errors: mapApiErrorsToFormErrors(err.body) }).code(
       HTTP_STATUS_BAD_REQUEST
     )
   }
-  logger.error({ err, organisationId }, 'Failed to create address')
+  logger.error({ err, ...logContext }, 'Failed to create address')
   return rerender({ recoverableError: true }).code(
     HTTP_STATUS_INTERNAL_SERVER_ERROR
   )
@@ -390,19 +357,17 @@ const createAddressAndRespond = async (
     addressType,
     landing,
     addMode,
+    logContext,
     addressToCreate,
-    postedCountryCode,
-    storedCountryCode
+    postedCountryCode
   }
 ) => {
   const createdAddress = await createAddress(organisationId, addressToCreate)
   logReplacedCountry({
-    handshakeContext,
-    organisationId,
+    logContext,
     addressId: createdAddress.id,
-    addressType,
     postedCountryCode,
-    storedCountryCode
+    countryCodeToSave: addressToCreate.countryCode
   })
   return addMode === ADD_MODES.ADDRESS_BOOK
     ? finishAddressBookAdd(request, toolkit, {
@@ -446,47 +411,41 @@ const submitAddress = async (
       tickedRoles: postedRoles,
       ...model
     })
+  const logContext = addLogContextOf({
+    organisationId,
+    handshakeContext,
+    addressType
+  })
   try {
-    const { errors, value: validatedAddress } = validate(
+    const { errors: fieldErrors, value: validatedAddress } = validate(
       addressRules(countryCodes),
       formValues
     )
-    if (errors) {
-      return rerender({ errors }).code(HTTP_STATUS_BAD_REQUEST)
-    }
     const savedRoles = rolesToSave({
       addMode,
       handshakeContext,
       addressType,
       postedRoles
     })
-    logDiscardedRoles({
-      handshakeContext,
-      organisationId,
-      addressType,
-      postedRoles,
-      keptRoles: savedRoles
-    })
-    const rolesRefusal = rerenderIfRolesInvalid({
-      addMode,
-      keptRoles: savedRoles,
-      rerender
-    })
-    if (rolesRefusal) {
-      return rolesRefusal
+    const rolesErrors = rolesErrorsFor(addMode, savedRoles)
+    if (fieldErrors || rolesErrors) {
+      return rerender({ errors: { ...fieldErrors, ...rolesErrors } }).code(
+        HTTP_STATUS_BAD_REQUEST
+      )
     }
+    logDiscardedRoles({ logContext, postedRoles, savedRoles })
     return await createAddressAndRespond(request, toolkit, {
       handshakeContext,
       organisationId,
       addressType,
       landing,
       addMode,
+      logContext,
       addressToCreate: { ...validatedAddress, roles: savedRoles },
-      postedCountryCode: postedValues.countryCode,
-      storedCountryCode: formValues.countryCode
+      postedCountryCode: postedValues.countryCode
     })
   } catch (err) {
-    return rerenderAfterCreateFailure(err, { organisationId, rerender })
+    return rerenderAfterCreateFailure(err, { logContext, rerender })
   }
 }
 
@@ -494,8 +453,13 @@ const post = async (request, toolkit) => {
   const handshakeContext = resolveHandshakeContext(request)
   const addMode = addModeFor(handshakeContext)
   const payload = request.payload ?? {}
+  const organisationId = kit.requireOrganisationId(request)
   if (payload.cancel) {
-    return redirectAfterCancel(toolkit, { addMode, handshakeContext })
+    return redirectAfterCancel(toolkit, {
+      addMode,
+      handshakeContext,
+      organisationId
+    })
   }
   const redirectToTypePage = redirectIfNoAddressTypeChosen(
     request,
@@ -505,16 +469,15 @@ const post = async (request, toolkit) => {
   if (redirectToTypePage) {
     return redirectToTypePage
   }
-  const organisationId = kit.requireOrganisationId(request)
   const postedValues = formValuesOf(payload)
   const postedRoles = postedRolesOf(payload)
   const addressType = addressBookAddressTypeOf(request, addMode)
-  storeAddressBookEntry(request, {
-    addMode,
-    addressType,
-    postedValues,
-    postedRoles
-  })
+  if (addMode === ADD_MODES.ADDRESS_BOOK) {
+    storeEnteredAddress(request, {
+      formValues: postedValues,
+      tickedRoles: keepRolesOfferedBy(addressType, postedRoles)
+    })
+  }
 
   return submitAddress(request, toolkit, {
     addMode,

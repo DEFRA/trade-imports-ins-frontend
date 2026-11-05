@@ -341,7 +341,7 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     const { result, statusCode, headers } = await postAddWithTypeChosen(
       getServer(),
       'add-post-invalid',
-      INVALID_ADDRESS_PAYLOAD
+      { ...INVALID_ADDRESS_PAYLOAD, roles: VALID_ADDRESS_PAYLOAD.roles }
     )
 
     expect(statusCode).toBe(statusCodes.badRequest)
@@ -534,8 +534,8 @@ describe(
       }
     )
 
-    test('POST with an invalid field and no role ticked shows only the field error', async () => {
-      const { roles: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
+    test('POST with an invalid field and no role ticked shows the field error and the roles error together, in page order', async () => {
+      const { roles: _noRole, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
 
       const { result, statusCode } = await postAddWithTypeChosen(
         getServer(),
@@ -545,8 +545,11 @@ describe(
 
       expect(statusCode).toBe(statusCodes.badRequest)
       const $ = load(result)
-      expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([REQUIRED_MESSAGES.name])
-      expect($('#roles-error')).toHaveLength(0)
+      expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([
+        REQUIRED_MESSAGES.name,
+        ROLES_ERROR
+      ])
+      expect(textsOf($, '#roles-error')).toEqual([`Error: ${ROLES_ERROR}`])
     })
 
     test('POST with an invalid field keeps the ticks the user made', async () => {
@@ -678,7 +681,8 @@ describe(
             name: '',
             postcode: '',
             phone: '',
-            countryCode: 'FR'
+            countryCode: 'FR',
+            roles: ROLES_BY_ADDRESS_TYPE[addressType][0]
           },
           { addressType }
         )
@@ -776,8 +780,12 @@ describe(
 
     test('POST with France posted that is refused for a field error, a missing role or the address book logs nothing and shows each refusal', async () => {
       const destination = ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
-      const france = { ...VALID_ADDRESS_PAYLOAD, countryCode: 'FR' }
-      const { roles: _noUse, ...franceWithoutRole } = france
+      const france = {
+        ...VALID_ADDRESS_PAYLOAD,
+        countryCode: 'FR',
+        roles: 'CONSIGNEE'
+      }
+      const { roles: _noRole, ...franceWithoutRole } = france
 
       const fieldError = await postAddWithTypeChosen(
         getServer(),
@@ -785,7 +793,7 @@ describe(
         { ...france, name: '' },
         { addressType: destination }
       )
-      const usesError = await postAddWithTypeChosen(
+      const rolesError = await postAddWithTypeChosen(
         getServer(),
         'add-log-refused-roles',
         franceWithoutRole,
@@ -800,14 +808,14 @@ describe(
       const refusedByAddressBook = await postAddWithTypeChosen(
         getServer(),
         'add-log-refused-address-book',
-        { ...france, roles: 'CONSIGNEE' },
+        france,
         { addressType: destination }
       )
 
       expect(textsOf(load(fieldError.result), ERROR_SUMMARY_LINKS)).toEqual([
         REQUIRED_MESSAGES.name
       ])
-      expect(textsOf(load(usesError.result), ERROR_SUMMARY_LINKS)).toEqual([
+      expect(textsOf(load(rolesError.result), ERROR_SUMMARY_LINKS)).toEqual([
         ROLES_ERROR
       ])
       expect(
@@ -1418,6 +1426,7 @@ describe(
       expect(loggedWith(CANCEL_HAND_BACK_MESSAGE)).toEqual([
         {
           fields: {
+            organisationId: ORGANISATION_ID,
             notificationId: CONSIGNMENT_CONTACT_HANDSHAKE['notification-id'],
             fulfilmentId: CONSIGNMENT_CONTACT_HANDSHAKE['fulfilment-id']
           },
