@@ -1,4 +1,4 @@
-import { statusCodes } from '../common/constants/status-codes.js'
+import { expectHealthy } from '../common/test-helpers/expect-healthy.js'
 import { serveOidcDiscovery } from '../common/test-helpers/serve-oidc-discovery.js'
 import {
   startTestServer,
@@ -18,12 +18,6 @@ describe('#healthController', () => {
   })
 
   test('Should provide expected response', async () => {
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/health'
-    })
-
-    expect(result).toEqual({ message: 'success' })
-    expect(statusCode).toBe(statusCodes.ok)
+    await expectHealthy(server)
   })
 })

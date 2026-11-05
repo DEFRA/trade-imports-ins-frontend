@@ -2,7 +2,7 @@ import { getDefaultAutoSelectFamilyAttemptTimeout } from 'node:net'
 import Wreck from '@hapi/wreck'
 
 import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
-import { statusCodes } from '../constants/status-codes.js'
+import { expectHealthy } from '../test-helpers/expect-healthy.js'
 import { serveOidcDiscovery } from '../test-helpers/serve-oidc-discovery.js'
 
 vi.mock('../../server.js', async (importOriginal) => {
@@ -33,13 +33,7 @@ describe('#startServer', () => {
     })
 
     test('Should start up server as expected', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/health'
-      })
-
-      expect(result).toEqual({ message: 'success' })
-      expect(statusCode).toBe(statusCodes.ok)
+      await expectHealthy(server)
     })
 
     test('gives each address of a host one second to connect before trying the next', () => {
