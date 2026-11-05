@@ -116,7 +116,7 @@ describe('#seedAddress', () => {
       .post('/address-book/add', {
         crumb: CRUMB,
         ...SEED_ADDRESS,
-        uses: 'PLACE_OF_ORIGIN'
+        roles: 'PLACE_OF_ORIGIN'
       })
       .matchHeader('cookie', /crumb=cookie-crumb/)
       .reply(HTTP_FOUND, '', { location: ORIGIN_AND_CONSIGNOR_LANDING })

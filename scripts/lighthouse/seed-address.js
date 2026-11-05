@@ -70,7 +70,7 @@ export const createSeedAddress = async (client) => {
   }
   const posted = await client.submit(
     addressAddPath(),
-    { ...SEED_ADDRESS, uses: 'PLACE_OF_ORIGIN' },
+    { ...SEED_ADDRESS, roles: 'PLACE_OF_ORIGIN' },
     form.crumb
   )
   const savedAddressLanding = addressBookPageHref(1, {
