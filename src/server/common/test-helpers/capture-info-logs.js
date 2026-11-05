@@ -25,3 +25,5 @@ const captureLogsAt = (level) => {
 export const captureInfoLogs = () => captureLogsAt('info')
 
 export const captureWarnLogs = () => captureLogsAt('warn')
+
+export const captureErrorLogs = () => captureLogsAt('error')

@@ -6,7 +6,13 @@ import {
   addressBookPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
+import {
+  captureErrorLogs,
+  captureInfoLogs
+} from '../../../../common/test-helpers/capture-info-logs.js'
+import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
+import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
   TABLE_HEADINGS,
@@ -24,8 +30,13 @@ import {
   tableHeadingsOf
 } from './list.test-support.js'
 
+const PAST_LAST_PAGE_MESSAGE =
+  'Address book page is past the last page, serving the last page'
+const LOAD_FAILED_MESSAGE = 'Failed to load address book'
+
 describe('#addressBookListController', () => {
   const readPage = startServerWithPageReader()
+  const infoLogs = captureInfoLogs()
 
   test("renders the results count, column headings, and each address's View link and country label", async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, parisDepotAddress]))
@@ -101,7 +112,7 @@ describe('#addressBookListController', () => {
     }
   )
 
-  test('shows the last page, asked for a second time, when the page number is past the last page', async () => {
+  test('shows the last page, asked for a second time, when the page number is past the last page, and logs the fallback once', async () => {
     const pastLastPage = stubAddressPage(
       { page: '99' },
       pageOf([], { page: 99, totalItems: 12, totalPages: 2 })
@@ -126,6 +137,17 @@ describe('#addressBookListController', () => {
     expect(resultsLineOf($)).toBe('Showing 9-12 of 12')
     expect(bodyRowCountOf($)).toBe(2)
     expect(textOf($, '.govuk-pagination__item--current')).toBe('2')
+    expect(infoLogs(PAST_LAST_PAGE_MESSAGE)).toEqual([
+      {
+        fields: {
+          organisationId: ORGANISATION_ID,
+          roles: DEFAULT_ADDRESS_BOOK_TAB.roles,
+          requestedPage: 99,
+          servedPage: 2
+        },
+        message: PAST_LAST_PAGE_MESSAGE
+      }
+    ])
   })
 
   test('shows no pagination when the matches of a search fit on one page', async () => {
@@ -215,8 +237,13 @@ describe('#addressBookListController', () => {
       `${addressBookPath()}?addressType=BRANCH&q=green&page=4`
     ])
   })
+})
 
-  test('returns 500 when the address book cannot be reached, with the heading, intro, Add button and filter but no results line or table', async () => {
+describe('#addressBookListController when the address book cannot be reached', () => {
+  const readPage = startServerWithPageReader()
+  const errorLogs = captureErrorLogs()
+
+  test('returns 500 with the heading, intro, Add button and filter but no results line or table, and logs the failure once', async () => {
     stubAddressBookUnavailable()
 
     const { $, html, statusCode } = await readPage(
@@ -242,5 +269,15 @@ describe('#addressBookListController', () => {
     )
     expect(resultsLineOf($)).toBe('')
     expect(tableHeadingsOf($)).toEqual([])
+    expect(errorLogs(LOAD_FAILED_MESSAGE)).toEqual([
+      {
+        fields: {
+          err: expect.any(Error),
+          organisationId: ORGANISATION_ID,
+          addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType
+        },
+        message: LOAD_FAILED_MESSAGE
+      }
+    ])
   })
 })

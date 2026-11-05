@@ -5,6 +5,8 @@ import {
   addressBookPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
+import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
+import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
   greenFarmAddress,
@@ -20,9 +22,12 @@ import {
 
 const SELECT_ONE = 'Select one'
 const BRANCH_ADDRESS_OPTION = 'Branch Address'
+const IGNORED_ROLE_MESSAGE =
+  'Address book list ignored a role the tab does not offer'
 
 describe('#addressBookListTypeFilter', () => {
   const readPage = startServerWithPageReader()
+  const infoLogs = captureInfoLogs()
 
   test.each([
     [
@@ -94,7 +99,7 @@ describe('#addressBookListTypeFilter', () => {
     }
   )
 
-  test('lists the whole Branch tab with no Type selected for a role the Branch tab does not offer', async () => {
+  test('lists the whole Branch tab with no Type selected for a role the Branch tab does not offer, and logs the ignored role once', async () => {
     const scope = stubAddressPage(
       { page: '1', tabAddressType: ADDRESS_TYPES.BRANCH },
       pageOf([highlandAddress])
@@ -108,6 +113,16 @@ describe('#addressBookListTypeFilter', () => {
     expect(scope.isDone()).toBe(true)
     expect(resultsLineOf($)).toBe('Showing 1-1 of 1')
     expect(typeSelectStateOf($).selectedTexts).toEqual([])
+    expect(infoLogs(IGNORED_ROLE_MESSAGE)).toEqual([
+      {
+        fields: {
+          organisationId: ORGANISATION_ID,
+          addressType: ADDRESS_TYPES.BRANCH,
+          requestedRole: 'CONSIGNOR'
+        },
+        message: IGNORED_ROLE_MESSAGE
+      }
+    ])
   })
 
   test('offers the Type select of the tab, with the chosen Type selected, on the page shown when the address book cannot be reached', async () => {
