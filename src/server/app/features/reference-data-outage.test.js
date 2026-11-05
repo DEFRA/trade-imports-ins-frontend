@@ -2,12 +2,12 @@ import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../common/constants/status-codes.js'
 import {
-  ADD_ADDRESS_PATH,
-  ADDRESS_BOOK_PATH,
+  addressAddPath,
+  addressBookPath,
   ADDRESS_ID,
   cookieAfterChoosingAddressType,
-  addressPagePath,
-  editAddressPagePath,
+  addressPath,
+  addressEditPath,
   getPage,
   INVALID_ADDRESS_PAYLOAD,
   postPage,
@@ -25,7 +25,7 @@ const refuseCountries = () =>
     .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
 
 describe('#referenceDataOutage', () => {
-  const server = startRealModeServer()
+  const getServer = startRealModeServer()
 
   const expectServiceUnavailablePage = ({ result, statusCode }) => {
     expect(statusCode).toBe(statusCodes.serviceUnavailable)
@@ -38,7 +38,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), '/', 'outage-dashboard')
+      await getPage(getServer(), '/', 'outage-dashboard')
     )
   })
 
@@ -46,16 +46,19 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), ADDRESS_BOOK_PATH, 'outage-list')
+      await getPage(getServer(), addressBookPath(), 'outage-list')
     )
   })
 
   test('Should serve the add address form as a 503 error page', async () => {
     refuseCountries()
-    const cookie = await cookieAfterChoosingAddressType(server(), 'outage-add')
+    const cookie = await cookieAfterChoosingAddressType(
+      getServer(),
+      'outage-add'
+    )
 
     expectServiceUnavailablePage(
-      await getPage(server(), ADD_ADDRESS_PATH, 'outage-add', cookie)
+      await getPage(getServer(), addressAddPath(), 'outage-add', cookie)
     )
   })
 
@@ -64,7 +67,7 @@ describe('#referenceDataOutage', () => {
     refuseCountries()
 
     expectServiceUnavailablePage(
-      await getPage(server(), addressPagePath(ADDRESS_ID), 'outage-view')
+      await getPage(getServer(), addressPath(ADDRESS_ID), 'outage-view')
     )
   })
 
@@ -74,8 +77,8 @@ describe('#referenceDataOutage', () => {
 
     expectServiceUnavailablePage(
       await postPage(
-        server(),
-        editAddressPagePath(ADDRESS_ID),
+        getServer(),
+        addressEditPath(ADDRESS_ID),
         'outage-edit-save',
         INVALID_ADDRESS_PAYLOAD
       )

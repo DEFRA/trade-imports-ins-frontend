@@ -104,9 +104,13 @@ export const rowCellsOf = ($, rowIndex) =>
   $('tbody tr').eq(rowIndex).children('td')
 
 export const startServerWithPageReader = () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
   return async (url, sessionId) => {
-    const { result: html, statusCode } = await getPage(server(), url, sessionId)
+    const { result: html, statusCode } = await getPage(
+      getServer(),
+      url,
+      sessionId
+    )
     return { $: load(html), html, statusCode }
   }
 }

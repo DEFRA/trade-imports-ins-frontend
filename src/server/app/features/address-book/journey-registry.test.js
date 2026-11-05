@@ -208,11 +208,20 @@ describe('journey-registry', () => {
     })
 
     test('throws when notificationId or fulfilmentId is missing', () => {
+      const {
+        notificationId: _notificationId,
+        ...contextWithoutNotificationId
+      } = CONSIGNOR_CONTEXT
       const { fulfilmentId: _fulfilmentId, ...contextWithoutFulfilmentId } =
         CONSIGNOR_CONTEXT
-
-      expect(() => buildReturnUrl(contextWithoutFulfilmentId)).toThrow(
+      const missingIdsError =
         'Handshake context must include notificationId and fulfilmentId'
+
+      expect(() => buildReturnUrl(contextWithoutNotificationId)).toThrow(
+        missingIdsError
+      )
+      expect(() => buildReturnUrl(contextWithoutFulfilmentId)).toThrow(
+        missingIdsError
       )
     })
   })

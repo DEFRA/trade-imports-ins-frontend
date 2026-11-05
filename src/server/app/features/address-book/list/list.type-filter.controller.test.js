@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESS_BOOK_PATH,
+  addressBookPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
@@ -40,7 +40,7 @@ describe('#addressBookListTypeFilter', () => {
       stubAddressPage({ page: '1', addressType }, pageOf([highlandAddress]))
 
       const { $ } = await readPage(
-        `${ADDRESS_BOOK_PATH}?addressType=${addressType}`,
+        `${addressBookPath()}?addressType=${addressType}`,
         'list-type-options'
       )
 
@@ -60,7 +60,7 @@ describe('#addressBookListTypeFilter', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.BRANCH}&role=BRANCH_ADDRESS`,
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}&role=BRANCH_ADDRESS`,
       'list-role-honoured'
     )
 
@@ -78,7 +78,7 @@ describe('#addressBookListTypeFilter', () => {
       const scope = stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
       const { $ } = await readPage(
-        `${ADDRESS_BOOK_PATH}${query}`,
+        `${addressBookPath()}${query}`,
         'list-role-not-honoured'
       )
 
@@ -94,7 +94,7 @@ describe('#addressBookListTypeFilter', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&role=CONSIGNOR`,
+      `${addressBookPath()}?addressType=BRANCH&role=CONSIGNOR`,
       'list-role-of-another-tab'
     )
 
@@ -110,7 +110,7 @@ describe('#addressBookListTypeFilter', () => {
     })
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&role=BRANCH_ADDRESS`,
+      `${addressBookPath()}?addressType=BRANCH&role=BRANCH_ADDRESS`,
       'list-role-address-book-unavailable'
     )
 
@@ -140,7 +140,7 @@ describe('#addressBookListTypeFilter', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=2`,
+      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=2`,
       'list-role-page-2'
     )
 
@@ -150,10 +150,10 @@ describe('#addressBookListTypeFilter', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS`,
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=2`,
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=3`,
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=4`
+      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS`,
+      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=2`,
+      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=3`,
+      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=4`
     ])
   })
 
@@ -164,7 +164,7 @@ describe('#addressBookListTypeFilter', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?role=CONSIGNOR`,
+      `${addressBookPath()}?role=CONSIGNOR`,
       'list-role-one-page'
     )
 
@@ -184,12 +184,12 @@ describe('#addressBookListTypeFilter', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS`,
+      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS`,
       'list-clear-search-role'
     )
 
     expect($('[data-testid="address-book-clear-search"]').attr('href')).toBe(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&role=BRANCH_ADDRESS`
+      `${addressBookPath()}?addressType=BRANCH&role=BRANCH_ADDRESS`
     )
   })
 
@@ -206,7 +206,7 @@ describe('#addressBookListTypeFilter', () => {
       )
 
       const { statusCode } = await readPage(
-        `${ADDRESS_BOOK_PATH}?q=${encodeURIComponent(term)}`,
+        `${addressBookPath()}?q=${encodeURIComponent(term)}`,
         'list-search-roles'
       )
 
@@ -227,7 +227,7 @@ describe('#addressBookListTypeFilter', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=${encodeURIComponent('branch address')}`,
+      `${addressBookPath()}?addressType=BRANCH&q=${encodeURIComponent('branch address')}`,
       'list-search-branch-address'
     )
 
@@ -243,7 +243,7 @@ describe('#addressBookListTypeFilter', () => {
     )
 
     await readPage(
-      `${ADDRESS_BOOK_PATH}?q=consign`,
+      `${addressBookPath()}?q=consign`,
       'list-search-several-roles'
     )
 

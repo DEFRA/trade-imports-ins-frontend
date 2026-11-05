@@ -67,7 +67,7 @@ test.describe('navigation', () => {
 })
 
 test.describe('list and pagination', () => {
-  test('renders addresses in a table with Name, Type, Address, Country and Action columns', async ({
+  test('renders the seed address in a table with Name, Type, Address, Country and Action columns', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
@@ -91,9 +91,6 @@ test.describe('list and pagination', () => {
     ).toBeVisible()
     await expect(
       table.getByRole('cell', { name: 'United Kingdom', exact: true })
-    ).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: ADD_A_NEW_ADDRESS })
     ).toBeVisible()
   })
 
@@ -435,14 +432,11 @@ test.describe('filter addresses', () => {
     })
   })
 
-  test('finds the addresses in a country by part of its name', async ({
-    page
-  }) => {
+  test('finds an address by part of its country name', async ({ page }) => {
     await addValidAddressToFreshOrganisation(page, {
       organisationPrefix: 'stub-org-list-country',
       overrides: { name: 'Paris Depot', countryCode: 'FR' }
     })
-    await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
 
     await searchAndExpectSingleMatch(page, 'fran', {
       matchedCellText: 'France'

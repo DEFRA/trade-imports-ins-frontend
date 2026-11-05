@@ -9,7 +9,6 @@ import {
 } from '../../../shared/paths.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { copy } from '../copy/copy.en.js'
-import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import {
   addressTypeRadio,
@@ -120,7 +119,7 @@ test.describe('choose an address type', () => {
     const country = page.getByLabel(fieldLabels.countryCode)
     await expect(country).toHaveValue(GB_COUNTRY.code)
     await expect(country.getByRole('option').first()).toHaveText(
-      COUNTRY_PLACEHOLDER
+      copy.form.countryPlaceholder
     )
 
     await backLink(page).click()

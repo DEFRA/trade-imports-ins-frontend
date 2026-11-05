@@ -2,7 +2,7 @@ import { expect } from '@playwright/test'
 
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { addressBookPath } from '../../../shared/paths.js'
-import { signIn } from '../../../../../../fit/sign-in.js'
+import { signInAndOpen } from './sign-in-and-open.js'
 
 export const UNKNOWN_ADDRESS_TYPE = 'TRANSPORTER'
 export const NO_RESULTS_LINE = 'Showing 0 of 0'
@@ -12,7 +12,6 @@ export const openAddressBookList = async (
   page,
   { organisationId, pageNumber, addressType }
 ) => {
-  await signIn(page, { organisationId })
   const params = new URLSearchParams()
   if (addressType !== undefined) {
     params.set('addressType', addressType)
@@ -21,7 +20,7 @@ export const openAddressBookList = async (
     params.set('page', String(pageNumber))
   }
   const query = params.size ? `?${params}` : ''
-  await page.goto(`${addressBookPath()}${query}`)
+  await signInAndOpen(page, organisationId, `${addressBookPath()}${query}`)
 }
 
 const tabsNavOf = (page) =>

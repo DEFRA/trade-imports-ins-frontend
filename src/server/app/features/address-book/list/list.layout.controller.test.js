@@ -2,8 +2,9 @@ import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESS_TYPE_START_PATH,
-  ADDRESS_BOOK_PATH,
+  addressTypeStartPath,
+  addressBookPath,
+  addressPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
 import {
@@ -44,7 +45,7 @@ describe('#addressBookListLayout', () => {
   test('lays the page out as heading, large intro, Add button, the filter form wrapping a collapsed Filter addresses disclosure, the sub navigation, the panel heading, the results line and the table', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
-    const { $ } = await readPage(ADDRESS_BOOK_PATH, 'list-layout')
+    const { $ } = await readPage(addressBookPath(), 'list-layout')
 
     const content = contentOf($)
     expect(tagNamesOf(content.children())).toEqual([
@@ -63,10 +64,10 @@ describe('#addressBookListLayout', () => {
     )
     const addButton = content.children('div').find('a')
     expect(textOf($, addButton)).toBe('Add a new address')
-    expect(addButton.attr('href')).toBe(ADDRESS_TYPE_START_PATH)
+    expect(addButton.attr('href')).toBe(addressTypeStartPath())
     const form = content.children('form')
     expect(form.attr('method')).toBe('get')
-    expect(form.attr('action')).toBe(ADDRESS_BOOK_PATH)
+    expect(form.attr('action')).toBe(addressBookPath())
     expect(tagNamesOf(form.children())).toEqual(['input', 'details'])
     const disclosure = form.children('details')
     expect(disclosure.attr('open')).toBeUndefined()
@@ -76,7 +77,7 @@ describe('#addressBookListLayout', () => {
   test('holds the Search controls, then the Type label and select, inside the disclosure', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
-    const { $ } = await readPage(ADDRESS_BOOK_PATH, 'list-search-controls')
+    const { $ } = await readPage(addressBookPath(), 'list-search-controls')
 
     const controls = contentOf($).find('form details .govuk-details__text')
     expect(
@@ -111,21 +112,18 @@ describe('#addressBookListLayout', () => {
   test('shows Showing 0 of 0 and the table headings with no rows when the book is empty', async () => {
     stubAddressPage({ page: '1' }, pageOf([]))
 
-    const { $, statusCode } = await readPage(ADDRESS_BOOK_PATH, 'list-empty')
+    const { $, statusCode } = await readPage(addressBookPath(), 'list-empty')
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(resultsLineOf($)).toBe(NO_RESULTS_LINE)
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
-    expect(contentOf($).children('div').find('a').attr('href')).toBe(
-      ADDRESS_TYPE_START_PATH
-    )
   })
 
   test('hides the Action heading visually while keeping it for assistive technology', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
-    const { $ } = await readPage(ADDRESS_BOOK_PATH, 'list-action-heading')
+    const { $ } = await readPage(addressBookPath(), 'list-action-heading')
 
     const actionHeading = $('thead th').last().children('span')
     expect(actionHeading.attr('class')).toBe('govuk-visually-hidden')
@@ -135,7 +133,7 @@ describe('#addressBookListLayout', () => {
   test('breaks the name after its first word and puts every stored address line on its own line', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, fullAddress]))
 
-    const { $ } = await readPage(ADDRESS_BOOK_PATH, 'list-cells')
+    const { $ } = await readPage(addressBookPath(), 'list-cells')
 
     expect(rowCellsOf($, 0).eq(0).html()).toBe('Highland<br> Livestock Ltd')
     expect(rowCellsOf($, 0).eq(2).html()).toBe(
@@ -162,7 +160,7 @@ describe('#addressBookListLayout', () => {
       ])
     )
 
-    const { $, html } = await readPage(ADDRESS_BOOK_PATH, 'list-escaping')
+    const { $, html } = await readPage(addressBookPath(), 'list-escaping')
 
     expect(html).toContain('&lt;b&gt;Bold&lt;/b&gt;<br> Farm')
     expect(html).toContain('1 &lt;i&gt;Lane&lt;/i&gt;&#39;s End,<br> Inverness')
@@ -173,7 +171,7 @@ describe('#addressBookListLayout', () => {
     stubAddressPage({ page: '1', q: 'green' }, pageOf([greenFarmAddress]))
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=green`,
+      `${addressBookPath()}?q=green`,
       'list-search-with-results'
     )
 
@@ -182,11 +180,11 @@ describe('#addressBookListLayout', () => {
     expect(linksAfterSubNavigation($)).toEqual([
       {
         text: 'Clear search',
-        href: `${ADDRESS_BOOK_PATH}?addressType=ORIGIN_OR_CONSIGNOR`
+        href: `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR`
       },
       {
         text: `View ${greenFarmAddress.name}`,
-        href: `${ADDRESS_BOOK_PATH}/${greenFarmAddress.id}`
+        href: addressPath(greenFarmAddress.id)
       }
     ])
   })
@@ -195,7 +193,7 @@ describe('#addressBookListLayout', () => {
     stubAddressPage({ page: '1', q: 'zzznomatch' }, pageOf([]))
 
     const { $, statusCode } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=zzznomatch`,
+      `${addressBookPath()}?q=zzznomatch`,
       'list-no-results'
     )
 
@@ -203,12 +201,22 @@ describe('#addressBookListLayout', () => {
     expect(resultsLineOf($)).toBe(NO_RESULTS_LINE)
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
-    expect($('input[name="q"]').val()).toBe('zzznomatch')
     expect(linksAfterSubNavigation($)).toEqual([
       {
         text: 'Clear search',
-        href: `${ADDRESS_BOOK_PATH}?addressType=ORIGIN_OR_CONSIGNOR`
+        href: `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR`
       }
     ])
+  })
+
+  test('keeps the search term in the Search box', async () => {
+    stubAddressPage({ page: '1', q: 'green' }, pageOf([greenFarmAddress]))
+
+    const { $ } = await readPage(
+      `${addressBookPath()}?q=green`,
+      'list-search-term-kept'
+    )
+
+    expect(contentOf($).find('form input[name="q"]').val()).toBe('green')
   })
 })

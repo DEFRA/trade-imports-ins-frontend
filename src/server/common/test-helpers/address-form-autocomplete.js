@@ -6,3 +6,9 @@ export const AUTOCOMPLETE_BY_FIELD = Object.freeze({
   email: 'email',
   phone: 'tel'
 })
+
+export const FIELDS_WITHOUT_AUTOCOMPLETE = Object.freeze([
+  'name',
+  'county',
+  'countryCode'
+])

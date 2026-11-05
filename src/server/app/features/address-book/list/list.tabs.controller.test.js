@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESS_BOOK_PATH,
+  addressBookPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
@@ -31,22 +31,22 @@ describe('#addressBookListTabs', () => {
   test.each([
     [
       'no address type',
-      ADDRESS_BOOK_PATH,
+      addressBookPath(),
       DEFAULT_ADDRESS_BOOK_TAB.addressType
     ],
     [
       'an unknown address type',
-      `${ADDRESS_BOOK_PATH}?addressType=TRANSPORTER`,
+      `${addressBookPath()}?addressType=TRANSPORTER`,
       DEFAULT_ADDRESS_BOOK_TAB.addressType
     ],
     [
       'the Destination, Consignee and Importer address type',
-      `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER}`,
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER}`,
       ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
     ],
     [
       'the Branch address type',
-      `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.BRANCH}`,
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}`,
       ADDRESS_TYPES.BRANCH
     ]
   ])(
@@ -76,7 +76,7 @@ describe('#addressBookListTabs', () => {
       )
 
       await readPage(
-        `${ADDRESS_BOOK_PATH}?addressType=TRANSPORTER`,
+        `${addressBookPath()}?addressType=TRANSPORTER`,
         'list-unknown-tab-log'
       )
 
@@ -95,12 +95,12 @@ describe('#addressBookListTabs', () => {
     test.each([
       [
         'no address type',
-        ADDRESS_BOOK_PATH,
+        addressBookPath(),
         DEFAULT_ADDRESS_BOOK_TAB.addressType
       ],
       [
         'an address type it offers',
-        `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.BRANCH}`,
+        `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}`,
         ADDRESS_TYPES.BRANCH
       ]
     ])('logs nothing for %s', async (_description, url, servedAddressType) => {
@@ -129,7 +129,7 @@ describe('#addressBookListTabs', () => {
     async (_description, roles, roleLabels) => {
       stubAddressPage({ page: '1' }, pageOf([{ ...highlandAddress, roles }]))
 
-      const { $ } = await readPage(ADDRESS_BOOK_PATH, 'list-type-cell')
+      const { $ } = await readPage(addressBookPath(), 'list-type-cell')
 
       expect(textOf($, rowCellsOf($, 0).eq(1))).toBe(roleLabels)
     }
@@ -138,22 +138,22 @@ describe('#addressBookListTabs', () => {
   test('names the three tabs in order as links to the list on each tab, marking the Origin and Consignor tab as current', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
-    const { $ } = await readPage(ADDRESS_BOOK_PATH, 'list-tabs')
+    const { $ } = await readPage(addressBookPath(), 'list-tabs')
 
     expect(subNavigationLinksOf($)).toEqual([
       {
         text: 'Origin and Consignor',
-        href: `${ADDRESS_BOOK_PATH}?addressType=ORIGIN_OR_CONSIGNOR`,
+        href: `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR`,
         current: 'page'
       },
       {
         text: 'Destination, Consignee and Importer',
-        href: `${ADDRESS_BOOK_PATH}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER`,
+        href: `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER`,
         current: null
       },
       {
         text: 'Branch',
-        href: `${ADDRESS_BOOK_PATH}?addressType=BRANCH`,
+        href: `${addressBookPath()}?addressType=BRANCH`,
         current: null
       }
     ])
@@ -164,7 +164,7 @@ describe('#addressBookListTabs', () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=TRANSPORTER`,
+      `${addressBookPath()}?addressType=TRANSPORTER`,
       'list-unknown-tab'
     )
 
@@ -186,7 +186,7 @@ describe('#addressBookListTabs', () => {
       stubAddressPage({ page: '1', addressType }, pageOf([highlandAddress]))
 
       const { $ } = await readPage(
-        `${ADDRESS_BOOK_PATH}?addressType=${addressType}`,
+        `${addressBookPath()}?addressType=${addressType}`,
         'list-selected-tab'
       )
 
@@ -211,7 +211,7 @@ describe('#addressBookListTabs', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?addressType=${ADDRESS_TYPES.BRANCH}`,
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}`,
       'list-form-tab'
     )
 
@@ -228,14 +228,14 @@ describe('#addressBookListTabs', () => {
     )
 
     const { $ } = await readPage(
-      `${ADDRESS_BOOK_PATH}?q=farm&role=CONSIGNOR&page=2`,
+      `${addressBookPath()}?q=farm&role=CONSIGNOR&page=2`,
       'list-tab-links-with-search'
     )
 
     expect(subNavigationLinksOf($).map(({ href }) => href)).toEqual([
-      `${ADDRESS_BOOK_PATH}?addressType=ORIGIN_OR_CONSIGNOR&q=farm`,
-      `${ADDRESS_BOOK_PATH}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=farm`,
-      `${ADDRESS_BOOK_PATH}?addressType=BRANCH&q=farm`
+      `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR&q=farm`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=farm`,
+      `${addressBookPath()}?addressType=BRANCH&q=farm`
     ])
   })
 })

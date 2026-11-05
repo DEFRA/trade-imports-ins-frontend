@@ -3,7 +3,8 @@ import Boom from '@hapi/boom'
 
 import {
   JOURNEY_HANDSHAKES_BY_PARTY,
-  UNREGISTERED_JOURNEY_TYPE
+  UNREGISTERED_JOURNEY_TYPE,
+  handshakeContextOf
 } from '../../../common/test-helpers/journey-handshake.js'
 import {
   loadHandshakeContext,
@@ -24,12 +25,7 @@ const PADDED_CONSIGNOR_HANDSHAKE = Object.fromEntries(
 )
 const INCOMPLETE_HANDSHAKE_ERROR = 'Incomplete journey handshake'
 
-const validContext = {
-  journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
-  notificationId: CONSIGNOR_HANDSHAKE['notification-id'],
-  fulfilmentId: CONSIGNOR_HANDSHAKE['fulfilment-id'],
-  handshakeToken: CONSIGNOR_HANDSHAKE['handshake-token']
-}
+const validContext = handshakeContextOf(CONSIGNOR_HANDSHAKE)
 
 const mockRequest = (query = {}, payload = undefined, session = {}) => {
   const store = { ...session }

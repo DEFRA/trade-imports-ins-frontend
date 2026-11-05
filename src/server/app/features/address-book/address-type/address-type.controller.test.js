@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADD_ADDRESS_PATH,
-  ADDRESS_BOOK_PATH,
-  ADDRESS_TYPE_PATH,
+  addressAddPath,
+  addressBookPath,
+  addressTypePath,
   BACK_LINK,
   cookieAfterChoosingAddressType,
   cookieHeaderOf,
@@ -51,7 +51,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
   test('GET shows the caption, the heading, a visually hidden legend, the three address types with their hints in order and none chosen, Continue and Back to the address book', async () => {
     const { result, statusCode, headers } = await getPage(
       server(),
-      ADDRESS_TYPE_PATH,
+      addressTypePath(),
       'type-get'
     )
 
@@ -75,7 +75,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
     expect($(RADIOS)).toHaveLength(3)
     expect(checkedValuesOf($)).toEqual([])
     expect(textsOf($, 'form button')).toEqual(['Continue'])
-    expect($(BACK_LINK).attr('href')).toBe(ADDRESS_BOOK_PATH)
+    expect($(BACK_LINK).attr('href')).toBe(addressBookPath())
     expect(textOf($, 'head title')).toBe(
       'Choose an address type - Import notification service - GOV.UK'
     )
@@ -84,7 +84,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
   test('POST with no address type answers 400 with the message inline and as the summary link to the first option', async () => {
     const { result, statusCode } = await postPage(
       server(),
-      ADDRESS_TYPE_PATH,
+      addressTypePath(),
       'type-post-none',
       {}
     )
@@ -103,7 +103,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
   test('POST with a value that is not an offered address type answers as a missing type does', async () => {
     const { result, statusCode } = await postPage(
       server(),
-      ADDRESS_TYPE_PATH,
+      addressTypePath(),
       'type-post-unsupported',
       { addressType: UNSUPPORTED_ADDRESS_TYPE }
     )
@@ -116,14 +116,14 @@ describe('#addressTypeController', { concurrent: false }, () => {
     'POST of %s goes to the add form and the type page then shows it chosen',
     async (addressType) => {
       const sessionId = `type-post-${addressType}`
-      const response = await postPage(server(), ADDRESS_TYPE_PATH, sessionId, {
+      const response = await postPage(server(), addressTypePath(), sessionId, {
         addressType
       })
 
-      expectRedirectTo(response, ADD_ADDRESS_PATH)
+      expectRedirectTo(response, addressAddPath())
       const { result } = await getPage(
         server(),
-        ADDRESS_TYPE_PATH,
+        addressTypePath(),
         sessionId,
         cookieHeaderOf(response.headers)
       )
@@ -151,7 +151,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
 
     expect(loggedWith(message)).toEqual([
       {
-        fields: { organisationId: ORGANISATION_ID, path: ADDRESS_TYPE_PATH },
+        fields: { organisationId: ORGANISATION_ID, path: addressTypePath() },
         message
       }
     ])

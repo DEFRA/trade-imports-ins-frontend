@@ -57,7 +57,7 @@
           classes: "govuk-button--secondary"
         }) }}
       </div>
-      <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ copy.add.cancelToHub }}</a></p>
+      <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ copy.add.cancelAndReturnToHub }}</a></p>
     {% elif addMode == addModes.CONSIGNMENT_CONTACT %}
       <div class="govuk-button-group">
         {{ govukButton({ text: copy.add.save }) }}
@@ -72,7 +72,7 @@
       <div class="govuk-button-group">
         {{ govukButton({ text: copy.add.save }) }}
       </div>
-      <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ copy.add.cancel }}</a></p>
+      <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ copy.add.cancelAndReturnToAddressBook }}</a></p>
     {% endif %}
 
   </form>

@@ -1,27 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
-import { textOf } from '../../../shared/copy-leaves.test-support.js'
+import { itHoldsCopyAtEveryLeaf } from '../../../shared/copy-leaves.test-support.js'
 import { SORT_OPTIONS } from '../view-model/list.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
 
 describe('#copy', () => {
-  it.each([
-    ['en', copy],
-    ['cy', cy]
-  ])(
-    'Should hold a non-empty string or copy function at every %s leaf',
-    (locale, bundle) => {
-      for (const { path, value } of leaves(bundle)) {
-        expect(isCopyLeaf(value), `${locale}: ${path} must be copy`).toBe(true)
-        expect(
-          textOf(value).trim().length,
-          `${locale}: ${path} must render text`
-        ).toBeGreaterThan(0)
-      }
-    }
-  )
+  itHoldsCopyAtEveryLeaf(copy, cy)
 
   it.each([
     ['en', copy],
@@ -35,11 +20,11 @@ describe('#copy', () => {
     }
   )
 
-  it('Should describe the results range the way the page always has', () => {
+  it('Should word the results range as Showing {from}-{to} of {total}', () => {
     expect(copy.results(26, 40, 40)).toBe('Showing 26-40 of 40')
   })
 
-  it('Should carry the search and empty-state wording the fit specs pin', () => {
+  it('Should word the title, search label, no-results line, empty text and start button', () => {
     expect(copy.title).toBe('Dashboard')
     expect(copy.search.label).toBe('Search by notification reference')
     expect(copy.search.noResults).toBe('No notifications found')

@@ -129,9 +129,9 @@ export const copy = {
     save: 'Cadw a pharhau',
     saveAndSelect: 'Cadw a dewis',
     saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
-    cancel: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
+    cancelAndReturnToAddressBook: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
     cancelAndReturnToAddressPage: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
-    cancelToHub: 'Canslo a dychwelyd i’r hyb'
+    cancelAndReturnToHub: 'Canslo a dychwelyd i’r hyb'
   },
   edit: {
     title: 'Golygu manylion cyfeiriad a manylion cyswllt',

@@ -10,7 +10,7 @@ import {
   addressBookPath,
   addressTypePath
 } from '../../../shared/paths.js'
-import { signIn } from '../../../../../../fit/sign-in.js'
+import { signInAndOpen } from './sign-in-and-open.js'
 import { JOURNEY_HANDSHAKES_BY_PARTY } from '../../../../common/test-helpers/journey-handshake.js'
 
 export const fieldLabels = copy.form.fields
@@ -80,13 +80,26 @@ export const chooseAddressType = async (
   await page.getByRole('button', { name: copy.addressType.continue }).click()
 }
 
+const chooseAddressTypeThenExpectAddForm = async (page, addressType) => {
+  await chooseAddressType(page, addressType)
+  await expect(page).toHaveURL(addressAddPath())
+}
+
 export const openAddForm = async (
   page,
   addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
 ) => {
   await page.goto(addressTypePath())
-  await chooseAddressType(page, addressType)
-  await expect(page).toHaveURL(addressAddPath())
+  await chooseAddressTypeThenExpectAddForm(page, addressType)
+}
+
+export const signInAndOpenAddForm = async (
+  page,
+  organisationId,
+  addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+) => {
+  await signInAndOpen(page, organisationId, addressTypePath())
+  await chooseAddressTypeThenExpectAddForm(page, addressType)
 }
 
 export const roleCheckbox = (page, role) =>
@@ -156,10 +169,11 @@ export const addValidAddressToFreshOrganisation = async (
     roles = ['PLACE_OF_ORIGIN']
   }
 ) => {
-  await signIn(page, {
-    organisationId: `${organisationPrefix}-${crypto.randomUUID()}`
-  })
-  await openAddForm(page, addressType)
+  await signInAndOpenAddForm(
+    page,
+    `${organisationPrefix}-${crypto.randomUUID()}`,
+    addressType
+  )
   await fillValidAddress(page, overrides)
   await tickRoles(page, roles)
   await saveAndContinueButton(page).click()
@@ -236,7 +250,7 @@ export const maxLengthValidations = [
     'phone',
     fieldLabels.phone,
     FIELD_RULES.phone.maxLength,
-    'Telephone number must be 20 characters or fewer'
+    'Phone number must be 20 characters or fewer'
   ],
   [
     'email',
@@ -251,6 +265,9 @@ export const openAddFormFromJourney = async (
   organisationId,
   handshake = JOURNEY_HANDSHAKES_BY_PARTY.consignor
 ) => {
-  await signIn(page, { organisationId })
-  await page.goto(`${addressAddPath()}?${new URLSearchParams(handshake)}`)
+  await signInAndOpen(
+    page,
+    organisationId,
+    `${addressAddPath()}?${new URLSearchParams(handshake)}`
+  )
 }

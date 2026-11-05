@@ -1,28 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { isCopyLeaf, leaves } from '../../../shared/copy-leaves.js'
-import { textOf } from '../../../shared/copy-leaves.test-support.js'
+import { itHoldsCopyAtEveryLeaf } from '../../../shared/copy-leaves.test-support.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
 
 describe('#copy', () => {
-  it.each([
-    ['en', copy],
-    ['cy', cy]
-  ])(
-    'Should hold a non-empty string or copy function at every %s leaf',
-    (locale, bundle) => {
-      for (const { path, value } of leaves(bundle)) {
-        expect(isCopyLeaf(value), `${locale}: ${path} must be copy`).toBe(true)
-        expect(
-          textOf(value).trim().length,
-          `${locale}: ${path} must render text`
-        ).toBeGreaterThan(0)
-      }
-    }
-  )
+  itHoldsCopyAtEveryLeaf(copy, cy)
 
-  it('Should pin the English wording the controller tests and page rely on', () => {
+  it('Should word the title, form label, required-term error, returned count, failed reason, milliseconds and match line', () => {
     expect(copy.title).toBe('Address lookup spike')
     expect(copy.form.label).toBe('Postcode or address')
     expect(copy.errors.termRequired).toBe(

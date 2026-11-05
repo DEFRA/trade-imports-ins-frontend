@@ -1,15 +1,38 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  EAST_OF_UTC,
+  WEST_OF_UTC,
+  runInZone
+} from '../../../common/test-helpers/run-in-zone.js'
+import {
   addUtcDays,
   addUtcMonths,
   formatDateText,
+  formatDisplayCalendarDate,
   parseDateText,
-  startOfDayInZone,
-  startOfUtcDay
+  startOfUtcDay,
+  utcMidnightOfDayInZone
 } from './calendar.js'
 
 const utc = (year, month, day) => new Date(Date.UTC(year, month - 1, day))
+
+describe('#formatDisplayCalendarDate', () => {
+  it('renders the day, a three-letter month and the year', () => {
+    expect(formatDisplayCalendarDate('2026-07-21')).toBe('21 Jul 2026')
+  })
+
+  it('renders September with a three-letter month', () => {
+    expect(formatDisplayCalendarDate('2026-09-10')).toBe('10 Sep 2026')
+  })
+
+  it.each(['2026-02-30', 'not-a-date', undefined])(
+    'returns an empty string for %s, which is not a real YYYY-MM-DD date',
+    (calendarDate) => {
+      expect(formatDisplayCalendarDate(calendarDate)).toBe('')
+    }
+  )
+})
 
 describe('#startOfUtcDay', () => {
   it('strips the time from an instant', () => {
@@ -19,16 +42,16 @@ describe('#startOfUtcDay', () => {
   })
 })
 
-describe('#startOfDayInZone', () => {
+describe('#utcMidnightOfDayInZone', () => {
   it('takes the London day, not the UTC one, in the hour they disagree', () => {
     expect(
-      startOfDayInZone(new Date('2026-08-11T23:30:00Z'), 'Europe/London')
+      utcMidnightOfDayInZone(new Date('2026-08-11T23:30:00Z'), 'Europe/London')
     ).toEqual(utc(2026, 8, 12))
   })
 
   it('agrees with the UTC day outside British Summer Time', () => {
     expect(
-      startOfDayInZone(new Date('2026-01-11T23:30:00Z'), 'Europe/London')
+      utcMidnightOfDayInZone(new Date('2026-01-11T23:30:00Z'), 'Europe/London')
     ).toEqual(utc(2026, 1, 11))
   })
 })
@@ -70,6 +93,12 @@ describe('#parseDateText', () => {
     expect(parseDateText(raw)).toEqual(expected)
   })
 
+  it('keeps the typed day when the process zone is east of UTC', () => {
+    runInZone(EAST_OF_UTC, () => {
+      expect(parseDateText('5/8/2026')).toEqual(utc(2026, 8, 5))
+    })
+  })
+
   it.each([
     ['31/2/2026'],
     ['32/1/2026'],
@@ -88,8 +117,14 @@ describe('#parseDateText', () => {
 })
 
 describe('#formatDateText', () => {
-  it('drops leading zeros, matching what the picker writes back', () => {
+  it('drops leading zeros from the day and month', () => {
     expect(formatDateText(utc(2026, 8, 5))).toBe('5/8/2026')
+  })
+
+  it('writes the UTC day when the process zone is west of UTC', () => {
+    runInZone(WEST_OF_UTC, () => {
+      expect(formatDateText(utc(2026, 8, 5))).toBe('5/8/2026')
+    })
   })
 
   it('keeps two-digit days and months intact', () => {

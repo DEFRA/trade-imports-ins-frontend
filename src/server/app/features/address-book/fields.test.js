@@ -173,7 +173,7 @@ describe('#formValuesOf', () => {
     expect(Object.keys(formValuesOf())).toEqual(FIELDS)
   })
 
-  test('Should read the form fields from a stored address and blank what is missing', () => {
+  test('Should read the form fields from a stored address and blank the fields stored as null', () => {
     const address = {
       ...STORED_ADDRESS,
       addressLine2: null,
