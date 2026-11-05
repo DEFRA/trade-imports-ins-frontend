@@ -1604,7 +1604,7 @@ describe(
       expectAddressFormAutocomplete(result)
     })
 
-    test('GET opens the Country select on its blank first option, Select a country, with United Kingdom selected', async () => {
+    test('GET lists Select a country first and opens the Country select on United Kingdom', async () => {
       const { result, statusCode } = await getAddWithTypeChosen(
         getServer(),
         'add-get-select-one'

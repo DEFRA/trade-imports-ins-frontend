@@ -4,9 +4,18 @@ import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { addressBookPath } from '../../../shared/paths.js'
 import { signInAndOpen } from './sign-in-and-open.js'
 
+import { NO_RESULTS_LINE, TABLE_HEADINGS } from './address-book-list-text.js'
+
+export { NO_RESULTS_LINE, TABLE_HEADINGS }
+
 export const UNKNOWN_ADDRESS_TYPE = 'TRANSPORTER'
-export const NO_RESULTS_LINE = 'Showing 0 of 0'
 export const ONE_MATCH_LINE = 'Showing 1-1 of 1'
+
+export const typeCellOf = (page, name) =>
+  page
+    .getByRole('row', { name: new RegExp(name) })
+    .getByRole('cell')
+    .nth(1)
 
 export const openAddressBookList = async (
   page,

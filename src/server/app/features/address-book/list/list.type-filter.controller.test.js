@@ -37,7 +37,10 @@ describe('#addressBookListTypeFilter', () => {
   ])(
     'offers the Type select the options of the %s tab only, led by Select one with no value',
     async (addressType, optionTexts) => {
-      stubAddressPage({ page: '1', addressType }, pageOf([highlandAddress]))
+      stubAddressPage(
+        { page: '1', tabAddressType: addressType },
+        pageOf([highlandAddress])
+      )
 
       const { $ } = await readPage(
         `${addressBookPath()}?addressType=${addressType}`,
@@ -55,7 +58,11 @@ describe('#addressBookListTypeFilter', () => {
 
   test('asks the address book for the role the tab offers and shows it chosen', async () => {
     const scope = stubAddressPage(
-      { page: '1', addressType: ADDRESS_TYPES.BRANCH, role: 'BRANCH_ADDRESS' },
+      {
+        page: '1',
+        tabAddressType: ADDRESS_TYPES.BRANCH,
+        role: 'BRANCH_ADDRESS'
+      },
       pageOf([highlandAddress])
     )
 
@@ -89,7 +96,7 @@ describe('#addressBookListTypeFilter', () => {
 
   test('lists the whole Branch tab with no Type selected for a role the Branch tab does not offer', async () => {
     const scope = stubAddressPage(
-      { page: '1', addressType: ADDRESS_TYPES.BRANCH },
+      { page: '1', tabAddressType: ADDRESS_TYPES.BRANCH },
       pageOf([highlandAddress])
     )
 
@@ -105,7 +112,7 @@ describe('#addressBookListTypeFilter', () => {
 
   test('offers the Type select of the tab, with the chosen Type selected, on the page shown when the address book cannot be reached', async () => {
     const scope = stubAddressBookUnavailable({
-      addressType: ADDRESS_TYPES.BRANCH,
+      tabAddressType: ADDRESS_TYPES.BRANCH,
       role: 'BRANCH_ADDRESS'
     })
 
@@ -123,13 +130,17 @@ describe('#addressBookListTypeFilter', () => {
       selectedTexts: [BRANCH_ADDRESS_OPTION]
     })
   })
+})
+
+describe('#addressBookListTypeFilter links', () => {
+  const readPage = startServerWithPageReader()
 
   test('links every page with the selected tab, the search term, the role and the page number only', async () => {
     const scope = stubAddressPage(
       {
         page: '2',
         q: 'green',
-        addressType: ADDRESS_TYPES.BRANCH,
+        tabAddressType: ADDRESS_TYPES.BRANCH,
         role: 'BRANCH_ADDRESS'
       },
       pageOf([greenFarmAddress], {
@@ -177,7 +188,7 @@ describe('#addressBookListTypeFilter', () => {
       {
         page: '1',
         q: 'green',
-        addressType: ADDRESS_TYPES.BRANCH,
+        tabAddressType: ADDRESS_TYPES.BRANCH,
         role: 'BRANCH_ADDRESS'
       },
       pageOf([greenFarmAddress])
@@ -220,7 +231,7 @@ describe('#addressBookListTypeFilter', () => {
       {
         page: '1',
         q: 'branch address',
-        addressType: ADDRESS_TYPES.BRANCH,
+        tabAddressType: ADDRESS_TYPES.BRANCH,
         searchRole: 'BRANCH_ADDRESS'
       },
       pageOf([{ ...parisDepotAddress, roles: ['BRANCH_ADDRESS'] }])

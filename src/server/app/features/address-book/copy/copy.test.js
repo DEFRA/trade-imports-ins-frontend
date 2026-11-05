@@ -200,6 +200,12 @@ describe('#copy', () => {
     expect(copy.errors.countryCode.required).toBe('Select a country')
     expect(copy.errors.phone.required).toBe('Enter a phone number')
   })
+
+  it('Should cap the name at 255 characters in its maxLength message', () => {
+    expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
+      'Name must be 255 characters or fewer'
+    )
+  })
 })
 
 describe('#copy of the list page', () => {
@@ -342,12 +348,6 @@ describe('#copy.roles journey question', () => {
     )
     expect(cy.roles.journeyHint('Mewnforiwr')).toBe(
       'Mae’r cyfeiriad hwn yn cael ei ychwanegu fel cyfeiriad Mewnforiwr. Dewiswch unrhyw rolau neu gyfeiriadau eraill y dylid defnyddio’r cyfeiriad hwn ar eu cyfer.'
-    )
-  })
-
-  it('Should cap the name at 255 characters in its maxLength message', () => {
-    expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
-      'Name must be 255 characters or fewer'
     )
   })
 })

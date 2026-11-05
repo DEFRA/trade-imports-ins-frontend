@@ -10,7 +10,7 @@ import {
 } from './address-types.js'
 
 describe('the roles each address type lists', () => {
-  test('Should list them in the order the Type select offers them', () => {
+  test("Should list each address type's roles in this order", () => {
     expect(ROLES_BY_ADDRESS_TYPE).toEqual({
       ORIGIN_OR_CONSIGNOR: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
       DESTINATION_CONSIGNEE_OR_IMPORTER: [

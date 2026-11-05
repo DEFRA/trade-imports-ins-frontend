@@ -25,7 +25,8 @@ import {
   ONE_MATCH_LINE,
   resultsLineOf,
   searchAndExpectSingleMatch,
-  selectedTabOf
+  selectedTabOf,
+  typeCellOf
 } from './address-book-list.js'
 import { copy } from '../copy/copy.en.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
@@ -579,12 +580,9 @@ test.describe('add address reached from a notification journey with JavaScript o
     await listPage.goto(
       addressTypeListUrl(ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER)
     )
-    await expect(
-      listPage
-        .getByRole('row', { name: new RegExp(validAddress.name) })
-        .getByRole('cell')
-        .nth(1)
-    ).toHaveText('Consignee, Importer')
+    await expect(typeCellOf(listPage, validAddress.name)).toHaveText(
+      'Consignee, Importer'
+    )
   })
 })
 

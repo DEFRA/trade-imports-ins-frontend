@@ -20,7 +20,9 @@ import {
   followTab,
   typeSelectOf,
   selectedTabOf,
-  tabLinksOf
+  tabLinksOf,
+  TABLE_HEADINGS,
+  typeCellOf
 } from './address-book-list.js'
 import { expectDashboard } from './dashboard.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
@@ -73,13 +75,7 @@ test.describe('list and pagination', () => {
     await openAddressBookList(page, { organisationId: ORG_DEFAULT })
 
     const table = page.getByRole('table')
-    await expect(table.getByRole('columnheader')).toHaveText([
-      'Name',
-      'Type',
-      'Address',
-      'Country',
-      'Action'
-    ])
+    await expect(table.getByRole('columnheader')).toHaveText(TABLE_HEADINGS)
     await expect(
       table.getByRole('cell', { name: seedAddress.name, exact: true })
     ).toBeVisible()
@@ -258,18 +254,13 @@ test.describe('address type tabs', () => {
     })
   }
 
-  test('shows each address with the labels of its roles in the Type column', async ({
+  test('shows Place of origin, Consignor and Consignee, Place of destination in the Type column of the addresses holding them', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
 
     await expect(
-      page
-        .getByRole('row', {
-          name: new RegExp(TYPED_SEED.originAndConsignor.name)
-        })
-        .getByRole('cell')
-        .nth(1)
+      typeCellOf(page, TYPED_SEED.originAndConsignor.name)
     ).toHaveText('Place of origin, Consignor')
 
     await openAddressBookList(page, {
@@ -278,12 +269,7 @@ test.describe('address type tabs', () => {
     })
 
     await expect(
-      page
-        .getByRole('row', {
-          name: new RegExp(TYPED_SEED.consigneeAndDestination.name)
-        })
-        .getByRole('cell')
-        .nth(1)
+      typeCellOf(page, TYPED_SEED.consigneeAndDestination.name)
     ).toHaveText('Consignee, Place of destination')
   })
 

@@ -102,10 +102,12 @@ export const INVALID_ADDRESS_PAYLOAD = {
   email: 'bad'
 }
 
-const carriesRoles = (body) =>
+const carriesRolesWithoutAddressType = (body) =>
   body.roles?.length > 0 && !Object.hasOwn(body, 'addressType')
 
-export const serveAddressCreated = (matchBody = carriesRoles) =>
+export const serveAddressCreated = (
+  matchBody = carriesRolesWithoutAddressType
+) =>
   addressBookApi()
     .post(addressesApiPath(), matchBody)
     .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)

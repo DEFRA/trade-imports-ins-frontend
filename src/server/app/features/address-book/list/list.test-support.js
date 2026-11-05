@@ -17,8 +17,10 @@ import { ROLES_BY_ADDRESS_TYPE } from '../../../services/address-book/index.js'
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { LIST_PAGE_SIZE } from './list.controller.js'
 
-export const NO_RESULTS_LINE = 'Showing 0 of 0'
-export const TABLE_HEADINGS = ['Name', 'Type', 'Address', 'Country', 'Action']
+export {
+  NO_RESULTS_LINE,
+  TABLE_HEADINGS
+} from '../fit/address-book-list-text.js'
 
 export const highlandAddress = {
   id: '1',
@@ -122,7 +124,7 @@ export const startServerWithPageReader = () => {
 const roleQueryValueOf = (roles) => (roles.length === 1 ? roles[0] : roles)
 
 const interceptListRequest = ({
-  addressType = DEFAULT_ADDRESS_BOOK_TAB.addressType,
+  tabAddressType = DEFAULT_ADDRESS_BOOK_TAB.addressType,
   role,
   ...query
 }) =>
@@ -130,7 +132,7 @@ const interceptListRequest = ({
     .get(addressesApiPath())
     .query({
       pageSize: String(LIST_PAGE_SIZE),
-      role: role ?? roleQueryValueOf(ROLES_BY_ADDRESS_TYPE[addressType]),
+      role: role ?? roleQueryValueOf(ROLES_BY_ADDRESS_TYPE[tabAddressType]),
       ...query
     })
 

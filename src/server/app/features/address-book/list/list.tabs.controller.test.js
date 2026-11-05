@@ -53,7 +53,7 @@ describe('#addressBookListTabs', () => {
     'asks the address book for the tab chosen by %s',
     async (_description, url, askedAddressType) => {
       const scope = stubAddressPage(
-        { page: '1', addressType: askedAddressType },
+        { page: '1', tabAddressType: askedAddressType },
         pageOf([highlandAddress])
       )
 
@@ -71,7 +71,7 @@ describe('#addressBookListTabs', () => {
 
     test('logs an unknown address type once, with the organisation and the address type served', async () => {
       stubAddressPage(
-        { page: '1', addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType },
+        { page: '1', tabAddressType: DEFAULT_ADDRESS_BOOK_TAB.addressType },
         pageOf([highlandAddress])
       )
 
@@ -105,7 +105,7 @@ describe('#addressBookListTabs', () => {
       ]
     ])('logs nothing for %s', async (_description, url, servedAddressType) => {
       const scope = stubAddressPage(
-        { page: '1', addressType: servedAddressType },
+        { page: '1', tabAddressType: servedAddressType },
         pageOf([highlandAddress])
       )
 
@@ -183,7 +183,10 @@ describe('#addressBookListTabs', () => {
   )(
     'marks only the %s tab as current and heads its panel',
     async (addressType, tabIndex) => {
-      stubAddressPage({ page: '1', addressType }, pageOf([highlandAddress]))
+      stubAddressPage(
+        { page: '1', tabAddressType: addressType },
+        pageOf([highlandAddress])
+      )
 
       const { $ } = await readPage(
         `${addressBookPath()}?addressType=${addressType}`,
@@ -204,9 +207,9 @@ describe('#addressBookListTabs', () => {
     }
   )
 
-  test('holds the selected tab in the filter form so a search stays on it', async () => {
+  test('holds the selected tab as a hidden addressType input in the filter form', async () => {
     stubAddressPage(
-      { page: '1', addressType: ADDRESS_TYPES.BRANCH },
+      { page: '1', tabAddressType: ADDRESS_TYPES.BRANCH },
       pageOf([highlandAddress])
     )
 

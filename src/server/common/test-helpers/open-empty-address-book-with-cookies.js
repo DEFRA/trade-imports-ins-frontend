@@ -3,6 +3,7 @@ import {
   addressBookPath,
   addressesApiPath,
   cookieHeaderOf,
+  getPage,
   pageOf
 } from './address-book-requests.js'
 import { addressBookApi } from './real-mode.js'
@@ -18,10 +19,10 @@ export const openEmptyAddressBookWithCookiesFrom = (
     .get(addressesApiPath(organisationId))
     .query(true)
     .reply(statusCodes.ok, pageOf([]))
-  return server.inject({
-    method: 'GET',
-    url: addressBookPath(),
-    auth: sessionAuth(sessionId),
-    headers: { cookie: cookieHeaderOf(postHeaders) }
-  })
+  return getPage(
+    server,
+    addressBookPath(),
+    sessionId,
+    cookieHeaderOf(postHeaders)
+  )
 }
