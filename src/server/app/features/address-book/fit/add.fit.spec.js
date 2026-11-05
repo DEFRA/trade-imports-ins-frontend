@@ -174,7 +174,7 @@ test.describe('add address roles question', () => {
     })
 
     await expect(selectedTabOf(page)).toHaveText(
-      copy.list.tabs.originOrConsignor.label
+      copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label
     )
     await expect(page.getByRole('link', { name: /^View / }).first()).toHaveText(
       `View ${LATE_ALPHABETICAL_NAME}`
@@ -207,7 +207,7 @@ test.describe('add address roles question without JavaScript', () => {
     })
 
     await expect(selectedTabOf(page)).toHaveText(
-      copy.list.tabs.originOrConsignor.label
+      copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label
     )
     await expect(
       page.getByRole('link', { name: `View ${validAddress.name}` })
@@ -222,12 +222,12 @@ test.describe('add address of a type that must be in the United Kingdom', () => 
     {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       offeredRoles: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
-      tab: copy.list.tabs.destinationConsigneeOrImporter.label
+      tab: copy.list.tabs[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER].label
     },
     {
       addressType: ADDRESS_TYPES.BRANCH,
       offeredRoles: ['BRANCH_ADDRESS'],
-      tab: copy.list.tabs.branch.label
+      tab: copy.list.tabs[ADDRESS_TYPES.BRANCH].label
     }
   ]) {
     const typeLabel = copy.addressType.options[addressType].label

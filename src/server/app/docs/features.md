@@ -78,8 +78,8 @@ root:
   `rolesToSaveForParty` and `requiresUnitedKingdomAddress` read it.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
   `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address
-  type, the roles its Type select offers in order, and the copy key of its label
-  and panel heading), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and Consignor tab),
+  type and the roles its Type select offers in order; its label and panel
+  heading are `copy.list.tabs[addressType]`), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and Consignor tab),
   `resolveTab` (the tab a requested address type names, else nothing) and
   `resolveRole` (the requested role when the tab offers it, else nothing). The
   list controller serves the default tab when `resolveTab` finds none, and

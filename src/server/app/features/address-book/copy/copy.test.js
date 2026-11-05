@@ -96,7 +96,7 @@ describe('#copy', () => {
       hint: 'Search by name, address or country',
       button: 'Search',
       clear: 'Clear search',
-      type: {
+      role: {
         label: 'Type',
         placeholder: 'Select one'
       }
@@ -226,24 +226,24 @@ describe('#copy of the list page', () => {
       ['search.hint', 'Chwilio yn ôl enw, cyfeiriad neu wlad'],
       ['search.button', 'Chwilio'],
       ['search.clear', 'Clirio’r chwiliad'],
-      ['search.type.label', 'Math'],
-      ['search.type.placeholder', 'Dewiswch un'],
+      ['search.role.label', 'Math'],
+      ['search.role.placeholder', 'Dewiswch un'],
       ['add', 'Ychwanegu cyfeiriad newydd'],
       ['results', 'Yn dangos 1-2 o 3'],
       ['noResults', 'Yn dangos 0 o 0'],
       ['tabsLabel', 'Mathau o gyfeiriad'],
-      ['tabs.originOrConsignor.label', 'Tarddiad ac Anfonwr'],
-      ['tabs.originOrConsignor.heading', 'Cyfeiriadau tarddiad ac anfonwr'],
+      ['tabs.ORIGIN_OR_CONSIGNOR.label', 'Tarddiad ac Anfonwr'],
+      ['tabs.ORIGIN_OR_CONSIGNOR.heading', 'Cyfeiriadau tarddiad ac anfonwr'],
       [
-        'tabs.destinationConsigneeOrImporter.label',
+        'tabs.DESTINATION_CONSIGNEE_OR_IMPORTER.label',
         'Cyrchfan, Derbynnydd a Mewnforiwr'
       ],
       [
-        'tabs.destinationConsigneeOrImporter.heading',
+        'tabs.DESTINATION_CONSIGNEE_OR_IMPORTER.heading',
         'Cyfeiriadau cyrchfan, derbynnydd a mewnforiwr'
       ],
-      ['tabs.branch.label', 'Cangen'],
-      ['tabs.branch.heading', 'Cyfeiriadau cangen'],
+      ['tabs.BRANCH.label', 'Cangen'],
+      ['tabs.BRANCH.heading', 'Cyfeiriadau cangen'],
       ['roles.PLACE_OF_ORIGIN.columnLabel', 'Man tarddiad'],
       ['roles.PLACE_OF_ORIGIN.optionLabel', 'Man Tarddiad'],
       ['roles.CONSIGNOR.columnLabel', 'Anfonwr'],
@@ -257,7 +257,7 @@ describe('#copy of the list page', () => {
       ['roles.BRANCH_ADDRESS.columnLabel', 'Cangen'],
       ['roles.BRANCH_ADDRESS.optionLabel', 'Cyfeiriad Cangen'],
       ['table.name', 'Enw'],
-      ['table.type', 'Math'],
+      ['table.role', 'Math'],
       ['table.address', 'Cyfeiriad'],
       ['table.country', 'Gwlad'],
       ['table.action', 'Cam gweithredu'],
@@ -267,17 +267,17 @@ describe('#copy of the list page', () => {
 
   it('Should word the tab labels, panel headings, Type heading and role labels', () => {
     expect(copy.list.tabs).toEqual({
-      originOrConsignor: {
+      ORIGIN_OR_CONSIGNOR: {
         label: 'Origin and Consignor',
         heading: 'Origin and Consignor addresses'
       },
-      destinationConsigneeOrImporter: {
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
         label: 'Destination, Consignee and Importer',
         heading: 'Destination, Consignee and Importer addresses'
       },
-      branch: { label: 'Branch', heading: 'Branch addresses' }
+      BRANCH: { label: 'Branch', heading: 'Branch addresses' }
     })
-    expect(copy.list.table.type).toBe('Type')
+    expect(copy.list.table.role).toBe('Type')
     expect(copy.list.roles).toEqual({
       PLACE_OF_ORIGIN: {
         columnLabel: 'Place of origin',

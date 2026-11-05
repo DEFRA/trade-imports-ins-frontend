@@ -172,9 +172,9 @@ describe('#addressBookListTabs', () => {
       subNavigationLinksOf($)
         .filter(({ current }) => current === 'page')
         .map(({ text }) => text)
-    ).toEqual([copy.list.tabs[DEFAULT_ADDRESS_BOOK_TAB.copyKey].label])
+    ).toEqual([copy.list.tabs[DEFAULT_ADDRESS_BOOK_TAB.addressType].label])
     expect(panelHeadingTextOf($)).toBe(
-      copy.list.tabs[DEFAULT_ADDRESS_BOOK_TAB.copyKey].heading
+      copy.list.tabs[DEFAULT_ADDRESS_BOOK_TAB.addressType].heading
     )
   })
 
@@ -196,14 +196,12 @@ describe('#addressBookListTabs', () => {
       expect(
         subNavigationLinksOf($).map(({ text, current }) => [text, current])
       ).toEqual(
-        ADDRESS_BOOK_TABS.map(({ copyKey }, index) => [
-          copy.list.tabs[copyKey].label,
+        ADDRESS_BOOK_TABS.map((tab, index) => [
+          copy.list.tabs[tab.addressType].label,
           index === tabIndex ? 'page' : null
         ])
       )
-      expect(panelHeadingTextOf($)).toBe(
-        copy.list.tabs[ADDRESS_BOOK_TABS[tabIndex].copyKey].heading
-      )
+      expect(panelHeadingTextOf($)).toBe(copy.list.tabs[addressType].heading)
     }
   )
 

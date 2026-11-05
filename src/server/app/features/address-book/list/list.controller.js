@@ -64,13 +64,13 @@ const paginationOf = (addressPage) => ({
 
 const subNavigationItemsOf = (selectedTab, searchTerm) =>
   ADDRESS_BOOK_TABS.map((tab) => ({
-    text: copy.list.tabs[tab.copyKey].label,
+    text: copy.list.tabs[tab.addressType].label,
     href: addressBookPageHref(1, { addressType: tab.addressType, searchTerm }),
     active: tab === selectedTab
   }))
 
 const roleItemsOf = (selectedTab, selectedRole) => [
-  { value: '', text: copy.list.search.type.placeholder },
+  { value: '', text: copy.list.search.role.placeholder },
   ...selectedTab.roles.map((role) => ({
     value: role,
     text: copy.list.roles[role].optionLabel,
@@ -170,7 +170,7 @@ const get = async (request, toolkit) => {
     return buildView(toolkit, {
       listLoaded: true,
       subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
-      panelHeading: copy.list.tabs[selectedTab.copyKey].heading,
+      panelHeading: copy.list.tabs[selectedTab.addressType].heading,
       clearSearchHref: addressBookPageHref(1, { addressType, role }),
       tableRows: tableRowsOf(addresses),
       resultsLabel: resultsLabelOf(pagination, copy.list),

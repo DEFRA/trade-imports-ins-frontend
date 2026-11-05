@@ -12,7 +12,7 @@ export const copy = {
       hint: 'Search by name, address or country',
       button: 'Search',
       clear: 'Clear search',
-      type: {
+      role: {
         label: 'Type',
         placeholder: 'Select one'
       }
@@ -22,15 +22,15 @@ export const copy = {
     noResults: 'Showing 0 of 0',
     tabsLabel: 'Address types',
     tabs: {
-      originOrConsignor: {
+      ORIGIN_OR_CONSIGNOR: {
         label: 'Origin and Consignor',
         heading: 'Origin and Consignor addresses'
       },
-      destinationConsigneeOrImporter: {
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
         label: 'Destination, Consignee and Importer',
         heading: 'Destination, Consignee and Importer addresses'
       },
-      branch: {
+      BRANCH: {
         label: 'Branch',
         heading: 'Branch addresses'
       }
@@ -54,7 +54,7 @@ export const copy = {
     },
     table: {
       name: 'Name',
-      type: 'Type',
+      role: 'Type',
       address: 'Address',
       country: 'Country',
       action: 'Action',

@@ -14,7 +14,7 @@ export const copy = {
       hint: 'Chwilio yn ôl enw, cyfeiriad neu wlad',
       button: 'Chwilio',
       clear: 'Clirio’r chwiliad',
-      type: {
+      role: {
         label: 'Math',
         placeholder: 'Dewiswch un'
       }
@@ -24,15 +24,15 @@ export const copy = {
     noResults: 'Yn dangos 0 o 0',
     tabsLabel: 'Mathau o gyfeiriad',
     tabs: {
-      originOrConsignor: {
+      ORIGIN_OR_CONSIGNOR: {
         label: 'Tarddiad ac Anfonwr',
         heading: 'Cyfeiriadau tarddiad ac anfonwr'
       },
-      destinationConsigneeOrImporter: {
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
         label: 'Cyrchfan, Derbynnydd a Mewnforiwr',
         heading: 'Cyfeiriadau cyrchfan, derbynnydd a mewnforiwr'
       },
-      branch: {
+      BRANCH: {
         label: 'Cangen',
         heading: 'Cyfeiriadau cangen'
       }
@@ -56,7 +56,7 @@ export const copy = {
     },
     table: {
       name: 'Enw',
-      type: 'Math',
+      role: 'Math',
       address: 'Cyfeiriad',
       country: 'Gwlad',
       action: 'Cam gweithredu',
