@@ -1,19 +1,11 @@
 import { load } from 'cheerio'
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi
-} from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 import { config } from '../../../config/config.js'
 import { nunjucksConfig } from '../../../config/nunjucks/nunjucks.js'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
+import { serveOidcDiscovery } from '../../common/test-helpers/serve-oidc-discovery.js'
 import {
   normalisedText,
   textsOf
@@ -27,10 +19,6 @@ import {
 import { sharedCopy } from '../shared/kit.js'
 import { copy } from './copy/copy.en.js'
 import { BANNER_CLASSES, LEVELS, TAG_CLASSES } from './levels.js'
-
-vi.mock('../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const environment = nunjucksConfig.options.compileOptions.environment
 
@@ -145,6 +133,7 @@ describe('page maturity banner', () => {
     runInRealMode()
 
     beforeAll(async () => {
+      serveOidcDiscovery()
       server = await createServer()
       await server.initialize()
     })

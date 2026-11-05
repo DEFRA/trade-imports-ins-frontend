@@ -1,10 +1,6 @@
 import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
 import { statusCodes } from '../constants/status-codes.js'
-import { mockOidcConfig } from '../test-helpers/mock-oidc-config.js'
-
-vi.mock('../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
+import { serveOidcDiscovery } from '../test-helpers/serve-oidc-discovery.js'
 
 vi.mock('../../server.js', async (importOriginal) => {
   const actual = await importOriginal()
@@ -25,6 +21,7 @@ describe('#startServer', () => {
     let server
 
     beforeAll(async () => {
+      serveOidcDiscovery()
       server = await startServer()
     })
 

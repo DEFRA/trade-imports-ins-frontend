@@ -109,10 +109,12 @@ entry module under `src/client/javascripts/`, name it as an `entry` in
 Write `controller.test.js` in the shape of
 [`add/add.controller.test.js`](../features/address-book/add/add.controller.test.js):
 
-- `vi.mock` of `get-oidc-config.js`, `runInRealMode()`, and
-  `describe(name, { concurrent: false }, fn)`.
-- `createServer()` and `initialize()` in `beforeAll`; `server.stop({
-timeout: 0 })` in `afterAll`.
+- `describe(name, { concurrent: false }, fn)`.
+- Start the server with `const server = startRealModeServer()` (or
+  `startRealModeServerServingCountries(countries)`) from
+  `common/test-helpers/test-server.js`, which serves OIDC discovery through
+  `serveOidcDiscovery()`. Then use `restoreConfigAfterEach([...keys])` and
+  `recordModuleLoggerInfo()` where needed.
 - `config.set('csrf.enabled', false)` and `serveCountries(...)` in
   `beforeEach`.
 - `server.inject` with `auth: sessionAuth('<unique id>')`.

@@ -32,9 +32,10 @@ for the pattern, and the helpers in
 [`common/test-helpers/`](../../common/test-helpers/): `real-mode.js`
 (`runInRealMode()`, `refuseOutboundHttp()`, `addressBookApi()`,
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
-`module-logger-lines.js` (`recordModuleLoggerInfo()`, which records the info
-lines the module-level logger writes during each test of the enclosing
-`describe`), `address-book-requests.js`, the one owner of the address book tests'
+`module-logger-lines.js` (`recordModuleLoggerInfo()` and
+`recordModuleLoggerWarn()`, which record the info or warn lines the
+module-level logger writes during each test of the enclosing `describe`),
+`address-book-requests.js`, the one owner of the address book tests'
 set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
 `addressPagePath(addressId)`, `editAddressPagePath(addressId)`,
 `deleteAddressPagePath(addressId)`, `RETURN_HOME`), address book API paths
@@ -95,7 +96,24 @@ read the banner),
 (`mockAuthConfig(importOriginal)`), `test-server.js`
 (`startTestServer()`, `stopTestServer(server)`, `startRealModeServer()`,
 `startRealModeServerServingCountries(countries)`, which returns a getter
-for the started server).
+for the started server), `restore-config-after-each.js`
+(`restoreConfigAfterEach(keys)`, which restores the named config keys after
+each test) and `serve-oidc-discovery.js` (`serveOidcDiscovery()`, which serves
+the OIDC discovery document at the network boundary; `startRealModeServer()`
+calls it).
+
+[`shared/copy-leaves.test-support.js`](../shared/copy-leaves.test-support.js)
+holds `itHoldsTextAtEveryLeaf({ en, cy })`, which every copy bundle test calls,
+and `textOf(value)`.
+
+The notification type question keeps its test set-up beside the controller:
+[`requests.test-support.js`](../features/notification-type/requests.test-support.js)
+(`CRN`, and `requestsTo(server)`, which returns `getPage(user, query)` and
+`postType(user, payload)`) and
+[`hand-overs.test-support.js`](../features/notification-type/hand-overs.test-support.js)
+(`handOversFor({ animalsBaseUrl, plantsBaseUrl })`,
+`expectedReturnUrl({ animalsBaseUrl, reference })`, `SAMPLE_REFERENCE` and
+`LABELS_IN_ORDER`).
 
 [`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
 holds the list's fixtures, nock stubs and Cheerio readers:
@@ -167,10 +185,8 @@ validation tables.
 `expectEmptyAddressBookList`, `searchFieldOf`, `openFilterDisclosure`,
 `expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery`,
 `resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
-[`dashboard.js`](../features/address-book/fit/dashboard.js) —
-`expectDashboard`.
 [`dashboard.js`](../features/dashboard/fit/dashboard.js) —
-`dashboardSearchField`, `searchDashboardFor`.
+`expectDashboard`, `dashboardSearchField`, `searchDashboardFor`.
 [`notification-type.js`](../features/notification-type/fit/notification-type.js) —
 `expectUnselectedNotificationType`: the browser is on the type question, with
 its five options in order and none chosen.

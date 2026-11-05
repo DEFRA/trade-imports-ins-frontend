@@ -7,7 +7,7 @@ import {
   validAddress,
   validAddressViewLink
 } from './address-form.js'
-import { expectDashboard } from './dashboard.js'
+import { expectDashboard } from '../../dashboard/fit/dashboard.js'
 import { withReturn } from './return-query.js'
 import {
   seedAddress,

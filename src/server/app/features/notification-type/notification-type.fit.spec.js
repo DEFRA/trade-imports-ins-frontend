@@ -7,6 +7,10 @@ import {
   expectOnlyNotificationTypeChecked,
   expectUnselectedNotificationType
 } from './fit/notification-type.js'
+import {
+  SAMPLE_REFERENCE,
+  expectedReturnUrl
+} from './hand-overs.test-support.js'
 
 const continueButton = (page) =>
   page.getByRole('button', { name: 'Continue', exact: true })
@@ -88,11 +92,10 @@ test.describe('notification type question', () => {
 
   test.describe('opened for a live animals notification', () => {
     const ANIMALS_ORIGIN = 'http://localhost:3000'
-    const REFERENCE = 'DRAFT.IMP.2026.1'
 
     test.beforeEach(async ({ page }) => {
       await page.goto(
-        `${notificationTypePath()}?notification-id=${REFERENCE}&current-notification-type=live-animals`
+        `${notificationTypePath()}?notification-id=${SAMPLE_REFERENCE}&current-notification-type=live-animals`
       )
     })
 
@@ -114,7 +117,10 @@ test.describe('notification type question', () => {
       const response = await returned
       expect(response.status()).toBe(302)
       expect(await response.headerValue('location')).toBe(
-        `${ANIMALS_ORIGIN}/live-animals/notifications/${REFERENCE}/origin`
+        expectedReturnUrl({
+          animalsBaseUrl: ANIMALS_ORIGIN,
+          reference: SAMPLE_REFERENCE
+        })
       )
     })
   })

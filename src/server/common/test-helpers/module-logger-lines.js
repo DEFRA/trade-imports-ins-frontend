@@ -2,27 +2,21 @@ import { afterEach, beforeEach, vi } from 'vitest'
 
 import { createLogger } from '../helpers/logging/logger.js'
 
-/**
- * Records the info lines the module-level logger writes during each test of the
- * enclosing `describe`, and restores the logger afterwards.
- *
- * @returns {{ entries: Array<{ fields: object, message: string }>, entriesWith: (message: string) => Array<{ fields: object, message: string }> }}
- */
-export const recordModuleLoggerInfo = () => {
+const recordModuleLoggerLevel = (level) => {
   const entries = []
-  let infoSpy
+  let levelSpy
 
   beforeEach(() => {
     entries.length = 0
-    infoSpy = vi
-      .spyOn(createLogger(), 'info')
+    levelSpy = vi
+      .spyOn(createLogger(), level)
       .mockImplementation((fields, message) => {
         entries.push({ fields, message })
       })
   })
 
   afterEach(() => {
-    infoSpy.mockRestore()
+    levelSpy.mockRestore()
   })
 
   return {
@@ -31,3 +25,19 @@ export const recordModuleLoggerInfo = () => {
       entries.filter((entry) => entry.message === message)
   }
 }
+
+/**
+ * Records the info lines the module-level logger writes during each test of the
+ * enclosing `describe`, and restores the logger afterwards.
+ *
+ * @returns {{ entries: Array<{ fields: object, message: string }>, entriesWith: (message: string) => Array<{ fields: object, message: string }> }}
+ */
+export const recordModuleLoggerInfo = () => recordModuleLoggerLevel('info')
+
+/**
+ * Records the warn lines the module-level logger writes during each test of the
+ * enclosing `describe`, and restores the logger afterwards.
+ *
+ * @returns {{ entries: Array<{ fields: object, message: string }>, entriesWith: (message: string) => Array<{ fields: object, message: string }> }}
+ */
+export const recordModuleLoggerWarn = () => recordModuleLoggerLevel('warn')

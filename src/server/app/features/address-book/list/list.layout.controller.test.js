@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
@@ -6,7 +6,6 @@ import {
   ADDRESS_BOOK_PATH,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
   NO_RESULTS_LINE,
@@ -23,10 +22,6 @@ import {
   tableHeadingsOf,
   tagNamesOf
 } from './list.test-support.js'
-
-vi.mock('../../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const linksAfterFilterForm = ($) =>
   contentOf($)

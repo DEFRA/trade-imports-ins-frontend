@@ -5,7 +5,7 @@ import {
   expectEmptyAddressBookList
 } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
-import { expectDashboard } from './dashboard.js'
+import { expectDashboard } from '../../dashboard/fit/dashboard.js'
 import { withReturn } from './return-query.js'
 import {
   seedAddress,

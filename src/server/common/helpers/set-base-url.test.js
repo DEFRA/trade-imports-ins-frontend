@@ -1,18 +1,16 @@
-import { afterAll, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { config } from '../../../config/config.js'
+import { restoreConfigAfterEach } from '../test-helpers/restore-config-after-each.js'
 import { buildNotificationUrl, buildSetBaseUrl } from './set-base-url.js'
 
 const LIVE_ANIMALS_BASE = '/live-animals'
 const ANIMALS_HOST = 'http://localhost:3000'
 const configKey = 'tradeImportsAnimalsFrontend.baseUrl'
-const originalBaseUrl = config.get(configKey)
+
+restoreConfigAfterEach([configKey])
 
 describe('buildSetBaseUrl', () => {
-  afterAll(() => {
-    config.set(configKey, originalBaseUrl)
-  })
-
   test('joins a base URL that carries no trailing slash to the set base', () => {
     config.set(configKey, ANIMALS_HOST)
 
@@ -39,10 +37,6 @@ describe('buildSetBaseUrl', () => {
 })
 
 describe('buildNotificationUrl', () => {
-  afterAll(() => {
-    config.set(configKey, originalBaseUrl)
-  })
-
   test('joins the set base and the notifications path to the base URL', () => {
     config.set(configKey, `${ANIMALS_HOST}/`)
 

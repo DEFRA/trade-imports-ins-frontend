@@ -1,26 +1,11 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi
-} from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 
-import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { mockOidcConfig } from '../../../common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../../../common/test-helpers/session-auth.js'
-import {
-  insBackendApi,
-  runInRealMode
-} from '../../../common/test-helpers/real-mode.js'
+import { insBackendApi } from '../../../common/test-helpers/real-mode.js'
 import { config } from '../../../../config/config.js'
-
-vi.mock('../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
+import { restoreConfigAfterEach } from '../../../common/test-helpers/restore-config-after-each.js'
+import { startRealModeServer } from '../../../common/test-helpers/test-server.js'
 
 const PAGE_PATH = '/address-lookup-spike'
 const LOOKUP_PATH = '/address-lookup'
@@ -91,26 +76,20 @@ const lookupByPostcode = (postcode) =>
 
 const lookupByFind = (find) => insBackendApi().get(LOOKUP_PATH).query({ find })
 
-describe('#addressLookupSpikeController', { concurrent: false }, () => {
-  let server
-
-  runInRealMode()
-
-  beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
+const startServerWithoutCsrf = () => {
+  restoreConfigAfterEach(['csrf.enabled'])
+  const server = startRealModeServer()
   beforeEach(() => {
     config.set('csrf.enabled', false)
   })
+  return server
+}
+
+describe('#addressLookupSpikeController', { concurrent: false }, () => {
+  const server = startServerWithoutCsrf()
 
   test('GET renders the search form with no results yet', async () => {
-    const { result, statusCode } = await server.inject({
+    const { result, statusCode } = await server().inject({
       method: 'GET',
       url: PAGE_PATH,
       auth: sessionAuth('address-lookup-spike-get')
@@ -128,7 +107,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       .matchHeader(TRACING_HEADER, TRACE_ID)
       .reply(200, resultsResponse('POSTCODE'))
 
-    const { result, statusCode } = await server.inject(
+    const { result, statusCode } = await server().inject(
       search('SW1A 1AA', 'address-lookup-spike-postcode')
     )
 
@@ -146,7 +125,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       resultsResponse('FIND')
     )
 
-    const { result } = await server.inject(
+    const { result } = await server().inject(
       search('Buckingham Palace', 'address-lookup-spike-find')
     )
 
@@ -161,7 +140,9 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       resultsResponse('POSTCODE')
     )
 
-    await server.inject(search('  sw1a1aa  ', 'address-lookup-spike-normalise'))
+    await server().inject(
+      search('  sw1a1aa  ', 'address-lookup-spike-normalise')
+    )
 
     expect(scope.isDone()).toBe(true)
   })
@@ -172,7 +153,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       .query(true)
       .reply(200, resultsResponse('POSTCODE'))
 
-    const { result, statusCode } = await server.inject(
+    const { result, statusCode } = await server().inject(
       search('   ', 'address-lookup-spike-empty')
     )
 
@@ -184,7 +165,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
   test('a warm search shows the lookup time and says no token hops ran', async () => {
     lookupByPostcode('SW1A 1AA').reply(200, resultsResponse('POSTCODE'))
 
-    const { result } = await server.inject(
+    const { result } = await server().inject(
       search('SW1A 1AA', 'address-lookup-spike-warm')
     )
 
@@ -200,7 +181,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       resultsResponse('POSTCODE', { timings: COLD_TIMINGS })
     )
 
-    const { result } = await server.inject(
+    const { result } = await server().inject(
       search('SW1A 1AA', 'address-lookup-spike-cold')
     )
 
@@ -214,7 +195,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
   test('the page reports its own round trip, the backend total and the trace id', async () => {
     lookupByPostcode('SW1A 1AA').reply(200, resultsResponse('POSTCODE'))
 
-    const { result } = await server.inject(
+    const { result } = await server().inject(
       search('SW1A 1AA', 'address-lookup-spike-roundtrip')
     )
 
@@ -236,7 +217,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       })
     )
 
-    const { result } = await server.inject(
+    const { result } = await server().inject(
       search('XX1 1XX', 'address-lookup-spike-failed')
     )
 
@@ -255,7 +236,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       })
     )
 
-    const { result, statusCode } = await server.inject(
+    const { result, statusCode } = await server().inject(
       search('XX1 1XX', 'address-lookup-spike-no-results')
     )
 
@@ -269,22 +250,7 @@ describe(
   '#addressLookupSpikeController — choosing and errors',
   { concurrent: false },
   () => {
-    let server
-
-    runInRealMode()
-
-    beforeAll(async () => {
-      server = await createServer()
-      await server.initialize()
-    })
-
-    afterAll(async () => {
-      await server.stop({ timeout: 0 })
-    })
-
-    beforeEach(() => {
-      config.set('csrf.enabled', false)
-    })
+    const server = startServerWithoutCsrf()
 
     test('choosing a result maps it onto the address book fields without searching again', async () => {
       const scope = insBackendApi()
@@ -292,7 +258,7 @@ describe(
         .query(true)
         .reply(200, resultsResponse('POSTCODE'))
 
-      const { result, statusCode } = await server.inject(
+      const { result, statusCode } = await server().inject(
         chosen(
           { term: 'SW1A 1AA', chosen: JSON.stringify(BUCKINGHAM_PALACE) },
           'address-lookup-spike-chosen'
@@ -307,7 +273,7 @@ describe(
     })
 
     test('choosing a result names the gaps the lookup cannot fill', async () => {
-      const { result } = await server.inject(
+      const { result } = await server().inject(
         chosen(
           { term: 'SW1A 1AA', chosen: JSON.stringify(BUCKINGHAM_PALACE) },
           'address-lookup-spike-gaps'
@@ -325,7 +291,7 @@ describe(
     ])(
       'choosing a result renders a warning when the chosen address %s',
       async (_description, badChosen) => {
-        const { result, statusCode } = await server.inject(
+        const { result, statusCode } = await server().inject(
           chosen(
             { term: 'SW1A 1AA', chosen: badChosen },
             'address-lookup-spike-bad-chosen'
@@ -341,7 +307,7 @@ describe(
     test('POST renders a warning when the backend itself is unreachable', async () => {
       lookupByPostcode('SW1A 1AA').replyWithError('fetch failed')
 
-      const { result, statusCode } = await server.inject(
+      const { result, statusCode } = await server().inject(
         search('SW1A 1AA', 'address-lookup-spike-network-error')
       )
 
@@ -352,7 +318,7 @@ describe(
     test('POST renders the same warning when the backend answers with a server error', async () => {
       lookupByPostcode('SW1A 1AA').reply(503, { title: 'Service Unavailable' })
 
-      const { result, statusCode } = await server.inject(
+      const { result, statusCode } = await server().inject(
         search('SW1A 1AA', 'address-lookup-spike-service-unavailable')
       )
 

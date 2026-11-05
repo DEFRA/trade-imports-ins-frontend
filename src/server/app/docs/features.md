@@ -14,7 +14,7 @@ below.
 **`dashboard/`** is the single-page shape: `controller.js`, `template.njk`,
 `controller.test.js`, `copy/`, `view-model/list.js` (plus its test), and
 `dashboard.fit.spec.js` beside the controller, and `fit/dashboard.js`
-(`dashboardSearchField`, `searchDashboardFor`).
+(`expectDashboard`, `dashboardSearchField`, `searchDashboardFor`).
 
 **`notification-type/`** is also a single-page feature: `controller.js`,
 `template.njk`, `controller.test.js`, `copy/` and
@@ -90,8 +90,8 @@ root:
   yar-backed, read-once.
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
-specs plus the fixtures `address-book-list.js`, `address-form.js`,
-`dashboard.js` and `seed-address.js`. `view-model/list.js` owns the list's
+specs plus the fixtures `address-book-list.js`, `address-form.js`
+and `seed-address.js`. `view-model/list.js` owns the list's
 name lines, postal lines and results line, which the list controller builds
 into table cells.
 

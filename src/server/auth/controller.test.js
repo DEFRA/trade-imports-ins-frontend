@@ -2,16 +2,12 @@ import { vi } from 'vitest'
 import { createServer } from '../server.js'
 import { config } from '../../config/config.js'
 import { statusCodes } from '../common/constants/status-codes.js'
-import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
+import { serveOidcDiscovery } from '../common/test-helpers/serve-oidc-discovery.js'
 import { sessionAuth } from '../common/test-helpers/session-auth.js'
 import { readEmfDocuments } from '../common/test-helpers/emf-documents.js'
 import { verifyToken } from '../../auth/verify-token.js'
 import { getPermissions } from '../../auth/get-permissions.js'
 import { copy as sharedEn } from '../app/shared/copy.en.js'
-
-vi.mock('../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 vi.mock('../../config/config.js', async (importOriginal) => {
   const { mockAuthConfig } =
@@ -73,6 +69,7 @@ describe('#authController', () => {
       'fetch',
       vi.fn(async () => ({ ok: true, json: async () => [] }))
     )
+    serveOidcDiscovery()
     server = await createServer()
     await server.initialize()
   })

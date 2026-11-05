@@ -4,11 +4,19 @@ import { beforeEach, describe, expect, test } from 'vitest'
 
 import { startRealModeServer } from '../../../common/test-helpers/test-server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { recordModuleLoggerInfo } from '../../../common/test-helpers/module-logger-lines.js'
+import {
+  recordModuleLoggerInfo,
+  recordModuleLoggerWarn
+} from '../../../common/test-helpers/module-logger-lines.js'
 import { restoreConfigAfterEach } from '../../../common/test-helpers/restore-config-after-each.js'
 import { ORGANISATION_ID } from '../../../common/test-helpers/session-auth.js'
 import { config } from '../../../../config/config.js'
-import { expectedReturnUrl, handOversFor } from './hand-overs.test-support.js'
+import {
+  LABELS_IN_ORDER,
+  SAMPLE_REFERENCE,
+  expectedReturnUrl,
+  handOversFor
+} from './hand-overs.test-support.js'
 import { CRN, requestsTo } from './requests.test-support.js'
 
 const TITLE = 'What are you importing?'
@@ -19,23 +27,17 @@ const PLANTS_BASE_URL = 'http://localhost:3003'
 const HAND_OVER_MESSAGE =
   'Notification type chosen, handing over to the journey frontend'
 const RETURN_MESSAGE = 'Notification type kept, returning to the notification'
-const REFERENCE = 'DRAFT.IMP.2026.1'
+const NOT_RECOGNISED_MESSAGE =
+  'Returning notification not recognised, question opened with nothing chosen'
 const CHECKED_OPTION = '.govuk-radios__input:checked'
 const ID_FIELD = 'input[name="notification-id"]'
 const TYPE_FIELD = 'input[name="current-notification-type"]'
 const LIVE_ANIMALS = 'live-animals'
-const RETURNING_QUERY = `notification-id=${REFERENCE}&current-notification-type=${LIVE_ANIMALS}`
+const RETURNING_QUERY = `notification-id=${SAMPLE_REFERENCE}&current-notification-type=${LIVE_ANIMALS}`
 const RETURNING_PAYLOAD = {
-  'notification-id': REFERENCE,
+  'notification-id': SAMPLE_REFERENCE,
   'current-notification-type': LIVE_ANIMALS
 }
-const LABELS_IN_ORDER = [
-  'Live animals',
-  'Germinal products (semen, ova, embryos)',
-  'Plants for planting',
-  'Potatoes (seed and ware)',
-  'Wood products'
-]
 const linkTextsInMain = ($) =>
   $('main a')
     .map((_index, link) => $(link).text().trim())
@@ -90,38 +92,6 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     expect($('.govuk-radios__input').attr('name')).toBe('notificationType')
   })
 
-  test('GET with a live animals notification checks Live animals alone and carries the reference and type in hidden fields', async () => {
-    const { result } = await getPage('type-returning', RETURNING_QUERY)
-
-    const $ = load(result)
-    expect($(CHECKED_OPTION)).toHaveLength(1)
-    expect($(CHECKED_OPTION).attr('value')).toBe(LIVE_ANIMALS)
-    expect($(ID_FIELD).attr('value')).toBe(REFERENCE)
-    expect($(TYPE_FIELD).attr('value')).toBe(LIVE_ANIMALS)
-  })
-
-  test.each([
-    [
-      'a type INS does not offer',
-      `notification-id=${REFERENCE}&current-notification-type=cattle`
-    ],
-    [
-      'a type that takes no notification back',
-      `notification-id=${REFERENCE}&current-notification-type=potatoes`
-    ],
-    ['no reference', 'current-notification-type=live-animals']
-  ])(
-    'GET with %s shows nothing selected and no hidden fields',
-    async (_name, query) => {
-      const { result } = await getPage('type-ignored', query)
-
-      const $ = load(result)
-      expect($(CHECKED_OPTION)).toHaveLength(0)
-      expect($(ID_FIELD)).toHaveLength(0)
-      expect($(TYPE_FIELD)).toHaveLength(0)
-    }
-  )
-
   test('POST with the notification type kept returns to that notification and logs it once', async () => {
     const { statusCode, headers } = await postType('type-post-return', {
       notificationType: LIVE_ANIMALS,
@@ -132,7 +102,7 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     expect(headers.location).toBe(
       expectedReturnUrl({
         animalsBaseUrl: ANIMALS_BASE_URL,
-        reference: REFERENCE
+        reference: SAMPLE_REFERENCE
       })
     )
     expect(loggedWith(RETURN_MESSAGE)).toEqual([
@@ -140,11 +110,11 @@ describe('#notificationTypeController', { concurrent: false }, () => {
         fields: {
           organisationId: ORGANISATION_ID,
           crn: CRN,
-          notificationReference: REFERENCE,
+          notificationReference: SAMPLE_REFERENCE,
           notificationType: LIVE_ANIMALS,
           destination: expectedReturnUrl({
             animalsBaseUrl: ANIMALS_BASE_URL,
-            reference: REFERENCE
+            reference: SAMPLE_REFERENCE
           })
         },
         message: RETURN_MESSAGE
@@ -175,7 +145,7 @@ describe('#notificationTypeController', { concurrent: false }, () => {
 
     const $ = load(result)
     expect(statusCode).toBe(statusCodes.badRequest)
-    expect($(ID_FIELD).attr('value')).toBe(REFERENCE)
+    expect($(ID_FIELD).attr('value')).toBe(SAMPLE_REFERENCE)
     expect($(CHECKED_OPTION)).toHaveLength(0)
   })
 
@@ -276,3 +246,73 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     }
   })
 })
+
+describe(
+  '#notificationTypeController returning notification',
+  { concurrent: false },
+  () => {
+    const server = startRealModeServer()
+    const { entriesWith: warnedWith } = recordModuleLoggerWarn()
+    const { getPage } = requestsTo(server)
+
+    test('GET with a live animals notification checks Live animals alone and carries the reference and type in hidden fields', async () => {
+      const { result } = await getPage('type-returning', RETURNING_QUERY)
+
+      const $ = load(result)
+      expect($(CHECKED_OPTION)).toHaveLength(1)
+      expect($(CHECKED_OPTION).attr('value')).toBe(LIVE_ANIMALS)
+      expect($(ID_FIELD).attr('value')).toBe(SAMPLE_REFERENCE)
+      expect($(TYPE_FIELD).attr('value')).toBe(LIVE_ANIMALS)
+    })
+
+    test.each([
+      [
+        'a type INS does not offer',
+        `notification-id=${SAMPLE_REFERENCE}&current-notification-type=cattle`
+      ],
+      [
+        'a type that takes no notification back',
+        `notification-id=${SAMPLE_REFERENCE}&current-notification-type=potatoes`
+      ],
+      ['no reference', 'current-notification-type=live-animals']
+    ])(
+      'GET with %s shows nothing selected and no hidden fields',
+      async (_name, query) => {
+        const { result } = await getPage('type-ignored', query)
+
+        const $ = load(result)
+        expect($(CHECKED_OPTION)).toHaveLength(0)
+        expect($(ID_FIELD)).toHaveLength(0)
+        expect($(TYPE_FIELD)).toHaveLength(0)
+      }
+    )
+
+    test('GET with a reference and a type that takes nothing back logs once that the returning notification is not recognised', async () => {
+      await getPage(
+        'type-unrecognised',
+        `notification-id=${SAMPLE_REFERENCE}&current-notification-type=unknown`
+      )
+
+      expect(warnedWith(NOT_RECOGNISED_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            notificationReference: SAMPLE_REFERENCE,
+            currentNotificationType: 'unknown'
+          },
+          message: NOT_RECOGNISED_MESSAGE
+        }
+      ])
+    })
+
+    test('GET with a recognised returning notification or no reference logs no warning', async () => {
+      await getPage('type-recognised-quiet', RETURNING_QUERY)
+      await getPage(
+        'type-no-reference-quiet',
+        'current-notification-type=unknown'
+      )
+
+      expect(warnedWith(NOT_RECOGNISED_MESSAGE)).toEqual([])
+    })
+  }
+)

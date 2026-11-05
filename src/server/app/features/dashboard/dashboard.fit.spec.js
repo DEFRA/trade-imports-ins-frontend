@@ -2,8 +2,11 @@ import { test, expect } from '@playwright/test'
 
 import { expectNoSeriousOrCriticalViolations } from '../../../../../fit/axe.js'
 import { signIn } from '../../../../../fit/sign-in.js'
-import { expectDashboard } from '../address-book/fit/dashboard.js'
-import { dashboardSearchField, searchDashboardFor } from './fit/dashboard.js'
+import {
+  dashboardSearchField,
+  expectDashboard,
+  searchDashboardFor
+} from './fit/dashboard.js'
 import { expectUnselectedNotificationType } from '../notification-type/fit/notification-type.js'
 import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
 

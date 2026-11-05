@@ -8,3 +8,13 @@ export const handOversFor = ({ animalsBaseUrl, plantsBaseUrl }) => [
 
 export const expectedReturnUrl = ({ animalsBaseUrl, reference }) =>
   `${animalsBaseUrl}/live-animals/notifications/${encodeURIComponent(reference)}/origin`
+
+export const SAMPLE_REFERENCE = 'DRAFT.IMP.2026.1'
+
+export const LABELS_IN_ORDER = [
+  'Live animals',
+  'Germinal products (semen, ova, embryos)',
+  'Plants for planting',
+  'Potatoes (seed and ware)',
+  'Wood products'
+]

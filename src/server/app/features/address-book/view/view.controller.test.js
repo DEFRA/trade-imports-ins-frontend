@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
@@ -25,7 +25,6 @@ import {
   serveStoredAddress,
   STORED_ADDRESS
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { mockOidcConfig } from '../../../../common/test-helpers/mock-oidc-config.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
   textOf,
@@ -34,10 +33,6 @@ import {
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { buildRows } from './view.controller.js'
-
-vi.mock('../../../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const UK_NAME = 'United Kingdom'
 const INS_HOME = '/'

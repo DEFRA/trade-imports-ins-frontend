@@ -33,6 +33,23 @@ const readReturningNotification = (source) => {
     : undefined
 }
 
+const warnWhenReturningNotificationNotRecognised = (request, source) => {
+  const reference = trimmedField(source, 'notification-id')
+  if (reference && !readReturningNotification(source)) {
+    logger.warn(
+      {
+        organisationId: kit.requireOrganisationId(request),
+        notificationReference: reference,
+        currentNotificationType: trimmedField(
+          source,
+          'current-notification-type'
+        )
+      },
+      'Returning notification not recognised, question opened with nothing chosen'
+    )
+  }
+}
+
 const itemsOf = (selected) =>
   NOTIFICATION_TYPES.map(({ value, copyKey }) => ({
     value,
@@ -53,6 +70,7 @@ const buildView = (h, { selected, returningNotification, errors = {} } = {}) =>
     .header('Cache-Control', 'no-store')
 
 const get = (request, h) => {
+  warnWhenReturningNotificationNotRecognised(request, request.query)
   const returningNotification = readReturningNotification(request.query)
   return buildView(h, {
     selected: returningNotification?.type,
@@ -99,6 +117,7 @@ const handOverToJourney = (request, h, notificationType) => {
 
 const post = (request, h) => {
   const selected = request.payload?.[FIELD]
+  warnWhenReturningNotificationNotRecognised(request, request.payload)
   const returningNotification = readReturningNotification(request.payload)
   const { errors, value } = validate(rules, { [FIELD]: selected })
   if (errors) {

@@ -8,7 +8,11 @@ import {
   startUrlFor,
   takesNotificationBack
 } from './destinations.js'
-import { expectedReturnUrl, handOversFor } from './hand-overs.test-support.js'
+import {
+  SAMPLE_REFERENCE,
+  expectedReturnUrl,
+  handOversFor
+} from './hand-overs.test-support.js'
 
 const ANIMALS_KEY = 'tradeImportsAnimalsFrontend.baseUrl'
 const PLANTS_KEY = 'tradeImportsPlantsFrontend.baseUrl'
@@ -53,10 +57,10 @@ describe('notification types', () => {
   })
 
   test('return a live animals notification to its origin page on the animals frontend', () => {
-    expect(returnUrlFor(LIVE_ANIMALS, 'DRAFT.IMP.2026.1')).toBe(
+    expect(returnUrlFor(LIVE_ANIMALS, SAMPLE_REFERENCE)).toBe(
       expectedReturnUrl({
         animalsBaseUrl: ANIMALS_BASE_URL,
-        reference: 'DRAFT.IMP.2026.1'
+        reference: SAMPLE_REFERENCE
       })
     )
   })

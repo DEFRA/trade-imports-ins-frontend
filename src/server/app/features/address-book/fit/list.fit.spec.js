@@ -13,7 +13,7 @@ import {
   searchAndExpectSingleMatch,
   searchFieldOf
 } from './address-book-list.js'
-import { expectDashboard } from './dashboard.js'
+import { expectDashboard } from '../../dashboard/fit/dashboard.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 import { seedAddress, seedAddressLines } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'

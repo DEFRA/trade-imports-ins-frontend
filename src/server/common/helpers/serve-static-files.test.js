@@ -1,12 +1,6 @@
 import { createServer } from '../../server.js'
 import { statusCodes } from '../constants/status-codes.js'
-import { vi } from 'vitest'
-
-import { mockOidcConfig } from '../test-helpers/mock-oidc-config.js'
-
-vi.mock('../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
+import { serveOidcDiscovery } from '../test-helpers/serve-oidc-discovery.js'
 
 describe('#serveStaticFiles', () => {
   let server
@@ -17,6 +11,7 @@ describe('#serveStaticFiles', () => {
       // but binds no port — `server.inject` needs no listener. Starting for
       // real made this the only test in the suite that could not run while
       // the local stack held the configured port.
+      serveOidcDiscovery()
       server = await createServer()
       await server.initialize()
     })
