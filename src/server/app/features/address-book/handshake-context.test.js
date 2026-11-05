@@ -25,6 +25,7 @@ const PADDED_CONSIGNOR_HANDSHAKE = Object.fromEntries(
   ])
 )
 const INCOMPLETE_HANDSHAKE_ERROR = 'Incomplete journey handshake'
+const UNLISTED_FULFILMENT_ID = 'not-a-fulfilment-id'
 const INCOMPLETE_MESSAGE =
   'Journey handshake refused, it is missing an id or its token'
 const SESSION_DISCARDED_MESSAGE =
@@ -83,7 +84,7 @@ describe('readHandshakeQuery', () => {
       readHandshakeQuery(
         mockRequest({
           ...CONSIGNOR_HANDSHAKE,
-          'fulfilment-id': 'not-a-fulfilment-id'
+          'fulfilment-id': UNLISTED_FULFILMENT_ID
         })
       )
     ).toThrow(Boom.notFound())
@@ -122,7 +123,7 @@ describe('readHandshakePayload', () => {
     expect(() =>
       readHandshakePayload({
         ...CONSIGNOR_HANDSHAKE,
-        'fulfilment-id': 'not-a-fulfilment-id'
+        'fulfilment-id': UNLISTED_FULFILMENT_ID
       })
     ).toThrow(Boom.notFound())
   })
@@ -217,7 +218,7 @@ describe('resolveHandshakeContext', () => {
     ],
     [
       'whose fulfilment id is not listed',
-      { fulfilmentId: 'not-a-fulfilment-id' }
+      { fulfilmentId: UNLISTED_FULFILMENT_ID }
     ]
   ])(
     'clears and ignores a session handshake %s, and logs it once at warn',

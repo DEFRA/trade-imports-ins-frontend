@@ -1,6 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { createServer } from '../../server.js'
+import {
+  startTestServer,
+  stopTestServer
+} from '../../common/test-helpers/test-server.js'
 import { LEVELS } from './levels.js'
 import { PAGE_LEVELS, SECTION_LEVELS } from './page-levels.js'
 import { isInSection } from './page-maturity.js'
@@ -9,12 +12,11 @@ describe('page maturity page levels', () => {
   let server
 
   beforeAll(async () => {
-    server = await createServer()
-    await server.initialize()
+    server = await startTestServer()
   })
 
   afterAll(async () => {
-    await server.stop({ timeout: 0 })
+    await stopTestServer(server)
   })
 
   const registeredGetPaths = () =>

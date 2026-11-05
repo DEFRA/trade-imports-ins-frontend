@@ -33,7 +33,7 @@ describe('#errors', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('Should provide expected Not Found page', async () => {
+  test('Should render the Page not found page with a 404 for an unknown path', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/non-existent-path'
@@ -115,7 +115,7 @@ describe('#catchAll', () => {
       recoverableError: false
     })
 
-  test('Should provide expected "Not Found" page', () => {
+  test('Should render the error view titled Page not found with a 404 and log no stack', () => {
     catchAll(mockRequest(statusCodes.notFound), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
@@ -126,7 +126,7 @@ describe('#catchAll', () => {
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.notFound)
   })
 
-  test('Should provide expected "Forbidden" page', () => {
+  test('Should render the error view titled Forbidden with a 403 and log no stack', () => {
     catchAll(mockRequest(statusCodes.forbidden), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
@@ -137,7 +137,7 @@ describe('#catchAll', () => {
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.forbidden)
   })
 
-  test('Should provide expected "Unauthorized" page', () => {
+  test('Should render the error view titled You need to sign in to view this page with a 401 and log no stack', () => {
     catchAll(mockRequest(statusCodes.unauthorized), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
@@ -151,7 +151,7 @@ describe('#catchAll', () => {
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.unauthorized)
   })
 
-  test('Should provide expected "Bad Request" page', () => {
+  test('Should render the error view titled There is a problem with your request with a 400 and log no stack', () => {
     catchAll(mockRequest(statusCodes.badRequest), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
@@ -165,7 +165,7 @@ describe('#catchAll', () => {
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.badRequest)
   })
 
-  test('Should provide expected default page', () => {
+  test('Should render Something went wrong for an unmapped status, keep that status and log no stack', () => {
     catchAll(mockRequest(statusCodes.imATeapot), mockToolkit)
 
     expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
@@ -176,7 +176,7 @@ describe('#catchAll', () => {
     expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.imATeapot)
   })
 
-  test('Should provide expected "Something went wrong" page and log error for internalServerError', () => {
+  test('Should render Something went wrong with a 500 and log the stack', () => {
     catchAll(mockRequest(statusCodes.internalServerError), mockToolkit)
 
     expect(mockErrorLogger).toHaveBeenCalledWith(mockStack)

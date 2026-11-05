@@ -51,28 +51,17 @@ const expectSessionCookieCleared = (headers) => {
 }
 
 describe('#authController', () => {
-  beforeAll(() => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => ({ ok: true, json: async () => [] }))
-    )
-  })
-
-  afterAll(() => {
-    vi.unstubAllGlobals()
-  })
-
-  const server = startRealModeServer()
+  const getServer = startRealModeServer()
 
   const signInOidc = (profileOverrides) =>
-    server().inject({
+    getServer().inject({
       method: 'GET',
       url: SIGN_IN_OIDC_URL,
       auth: defraIdAuth(profileOverrides)
     })
 
   test('GET /auth/sign-in redirects to home', async () => {
-    const { statusCode, headers } = await server().inject({
+    const { statusCode, headers } = await getServer().inject({
       method: 'GET',
       url: '/auth/sign-in',
       auth: {
@@ -86,7 +75,7 @@ describe('#authController', () => {
   })
 
   test('GET /auth/sign-out redirects unauthenticated users to home', async () => {
-    const { statusCode, headers } = await server().inject({
+    const { statusCode, headers } = await getServer().inject({
       method: 'GET',
       url: '/auth/sign-out'
     })
@@ -97,9 +86,9 @@ describe('#authController', () => {
 
   test('GET /auth/sign-out drops the session and redirects authenticated users to the sign-out URL', async () => {
     const sessionId = 'signout-authenticated'
-    await server().app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
+    await getServer().app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
 
-    const { statusCode, headers } = await server().inject({
+    const { statusCode, headers } = await getServer().inject({
       method: 'GET',
       url: '/auth/sign-out',
       auth: sessionAuth(sessionId)
@@ -107,12 +96,12 @@ describe('#authController', () => {
 
     expect(statusCode).toBe(HTTP_STATUS_FOUND)
     expect(headers.location).toBe(SIGNED_OUT_URL)
-    expect(await server().app.cache.get(sessionId)).toBeNull()
+    expect(await getServer().app.cache.get(sessionId)).toBeNull()
     expectSessionCookieCleared(headers)
   })
 
   test('GET /auth/sign-out-oidc redirects unauthenticated users to home', async () => {
-    const { statusCode, headers } = await server().inject({
+    const { statusCode, headers } = await getServer().inject({
       method: 'GET',
       url: '/auth/sign-out-oidc'
     })
@@ -123,9 +112,9 @@ describe('#authController', () => {
 
   test('GET /auth/sign-out-oidc clears authenticated session and redirects', async () => {
     const sessionId = 'signout-oidc-authenticated'
-    await server().app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
+    await getServer().app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
 
-    const { statusCode, headers } = await server().inject({
+    const { statusCode, headers } = await getServer().inject({
       method: 'GET',
       url: '/auth/sign-out-oidc',
       auth: sessionAuth(sessionId)
@@ -133,7 +122,7 @@ describe('#authController', () => {
 
     expect(statusCode).toBe(HTTP_STATUS_FOUND)
     expect(headers.location).toBe(SIGNED_OUT_URL)
-    expect(await server().app.cache.get(sessionId)).toBeNull()
+    expect(await getServer().app.cache.get(sessionId)).toBeNull()
     expectSessionCookieCleared(headers)
   })
 
@@ -197,7 +186,7 @@ describe('#authController', () => {
       verifyToken.mockResolvedValue(undefined)
       getPermissions.mockResolvedValue({ role: 'role', scope: [] })
 
-      const { statusCode, headers } = await server().inject({
+      const { statusCode, headers } = await getServer().inject({
         method: 'GET',
         url: SIGN_IN_OIDC_URL,
         auth: defraIdAuth(),
@@ -217,7 +206,7 @@ describe('#authController', () => {
     })
 
     test('GET /auth/sign-in-oidc records the Defra ID token exchange as failed when sign-in is not authenticated', async () => {
-      const { statusCode, payload } = await server().inject({
+      const { statusCode, payload } = await getServer().inject({
         method: 'GET',
         url: `${SIGN_IN_OIDC_URL}?code=unused&state=unmatched&refresh=1`,
         app: { defraIdTokenExchangeStartedAt: performance.now() }

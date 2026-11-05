@@ -169,7 +169,6 @@ const tickedRolesOf = ($) =>
     .get()
 
 beforeEach(() => {
-  config.set('csrf.enabled', false)
   config.set('tradeImportsAnimalsFrontend.baseUrl', ANIMALS_BASE_URL)
 })
 

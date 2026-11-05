@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { sessionAuth } from '../../../common/test-helpers/session-auth.js'
@@ -76,14 +76,10 @@ const lookupByPostcode = (postcode) =>
 const lookupByFind = (find) => insBackendApi().get(LOOKUP_PATH).query({ find })
 
 describe('#addressLookupSpikeController', { concurrent: false }, () => {
-  const server = startRealModeServer()
-
-  beforeEach(() => {
-    config.set('csrf.enabled', false)
-  })
+  const getServer = startRealModeServer()
 
   test('GET renders the search form with no results yet', async () => {
-    const { result, statusCode } = await server().inject({
+    const { result, statusCode } = await getServer().inject({
       method: 'GET',
       url: PAGE_PATH,
       auth: sessionAuth('address-lookup-spike-get')
@@ -101,7 +97,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       .matchHeader(TRACING_HEADER, TRACE_ID)
       .reply(200, resultsResponse('POSTCODE'))
 
-    const { result, statusCode } = await server().inject(
+    const { result, statusCode } = await getServer().inject(
       search('SW1A 1AA', 'address-lookup-spike-postcode')
     )
 
@@ -119,7 +115,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       resultsResponse('FIND')
     )
 
-    const { result } = await server().inject(
+    const { result } = await getServer().inject(
       search('Buckingham Palace', 'address-lookup-spike-find')
     )
 
@@ -134,7 +130,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       resultsResponse('POSTCODE')
     )
 
-    await server().inject(
+    await getServer().inject(
       search('  sw1a1aa  ', 'address-lookup-spike-normalise')
     )
 
@@ -147,7 +143,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       .query(true)
       .reply(200, resultsResponse('POSTCODE'))
 
-    const { result, statusCode } = await server().inject(
+    const { result, statusCode } = await getServer().inject(
       search('   ', 'address-lookup-spike-empty')
     )
 
@@ -159,7 +155,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
   test('a warm search shows the lookup time and says no token hops ran', async () => {
     lookupByPostcode('SW1A 1AA').reply(200, resultsResponse('POSTCODE'))
 
-    const { result } = await server().inject(
+    const { result } = await getServer().inject(
       search('SW1A 1AA', 'address-lookup-spike-warm')
     )
 
@@ -175,7 +171,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       resultsResponse('POSTCODE', { timings: COLD_TIMINGS })
     )
 
-    const { result } = await server().inject(
+    const { result } = await getServer().inject(
       search('SW1A 1AA', 'address-lookup-spike-cold')
     )
 
@@ -189,7 +185,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
   test('the page reports its own round trip, the backend total and the trace id', async () => {
     lookupByPostcode('SW1A 1AA').reply(200, resultsResponse('POSTCODE'))
 
-    const { result } = await server().inject(
+    const { result } = await getServer().inject(
       search('SW1A 1AA', 'address-lookup-spike-roundtrip')
     )
 
@@ -211,7 +207,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       })
     )
 
-    const { result } = await server().inject(
+    const { result } = await getServer().inject(
       search('XX1 1XX', 'address-lookup-spike-failed')
     )
 
@@ -230,7 +226,7 @@ describe('#addressLookupSpikeController', { concurrent: false }, () => {
       })
     )
 
-    const { result, statusCode } = await server().inject(
+    const { result, statusCode } = await getServer().inject(
       search('XX1 1XX', 'address-lookup-spike-no-results')
     )
 
@@ -244,11 +240,7 @@ describe(
   '#addressLookupSpikeController — choosing and errors',
   { concurrent: false },
   () => {
-    const server = startRealModeServer()
-
-    beforeEach(() => {
-      config.set('csrf.enabled', false)
-    })
+    const getServer = startRealModeServer()
 
     test('choosing a result maps it onto the address book fields without searching again', async () => {
       const scope = insBackendApi()
@@ -256,7 +248,7 @@ describe(
         .query(true)
         .reply(200, resultsResponse('POSTCODE'))
 
-      const { result, statusCode } = await server().inject(
+      const { result, statusCode } = await getServer().inject(
         chosen(
           { term: 'SW1A 1AA', chosen: JSON.stringify(BUCKINGHAM_PALACE) },
           'address-lookup-spike-chosen'
@@ -271,7 +263,7 @@ describe(
     })
 
     test('choosing a result names the gaps the lookup cannot fill', async () => {
-      const { result } = await server().inject(
+      const { result } = await getServer().inject(
         chosen(
           { term: 'SW1A 1AA', chosen: JSON.stringify(BUCKINGHAM_PALACE) },
           'address-lookup-spike-gaps'
@@ -289,7 +281,7 @@ describe(
     ])(
       'choosing a result renders a warning when the chosen address %s',
       async (_description, badChosen) => {
-        const { result, statusCode } = await server().inject(
+        const { result, statusCode } = await getServer().inject(
           chosen(
             { term: 'SW1A 1AA', chosen: badChosen },
             'address-lookup-spike-bad-chosen'
@@ -305,7 +297,7 @@ describe(
     test('POST renders a warning when the backend itself is unreachable', async () => {
       lookupByPostcode('SW1A 1AA').replyWithError('fetch failed')
 
-      const { result, statusCode } = await server().inject(
+      const { result, statusCode } = await getServer().inject(
         search('SW1A 1AA', 'address-lookup-spike-network-error')
       )
 
@@ -316,7 +308,7 @@ describe(
     test('POST renders the same warning when the backend answers with a server error', async () => {
       lookupByPostcode('SW1A 1AA').reply(503, { title: 'Service Unavailable' })
 
-      const { result, statusCode } = await server().inject(
+      const { result, statusCode } = await getServer().inject(
         search('SW1A 1AA', 'address-lookup-spike-service-unavailable')
       )
 

@@ -1,7 +1,6 @@
 import { load } from 'cheerio'
-import { beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
-import { config } from '../../../../../config/config.js'
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
   addressAddPath,
@@ -41,16 +40,12 @@ const checkedValuesOf = ($) =>
     .get()
 
 describe('#addressTypeController', { concurrent: false }, () => {
-  const server = startRealModeServer()
+  const getServer = startRealModeServer()
   const loggedWith = captureInfoLogs()
-
-  beforeEach(() => {
-    config.set('csrf.enabled', false)
-  })
 
   test('GET shows the caption, the heading, a visually hidden legend, the three address types with their hints in order and none chosen, Continue and Back to the address book', async () => {
     const { result, statusCode, headers } = await getPage(
-      server(),
+      getServer(),
       addressTypePath(),
       'type-get'
     )
@@ -83,7 +78,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
 
   test('POST with no address type answers 400 with the message inline and as the summary link to the first option', async () => {
     const { result, statusCode } = await postPage(
-      server(),
+      getServer(),
       addressTypePath(),
       'type-post-none',
       {}
@@ -102,7 +97,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
 
   test('POST with a value that is not an offered address type answers as a missing type does', async () => {
     const { result, statusCode } = await postPage(
-      server(),
+      getServer(),
       addressTypePath(),
       'type-post-unsupported',
       { addressType: UNSUPPORTED_ADDRESS_TYPE }
@@ -116,13 +111,18 @@ describe('#addressTypeController', { concurrent: false }, () => {
     'POST of %s goes to the add form and the type page then shows it chosen',
     async (addressType) => {
       const sessionId = `type-post-${addressType}`
-      const response = await postPage(server(), addressTypePath(), sessionId, {
-        addressType
-      })
+      const response = await postPage(
+        getServer(),
+        addressTypePath(),
+        sessionId,
+        {
+          addressType
+        }
+      )
 
       expectRedirectTo(response, addressAddPath())
       const { result } = await getPage(
-        server(),
+        getServer(),
         addressTypePath(),
         sessionId,
         cookieHeaderOf(response.headers)
@@ -132,10 +132,13 @@ describe('#addressTypeController', { concurrent: false }, () => {
   )
 
   test('GET of the start address with a type already chosen shows none chosen', async () => {
-    const cookie = await cookieAfterChoosingAddressType(server(), 'type-start')
+    const cookie = await cookieAfterChoosingAddressType(
+      getServer(),
+      'type-start'
+    )
 
     const { result } = await getPage(
-      server(),
+      getServer(),
       addressTypeStartPath(),
       'type-start',
       cookie
@@ -147,7 +150,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
   test('GET of the start address logs once that a new address is starting', async () => {
     const message = 'Starting a new address, clearing the address being added'
 
-    await getPage(server(), addressTypeStartPath(), 'type-start-log')
+    await getPage(getServer(), addressTypeStartPath(), 'type-start-log')
 
     expect(loggedWith(message)).toEqual([
       {

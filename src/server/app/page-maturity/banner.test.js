@@ -126,7 +126,7 @@ describe('page maturity banner', () => {
 
   describe('on a rendered page', () => {
     const FLAG = 'pageMaturityBanner.enabled'
-    const server = startRealModeServer()
+    const getServer = startRealModeServer()
 
     afterEach(() => {
       config.set(FLAG, true)
@@ -145,7 +145,7 @@ describe('page maturity banner', () => {
           totalElements: 0,
           totalPages: 0
         })
-      const { result, statusCode } = await server().inject({
+      const { result, statusCode } = await getServer().inject({
         method: 'GET',
         url: '/',
         auth: sessionAuth(user)
@@ -156,7 +156,6 @@ describe('page maturity banner', () => {
     }
 
     it('Should show the level tag after Alpha when the switch is on', async () => {
-      config.set('csrf.enabled', false)
       config.set(FLAG, true)
 
       expect(await getBannerTags('maturity-on')).toEqual([
@@ -166,7 +165,6 @@ describe('page maturity banner', () => {
     })
 
     it('Should show only the Alpha tag when the switch is off', async () => {
-      config.set('csrf.enabled', false)
       config.set(FLAG, false)
 
       expect(await getBannerTags('maturity-off')).toEqual(['Alpha'])
@@ -175,7 +173,7 @@ describe('page maturity banner', () => {
     it('Should show only the Alpha tag on the not found page, though every route has a level', async () => {
       config.set(FLAG, true)
 
-      const { result, statusCode } = await server().inject({
+      const { result, statusCode } = await getServer().inject({
         method: 'GET',
         url: '/no-such-page',
         auth: sessionAuth('maturity-not-found')
