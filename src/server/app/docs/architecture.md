@@ -38,6 +38,21 @@ static files.
 - `src/server/auth/` and `src/server/health/` — the routes those helpers
   serve.
 
+**Process start-up**: [`src/index.js`](../../../index.js) calls
+`startServer()`
+([`common/helpers/start-server.js`](../../common/helpers/start-server.js)),
+which calls `allowOneSecondPerAddressWhenConnecting()`
+([`common/helpers/connect-attempt.js`](../../common/helpers/connect-attempt.js))
+before it creates the server. It raises Node's process-wide happy-eyeballs
+connect attempt per address from 250ms to one second, for every outbound
+client: Wreck, Bell and `fetch`. In the workspace stack and CI, services
+reach each other through `host.docker.internal`, which resolves to an IPv4
+and an IPv6 address. Under load neither answered within 250ms, so the JWKS
+fetch to the Defra ID stub at sign-in (`/auth/sign-in-oidc`) and the
+address book's create failed with `AggregateError [ETIMEDOUT]` a few
+hundred milliseconds into the call. The animals and plants frontends set
+the same one second.
+
 **The error page**: [`common/helpers/errors.js`](../../common/helpers/errors.js)'s
 `catchAll` renders `shared/error` through `kit.base()` with the
 status-keyed message from `sharedCopy.errorPage`.
@@ -91,7 +106,8 @@ can flip the mode with `config.set`.
 
 Nunjucks roots are set in
 [`nunjucks.js`](../../../config/nunjucks/nunjucks.js): the govuk-frontend
-dist, `src/server/app` (resolves `shared/layout.njk`,
+dist, the `@ministryofjustice/frontend` package root (the sub navigation
+macro), `src/server/app` (resolves `shared/layout.njk`,
 `shared/error-summary.njk`, `shared/error.njk`, `auth/unauthorised.njk`) and
 `src/server/app/features` (resolves feature views); `src/server/common/components`
 is also listed but does not exist. Vision's `path` is `['server/app',
@@ -114,7 +130,12 @@ Webpack ([`webpack.config.js`](../../../../webpack.config.js)) builds
 govuk-frontend's assets to `/public/assets`, and writes the manifest
 `getAssetPath()` reads. Run `npm run build:frontend` once; `npm run dev`
 watches. A missing webpack entry is a silent 404 — the template renders,
-the bundle does not.
+the bundle does not. `_govuk-frontend.scss` configures GOV.UK Frontend
+through the vendored module of `@ministryofjustice/frontend`
+(`moj/vendor/govuk-frontend`), with this service's asset path and global
+styles, so GOV.UK Frontend is configured once. `application.scss` then
+`@use`s the package's own sub navigation component
+(`moj/components/sub-navigation/sub-navigation`).
 
 ## Enforced boundaries
 
@@ -152,8 +173,5 @@ production code cannot use test exemptions.
   module-scope cache thereafter.
 - browser tests share one address-form fixture
   ([`address-form.js`](../features/address-book/fit/address-form.js))
-  across the add and edit specs and the repo-root smoke spec.
-- [`lib/validate/validators.js`](../lib/validate/validators.js) and
-  [`address-id-params.js`](../features/address-book/address-id-params.js)
-  still import Joi directly, although the package is not declared in
-  `package.json`.
+  across the add, address type, edit, list, view and page-title specs and the
+  repo-root smoke spec.

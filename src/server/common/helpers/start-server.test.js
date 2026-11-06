@@ -1,29 +1,38 @@
-import { getDefaultAutoSelectFamilyAttemptTimeout } from 'node:net'
+import {
+  createServer as createNetServer,
+  getDefaultAutoSelectFamilyAttemptTimeout
+} from 'node:net'
 import Wreck from '@hapi/wreck'
 
-import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
+import { beforeAll, afterAll, afterEach, describe, expect, test } from 'vitest'
+
+import { config } from '../../../config/config.js'
 import { expectHealthy } from '../test-helpers/expect-healthy.js'
+import { refuseOutboundHttp } from '../test-helpers/real-mode.js'
 import { serveOidcDiscovery } from '../test-helpers/serve-oidc-discovery.js'
-
-vi.mock('../../server.js', async (importOriginal) => {
-  const actual = await importOriginal()
-  return {
-    createServer: vi.fn(async () => {
-      const server = await actual.createServer()
-      server.start = () => server.initialize()
-      return server
-    })
-  }
-})
-
 import { startServer } from './start-server.js'
-import { createServer } from '../../server.js'
+
+const listenOnFreePort = (host) =>
+  new Promise((resolve, reject) => {
+    const occupier = createNetServer()
+    occupier.once('error', reject)
+    occupier.listen(0, host, () => resolve(occupier))
+  })
 
 describe('#startServer', () => {
+  const originalPort = config.get('port')
+
+  refuseOutboundHttp()
+
+  afterEach(() => {
+    config.set('port', originalPort)
+  })
+
   describe('When server starts', () => {
     let server
 
     beforeAll(async () => {
+      config.set('port', 0)
       serveOidcDiscovery()
       server = await startServer()
     })
@@ -32,7 +41,12 @@ describe('#startServer', () => {
       await server?.stop({ timeout: 0 })
     })
 
-    test('Should start up server as expected', async () => {
+    test('listens on a port once started', () => {
+      expect(server.info.started).toBeGreaterThan(0)
+      expect(server.info.port).toBeGreaterThan(0)
+    })
+
+    test('answers GET /health with 200 and a success message', async () => {
       await expectHealthy(server)
     })
 
@@ -46,12 +60,16 @@ describe('#startServer', () => {
   })
 
   describe('When server start fails', () => {
-    test('Should propagate createServer errors', async () => {
-      vi.mocked(createServer).mockRejectedValueOnce(
-        new Error('Server failed to start')
-      )
+    test('rejects when the port is already in use', async () => {
+      const occupier = await listenOnFreePort(config.get('host'))
+      config.set('port', occupier.address().port)
+      serveOidcDiscovery()
 
-      await expect(startServer()).rejects.toThrow('Server failed to start')
+      try {
+        await expect(startServer()).rejects.toThrow(/EADDRINUSE/)
+      } finally {
+        await new Promise((resolve) => occupier.close(resolve))
+      }
     })
   })
 })

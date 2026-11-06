@@ -56,5 +56,14 @@ export const createPageClient = (baseUrl, cookies = []) => {
     }
   }
 
-  return { document, submit }
+  const heldCookies = () => [...jar].map(([name, value]) => ({ name, value }))
+
+  return { document, submit, cookies: heldCookies }
+}
+
+export const appCookiesOf = async (browser, origin) => {
+  const { hostname } = new URL(origin)
+  return (await browser.cookies()).filter(({ domain }) =>
+    hostname.endsWith(domain.replace(/^\./, ''))
+  )
 }

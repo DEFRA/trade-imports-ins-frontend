@@ -14,13 +14,19 @@ Every GET route the service registers, derived from
 - `/notification-type` — the question that opens a new notification
 - `/address-book` — the list
 - `/address-book/add`
+- `/address-book/add/address-type` — choose an address type
 - `/address-book/{id}` — view
 - `/address-book/{id}/edit`
 - `/address-book/{id}/delete`
 
 The three `{id}` pages are audited on one address the setup step creates
-through the app's own add page, named `Lighthouse seed address`. A run
-that finds it already in the book reuses it rather than adding another.
+through the app's own address type page and add page, named
+`Lighthouse seed address`. A run that finds it already in the book reuses it
+rather than adding another. The add page sends a user with no address type
+chosen to the type page, so the seed walk and the sign-in set-up each choose
+Origin or Consignor through `chooseAddressType` before they open the add form. The seed walk ticks
+Place of origin, as the add page requires a role, and expects the save to land
+on the Origin and Consignor tab of the list.
 
 `scripts/lighthouse/audit-targets.js` (with `audit-targets.test.js`) holds
 the derivation and two maps, both empty today: `SKIPPED`, for a GET route
@@ -28,24 +34,30 @@ that must not be audited, with a reason; and `QUERY`, for a route that
 needs a query string before it renders. Both are checked against the live
 route table, so a stale entry fails the run rather than quietly shrinking
 the audit. `scripts/lighthouse/seed-address.js` (with
-`seed-address.test.js`) holds the seed address and the find-or-create walk
-through the list and add pages.
+`seed-address.test.js`) holds the seed address, the find-or-create walk
+through the list, type and add pages, and `chooseAddressType`, the one step
+that chooses Origin or Consignor on the type page and fails unless it lands
+on the add form. `scripts/lighthouse/page-client.js` is the cookie-carrying
+HTTP client both use.
 
 ## What the run does
 
 `npm run lighthouse` is `run-s lighthouse:targets lighthouse:run`.
 
-`lighthouse:targets` (`seed-audit-targets.js`) signs in through
-`tests/lighthouse/auth-setup.cjs`, seeds the address, derives the audit
+`lighthouse:targets` (`seed-audit-targets.js`) signs in and chooses an
+address type through `tests/lighthouse/auth-setup.cjs`, which runs
+`chooseAddressType` with the browser's cookies and hands the resulting
+session cookie back to the browser. It seeds the address, derives the audit
 URLs from the app's registered routes and writes them to
-`.lighthouse/targets.json`. It then re-fetches every URL and fails when one
-does not return 200 for its own page — a redirected URL would silently
-audit whatever it landed on.
+`.lighthouse/targets.json`. It then re-fetches every URL with the cookies the
+set-up left, as each audit starts with, and fails when one does not return
+200 for its own page — a redirected URL would silently audit whatever it
+landed on.
 
 `lighthouse:run` (`run-audit.js`) clears the previous run's reports, runs
 `lhci autorun`, then renames each report from the LHCI filename pattern to
 the page's own stable name from the targets file: `home`, `notification_type`, `address_book`,
-`address_book_add`, `address_book_id`, `address_book_id_edit`,
+`address_book_add`, `address_book_add_address_type`, `address_book_id`, `address_book_id_edit`,
 `address_book_id_delete`.
 
 The config:
@@ -55,7 +67,8 @@ The config:
 - runs each URL once
 - uses the desktop preset
 - starts Chromium with `--no-sandbox` and `--disable-gpu`
-- runs `tests/lighthouse/auth-setup.cjs` before each audit
+- runs `tests/lighthouse/auth-setup.cjs` before each audit, which signs in and
+  chooses an address type
 - writes HTML and JSON output to `lighthouse-report/`
 
 Never run `lhci autorun` on its own. The LHCI filename pattern only has to
@@ -82,7 +95,7 @@ To audit the app the way CI does, start the workspace stack instead
 this frontend on 3002 against the real address book and the Defra ID stub,
 and run `npm run lighthouse` from this repository. The sign-in script
 fills the Defra ID stub's form as a single-organisation user; in stub mode
-there is no form and it has nothing to do.
+there is no form to fill, and it only chooses the address type.
 
 ## Passing scores
 

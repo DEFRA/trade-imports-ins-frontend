@@ -153,11 +153,10 @@ const submitEdit = async (
         errors
       }).code(HTTP_STATUS_BAD_REQUEST)
     }
-    const updatedAddress = await updateAddress(
-      organisationId,
-      addressId,
-      validatedAddress
-    )
+    const updatedAddress = await updateAddress(organisationId, addressId, {
+      ...validatedAddress,
+      roles: address.roles
+    })
     setSuccessMessage(request, copy.successBanner.updated(updatedAddress.name))
     return toolkit.redirect(addressBookPath())
   } catch (err) {

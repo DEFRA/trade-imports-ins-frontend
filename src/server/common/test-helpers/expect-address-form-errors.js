@@ -18,8 +18,8 @@ export const INVALID_ADDRESS_PAYLOAD_ERRORS = [
   ['townOrCity', REQUIRED_MESSAGES.townOrCity],
   ['postcode', REQUIRED_MESSAGES.postcode],
   ['countryCode', REQUIRED_MESSAGES.countryCode],
-  ['phone', REQUIRED_MESSAGES.phone],
-  ['email', copy.errors.email.format]
+  ['email', copy.errors.email.format],
+  ['phone', REQUIRED_MESSAGES.phone]
 ]
 
 const summaryLinksOf = ($) =>

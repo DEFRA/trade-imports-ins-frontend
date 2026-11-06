@@ -14,6 +14,7 @@ The application registers eleven routes, exactly as
 - `GET /notification-type`, `POST /notification-type`
 - `GET /address-book`
 - `GET /address-book/add`, `POST /address-book/add`
+- `GET /address-book/add/address-type`, `POST /address-book/add/address-type`
 - `GET /address-book/{id}`
 - `GET /address-book/{id}/edit`, `POST /address-book/{id}/edit`
 - `GET /address-book/{id}/delete`, `POST /address-book/{id}/delete`

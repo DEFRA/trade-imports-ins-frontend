@@ -5,10 +5,15 @@ All other paths are relative to `src/server/app/`.
 
 ## Read these files first
 
-`features/address-book/add` is the smallest complete page: one form, one
-service call, one template, both copy bundles, one controller test and one
-feature spec.
+`features/address-book/address-type` is the smallest complete page: one
+form, one template, both copy bundles, one controller test and one feature
+spec. `features/address-book/add` adds a service call and the address fields.
 
+- [`features/address-book/address-type/address-type.controller.js`](../features/address-book/address-type/address-type.controller.js)
+- [`features/address-book/address-type/address-type.njk`](../features/address-book/address-type/address-type.njk)
+- [`features/address-book/address-type/address-type.controller.test.js`](../features/address-book/address-type/address-type.controller.test.js)
+- [`features/address-book/fit/address-type.fit.spec.js`](../features/address-book/fit/address-type.fit.spec.js)
+- [`features/address-book/add-in-progress.js`](../features/address-book/add-in-progress.js)
 - [`features/address-book/add/add.controller.js`](../features/address-book/add/add.controller.js)
 - [`features/address-book/add/add.njk`](../features/address-book/add/add.njk)
 - [`features/address-book/add/add.controller.test.js`](../features/address-book/add/add.controller.test.js)
@@ -78,6 +83,13 @@ GET/POST pair. A page whose dead link should go back to the list passes
 from `return-to.js` to honour a `return`, and loads through `findLiveAddress` (or `findLiveAddressWithCountryLabel`),
 as the view, edit and delete pages do.
 
+A page that needs an answer from an earlier page reads it from the session
+through a module like `add-in-progress.js`, which the earlier page's POST
+writes to. Its GET and POST redirect to the earlier page when the answer is
+missing, as the add form's `redirectIfNoAddressTypeChosen` does. Its
+controller test gets the session cookie through the earlier page, as
+`cookieAfterChoosingAddressType()` in `address-book-requests.js` does.
+
 ## 4. Add copy and the Nunjucks view
 
 Follow the copy rule and the template rules at
@@ -112,11 +124,10 @@ Write `controller.test.js` in the shape of
 - `describe(name, { concurrent: false }, fn)`.
 - Start the server with `const getServer = startRealModeServer()` (or
   `startRealModeServerServingCountries(countries)`) from
-  `common/test-helpers/test-server.js`, which serves OIDC discovery through
-  `serveOidcDiscovery()`. Then use `restoreConfigAfterEach([...keys])` and
-  `recordModuleLoggerInfo()` where needed.
-- `config.set('csrf.enabled', false)` and `serveCountries(...)` in
-  `beforeEach`.
+  `common/test-helpers/test-server.js`, which runs in real mode, serves
+  OIDC discovery through `serveOidcDiscovery()`, starts the server and
+  stops it after the describe. Then use `restoreConfigAfterEach([...keys])`
+  and `recordModuleLoggerInfo()` where needed.
 - `getServer().inject` with `auth: sessionAuth('<unique id>')`.
 - nock scopes from `real-mode.js` for every upstream call, asserted with
   `scope.isDone()`.
@@ -135,11 +146,12 @@ page joining a group, a spec in the group's `fit/`.
 `import { signInAndOpen } from '<relative>/fit/sign-in.js'`. Every test
 signs in with its own organisation id (`stub-org-<page>-<case>`, with
 `crypto.randomUUID()` when the test writes), because the address-book
-stub keys its data by organisation — the `-empty` and `-paginated`
-suffixes select the empty and 30-record seeds, and anything else gets one
-seed at `SEED_ADDRESS_ID`. The INS backend stub's `-empty` suffix likewise
-gives the dashboard no notifications; `isEmptySeedOrganisation` in
-`services/stub-seed.js` decides the `-empty` suffix for both stubs. Use raw role, label and copy locators, rely on
+stub keys its data by organisation — the `-empty`, `-paginated` and
+`-typed` suffixes select the empty, 30-record and typed-record seeds,
+and anything else gets one seed at `SEED_ADDRESS_ID`. The INS backend
+stub's `-empty` suffix likewise gives the dashboard no notifications;
+`isEmptySeedOrganisation` in `services/stub-seed.js` decides the `-empty`
+suffix for both stubs. Use raw role, label and copy locators, rely on
 auto-waiting, and use no sleeps and no page objects. Use
 `getByRole('link', { name: 'Back', exact: true })` — the phase banner's
 "feedback" link also matches "Back" without `exact`.

@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test'
 
-const errorLink = (page, message) =>
+export const errorLink = (page, message) =>
   page.getByRole('alert').getByRole('link', { name: message, exact: true })
 
 export async function expectErrorFocusOn(

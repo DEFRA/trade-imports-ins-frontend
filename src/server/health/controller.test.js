@@ -17,7 +17,7 @@ describe('#healthController', () => {
     await stopTestServer(server)
   })
 
-  test('Should provide expected response', async () => {
+  test('Should answer GET /health with 200 and a success message', async () => {
     await expectHealthy(server)
   })
 })

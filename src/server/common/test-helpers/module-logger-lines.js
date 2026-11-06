@@ -41,3 +41,11 @@ export const recordModuleLoggerInfo = () => recordModuleLoggerLevel('info')
  * @returns {{ entries: Array<{ fields: object, message: string }>, entriesWith: (message: string) => Array<{ fields: object, message: string }> }}
  */
 export const recordModuleLoggerWarn = () => recordModuleLoggerLevel('warn')
+
+/**
+ * Records the error lines the module-level logger writes during each test of the
+ * enclosing `describe`, and restores the logger afterwards.
+ *
+ * @returns {{ entries: Array<{ fields: object, message: string }>, entriesWith: (message: string) => Array<{ fields: object, message: string }> }}
+ */
+export const recordModuleLoggerError = () => recordModuleLoggerLevel('error')

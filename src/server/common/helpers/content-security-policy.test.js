@@ -1,16 +1,15 @@
 import nock from 'nock'
 
-import { createServer } from '../../server.js'
 import { siblingFrontendBaseUrls } from '../../../config/config.js'
 import { serveOidcDiscovery } from '../test-helpers/serve-oidc-discovery.js'
+import { startTestServer, stopTestServer } from '../test-helpers/test-server.js'
 
 describe('#contentSecurityPolicy', () => {
   let server
 
   beforeAll(async () => {
     serveOidcDiscovery()
-    server = await createServer()
-    await server.initialize()
+    server = await startTestServer()
   })
 
   afterEach(() => {
@@ -18,7 +17,7 @@ describe('#contentSecurityPolicy', () => {
   })
 
   afterAll(async () => {
-    await server.stop({ timeout: 0 })
+    await stopTestServer(server)
   })
 
   test('Should set the CSP policy header', async () => {

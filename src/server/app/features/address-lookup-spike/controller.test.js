@@ -1,11 +1,10 @@
-import { beforeEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { sessionAuth } from '../../../common/test-helpers/session-auth.js'
 import { insBackendApi } from '../../../common/test-helpers/real-mode.js'
-import { config } from '../../../../config/config.js'
-import { restoreConfigAfterEach } from '../../../common/test-helpers/restore-config-after-each.js'
 import { startRealModeServer } from '../../../common/test-helpers/test-server.js'
+import { config } from '../../../../config/config.js'
 
 const PAGE_PATH = '/address-lookup-spike'
 const LOOKUP_PATH = '/address-lookup'
@@ -76,17 +75,8 @@ const lookupByPostcode = (postcode) =>
 
 const lookupByFind = (find) => insBackendApi().get(LOOKUP_PATH).query({ find })
 
-const startServerWithoutCsrf = () => {
-  restoreConfigAfterEach(['csrf.enabled'])
-  const getServer = startRealModeServer()
-  beforeEach(() => {
-    config.set('csrf.enabled', false)
-  })
-  return getServer
-}
-
 describe('#addressLookupSpikeController', { concurrent: false }, () => {
-  const getServer = startServerWithoutCsrf()
+  const getServer = startRealModeServer()
 
   test('GET renders the search form with no results yet', async () => {
     const { result, statusCode } = await getServer().inject({
@@ -250,7 +240,7 @@ describe(
   '#addressLookupSpikeController — choosing and errors',
   { concurrent: false },
   () => {
-    const getServer = startServerWithoutCsrf()
+    const getServer = startRealModeServer()
 
     test('choosing a result maps it onto the address book fields without searching again', async () => {
       const scope = insBackendApi()

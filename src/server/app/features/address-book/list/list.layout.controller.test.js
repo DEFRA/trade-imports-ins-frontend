@@ -2,12 +2,15 @@ import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  addressAddPath,
+  addressTypeStartPath,
   addressBookPath,
   addressPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { textOf } from '../../../../common/test-helpers/rendered-text.js'
+import {
+  textOf,
+  textsOf
+} from '../../../../common/test-helpers/rendered-text.js'
 import {
   NO_RESULTS_LINE,
   TABLE_HEADINGS,
@@ -20,13 +23,14 @@ import {
   rowCellsOf,
   startServerWithPageReader,
   stubAddressPage,
+  subNavigationOf,
   tableHeadingsOf,
-  tagNamesOf
+  tagNamesOf,
+  typeSelectStateOf
 } from './list.test-support.js'
 
-const linksAfterFilterForm = ($) =>
-  contentOf($)
-    .children('form')
+const linksAfterSubNavigation = ($) =>
+  subNavigationOf($)
     .nextAll()
     .find('a')
     .map((_, anchor) => ({
@@ -38,7 +42,7 @@ const linksAfterFilterForm = ($) =>
 describe('#addressBookListLayout', () => {
   const readPage = startServerWithPageReader()
 
-  test('lays the page out as heading, large intro, Add button, then the filter form wrapping a collapsed Filter addresses disclosure', async () => {
+  test('lays the page out as heading, large intro, Add button, the filter form wrapping a collapsed Filter addresses disclosure, the sub navigation, the panel heading, the results line and the table', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await readPage(addressBookPath(), 'list-layout')
@@ -49,6 +53,8 @@ describe('#addressBookListLayout', () => {
       'p',
       'div',
       'form',
+      'nav',
+      'h2',
       'p',
       'table'
     ])
@@ -58,39 +64,41 @@ describe('#addressBookListLayout', () => {
     )
     const addButton = content.children('div').find('a')
     expect(textOf($, addButton)).toBe('Add a new address')
-    expect(addButton.attr('href')).toBe(addressAddPath())
+    expect(addButton.attr('href')).toBe(addressTypeStartPath())
     const form = content.children('form')
     expect(form.attr('method')).toBe('get')
     expect(form.attr('action')).toBe(addressBookPath())
-    expect(tagNamesOf(form.children())).toEqual(['details'])
+    expect(tagNamesOf(form.children())).toEqual(['input', 'details'])
     const disclosure = form.children('details')
     expect(disclosure.attr('open')).toBeUndefined()
     expect(textOf($, disclosure.children('summary'))).toBe('Filter addresses')
   })
 
-  test('holds the Search label, its hint, the input and one icon-only submit button inside the disclosure', async () => {
+  test('holds the Search controls, then the Type label and select, inside the disclosure', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await readPage(addressBookPath(), 'list-search-controls')
 
     const controls = contentOf($).find('form details .govuk-details__text')
     expect(
-      controls
-        .find('label, input, button, .govuk-hint')
-        .map((_, element) => ({
-          tag: element.tagName,
-          text: textOf($, element)
-        }))
-        .get()
-    ).toEqual([
-      { tag: 'label', text: 'Search' },
-      { tag: 'div', text: 'Search by name, address or country' },
-      { tag: 'input', text: '' },
-      { tag: 'button', text: 'Search' }
+      tagNamesOf(controls.find('label, input, button, select, .govuk-hint'))
+    ).toEqual(['label', 'div', 'input', 'button', 'label', 'select'])
+    expect(textsOf($, controls.find('label'))).toEqual(['Search', 'Type'])
+    expect(textOf($, controls.find('.govuk-hint'))).toBe(
+      'Search by name, address or country'
+    )
+    expect(textOf($, controls.find('button'))).toBe('Search')
+    expect(typeSelectStateOf($).optionTexts).toEqual([
+      'Select one',
+      'Place of Origin',
+      'Consignor'
     ])
     const input = controls.find('input')
     expect(input.attr('name')).toBe('q')
-    expect(controls.find('label').attr('for')).toBe(input.attr('id'))
+    expect(controls.find('label').first().attr('for')).toBe(input.attr('id'))
+    const select = controls.find('select')
+    expect(select.attr('name')).toBe('role')
+    expect(controls.find('label').last().attr('for')).toBe(select.attr('id'))
     expect(input.attr('aria-describedby')).toBe(
       controls.find('.govuk-hint').attr('id')
     )
@@ -112,17 +120,27 @@ describe('#addressBookListLayout', () => {
     expect(bodyRowCountOf($)).toBe(0)
   })
 
+  test('hides the Action heading visually while keeping it for assistive technology', async () => {
+    stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
+
+    const { $ } = await readPage(addressBookPath(), 'list-action-heading')
+
+    const actionHeading = $('thead th').last().children('span')
+    expect(actionHeading.attr('class')).toBe('govuk-visually-hidden')
+    expect(textOf($, actionHeading)).toBe('Action')
+  })
+
   test('breaks the name after its first word and puts every stored address line on its own line', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, fullAddress]))
 
     const { $ } = await readPage(addressBookPath(), 'list-cells')
 
     expect(rowCellsOf($, 0).eq(0).html()).toBe('Highland<br> Livestock Ltd')
-    expect(rowCellsOf($, 0).eq(1).html()).toBe(
+    expect(rowCellsOf($, 0).eq(2).html()).toBe(
       "14 Drover's Way,<br> Inverness,<br> IV2 3JH"
     )
     expect(rowCellsOf($, 1).eq(0).html()).toBe('Drover')
-    expect(rowCellsOf($, 1).eq(1).html()).toBe(
+    expect(rowCellsOf($, 1).eq(2).html()).toBe(
       "14 Drover's Way,<br> Unit 3,<br> Inverness,<br> Highland,<br> IV2 3JH"
     )
   })
@@ -137,7 +155,8 @@ describe('#addressBookListLayout', () => {
           addressLine1: "1 <i>Lane</i>'s End",
           townOrCity: 'Inverness',
           postcode: 'IV2 3JH',
-          countryCode: 'GB'
+          countryCode: 'GB',
+          roles: []
         }
       ])
     )
@@ -149,7 +168,7 @@ describe('#addressBookListLayout', () => {
     expect($('tbody b, tbody i')).toHaveLength(0)
   })
 
-  test('lists the match under the filter with Clear search and its View link as the only links there', async () => {
+  test('lists the match under the tabs with Clear search and its View link as the only links there', async () => {
     stubAddressPage({ page: '1', q: 'green' }, pageOf([greenFarmAddress]))
 
     const { $, statusCode } = await readPage(
@@ -159,8 +178,11 @@ describe('#addressBookListLayout', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(resultsLineOf($)).toBe('Showing 1-1 of 1')
-    expect(linksAfterFilterForm($)).toEqual([
-      { text: 'Clear search', href: addressBookPath() },
+    expect(linksAfterSubNavigation($)).toEqual([
+      {
+        text: 'Clear search',
+        href: `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR`
+      },
       {
         text: `View ${greenFarmAddress.name}`,
         href: addressPath(greenFarmAddress.id)
@@ -168,7 +190,7 @@ describe('#addressBookListLayout', () => {
     ])
   })
 
-  test('shows Showing 0 of 0, the table headings, no rows and Clear search as the only link under the filter when a search matches nothing', async () => {
+  test('shows Showing 0 of 0, the table headings, no rows and Clear search as the only link under the tabs when a search matches nothing', async () => {
     stubAddressPage({ page: '1', q: 'zzznomatch' }, pageOf([]))
 
     const { $, statusCode } = await readPage(
@@ -180,8 +202,11 @@ describe('#addressBookListLayout', () => {
     expect(resultsLineOf($)).toBe(NO_RESULTS_LINE)
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
     expect(bodyRowCountOf($)).toBe(0)
-    expect(linksAfterFilterForm($)).toEqual([
-      { text: 'Clear search', href: addressBookPath() }
+    expect(linksAfterSubNavigation($)).toEqual([
+      {
+        text: 'Clear search',
+        href: `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR`
+      }
     ])
   })
 

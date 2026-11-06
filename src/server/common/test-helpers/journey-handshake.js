@@ -1,3 +1,4 @@
+import { copy } from '../../app/features/address-book/copy/copy.en.js'
 import { CONSIGNMENT_CONTACT_FULFILMENT_ID } from '../../app/features/address-book/journey-registry.js'
 
 const handshakeForFulfilmentId = (fulfilmentId) =>
@@ -8,7 +9,7 @@ const handshakeForFulfilmentId = (fulfilmentId) =>
     'handshake-token': 'handshake-token-value'
   })
 
-export const JOURNEY_HANDSHAKES_BY_ROLE = Object.freeze({
+export const JOURNEY_HANDSHAKES_BY_PARTY = Object.freeze({
   placeOfOrigin: handshakeForFulfilmentId(
     '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c'
   ),
@@ -20,13 +21,41 @@ export const JOURNEY_HANDSHAKES_BY_ROLE = Object.freeze({
   )
 })
 
-export const UNITED_KINGDOM_ROLES = Object.freeze([
+export const ROLES_BY_PARTY = Object.freeze({
+  placeOfOrigin: {
+    ownRole: 'PLACE_OF_ORIGIN',
+    otherRoles: ['CONSIGNOR']
+  },
+  consignor: {
+    ownRole: 'CONSIGNOR',
+    otherRoles: ['PLACE_OF_ORIGIN']
+  },
+  consignee: {
+    ownRole: 'CONSIGNEE',
+    otherRoles: ['IMPORTER', 'PLACE_OF_DESTINATION']
+  },
+  importer: {
+    ownRole: 'IMPORTER',
+    otherRoles: ['CONSIGNEE', 'PLACE_OF_DESTINATION']
+  },
+  placeOfDestination: {
+    ownRole: 'PLACE_OF_DESTINATION',
+    otherRoles: ['CONSIGNEE', 'IMPORTER']
+  }
+})
+
+export const journeyRolesHintFor = (party) =>
+  copy.roles.journeyHint(
+    copy.roles.options[ROLES_BY_PARTY[party].ownRole].label
+  )
+
+export const UNITED_KINGDOM_PARTIES = Object.freeze([
   'consignee',
   'importer',
   'placeOfDestination'
 ])
 
-export const ANY_COUNTRY_ROLES = Object.freeze(['placeOfOrigin', 'consignor'])
+export const ANY_COUNTRY_PARTIES = Object.freeze(['placeOfOrigin', 'consignor'])
 
 export const CONSIGNMENT_CONTACT_HANDSHAKE = handshakeForFulfilmentId(
   CONSIGNMENT_CONTACT_FULFILMENT_ID
@@ -57,3 +86,5 @@ export const handshakeContextOf = (handshake) => ({
   fulfilmentId: handshake['fulfilment-id'],
   handshakeToken: handshake['handshake-token']
 })
+
+export const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'

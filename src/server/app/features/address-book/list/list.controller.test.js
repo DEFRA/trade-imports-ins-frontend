@@ -2,10 +2,17 @@ import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  addressAddPath,
+  addressTypeStartPath,
   addressBookPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
+import {
+  recordModuleLoggerError,
+  recordModuleLoggerInfo
+} from '../../../../common/test-helpers/module-logger-lines.js'
+import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
+import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
+import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
   TABLE_HEADINGS,
@@ -23,8 +30,13 @@ import {
   tableHeadingsOf
 } from './list.test-support.js'
 
+const PAST_LAST_PAGE_MESSAGE =
+  'Address book page is past the last page, serving the last page'
+const LOAD_FAILED_MESSAGE = 'Failed to load address book'
+
 describe('#addressBookListController', () => {
   const readPage = startServerWithPageReader()
+  const { entriesWith: infoLogs } = recordModuleLoggerInfo()
 
   test("renders the results count, column headings, and each address's View link and country label", async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, parisDepotAddress]))
@@ -38,12 +50,12 @@ describe('#addressBookListController', () => {
     expect(contentOf($).children('h1').text()).toBe('Address book')
     expect(resultsLineOf($)).toBe('Showing 1-2 of 2')
     expect(tableHeadingsOf($)).toEqual(TABLE_HEADINGS)
-    expect(textOf($, rowCellsOf($, 0).eq(2))).toBe('United Kingdom')
-    expect(rowCellsOf($, 0).eq(3).html().trim()).toBe(
+    expect(textOf($, rowCellsOf($, 0).eq(3))).toBe('United Kingdom')
+    expect(rowCellsOf($, 0).eq(4).html().trim()).toBe(
       '<a class="govuk-link" href="/address-book/1">View<span class="govuk-visually-hidden"> Highland Livestock Ltd</span></a>'
     )
-    expect(textOf($, rowCellsOf($, 1).eq(2))).toBe('France')
-    expect(rowCellsOf($, 1).eq(3).html().trim()).toBe(
+    expect(textOf($, rowCellsOf($, 1).eq(3))).toBe('France')
+    expect(rowCellsOf($, 1).eq(4).html().trim()).toBe(
       '<a class="govuk-link" href="/address-book/2">View<span class="govuk-visually-hidden"> Paris Depot</span></a>'
     )
   })
@@ -52,7 +64,15 @@ describe('#addressBookListController', () => {
     stubAddressPage(
       { page: '2' },
       pageOf(
-        [{ id: '1', name: 'Farm', addressLine1: '1 Road', countryCode: 'GB' }],
+        [
+          {
+            id: '1',
+            name: 'Farm',
+            addressLine1: '1 Road',
+            countryCode: 'GB',
+            roles: []
+          }
+        ],
         { page: 2, totalItems: 30, totalPages: 4 }
       )
     )
@@ -69,10 +89,10 @@ describe('#addressBookListController', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      addressBookPath(),
-      `${addressBookPath()}?page=2`,
-      `${addressBookPath()}?page=3`,
-      `${addressBookPath()}?page=4`
+      `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR`,
+      `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR&page=2`,
+      `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR&page=3`,
+      `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR&page=4`
     ])
     expect(textOf($, '.govuk-pagination__item--current')).toBe('2')
   })
@@ -92,7 +112,7 @@ describe('#addressBookListController', () => {
     }
   )
 
-  test('shows the last page, asked for a second time, when the page number is past the last page', async () => {
+  test('shows the last page, asked for a second time, when the page number is past the last page, and logs the fallback once', async () => {
     const pastLastPage = stubAddressPage(
       { page: '99' },
       pageOf([], { page: 99, totalItems: 12, totalPages: 2 })
@@ -117,6 +137,17 @@ describe('#addressBookListController', () => {
     expect(resultsLineOf($)).toBe('Showing 9-12 of 12')
     expect(bodyRowCountOf($)).toBe(2)
     expect(textOf($, '.govuk-pagination__item--current')).toBe('2')
+    expect(infoLogs(PAST_LAST_PAGE_MESSAGE)).toEqual([
+      {
+        fields: {
+          organisationId: ORGANISATION_ID,
+          roles: DEFAULT_ADDRESS_BOOK_TAB.roles,
+          requestedPage: 99,
+          servedPage: 2
+        },
+        message: PAST_LAST_PAGE_MESSAGE
+      }
+    ])
   })
 
   test('shows no pagination when the matches of a search fit on one page', async () => {
@@ -153,18 +184,23 @@ describe('#addressBookListController', () => {
     ['matches', pageOf([greenFarmAddress])],
     ['no matches', pageOf([])]
   ])(
-    'Should link Clear search to the whole address book under the results line when a search has %s',
+    'Should link Clear search to the whole list of the selected tab under the results line when a search has %s',
     async (_, addressPage) => {
-      stubAddressPage({ page: '1', q: 'green' }, addressPage)
+      stubAddressPage(
+        { page: '1', q: 'green', tabAddressType: ADDRESS_TYPES.BRANCH },
+        addressPage
+      )
 
       const { $ } = await readPage(
-        `${addressBookPath()}?q=green`,
+        `${addressBookPath()}?addressType=BRANCH&q=green`,
         'list-clear-search'
       )
 
       const clearSearch = $('[data-testid="address-book-clear-search"]')
       expect(textOf($, clearSearch)).toBe('Clear search')
-      expect(clearSearch.attr('href')).toBe(addressBookPath())
+      expect(clearSearch.attr('href')).toBe(
+        `${addressBookPath()}?addressType=BRANCH`
+      )
       expect(
         $('[data-testid="address-book-results-label"]')
           .next()
@@ -173,9 +209,9 @@ describe('#addressBookListController', () => {
     }
   )
 
-  test('links every page with the search term and the page number only', async () => {
+  test('links every page with the selected tab, the search term and the page number only', async () => {
     const scope = stubAddressPage(
-      { page: '2', q: 'green' },
+      { page: '2', q: 'green', tabAddressType: ADDRESS_TYPES.BRANCH },
       pageOf([greenFarmAddress], {
         page: 2,
         totalItems: 30,
@@ -184,7 +220,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${addressBookPath()}?q=green&countryCode=GB&page=2`,
+      `${addressBookPath()}?addressType=BRANCH&q=green&countryCode=GB&page=2`,
       'list-search-page-2'
     )
 
@@ -195,14 +231,19 @@ describe('#addressBookListController', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      `${addressBookPath()}?q=green`,
-      `${addressBookPath()}?q=green&page=2`,
-      `${addressBookPath()}?q=green&page=3`,
-      `${addressBookPath()}?q=green&page=4`
+      `${addressBookPath()}?addressType=BRANCH&q=green`,
+      `${addressBookPath()}?addressType=BRANCH&q=green&page=2`,
+      `${addressBookPath()}?addressType=BRANCH&q=green&page=3`,
+      `${addressBookPath()}?addressType=BRANCH&q=green&page=4`
     ])
   })
+})
 
-  test('returns 500 when the address book cannot be reached, with the heading, intro, Add button and filter but no results line or table', async () => {
+describe('#addressBookListController when the address book cannot be reached', () => {
+  const readPage = startServerWithPageReader()
+  const { entriesWith: errorLogs } = recordModuleLoggerError()
+
+  test('returns 500 with the heading, intro, Add button and filter but no results line or table, and logs the failure once', async () => {
     stubAddressBookUnavailable()
 
     const { $, html, statusCode } = await readPage(
@@ -221,12 +262,22 @@ describe('#addressBookListController', () => {
       'Manage your addresses for use across all your import notifications'
     )
     expect(contentOf($).children('p').next('div').find('a').attr('href')).toBe(
-      addressAddPath()
+      addressTypeStartPath()
     )
     expect(contentOf($).children('form').find('input[name="q"]')).toHaveLength(
       1
     )
     expect(resultsLineOf($)).toBe('')
     expect(tableHeadingsOf($)).toEqual([])
+    expect(errorLogs(LOAD_FAILED_MESSAGE)).toEqual([
+      {
+        fields: {
+          err: expect.any(Error),
+          organisationId: ORGANISATION_ID,
+          addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType
+        },
+        message: LOAD_FAILED_MESSAGE
+      }
+    ])
   })
 })

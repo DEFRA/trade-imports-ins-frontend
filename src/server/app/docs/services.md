@@ -1,9 +1,30 @@
 # Services
 
-`src/server/app/services/` holds one folder per upstream, each with the
-same three files — **`index.js`** the barrel a feature imports,
-**`client.js`** the HTTP client, **`stub.js`** the in-memory stand-in — and
-nothing imports `client.js` or `stub.js` from outside its folder.
+`src/server/app/services/` holds one folder per upstream. Each holds
+**`index.js`** the barrel a feature imports, **`client.js`** the HTTP client
+and **`stub.js`** the in-memory stand-in, plus any module those share. The
+address book also holds **`typed-seed.js`** (the stub's typed seed addresses,
+each with its roles) and **`address-types.js`**, which exports:
+
+- `ADDRESS_TYPES`, the address type values;
+- `ROLES`, the role codes;
+- `ROLES_BY_ADDRESS_TYPE`, the roles each address type groups, in the order
+  the Type select offers them;
+- `addressTypeOfRole`, the address type that groups a role;
+- `keepRolesOfferedBy`, the given roles an address type offers, kept in
+  `ROLES_BY_ADDRESS_TYPE`'s order, which is not the order the roles question
+  shows them;
+- `addressTypeRequiresUnitedKingdom`, whether an address type must be in the
+  United Kingdom;
+- `PLACE_ROLES`, the roles that name a place.
+
+The barrel exports both. A feature imports only the barrel, and nothing
+imports any other file from outside its folder.
+
+The address book itself holds roles only. An address type is this service's
+grouping of roles for its screens (the add flow's first step, the list's tabs
+and the UK-only country): it is never sent to the address book or read from
+it, and an address's type is worked out from its roles.
 
 ## Run mode
 
@@ -22,7 +43,7 @@ starting, and a test can switch modes with `config.set('stubMode', …)`.
 ### address-book
 
 [`index.js`](../services/address-book/index.js) exports `listAddresses(organisationId,
-listQuery)`, where `listQuery` is `{ page, pageSize, searchTerm, countryCodes }`,
+listQuery)`, where `listQuery` is `{ page, pageSize, searchTerm, countryCodes, roles, searchRoles }`,
 `createAddress(organisationId, address)`, `getAddress(organisationId, addressId)`,
 `updateAddress(organisationId, addressId, address)`,
 `deleteAddress(organisationId, addressId)`, plus `mapApiErrorsToFormErrors(problemBody)`
@@ -35,17 +56,27 @@ book runs no in-service authentication and trusts that header — it must
 always come from the session), the trace id under the header named by
 `tracing.header`, refuses a missing organisation rather than asking for
 `undefined`, raises a 400 as a validation failure with the problem body,
-and everything else through `throwOnError`.
+and everything else through `throwOnError`. A list sends each of the
+query's `roles` as a repeated `role` parameter (an address holding any of
+them is kept), and each of its `searchRoles` as a repeated `searchRole`.
+A save sends the address's `roles` and no address type.
 
 The [stub](../services/address-book/stub.js) keeps a `Map` per
 organisation, seeded by the id's suffix (`-empty`, `-paginated` for 30
-addresses, otherwise `Stub Farm 1` at `000000000000000000000001`), and
-mints 24-character hex ids because the `{id}` routes validate an
-ObjectId. It lists newest first, a created address ahead of the seeded
-ones, and at the page size the request gives. An address
-matches when the search term appears in its name, address lines, town,
-county or postcode, or when its country code is one of the request's
-country codes; with neither given, every address is listed. A delete
+addresses, `-typed` for addresses holding roles of all three address
+types, otherwise `Stub Farm 1` at `000000000000000000000001`); an untyped
+seed address is a place of origin and consignor. It mints 24-character hex
+ids because the `{id}` routes validate an ObjectId. It lists newest first, a
+created address ahead of the seeded ones, and at the page size the request
+gives. With `roles`, it first keeps the addresses holding any of them. Of
+those, an address matches when the search term appears in its name, address
+lines, town, county or postcode, when its country code is one of the
+request's country codes, or when it holds one of the request's search roles;
+with none of these given, every address left is listed. A create or update
+is refused, as the address book refuses it, with a 400 keyed `roles` when
+the address holds no role or roles of more than one address type, and keyed
+`countryCode` when it holds a consignee, importer or place of destination
+role outside the United Kingdom. A delete
 marks the address deleted rather than removing it, so `getAddress` still
 returns it.
 

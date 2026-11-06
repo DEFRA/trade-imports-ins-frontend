@@ -19,6 +19,7 @@ const DASHBOARD_PATH = '/'
 const NOTIFICATION_TYPE_PATH = '/notification-type'
 const LIST_PATH = '/address-book'
 const ADD_PATH = '/address-book/add'
+const ADDRESS_TYPE_PATH = '/address-book/add/address-type'
 const VIEW_PATH = '/address-book/{id}'
 const EDIT_PATH = '/address-book/{id}/edit'
 const DELETE_PATH = '/address-book/{id}/delete'
@@ -28,6 +29,7 @@ const REGISTERED_PATHS = [
   NOTIFICATION_TYPE_PATH,
   LIST_PATH,
   ADD_PATH,
+  ADDRESS_TYPE_PATH,
   VIEW_PATH,
   EDIT_PATH,
   DELETE_PATH
@@ -73,6 +75,7 @@ describe('#auditPaths', () => {
       NOTIFICATION_TYPE_PATH,
       LIST_PATH,
       ADD_PATH,
+      ADDRESS_TYPE_PATH,
       `/address-book/${ADDRESS_ID}`,
       `/address-book/${ADDRESS_ID}/edit`,
       `/address-book/${ADDRESS_ID}/delete`
@@ -145,6 +148,7 @@ describe('#reportName', () => {
     expect(reportName(LIST_PATH)).toBe('address_book')
     expect(reportName(VIEW_PATH)).toBe('address_book_id')
     expect(reportName(EDIT_PATH)).toBe('address_book_id_edit')
+    expect(reportName(ADDRESS_TYPE_PATH)).toBe('address_book_add_address_type')
   })
 })
 
@@ -159,6 +163,7 @@ describe('#reportNames', () => {
       'notification_type',
       'address_book',
       'address_book_add',
+      'address_book_add_address_type',
       'address_book_id',
       'address_book_id_edit',
       'address_book_id_delete'

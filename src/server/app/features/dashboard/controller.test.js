@@ -19,6 +19,9 @@ const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
 const ARRIVAL_DATE = '2026-09-10'
 const CREATE_NEW_SELECTOR = 'main a[role="button"]'
 
+const notificationsRequest = (query = DEFAULT_QUERY) =>
+  insBackendApi().get(NOTIFICATIONS_PATH).query(query)
+
 const pageOf = (content, overrides = {}) => ({
   content,
   page: 1,
@@ -47,21 +50,18 @@ describe('#dashboard', () => {
   const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test('renders notifications with reference, status, origin, commodity and arrival date, and a standard Create new button between the heading and the search and table', async () => {
-    insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query(DEFAULT_QUERY)
-      .reply(
-        200,
-        pageOf([
-          {
-            referenceNumber: REFERENCE_NUMBER,
-            status: 'SUBMITTED',
-            originCountry: 'FR',
-            commodity: 'Cattle',
-            arrivalDate: ARRIVAL_DATE
-          }
-        ])
-      )
+    notificationsRequest().reply(
+      200,
+      pageOf([
+        {
+          referenceNumber: REFERENCE_NUMBER,
+          status: 'SUBMITTED',
+          originCountry: 'FR',
+          commodity: 'Cattle',
+          arrivalDate: ARRIVAL_DATE
+        }
+      ])
+    )
 
     const { result, statusCode } = await getServer().inject({
       method: 'GET',
@@ -91,29 +91,26 @@ describe('#dashboard', () => {
   })
 
   test('notifications from more than one status all appear in the same list', async () => {
-    insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query(DEFAULT_QUERY)
-      .reply(
-        200,
-        pageOf(
-          [
-            {
-              referenceNumber: REFERENCE_NUMBER,
-              status: 'SUBMITTED',
-              originCountry: 'GB',
-              arrivalDate: ARRIVAL_DATE
-            },
-            {
-              referenceNumber: OTHER_REFERENCE_NUMBER,
-              status: 'DRAFT',
-              originCountry: 'GB',
-              arrivalDate: '2026-09-11'
-            }
-          ],
-          { totalElements: 2, totalPages: 1 }
-        )
+    notificationsRequest().reply(
+      200,
+      pageOf(
+        [
+          {
+            referenceNumber: REFERENCE_NUMBER,
+            status: 'SUBMITTED',
+            originCountry: 'GB',
+            arrivalDate: ARRIVAL_DATE
+          },
+          {
+            referenceNumber: OTHER_REFERENCE_NUMBER,
+            status: 'DRAFT',
+            originCountry: 'GB',
+            arrivalDate: '2026-09-11'
+          }
+        ],
+        { totalElements: 2, totalPages: 1 }
       )
+    )
 
     const { result } = await getServer().inject({
       method: 'GET',
@@ -126,20 +123,17 @@ describe('#dashboard', () => {
   })
 
   test('selecting a submitted notification links into the notification-view page', async () => {
-    insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query(DEFAULT_QUERY)
-      .reply(
-        200,
-        pageOf([
-          {
-            referenceNumber: REFERENCE_NUMBER,
-            status: 'SUBMITTED',
-            originCountry: 'GB',
-            arrivalDate: ARRIVAL_DATE
-          }
-        ])
-      )
+    notificationsRequest().reply(
+      200,
+      pageOf([
+        {
+          referenceNumber: REFERENCE_NUMBER,
+          status: 'SUBMITTED',
+          originCountry: 'GB',
+          arrivalDate: ARRIVAL_DATE
+        }
+      ])
+    )
 
     const { result } = await getServer().inject({
       method: 'GET',
@@ -153,20 +147,17 @@ describe('#dashboard', () => {
   })
 
   test('selecting a draft notification links to the notification journey hub', async () => {
-    insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query(DEFAULT_QUERY)
-      .reply(
-        200,
-        pageOf([
-          {
-            referenceNumber: OTHER_REFERENCE_NUMBER,
-            status: 'DRAFT',
-            originCountry: 'GB',
-            arrivalDate: ARRIVAL_DATE
-          }
-        ])
-      )
+    notificationsRequest().reply(
+      200,
+      pageOf([
+        {
+          referenceNumber: OTHER_REFERENCE_NUMBER,
+          status: 'DRAFT',
+          originCountry: 'GB',
+          arrivalDate: ARRIVAL_DATE
+        }
+      ])
+    )
 
     const { result } = await getServer().inject({
       method: 'GET',
@@ -188,20 +179,20 @@ describe('#dashboard — search, sort and errors', () => {
   const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test('searching by complete reference asks the backend for that reference, shows it and still offers Create new', async () => {
-    const scope = insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query({ ...DEFAULT_QUERY, referenceNumber: REFERENCE_NUMBER })
-      .reply(
-        200,
-        pageOf([
-          {
-            referenceNumber: REFERENCE_NUMBER,
-            status: 'SUBMITTED',
-            originCountry: 'GB',
-            arrivalDate: ARRIVAL_DATE
-          }
-        ])
-      )
+    const scope = notificationsRequest({
+      ...DEFAULT_QUERY,
+      referenceNumber: REFERENCE_NUMBER
+    }).reply(
+      200,
+      pageOf([
+        {
+          referenceNumber: REFERENCE_NUMBER,
+          status: 'SUBMITTED',
+          originCountry: 'GB',
+          arrivalDate: ARRIVAL_DATE
+        }
+      ])
+    )
 
     const { result } = await getServer().inject({
       method: 'GET',
@@ -217,10 +208,10 @@ describe('#dashboard — search, sort and errors', () => {
   })
 
   test('no matching notification shows "No notifications found" and still offers Create new', async () => {
-    insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query({ ...DEFAULT_QUERY, referenceNumber: 'GBN-AG-26-999999' })
-      .reply(200, pageOf([]))
+    notificationsRequest({
+      ...DEFAULT_QUERY,
+      referenceNumber: 'GBN-AG-26-999999'
+    }).reply(200, pageOf([]))
 
     const { result, statusCode } = await getServer().inject({
       method: 'GET',
@@ -234,10 +225,7 @@ describe('#dashboard — search, sort and errors', () => {
   })
 
   test('empty aggregated store shows the empty text and the Create new button', async () => {
-    insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query(DEFAULT_QUERY)
-      .reply(200, pageOf([]))
+    notificationsRequest().reply(200, pageOf([]))
 
     const { result, statusCode } = await getServer().inject({
       method: 'GET',
@@ -251,14 +239,11 @@ describe('#dashboard — search, sort and errors', () => {
   })
 
   test('sort and referenceNumber are forwarded to the backend', async () => {
-    const scope = insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query({
-        page: '1',
-        sort: 'lastUpdated,asc',
-        referenceNumber: REFERENCE_NUMBER
-      })
-      .reply(200, pageOf([]))
+    const scope = notificationsRequest({
+      page: '1',
+      sort: 'lastUpdated,asc',
+      referenceNumber: REFERENCE_NUMBER
+    }).reply(200, pageOf([]))
 
     await getServer().inject({
       method: 'GET',
@@ -270,10 +255,7 @@ describe('#dashboard — search, sort and errors', () => {
   })
 
   test('an unrecognised sort value falls back to the default rather than reaching the backend', async () => {
-    const scope = insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query(DEFAULT_QUERY)
-      .reply(200, pageOf([]))
+    const scope = notificationsRequest().reply(200, pageOf([]))
 
     await getServer().inject({
       method: 'GET',
@@ -285,10 +267,7 @@ describe('#dashboard — search, sort and errors', () => {
   })
 
   test('shows the recoverable-error banner and the Create new button under the heading when the backend call fails', async () => {
-    insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query(DEFAULT_QUERY)
-      .reply(500, { title: 'Internal Server Error' })
+    notificationsRequest().reply(500, { title: 'Internal Server Error' })
 
     const { result, statusCode } = await getServer().inject({
       method: 'GET',

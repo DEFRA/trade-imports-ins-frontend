@@ -1,7 +1,13 @@
 import { test, expect } from '@playwright/test'
 
 import { expectAddressBookList } from './address-book-list.js'
-import { fieldLabels, setFieldValue } from './address-form.js'
+import {
+  fieldLabels,
+  fieldLabelsInFormOrder,
+  setFieldValue,
+  backLink,
+  malformedEmail
+} from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import { expectDashboard } from '../../dashboard/fit/dashboard.js'
 import { expectErrorFocusOn } from '../../../../../../fit/error-focus.js'
@@ -85,9 +91,10 @@ test.describe('edit address', () => {
   test('has a Back link to the address details', async ({ page }) => {
     await openEditForm(page, 'stub-org-edit-back')
 
-    await expect(
-      page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', addressPath(seedAddressId))
+    await expect(backLink(page)).toHaveAttribute(
+      'href',
+      addressPath(seedAddressId)
+    )
   })
 
   test('asks for the nine address fields in the add form order, Email address before Phone number', async ({
@@ -95,17 +102,7 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-field-order')
 
-    await expect(page.locator('form label')).toHaveText([
-      fieldLabels.name,
-      fieldLabels.addressLine1,
-      fieldLabels.addressLine2,
-      fieldLabels.townOrCity,
-      fieldLabels.county,
-      fieldLabels.postcode,
-      fieldLabels.countryCode,
-      fieldLabels.email,
-      fieldLabels.phone
-    ])
+    await expect(page.locator('form label')).toHaveText(fieldLabelsInFormOrder)
   })
 
   test('lists the countries alphabetically with no blank option and the stored country selected', async ({
@@ -153,13 +150,13 @@ test.describe('edit address', () => {
   }) => {
     await openEditForm(page, 'stub-org-edit-email')
 
-    await setFieldValue(page, 'email', 'not-an-email')
+    await setFieldValue(page, 'email', malformedEmail)
     await save(page)
 
     await expectErrorFocusOn(page, {
       message: 'Enter an email address in the correct format',
       label: fieldLabels.email,
-      expectedValue: 'not-an-email',
+      expectedValue: malformedEmail,
       url: seedEditPath
     })
   })
@@ -216,9 +213,7 @@ test.describe('edit address', () => {
         returnTo: dashboardPath()
       })
 
-      await expect(
-        page.getByRole('link', { name: 'Back', exact: true })
-      ).toHaveAttribute('href', dashboardPath())
+      await expect(backLink(page)).toHaveAttribute('href', dashboardPath())
     })
 
     test('Cancel goes to the dashboard', async ({ page }) => {
