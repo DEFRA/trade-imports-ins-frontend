@@ -109,13 +109,17 @@ describe('#refreshTokens', () => {
     expect(document.Outcome).toBe('failure')
   })
 
-  test('Should give up when the token endpoint reply comes later than the timeout', async () => {
-    tokenEndpointRequest()
-      .delay(TOKEN_ENDPOINT_TIMEOUT_MS + 500)
-      .reply(statusCodes.ok, issuedTokens)
+  test(
+    'Should give up when the token endpoint reply comes later than the timeout',
+    { timeout: TOKEN_ENDPOINT_TIMEOUT_MS * 5 },
+    async () => {
+      tokenEndpointRequest()
+        .delay(TOKEN_ENDPOINT_TIMEOUT_MS + 500)
+        .reply(statusCodes.ok, issuedTokens)
 
-    await expect(refreshTokens(refreshToken)).rejects.toMatchObject({
-      output: { statusCode: statusCodes.gatewayTimeout }
-    })
-  })
+      await expect(refreshTokens(refreshToken)).rejects.toMatchObject({
+        output: { statusCode: statusCodes.gatewayTimeout }
+      })
+    }
+  )
 })
