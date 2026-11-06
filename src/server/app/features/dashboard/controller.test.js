@@ -225,6 +225,49 @@ describe('#dashboard — search, sort and errors', () => {
     expect(scope.isDone()).toBe(true)
   })
 
+  test('a middle page of many shows the first, neighbouring and last page links with an ellipsis for each gap, each keeping the sort', async () => {
+    notificationsRequest({ page: '10', sort: 'lastUpdated,asc' }).reply(
+      200,
+      pageOf(
+        [
+          {
+            referenceNumber: REFERENCE_NUMBER,
+            status: 'SUBMITTED',
+            originCountry: 'GB',
+            arrivalDate: ARRIVAL_DATE
+          }
+        ],
+        { page: 10, totalElements: 500, totalPages: 20 }
+      )
+    )
+
+    const { result } = await getServer().inject({
+      method: 'GET',
+      url: '/?page=10&sort=lastUpdated,asc',
+      auth: sessionAuth('dashboard-many-pages')
+    })
+
+    const $ = load(result)
+    const pageHref = (page) => `/?sort=lastUpdated%2Casc&page=${page}`
+    expect(
+      $('.govuk-pagination__item')
+        .map((_, item) => $(item).text().trim())
+        .get()
+    ).toEqual(['1', '⋯', '9', '10', '11', '⋯', '20'])
+    expect($('.govuk-pagination__item--current').text().trim()).toBe('10')
+    expect(
+      $('.govuk-pagination__item a')
+        .map((_, link) => $(link).attr('href'))
+        .get()
+    ).toEqual([
+      '/?sort=lastUpdated%2Casc',
+      pageHref(9),
+      pageHref(10),
+      pageHref(11),
+      pageHref(20)
+    ])
+  })
+
   test('an unrecognised sort value falls back to the default rather than reaching the backend', async () => {
     const scope = notificationsRequest().reply(200, pageOf([]))
 
