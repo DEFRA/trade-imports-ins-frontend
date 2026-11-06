@@ -98,12 +98,12 @@ lists the countries alphabetically, United Kingdom included in its place, and re
 ### ins-backend
 
 [`index.js`](../services/ins-backend/index.js) exports
-`listNotifications(organisationId, { page, sort, referenceNumber })` — the
-aggregated notifications the dashboard lists. The dashboard is not scoped to
+`listNotifications(stubSeedOrganisationId, { page, sort, referenceNumber })` —
+the aggregated notifications the dashboard lists. The dashboard is not scoped to
 an organisation: the client sends no organisation to the INS backend, and
-only the stub reads `organisationId`. The stub holds four, one soft-deleted
-and never returned, for every organisation except one whose id ends `-empty`,
-which has none.
+only the stub reads `stubSeedOrganisationId`, which the real client does not
+send. The stub holds four, one soft-deleted and never returned, for every
+organisation except one whose id ends `-empty`, which has none.
 
 ### address-lookup
 

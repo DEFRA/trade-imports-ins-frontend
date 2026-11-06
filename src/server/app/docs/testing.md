@@ -163,7 +163,7 @@ hostname rewrite (enabled, from `host.docker.internal` and
 
 [`shared/copy-leaves.test-support.js`](../shared/copy-leaves.test-support.js)
 holds `itHoldsTextAtEveryLeaf({ en, cy })`, which every copy bundle test calls,
-and `textOf(value)`.
+and `sampleCopyText(value)`.
 
 The notification type question keeps its test set-up beside the controller:
 [`requests.test-support.js`](../features/notification-type/requests.test-support.js)

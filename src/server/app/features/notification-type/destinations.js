@@ -1,11 +1,11 @@
-import { SET_BASES } from '../../../common/constants/journey-set-bases.js'
+import {
+  SET_BASES,
+  SET_FRONTEND_BASE_URL_KEYS
+} from '../../../common/constants/journey-set-bases.js'
 import {
   buildNotificationUrl,
   buildSetBaseUrl
 } from '../../../common/helpers/set-base-url.js'
-
-const ANIMALS_FRONTEND = 'tradeImportsAnimalsFrontend.baseUrl'
-const PLANTS_FRONTEND = 'tradeImportsPlantsFrontend.baseUrl'
 
 /**
  * The notification types the question offers, in the order it offers them.
@@ -15,26 +15,22 @@ export const NOTIFICATION_TYPES = Object.freeze([
     value: 'live-animals',
     copyKey: 'liveAnimals',
     setBase: SET_BASES.LIVE_ANIMALS,
-    frontend: ANIMALS_FRONTEND,
     returnPage: 'origin'
   },
   {
     value: 'plants-for-planting',
     copyKey: 'plantsForPlanting',
-    setBase: SET_BASES.HIGH_RISK_PLANTS,
-    frontend: PLANTS_FRONTEND
+    setBase: SET_BASES.HIGH_RISK_PLANTS
   },
   {
     value: 'potatoes',
     copyKey: 'potatoes',
-    setBase: SET_BASES.HIGH_RISK_PLANTS,
-    frontend: PLANTS_FRONTEND
+    setBase: SET_BASES.HIGH_RISK_PLANTS
   },
   {
     value: 'wood-products',
     copyKey: 'woodProducts',
-    setBase: SET_BASES.HIGH_RISK_PLANTS,
-    frontend: PLANTS_FRONTEND
+    setBase: SET_BASES.HIGH_RISK_PLANTS
   }
 ])
 
@@ -46,10 +42,8 @@ export const NOTIFICATION_TYPES = Object.freeze([
  */
 export const startUrlFor = (value) => {
   const START_ENTRY = '/start'
-  const { frontend, setBase } = NOTIFICATION_TYPES.find(
-    (type) => type.value === value
-  )
-  return `${buildSetBaseUrl(frontend, setBase)}${START_ENTRY}`
+  const { setBase } = NOTIFICATION_TYPES.find((type) => type.value === value)
+  return `${buildSetBaseUrl(SET_FRONTEND_BASE_URL_KEYS[setBase], setBase)}${START_ENTRY}`
 }
 
 /**
@@ -71,8 +65,8 @@ export const takesNotificationBack = (value) =>
  * @returns {string} absolute URL of the page a returning notification lands on
  */
 export const returnUrlFor = (value, reference) => {
-  const { frontend, setBase, returnPage } = NOTIFICATION_TYPES.find(
+  const { setBase, returnPage } = NOTIFICATION_TYPES.find(
     (type) => type.value === value
   )
-  return `${buildNotificationUrl(frontend, setBase, reference)}/${returnPage}`
+  return `${buildNotificationUrl(SET_FRONTEND_BASE_URL_KEYS[setBase], setBase, reference)}/${returnPage}`
 }

@@ -35,8 +35,10 @@ import from them. Read the files above, not the journey paths.
 ## 1. Name the path
 
 Add a builder to `shared/paths.js` (and a `*RoutePath()` twin if the page
-is parameterised). Add its case to `shared/paths.test.js`. The URL appears
-nowhere else.
+is parameterised). Add its case to `shared/paths.test.js`. This service's own
+page paths are written nowhere else; only `destinations.js`, `set-base-url.js`
+and `journey-registry.js` write URLs on the animals and plants frontends (see
+[Paths](features.md#paths)).
 
 ## 2. Create the feature folder
 

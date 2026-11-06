@@ -8,7 +8,9 @@ import { beforeAll, afterAll, afterEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../config/config.js'
 import { expectHealthy } from '../test-helpers/expect-healthy.js'
+import { recordModuleLoggerInfo } from '../test-helpers/module-logger-lines.js'
 import { refuseOutboundHttp } from '../test-helpers/real-mode.js'
+import { restoreConfigAfterEach } from '../test-helpers/restore-config-after-each.js'
 import { serveOidcDiscovery } from '../test-helpers/serve-oidc-discovery.js'
 import { startServer } from './start-server.js'
 
@@ -56,6 +58,56 @@ describe('#startServer', () => {
 
     test('installs a keep-alive agent for Wreck calls made without an agent', () => {
       expect(Wreck.agents.http.keepAlive).toBe(true)
+    })
+  })
+
+  describe('When no HTTP proxy is configured', () => {
+    const infoLines = recordModuleLoggerInfo()
+    restoreConfigAfterEach(['httpProxy', 'port'])
+
+    test('logs once that the retrying keep-alive agent is installed', async () => {
+      config.set('httpProxy', null)
+      config.set('port', 0)
+      serveOidcDiscovery()
+
+      const server = await startServer()
+      await server.stop({ timeout: 0 })
+
+      expect(
+        infoLines.entriesWith(
+          'Wreck plain-HTTP calls use the retrying keep-alive agent'
+        )
+      ).toEqual([
+        {
+          fields: { keepAliveAgent: true },
+          message: 'Wreck plain-HTTP calls use the retrying keep-alive agent'
+        }
+      ])
+    })
+  })
+
+  describe('When an HTTP proxy is configured', () => {
+    const infoLines = recordModuleLoggerInfo()
+    restoreConfigAfterEach(['httpProxy', 'port'])
+
+    test('logs once that Wreck keeps its own agent, without the proxy URL', async () => {
+      config.set('httpProxy', 'http://proxy.test:3128')
+      config.set('port', 0)
+      serveOidcDiscovery()
+
+      const server = await startServer()
+      await server.stop({ timeout: 0 })
+
+      expect(
+        infoLines.entriesWith(
+          'HTTP proxy configured; Wreck keeps its own agent'
+        )
+      ).toEqual([
+        {
+          fields: { keepAliveAgent: false, reason: 'httpProxy' },
+          message: 'HTTP proxy configured; Wreck keeps its own agent'
+        }
+      ])
     })
   })
 

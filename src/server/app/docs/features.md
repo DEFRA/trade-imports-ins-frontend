@@ -143,10 +143,17 @@ link carries the tab and the current search only.
 
 ## Paths
 
-[`shared/paths.js`](../shared/paths.js) is the only module that writes a
-URL, with one exception: the temporary `address-lookup-spike` feature
-keeps its own `'/address-lookup-spike'` literal in its controller (see
-below). Each public URL has a builder (`dashboardPath()`, `notificationTypePath()`, `addressBookPath()`,
+[`shared/paths.js`](../shared/paths.js) is the only module that writes this
+service's own page paths, with one exception: the temporary
+`address-lookup-spike` feature keeps its own `'/address-lookup-spike'` literal
+in its controller (see below). URLs on the animals and plants frontends have
+three owners:
+[`features/notification-type/destinations.js`](../features/notification-type/destinations.js)
+owns the hand-over and return URLs to those frontends,
+[`common/helpers/set-base-url.js`](../../common/helpers/set-base-url.js)
+(`buildNotificationUrl`) owns the `/notifications/<ref>` URLs on them, and
+[`features/address-book/journey-registry.js`](../features/address-book/journey-registry.js)
+owns the address-return path template. Each public URL has a builder (`dashboardPath()`, `notificationTypePath()`, `addressBookPath()`,
 `addressAddPath()`, `addressTypePath()`, `addressTypeStartPath()` (the
 type page with the marker that starts a new add), `addressPath(id)`,
 `addressEditPath(id)`, `addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin

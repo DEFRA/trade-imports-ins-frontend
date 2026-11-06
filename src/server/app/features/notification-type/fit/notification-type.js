@@ -22,3 +22,10 @@ export const expectOnlyNotificationTypeChecked = async (page, label) => {
   await expect(page.getByRole('radio', { checked: true })).toHaveCount(1)
   await expect(page.getByRole('radio', { name: label })).toBeChecked()
 }
+
+export const typeQuestionPost = (page) =>
+  page.waitForResponse(
+    (response) =>
+      response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === notificationTypePath()
+  )

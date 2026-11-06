@@ -1,4 +1,7 @@
-import { SET_BASES } from '../../../../common/constants/journey-set-bases.js'
+import {
+  SET_BASES,
+  SET_FRONTEND_BASE_URL_KEYS
+} from '../../../../common/constants/journey-set-bases.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { buildNotificationUrl } from '../../../../common/helpers/set-base-url.js'
 import { formatDisplayCalendarDate } from '../../../lib/validate/index.js'
@@ -39,7 +42,7 @@ export const dashboardPageHref = (page, { sort, referenceNumber } = {}) =>
 
 export function buildNotificationLink(status, referenceNumber) {
   const notificationUrl = buildNotificationUrl(
-    'tradeImportsAnimalsFrontend.baseUrl',
+    SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS],
     SET_BASES.LIVE_ANIMALS,
     referenceNumber
   )

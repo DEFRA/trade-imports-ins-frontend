@@ -7,7 +7,8 @@ import { signInAndOpen } from '../../../../../fit/sign-in.js'
 import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
 import {
   expectOnlyNotificationTypeChecked,
-  expectUnselectedNotificationType
+  expectUnselectedNotificationType,
+  typeQuestionPost
 } from './fit/notification-type.js'
 import {
   SAMPLE_REFERENCE,
@@ -101,11 +102,7 @@ test.describe('notification type question', () => {
       'stub-org-notification-type-plants-hand-over',
       notificationTypePath()
     )
-    const handOver = page.waitForResponse(
-      (response) =>
-        response.request().method() === 'POST' &&
-        response.url().endsWith(notificationTypePath())
-    )
+    const handOver = typeQuestionPost(page)
 
     await page.getByRole('radio', { name: 'Plants for planting' }).check()
     await continueButton(page).click()
@@ -138,11 +135,7 @@ test.describe('notification type question', () => {
         'stub-org-notification-type-live-return',
         livePath
       )
-      const returned = page.waitForResponse(
-        (response) =>
-          response.request().method() === 'POST' &&
-          new URL(response.url()).pathname === notificationTypePath()
-      )
+      const returned = typeQuestionPost(page)
 
       await continueButton(page).click()
 

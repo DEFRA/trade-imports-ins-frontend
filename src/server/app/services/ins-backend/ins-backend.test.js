@@ -19,7 +19,7 @@ const TRACE_ID = 'trace-123'
 const NOTIFICATIONS_PATH = '/notifications'
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
-const ORGANISATION_ID = 'stub-org-notifications'
+const STUB_SEED_ORGANISATION_ID = 'stub-org-notifications'
 
 const emptyPage = (page) => ({
   content: [],
@@ -51,7 +51,9 @@ describe('against the real INS backend', () => {
         totalPages: 1
       })
 
-    const result = await listNotifications(ORGANISATION_ID, { page: 1 })
+    const result = await listNotifications(STUB_SEED_ORGANISATION_ID, {
+      page: 1
+    })
 
     expect(result.totalElements).toBe(1)
     expect(result.content[0].referenceNumber).toBe(REFERENCE_NUMBER)
@@ -68,7 +70,7 @@ describe('against the real INS backend', () => {
       })
       .reply(200, emptyPage(2))
 
-    await listNotifications(ORGANISATION_ID, {
+    await listNotifications(STUB_SEED_ORGANISATION_ID, {
       page: 2,
       sort: 'arrivalDate,asc',
       referenceNumber: OTHER_REFERENCE_NUMBER
@@ -88,7 +90,7 @@ describe('against the real INS backend', () => {
         return [200, emptyPage(1)]
       })
 
-    await listNotifications(ORGANISATION_ID, { page: 1 })
+    await listNotifications(STUB_SEED_ORGANISATION_ID, { page: 1 })
 
     expect(scope.isDone()).toBe(true)
   })
@@ -100,7 +102,7 @@ describe('against the real INS backend', () => {
       .reply(500, { title: 'Internal Server Error' })
 
     await expect(
-      listNotifications(ORGANISATION_ID, { page: 1 })
+      listNotifications(STUB_SEED_ORGANISATION_ID, { page: 1 })
     ).rejects.toMatchObject({
       status: 500,
       message: 'Internal Server Error'
@@ -113,7 +115,7 @@ describe('in stub mode', () => {
 
   test('Should serve the canned notifications without a request', async () => {
     const { content, totalElements } = await listNotifications(
-      ORGANISATION_ID,
+      STUB_SEED_ORGANISATION_ID,
       { page: 1 }
     )
 

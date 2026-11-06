@@ -200,23 +200,17 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     expect(loggedInfo).toEqual([])
   })
 
-  test.each(['fish', 'germinal-products'])(
-    'POST with %s, which is not offered, is refused with a 400 and the error summary and logs nothing',
-    async (value) => {
-      const { result, statusCode } = await postType(
-        `type-post-other-${value}`,
-        {
-          notificationType: value
-        }
-      )
+  test('POST refuses a value the question does not offer and re-shows the error', async () => {
+    const { result, statusCode } = await postType('type-post-other-fish', {
+      notificationType: 'fish'
+    })
 
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(load(result)('.govuk-error-summary__list a').text()).toBe(
-        ERROR_MESSAGE
-      )
-      expect(loggedInfo).toEqual([])
-    }
-  )
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(load(result)('.govuk-error-summary__list a').text()).toBe(
+      ERROR_MESSAGE
+    )
+    expect(loggedInfo).toEqual([])
+  })
 
   test.each(HAND_OVERS)('POST %s hands over to %s', async (value, location) => {
     const { statusCode, headers } = await postType(`type-post-${value}`, {

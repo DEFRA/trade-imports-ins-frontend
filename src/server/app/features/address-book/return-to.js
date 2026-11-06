@@ -1,4 +1,8 @@
 import { config } from '../../../../config/config.js'
+import {
+  SET_BASES,
+  SET_FRONTEND_BASE_URL_KEYS
+} from '../../../common/constants/journey-set-bases.js'
 import { isStubMode } from '../../../common/services/mode.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
 import { addressBookPath, addressPath } from '../../shared/paths.js'
@@ -27,7 +31,7 @@ const pathnameOf = (pathOrUrl) =>
   pathOrUrl.startsWith('/') ? pathOrUrl.split(/[?#]/)[0] : null
 
 const animalsOrigin = () =>
-  new URL(config.get('tradeImportsAnimalsFrontend.baseUrl')).origin
+  new URL(config.get(SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS])).origin
 
 const animalsUrl = (pathOrUrl) => {
   if (isStubMode()) {

@@ -6,6 +6,7 @@ import { statusCodes } from '../../../common/constants/status-codes.js'
 import { sessionAuth } from '../../../common/test-helpers/session-auth.js'
 import { insBackendApi } from '../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../common/test-helpers/test-server.js'
+import { notificationTypePath } from '../../shared/paths.js'
 
 const COUNTRIES = [
   { code: 'GB', name: 'United Kingdom' },
@@ -37,7 +38,7 @@ const expectOneCreateNewButton = (result) => {
 
   expect(buttons).toHaveLength(1)
   expect(buttons.text().trim()).toBe('Create new')
-  expect(buttons.attr('href')).toBe('/notification-type')
+  expect(buttons.attr('href')).toBe(notificationTypePath())
   return buttons
 }
 

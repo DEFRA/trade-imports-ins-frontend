@@ -7,7 +7,7 @@ and `routes.js` registers what `features/index.js` exports.
 
 ## The served surface
 
-The application registers eleven routes, exactly as
+The application registers thirteen routes, exactly as
 [`routes.test.js`](../routes.test.js) pins them:
 
 - `GET /`
