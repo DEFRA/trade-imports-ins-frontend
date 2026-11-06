@@ -20,7 +20,7 @@ const SECOND_PAGE_HREF = pageHrefOf(2)
 
 const TWENTY_PAGES = 20
 
-const pageItem = (number, current = false) => ({
+const pageItem = (number, { current = false } = {}) => ({
   number: String(number),
   href: pageHrefOf(number),
   current
@@ -71,7 +71,10 @@ describe('#buildPaginationLinks', () => {
   test('Should return numbered pages, marking the current one', () => {
     const pagination = buildPaginationLinks(lastOfTwoPages, pageHrefOf)
 
-    expect(pagination.items).toEqual([pageItem(1), pageItem(2, true)])
+    expect(pagination.items).toEqual([
+      pageItem(1),
+      pageItem(2, { current: true })
+    ])
   })
 
   test('Should return null for a single page', () => {
@@ -134,7 +137,7 @@ describe('#buildPaginationLinks', () => {
         pageItem(1),
         ELLIPSIS,
         pageItem(9),
-        pageItem(10, true),
+        pageItem(10, { current: true }),
         pageItem(11),
         ELLIPSIS,
         pageItem(TWENTY_PAGES)
@@ -147,7 +150,7 @@ describe('#buildPaginationLinks', () => {
       position: 'the first page',
       page: 1,
       expectedItems: [
-        pageItem(1, true),
+        pageItem(1, { current: true }),
         pageItem(2),
         ELLIPSIS,
         pageItem(TWENTY_PAGES)
@@ -159,7 +162,7 @@ describe('#buildPaginationLinks', () => {
       expectedItems: [
         pageItem(1),
         pageItem(2),
-        pageItem(3, true),
+        pageItem(3, { current: true }),
         pageItem(4),
         ELLIPSIS,
         pageItem(TWENTY_PAGES)
@@ -172,7 +175,7 @@ describe('#buildPaginationLinks', () => {
         pageItem(1),
         ELLIPSIS,
         pageItem(TWENTY_PAGES - 1),
-        pageItem(TWENTY_PAGES, true)
+        pageItem(TWENTY_PAGES, { current: true })
       ]
     }
   ])(
@@ -196,7 +199,9 @@ describe('#buildPaginationLinks', () => {
       )
 
       expect(pagination.items).toEqual(
-        [1, 2, 3].map((number) => pageItem(number, number === page))
+        [1, 2, 3].map((number) =>
+          pageItem(number, { current: number === page })
+        )
       )
     }
   )
