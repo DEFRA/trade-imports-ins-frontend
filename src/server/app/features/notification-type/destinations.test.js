@@ -32,7 +32,6 @@ describe('notification types', () => {
   test('are offered in the order the question shows them', () => {
     expect(NOTIFICATION_TYPES.map(({ value }) => value)).toEqual([
       LIVE_ANIMALS,
-      'germinal-products',
       'plants-for-planting',
       'potatoes',
       'wood-products'

@@ -292,7 +292,7 @@ an address type tab's link), `openFilterDisclosure`,
 `expectDashboard`, `dashboardSearchField`, `searchDashboardFor`.
 [`notification-type.js`](../features/notification-type/fit/notification-type.js) —
 `expectUnselectedNotificationType`: the browser is on the type question, with
-its five options in order and none chosen.
+its four options in order and none chosen.
 `expectOnlyNotificationTypeChecked`: the browser is on the type question with
 the one named option chosen.
 [`seed-address.js`](../features/address-book/fit/seed-address.js) —

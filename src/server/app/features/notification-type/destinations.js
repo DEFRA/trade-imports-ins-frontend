@@ -19,12 +19,6 @@ export const NOTIFICATION_TYPES = Object.freeze([
     returnPage: 'origin'
   },
   {
-    value: 'germinal-products',
-    copyKey: 'germinalProducts',
-    setBase: SET_BASES.GERMINAL_PRODUCTS,
-    frontend: ANIMALS_FRONTEND
-  },
-  {
     value: 'plants-for-planting',
     copyKey: 'plantsForPlanting',
     setBase: SET_BASES.HIGH_RISK_PLANTS,

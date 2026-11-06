@@ -3,7 +3,6 @@ export const copy = {
   caption: 'About the consignment',
   options: {
     liveAnimals: 'Live animals',
-    germinalProducts: 'Germinal products (semen, ova, embryos)',
     plantsForPlanting: 'Plants for planting',
     potatoes: 'Potatoes (seed and ware)',
     woodProducts: 'Wood products'

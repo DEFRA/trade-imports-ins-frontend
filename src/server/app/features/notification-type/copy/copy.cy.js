@@ -4,7 +4,6 @@ export const copy = {
   caption: 'Am y llwyth',
   options: {
     liveAnimals: 'Anifeiliaid byw',
-    germinalProducts: 'Cynhyrchion germinol (semen, ofa, embryonau)',
     plantsForPlanting: 'Planhigion i’w plannu',
     potatoes: 'Tatws (hadyd a bwyta)',
     woodProducts: 'Cynhyrchion pren'

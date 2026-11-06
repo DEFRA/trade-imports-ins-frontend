@@ -81,7 +81,7 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     expect(headers['cache-control']).toBe('no-store')
   })
 
-  test('GET offers the five options in order with none selected', async () => {
+  test('GET offers the four options in order with none selected', async () => {
     const { result } = await getPage('type-options')
 
     const $ = load(result)
@@ -200,17 +200,23 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     expect(loggedInfo).toEqual([])
   })
 
-  test('POST with a value that is not offered is refused the same way', async () => {
-    const { result, statusCode } = await postType('type-post-other', {
-      notificationType: 'fish'
-    })
+  test.each(['fish', 'germinal-products'])(
+    'POST with %s, which is not offered, is refused with a 400 and the error summary and logs nothing',
+    async (value) => {
+      const { result, statusCode } = await postType(
+        `type-post-other-${value}`,
+        {
+          notificationType: value
+        }
+      )
 
-    expect(statusCode).toBe(statusCodes.badRequest)
-    expect(load(result)('.govuk-error-summary__list a').text()).toBe(
-      ERROR_MESSAGE
-    )
-    expect(loggedInfo).toEqual([])
-  })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(load(result)('.govuk-error-summary__list a').text()).toBe(
+        ERROR_MESSAGE
+      )
+      expect(loggedInfo).toEqual([])
+    }
+  )
 
   test.each(HAND_OVERS)('POST %s hands over to %s', async (value, location) => {
     const { statusCode, headers } = await postType(`type-post-${value}`, {

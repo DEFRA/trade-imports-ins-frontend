@@ -21,7 +21,7 @@ const continueButton = (page) =>
   page.getByRole('button', { name: 'Continue', exact: true })
 
 test.describe('notification type question', () => {
-  test('asks what you are importing with five unselected options and a single Continue button', async ({
+  test('asks what you are importing with four unselected options and a single Continue button', async ({
     page
   }) => {
     await signInAndOpen(
