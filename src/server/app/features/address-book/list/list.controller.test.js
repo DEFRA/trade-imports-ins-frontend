@@ -209,7 +209,7 @@ describe('#addressBookListController', () => {
     }
   )
 
-  test('links every page with the selected tab, the search term and the page number only', async () => {
+  test('links each page shown with the selected tab, the search term and the page number only', async () => {
     const scope = stubAddressPage(
       { page: '2', q: 'green', tabAddressType: ADDRESS_TYPES.BRANCH },
       pageOf([greenFarmAddress], {
