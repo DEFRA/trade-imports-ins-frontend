@@ -21,6 +21,29 @@ export const buildResultsLabel = (
   return rangeLabelOf(from, to, totalItems)
 }
 
+const numbersToShow = (currentPage, totalPages) => {
+  const pagesEitherSideOfCurrent = 1
+  const shown = [
+    FIRST_PAGE,
+    currentPage - pagesEitherSideOfCurrent,
+    currentPage,
+    currentPage + pagesEitherSideOfCurrent,
+    totalPages
+  ].filter((number) => number >= FIRST_PAGE && number <= totalPages)
+  return [...new Set(shown)].sort((left, right) => left - right)
+}
+
+const itemsWithEllipses = (currentPage, totalPages, pageHrefOf) =>
+  numbersToShow(currentPage, totalPages).flatMap((number, index, shown) => {
+    const pageItem = {
+      number: String(number),
+      href: pageHrefOf(number),
+      current: number === currentPage
+    }
+    const skipsPages = index > 0 && number - shown[index - 1] > 1
+    return skipsPages ? [{ ellipsis: true }, pageItem] : [pageItem]
+  })
+
 export const buildPaginationLinks = ({ page, totalPages }, pageHrefOf) => {
   if (totalPages <= 1) {
     return null
@@ -33,10 +56,6 @@ export const buildPaginationLinks = ({ page, totalPages }, pageHrefOf) => {
     ...(currentPage < totalPages && {
       next: { href: pageHrefOf(currentPage + 1) }
     }),
-    items: Array.from({ length: totalPages }, (_, index) => ({
-      number: String(index + 1),
-      href: pageHrefOf(index + 1),
-      current: index + 1 === currentPage
-    }))
+    items: itemsWithEllipses(currentPage, totalPages, pageHrefOf)
   }
 }

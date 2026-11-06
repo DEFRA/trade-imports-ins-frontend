@@ -150,7 +150,7 @@ describe('#addressBookListTypeFilter', () => {
 describe('#addressBookListTypeFilter links', () => {
   const readPage = startServerWithPageReader()
 
-  test('links every page with the selected tab, the search term, the role and the page number only', async () => {
+  test('links each page shown with the selected tab, the search term, the role and the page number only', async () => {
     const scope = stubAddressPage(
       {
         page: '2',

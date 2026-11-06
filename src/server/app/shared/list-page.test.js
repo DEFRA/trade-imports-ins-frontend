@@ -18,6 +18,16 @@ const FIRST_PAGE_HREF = pageHrefOf(1)
 
 const SECOND_PAGE_HREF = pageHrefOf(2)
 
+const TWENTY_PAGES = 20
+
+const pageItem = (number, { current = false } = {}) => ({
+  number: String(number),
+  href: pageHrefOf(number),
+  current
+})
+
+const ELLIPSIS = { ellipsis: true }
+
 describe('#parsePage', () => {
   test('Should read a page number from the query', () => {
     expect(parsePage('3')).toBe(3)
@@ -62,8 +72,8 @@ describe('#buildPaginationLinks', () => {
     const pagination = buildPaginationLinks(lastOfTwoPages, pageHrefOf)
 
     expect(pagination.items).toEqual([
-      { number: '1', href: FIRST_PAGE_HREF, current: false },
-      { number: '2', href: SECOND_PAGE_HREF, current: true }
+      pageItem(1),
+      pageItem(2, { current: true })
     ])
   })
 
@@ -113,4 +123,86 @@ describe('#buildPaginationLinks', () => {
     expect(pagination.previous.href).toBe(FIRST_PAGE_HREF)
     expect(pagination.next).toBeUndefined()
   })
+
+  test('Should show the first page, the pages either side of a middle page and the last page, with an ellipsis for each gap', () => {
+    const pagination = buildPaginationLinks(
+      { page: 10, totalPages: TWENTY_PAGES },
+      pageHrefOf
+    )
+
+    expect(pagination).toEqual({
+      previous: { href: pageHrefOf(9) },
+      next: { href: pageHrefOf(11) },
+      items: [
+        pageItem(1),
+        ELLIPSIS,
+        pageItem(9),
+        pageItem(10, { current: true }),
+        pageItem(11),
+        ELLIPSIS,
+        pageItem(TWENTY_PAGES)
+      ]
+    })
+  })
+
+  test.each([
+    {
+      position: 'the first page',
+      page: 1,
+      expectedItems: [
+        pageItem(1, { current: true }),
+        pageItem(2),
+        ELLIPSIS,
+        pageItem(TWENTY_PAGES)
+      ]
+    },
+    {
+      position: 'the third page, whose neighbours run on from the first page',
+      page: 3,
+      expectedItems: [
+        pageItem(1),
+        pageItem(2),
+        pageItem(3, { current: true }),
+        pageItem(4),
+        ELLIPSIS,
+        pageItem(TWENTY_PAGES)
+      ]
+    },
+    {
+      position: 'the last page',
+      page: TWENTY_PAGES,
+      expectedItems: [
+        pageItem(1),
+        ELLIPSIS,
+        pageItem(TWENTY_PAGES - 1),
+        pageItem(TWENTY_PAGES, { current: true })
+      ]
+    }
+  ])(
+    'Should put an ellipsis only where page numbers are skipped on $position of many',
+    ({ page, expectedItems }) => {
+      const pagination = buildPaginationLinks(
+        { page, totalPages: TWENTY_PAGES },
+        pageHrefOf
+      )
+
+      expect(pagination.items).toEqual(expectedItems)
+    }
+  )
+
+  test.each([1, 2, 3])(
+    'Should show every page and no ellipsis on page %i of three',
+    (page) => {
+      const pagination = buildPaginationLinks(
+        { page, totalPages: 3 },
+        pageHrefOf
+      )
+
+      expect(pagination.items).toEqual(
+        [1, 2, 3].map((number) =>
+          pageItem(number, { current: number === page })
+        )
+      )
+    }
+  )
 })
