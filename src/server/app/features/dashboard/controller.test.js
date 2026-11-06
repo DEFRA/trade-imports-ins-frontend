@@ -11,6 +11,12 @@ const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
 const ARRIVAL_DATE = '2026-09-10'
+const SUBMITTED_NOTIFICATION = {
+  referenceNumber: REFERENCE_NUMBER,
+  status: 'SUBMITTED',
+  originCountry: 'GB',
+  arrivalDate: ARRIVAL_DATE
+}
 const COUNTRIES = [
   { code: 'GB', name: 'United Kingdom' },
   { code: 'FR', name: 'France' }
@@ -69,12 +75,7 @@ describe('#dashboard', () => {
       200,
       pageOf(
         [
-          {
-            referenceNumber: REFERENCE_NUMBER,
-            status: 'SUBMITTED',
-            originCountry: 'GB',
-            arrivalDate: ARRIVAL_DATE
-          },
+          SUBMITTED_NOTIFICATION,
           {
             referenceNumber: OTHER_REFERENCE_NUMBER,
             status: 'DRAFT',
@@ -97,17 +98,7 @@ describe('#dashboard', () => {
   })
 
   test('selecting a submitted notification links into the notification-view page', async () => {
-    notificationsRequest().reply(
-      200,
-      pageOf([
-        {
-          referenceNumber: REFERENCE_NUMBER,
-          status: 'SUBMITTED',
-          originCountry: 'GB',
-          arrivalDate: ARRIVAL_DATE
-        }
-      ])
-    )
+    notificationsRequest().reply(200, pageOf([SUBMITTED_NOTIFICATION]))
 
     const { result } = await getServer().inject({
       method: 'GET',
@@ -153,17 +144,7 @@ describe('#dashboard — search, sort and errors', () => {
     const scope = notificationsRequest({
       ...DEFAULT_QUERY,
       referenceNumber: REFERENCE_NUMBER
-    }).reply(
-      200,
-      pageOf([
-        {
-          referenceNumber: REFERENCE_NUMBER,
-          status: 'SUBMITTED',
-          originCountry: 'GB',
-          arrivalDate: ARRIVAL_DATE
-        }
-      ])
-    )
+    }).reply(200, pageOf([SUBMITTED_NOTIFICATION]))
 
     const { result } = await getServer().inject({
       method: 'GET',
@@ -228,17 +209,11 @@ describe('#dashboard — search, sort and errors', () => {
   test('a middle page of many shows the first, neighbouring and last page links with an ellipsis for each gap, each keeping the sort', async () => {
     notificationsRequest({ page: '10', sort: 'lastUpdated,asc' }).reply(
       200,
-      pageOf(
-        [
-          {
-            referenceNumber: REFERENCE_NUMBER,
-            status: 'SUBMITTED',
-            originCountry: 'GB',
-            arrivalDate: ARRIVAL_DATE
-          }
-        ],
-        { page: 10, totalElements: 500, totalPages: 20 }
-      )
+      pageOf([SUBMITTED_NOTIFICATION], {
+        page: 10,
+        totalElements: 500,
+        totalPages: 20
+      })
     )
 
     const { result } = await getServer().inject({
