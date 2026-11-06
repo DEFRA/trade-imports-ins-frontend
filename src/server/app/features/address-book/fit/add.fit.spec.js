@@ -3,52 +3,69 @@ import { test, expect } from '@playwright/test'
 import {
   addValidAddressToFreshOrganisation,
   addressFormCountryNames,
+  addressTypeListUrl,
+  backLink,
+  errorLink,
   expectErrorFocusOn,
+  expectInDocumentOrder,
+  signInAndOpenAddForm,
+  openAddFormFromJourney,
   fieldLabels,
+  fieldLabelsInFormOrder,
   fillValidAddress,
+  malformedEmail,
   maxLengthValidations,
   requiredValidations,
+  saveAndContinueButton,
+  setFieldValue,
+  tickRoles,
+  roleCheckbox,
   validAddress
 } from './address-form.js'
 import {
+  ONE_MATCH_LINE,
   resultsLineOf,
-  searchAndExpectSingleMatch
+  searchAndExpectSingleMatch,
+  selectedTabOf,
+  typeCellOf
 } from './address-book-list.js'
+import { copy } from '../copy/copy.en.js'
 import { expectNoSeriousOrCriticalViolations } from './axe.js'
 import { GB_COUNTRY } from '../address-countries.js'
-import { copy } from '../copy/copy.en.js'
+import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { seedAddress } from './seed-address.js'
-import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import {
+  addressAddPath,
+  addressBookPath,
+  addressTypePath
+} from '../../../shared/paths.js'
 import {
   AUTOCOMPLETE_BY_FIELD,
   FIELDS_WITHOUT_AUTOCOMPLETE
 } from '../../../../common/test-helpers/address-form-autocomplete.js'
 import {
+  ANIMALS_BASE_URL,
   CONSIGNMENT_CONTACT_HANDSHAKE,
-  JOURNEY_HANDSHAKES_BY_ROLE,
-  returnUrlFor
+  JOURNEY_HANDSHAKES_BY_PARTY,
+  journeyRolesHintFor,
+  returnUrlFor,
+  ROLES_BY_PARTY
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 
-const openAddPage = (page, organisationId, { handshake } = {}) =>
-  signInAndOpen(
-    page,
-    organisationId,
-    handshake === undefined
-      ? addressAddPath()
-      : `${addressAddPath()}?${new URLSearchParams(handshake)}`
-  )
+const LATE_ALPHABETICAL_NAME = 'Zetland Livestock Ltd'
 
-const submit = (page) =>
-  page.getByRole('button', { name: 'Save and continue' }).click()
+const rolesGroupOf = (page, addressType) =>
+  page.getByRole('group', {
+    name: copy.roles.legendByAddressType[addressType]
+  })
 
 test.describe('add address', () => {
   test('renders every field, hints and populated country options', async ({
     page
   }) => {
-    await openAddPage(page, 'stub-org-add-render')
+    await signInAndOpenAddForm(page, 'stub-org-add-render')
 
     await expect(
       page.getByRole('heading', { name: 'Add address and contact details' })
@@ -68,7 +85,7 @@ test.describe('add address', () => {
     ).toBeVisible()
 
     const country = page.getByLabel('Country')
-    await expect(country).toHaveValue('')
+    await expect(country).toHaveValue(GB_COUNTRY.code)
     await expect(country.getByRole('option').first()).toHaveText(
       copy.form.countryPlaceholder
     )
@@ -77,16 +94,14 @@ test.describe('add address', () => {
     ).toHaveCount(1)
   })
 
-  test('has a Back link to the address book', async ({ page }) => {
-    await openAddPage(page, 'stub-org-add-back')
+  test('has a Back link to Choose an address type', async ({ page }) => {
+    await signInAndOpenAddForm(page, 'stub-org-add-back')
 
-    await expect(
-      page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', addressBookPath())
+    await expect(backLink(page)).toHaveAttribute('href', addressTypePath())
   })
 
   test('groups fields under Address and Contact details', async ({ page }) => {
-    await openAddPage(page, 'stub-org-add-sections')
+    await signInAndOpenAddForm(page, 'stub-org-add-sections')
 
     for (const name of ['Address', 'Contact details']) {
       await expect(
@@ -96,9 +111,162 @@ test.describe('add address', () => {
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
-    await openAddPage(page, 'stub-org-add-axe')
+    await signInAndOpenAddForm(page, 'stub-org-add-axe')
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address')
+  })
+})
+
+test.describe('add address roles question', () => {
+  const organisationPrefix = 'stub-org-add-roles'
+
+  test('finds an address saved with Consignor ticked by searching Consignor', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix: `${organisationPrefix}-search`,
+      emptyBook: true,
+      roles: ['CONSIGNOR']
+    })
+
+    await searchAndExpectSingleMatch(page, 'Consignor', {
+      matchedCellText: validAddress.name
+    })
+  })
+})
+
+test.describe('add address roles question without JavaScript', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('saves with a role ticked and lands on the Origin and Consignor list with the address listed', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix: 'stub-org-add-roles-no-js'
+    })
+
+    await expect(selectedTabOf(page)).toHaveText(
+      copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label
+    )
+    await expect(
+      page.getByRole('link', { name: `View ${validAddress.name}` })
+    ).toBeVisible()
+  })
+})
+
+test.describe('add address of each type', () => {
+  const organisationPrefix = 'stub-org-add-type'
+
+  for (const { addressType, offeredRoles, tab, unitedKingdomOnly } of [
+    {
+      addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+      offeredRoles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
+      tab: copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label,
+      unitedKingdomOnly: false
+    },
+    {
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      offeredRoles: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
+      tab: copy.list.tabs[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
+        .label,
+      unitedKingdomOnly: true
+    },
+    {
+      addressType: ADDRESS_TYPES.BRANCH,
+      offeredRoles: ['BRANCH_ADDRESS'],
+      tab: copy.list.tabs[ADDRESS_TYPES.BRANCH].label,
+      unitedKingdomOnly: true
+    }
+  ]) {
+    const typeLabel = copy.addressType.options[addressType].label
+    const countryOffered = unitedKingdomOnly
+      ? 'United Kingdom alone selected'
+      : 'United Kingdom selected'
+
+    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}`, async ({
+      page
+    }) => {
+      await signInAndOpenAddForm(
+        page,
+        `${organisationPrefix}-render`,
+        addressType
+      )
+
+      const main = page.getByRole('main')
+      await expect(main.locator('label')).toHaveText([
+        ...fieldLabelsInFormOrder,
+        ...offeredRoles.map((role) => copy.roles.options[role].label)
+      ])
+      const sectionBreak = main.getByRole('separator')
+      await expect(sectionBreak).toHaveCount(1)
+      const rolesGroup = rolesGroupOf(page, addressType)
+      await expectInDocumentOrder(page, [
+        page.getByLabel(fieldLabels.phone),
+        sectionBreak,
+        rolesGroup
+      ])
+      await expect(rolesGroup).toContainText(copy.roles.hint)
+      await expect(
+        rolesGroup.getByRole('checkbox', { checked: true })
+      ).toHaveCount(0)
+      const country = page.getByLabel(fieldLabels.countryCode)
+      await expect(country).toHaveValue(GB_COUNTRY.code)
+      if (unitedKingdomOnly) {
+        await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
+      }
+    })
+
+    test(`${typeLabel} saved with every offered role ticked lands on its tab with the new address first`, async ({
+      page
+    }) => {
+      await addValidAddressToFreshOrganisation(page, {
+        organisationPrefix,
+        overrides: { name: LATE_ALPHABETICAL_NAME },
+        addressType,
+        roles: offeredRoles
+      })
+
+      await expect(selectedTabOf(page)).toHaveText(tab)
+      await expect(
+        page.getByRole('link', { name: /^View / }).first()
+      ).toHaveText(`View ${LATE_ALPHABETICAL_NAME}`)
+    })
+
+    test(`${typeLabel} saved with no role shows the roles error, whose summary link focuses the first option, with no serious or critical axe violations`, async ({
+      page
+    }) => {
+      await signInAndOpenAddForm(
+        page,
+        `${organisationPrefix}-no-role`,
+        addressType
+      )
+
+      await fillValidAddress(page)
+      await saveAndContinueButton(page).click()
+
+      await expect(page).toHaveTitle(/^Error: /)
+      await expect(rolesGroupOf(page, addressType)).toContainText(
+        copy.errors.roles.required
+      )
+      await errorLink(page, copy.errors.roles.required).click()
+      await expect(roleCheckbox(page, offeredRoles[0])).toBeFocused()
+      await expectNoSeriousOrCriticalViolations(
+        page,
+        `Add ${typeLabel} address roles error`
+      )
+    })
+  }
+
+  test('Destination, Consignee or Importer form has no serious or critical axe violations', async ({
+    page
+  }) => {
+    await signInAndOpenAddForm(
+      page,
+      `${organisationPrefix}-axe`,
+      ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+    )
+
+    await expectNoSeriousOrCriticalViolations(page, 'Add Destination address')
   })
 })
 
@@ -106,9 +274,7 @@ test.describe('add address reached from a notification journey', () => {
   test('shows the Draft status and notification id above the caption, heading, section headings and fields', async ({
     page
   }) => {
-    await openAddPage(page, 'stub-org-add-journey', {
-      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignor
-    })
+    await openAddFormFromJourney(page, 'stub-org-add-journey')
 
     await expect(page).toHaveTitle(
       'Add address and contact details - Import notification service - GOV.UK'
@@ -117,7 +283,7 @@ test.describe('add address reached from a notification journey', () => {
     await expect(journeyStrip.getByText('Draft', { exact: true })).toBeVisible()
     await expect(
       journeyStrip.getByText(
-        JOURNEY_HANDSHAKES_BY_ROLE.consignor['notification-id'],
+        JOURNEY_HANDSHAKES_BY_PARTY.consignor['notification-id'],
         { exact: true }
       )
     ).toBeVisible()
@@ -158,9 +324,7 @@ test.describe('add address reached from a notification journey', () => {
   test('sets autocomplete on address lines, town, postcode, email and phone, and none on name, county and country', async ({
     page
   }) => {
-    await openAddPage(page, 'stub-org-add-journey-autocomplete', {
-      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignor
-    })
+    await openAddFormFromJourney(page, 'stub-org-add-journey-autocomplete')
 
     for (const [field, autocomplete] of Object.entries(AUTOCOMPLETE_BY_FIELD)) {
       await expect(page.getByLabel(fieldLabels[field])).toHaveAttribute(
@@ -176,9 +340,7 @@ test.describe('add address reached from a notification journey', () => {
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
-    await openAddPage(page, 'stub-org-add-journey-axe', {
-      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignor
-    })
+    await openAddFormFromJourney(page, 'stub-org-add-journey-axe')
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address from journey')
   })
@@ -186,9 +348,11 @@ test.describe('add address reached from a notification journey', () => {
   test('from the consignee handshake offers United Kingdom alone, selected, with every field shown', async ({
     page
   }) => {
-    await openAddPage(page, 'stub-org-add-journey-consignee', {
-      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignee
-    })
+    await openAddFormFromJourney(
+      page,
+      'stub-org-add-journey-consignee',
+      JOURNEY_HANDSHAKES_BY_PARTY.consignee
+    )
 
     const country = page.getByLabel('Country')
     await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
@@ -198,16 +362,18 @@ test.describe('add address reached from a notification journey', () => {
     }
   })
 
-  for (const [role, roleName] of [
+  for (const [party, partyName] of [
     ['placeOfOrigin', 'place of origin'],
     ['consignor', 'consignor']
   ]) {
-    test(`from the ${roleName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
+    test(`from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
       page
     }) => {
-      await openAddPage(page, `stub-org-add-journey-countries-${role}`, {
-        handshake: JOURNEY_HANDSHAKES_BY_ROLE[role]
-      })
+      await openAddFormFromJourney(
+        page,
+        `stub-org-add-journey-countries-${party}`,
+        JOURNEY_HANDSHAKES_BY_PARTY[party]
+      )
 
       const country = page.getByLabel('Country')
       await expect(country).toHaveJSProperty('tagName', 'SELECT')
@@ -222,12 +388,14 @@ test.describe('add address reached from a notification journey', () => {
   test('from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations', async ({
     page
   }) => {
-    await openAddPage(page, 'stub-org-add-journey-consignee-name', {
-      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignee
-    })
+    await openAddFormFromJourney(
+      page,
+      'stub-org-add-journey-consignee-name',
+      JOURNEY_HANDSHAKES_BY_PARTY.consignee
+    )
 
     await fillValidAddress(page, { name: '' })
-    await page.getByRole('button', { name: 'Save and select' }).click()
+    await page.getByRole('button', { name: copy.add.saveAndSelect }).click()
 
     await expectErrorFocusOn(page, {
       message: 'Enter a name or organisation',
@@ -241,28 +409,24 @@ test.describe('add address reached from a notification journey', () => {
     )
   })
 
-  test('from a role handshake offers Back to the journey, Save and select, Save and return to address page and a Cancel and return to hub link', async ({
+  test(`from a role handshake offers Back to the journey, ${copy.add.saveAndSelect}, ${copy.add.saveAndReturnToAddressPage} and a Cancel and return to hub link`, async ({
     page
   }) => {
-    await openAddPage(page, 'stub-org-add-journey-actions', {
-      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignor
-    })
+    await openAddFormFromJourney(page, 'stub-org-add-journey-actions')
 
-    await expect(
-      page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute(
+    await expect(backLink(page)).toHaveAttribute(
       'href',
-      returnUrlFor(JOURNEY_HANDSHAKES_BY_ROLE.consignor)
+      returnUrlFor(JOURNEY_HANDSHAKES_BY_PARTY.consignor)
     )
     await expect(page.locator('form button')).toHaveText([
-      'Save and select',
-      'Save and return to address page'
+      copy.add.saveAndSelect,
+      copy.add.saveAndReturnToAddressPage
     ])
     await expect(
       page.getByRole('link', { name: 'Cancel and return to hub' })
     ).toHaveAttribute(
       'href',
-      returnUrlFor(JOURNEY_HANDSHAKES_BY_ROLE.consignor, {
+      returnUrlFor(JOURNEY_HANDSHAKES_BY_PARTY.consignor, {
         landing: ADDRESS_LANDING.CANCEL
       })
     )
@@ -271,17 +435,109 @@ test.describe('add address reached from a notification journey', () => {
   test('from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page', async ({
     page
   }) => {
-    await openAddPage(page, 'stub-org-add-journey-contact', {
-      handshake: CONSIGNMENT_CONTACT_HANDSHAKE
-    })
+    await openAddFormFromJourney(
+      page,
+      'stub-org-add-journey-contact',
+      CONSIGNMENT_CONTACT_HANDSHAKE
+    )
 
-    await expect(
-      page.getByRole('link', { name: 'Back', exact: true })
-    ).toHaveAttribute('href', returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE))
+    await expect(backLink(page)).toHaveAttribute(
+      'href',
+      returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
+    )
     await expect(page.locator('form button')).toHaveText([
       'Save and continue',
       'Cancel and return to address page'
     ])
+  })
+})
+
+test.describe('add address roles question reached from a notification journey', () => {
+  for (const [party, { otherRoles }] of Object.entries(ROLES_BY_PARTY)) {
+    test(`from the ${party} handshake asks what else the address should be used for, naming the party and offering only the other roles on its side, unticked`, async ({
+      page
+    }) => {
+      await openAddFormFromJourney(
+        page,
+        `stub-org-add-journey-roles-${party}`,
+        JOURNEY_HANDSHAKES_BY_PARTY[party]
+      )
+
+      const rolesGroup = page.getByRole('group', {
+        name: copy.roles.journeyLegend
+      })
+      await expect(rolesGroup).toHaveAccessibleDescription(
+        journeyRolesHintFor(party)
+      )
+      await expect(rolesGroup.locator('label')).toHaveText(
+        otherRoles.map((role) => copy.roles.options[role].label)
+      )
+      for (const checkbox of await rolesGroup.getByRole('checkbox').all()) {
+        await expect(checkbox).not.toBeChecked()
+      }
+    })
+  }
+
+  test(`${copy.add.saveAndReturnToAddressPage} with answers missing keeps the page, lists the errors in field order and keeps the tick`, async ({
+    page
+  }) => {
+    await openAddFormFromJourney(
+      page,
+      'stub-org-add-journey-return-blank',
+      JOURNEY_HANDSHAKES_BY_PARTY.consignee
+    )
+
+    await setFieldValue(page, 'name', validAddress.name)
+    await tickRoles(page, ['IMPORTER'])
+    await page
+      .getByRole('button', { name: copy.add.saveAndReturnToAddressPage })
+      .click()
+
+    await expect(page).toHaveURL((url) => url.pathname === addressAddPath())
+    await expect(page.getByRole('alert').getByRole('link')).toHaveText([
+      'Enter address line 1',
+      'Enter a town or city',
+      'Enter a postcode or Zip code',
+      'Enter an email address',
+      'Enter a phone number'
+    ])
+    await expect(page.getByLabel(fieldLabels.name)).toHaveValue(
+      validAddress.name
+    )
+    await expect(roleCheckbox(page, 'IMPORTER')).toBeChecked()
+  })
+})
+
+test.describe('add address reached from a notification journey with JavaScript off', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer roles', async ({
+    page
+  }) => {
+    await page.route(`${ANIMALS_BASE_URL}/**`, (route) => route.abort())
+    await openAddFormFromJourney(
+      page,
+      `stub-org-add-journey-ticked-${crypto.randomUUID()}`,
+      JOURNEY_HANDSHAKES_BY_PARTY.consignee
+    )
+    await fillValidAddress(page)
+    await tickRoles(page, ['IMPORTER'])
+    const journeyReturn = page.waitForRequest((request) =>
+      request.url().includes('/address-return')
+    )
+    await page.getByRole('button', { name: copy.add.saveAndSelect }).click()
+
+    const returnUrl = new URL((await journeyReturn).url())
+    expect(returnUrl.searchParams.get('addressId')).toBeTruthy()
+    expect(returnUrl.searchParams.get('landing')).toBe(ADDRESS_LANDING.SELECT)
+
+    const listPage = await page.context().newPage()
+    await listPage.goto(
+      addressTypeListUrl(ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER)
+    )
+    await expect(typeCellOf(listPage, validAddress.name)).toHaveText(
+      'Consignee, Importer'
+    )
   })
 })
 
@@ -290,10 +546,10 @@ test.describe('add address validation', () => {
     test(`empty ${label} links to and focuses the preserved field`, async ({
       page
     }) => {
-      await openAddPage(page, 'stub-org-add-required')
+      await signInAndOpenAddForm(page, 'stub-org-add-required')
 
       await fillValidAddress(page, { [field]: '' })
-      await submit(page)
+      await saveAndContinueButton(page).click()
 
       await expectErrorFocusOn(page, {
         message: error,
@@ -311,11 +567,11 @@ test.describe('add address validation', () => {
     test(`${label} over ${maxLength} characters links to and focuses the preserved value`, async ({
       page
     }) => {
-      await openAddPage(page, 'stub-org-add-maxlength')
+      await signInAndOpenAddForm(page, 'stub-org-add-maxlength')
 
       const value = 'A'.repeat(maxLength + 1)
       await fillValidAddress(page, { [field]: value })
-      await submit(page)
+      await saveAndContinueButton(page).click()
 
       await expectErrorFocusOn(page, {
         message: error,
@@ -330,15 +586,15 @@ test.describe('add address validation', () => {
   }
 
   test('rejects a malformed email address', async ({ page }) => {
-    await openAddPage(page, 'stub-org-add-email')
+    await signInAndOpenAddForm(page, 'stub-org-add-email')
 
-    await fillValidAddress(page, { email: 'not-an-email' })
-    await submit(page)
+    await fillValidAddress(page, { email: malformedEmail })
+    await saveAndContinueButton(page).click()
 
     await expectErrorFocusOn(page, {
       message: 'Enter an email address in the correct format',
       label: fieldLabels.email,
-      expectedValue: 'not-an-email',
+      expectedValue: malformedEmail,
       url: addressAddPath()
     })
   })
@@ -346,10 +602,10 @@ test.describe('add address validation', () => {
   test('validation error page has no serious or critical axe violations', async ({
     page
   }) => {
-    await openAddPage(page, 'stub-org-add-validation-axe')
+    await signInAndOpenAddForm(page, 'stub-org-add-validation-axe')
 
     await fillValidAddress(page, { name: '' })
-    await submit(page)
+    await saveAndContinueButton(page).click()
     await expect(page.getByRole('alert')).toBeVisible()
 
     await expectNoSeriousOrCriticalViolations(
@@ -379,19 +635,18 @@ test.describe('save and confirm', () => {
   test('lists the saved address first, ahead of the seeded address, with a View link to its own details page', async ({
     page
   }) => {
-    const nameAfterSeedAlphabetically = 'Zetland Livestock Ltd'
     await addValidAddressToFreshOrganisation(page, {
       organisationPrefix,
-      overrides: { name: nameAfterSeedAlphabetically }
+      overrides: { name: LATE_ALPHABETICAL_NAME }
     })
 
     await expect(resultsLineOf(page)).toHaveText('Showing 1-2 of 2')
     await expect(page.getByRole('link', { name: /^View / })).toHaveText([
-      `View ${nameAfterSeedAlphabetically}`,
+      `View ${LATE_ALPHABETICAL_NAME}`,
       `View ${seedAddress.name}`
     ])
     const viewLink = page.getByRole('link', {
-      name: `View ${nameAfterSeedAlphabetically}`
+      name: `View ${LATE_ALPHABETICAL_NAME}`
     })
     await expect(viewLink).toHaveAttribute(
       'href',
@@ -401,7 +656,7 @@ test.describe('save and confirm', () => {
     await expect(
       page.getByRole('heading', {
         level: 1,
-        name: nameAfterSeedAlphabetically
+        name: LATE_ALPHABETICAL_NAME
       })
     ).toBeVisible()
   })
@@ -456,7 +711,7 @@ test.describe('cancel', () => {
   test('returns to the address book without creating an address', async ({
     page
   }) => {
-    await openAddPage(page, 'stub-org-add-cancel')
+    await signInAndOpenAddForm(page, 'stub-org-add-cancel')
 
     await fillValidAddress(page)
 
@@ -465,7 +720,7 @@ test.describe('cancel', () => {
       .click()
 
     await expect(page).toHaveURL(addressBookPath())
-    await expect(resultsLineOf(page)).toHaveText('Showing 1-1 of 1')
+    await expect(resultsLineOf(page)).toHaveText(ONE_MATCH_LINE)
     await expect(
       page.getByRole('link', { name: `View ${seedAddress.name}` })
     ).toBeVisible()

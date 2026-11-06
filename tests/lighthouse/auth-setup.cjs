@@ -1,19 +1,9 @@
-const SIGN_IN_TIMEOUT_MS = 10000
+const {
+  chooseAddressTypeInBrowser,
+  signInForm
+} = require('../../scripts/lighthouse/browser-session.js')
 
-const signInForm = (page, url) => {
-  const onIdentityProvider = new URL(page.url()).origin !== new URL(url).origin
-  if (!onIdentityProvider) {
-    return page.$('input[name="crn"]')
-  }
-  return page
-    .waitForSelector('input[name="crn"]', {
-      visible: true,
-      timeout: SIGN_IN_TIMEOUT_MS
-    })
-    .catch(() => null)
-}
-
-module.exports = async (browser, { url }) => {
+const signInAndChooseAddressType = async (browser, { url }) => {
   const page = await browser.newPage()
   await page.goto(url, { waitUntil: 'domcontentloaded' })
 
@@ -29,5 +19,9 @@ module.exports = async (browser, { url }) => {
     ])
   }
 
+  await chooseAddressTypeInBrowser(browser, url)
+
   await page.close()
 }
+
+module.exports = signInAndChooseAddressType

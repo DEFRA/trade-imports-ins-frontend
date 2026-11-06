@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach } from 'vitest'
 
 import { createServer } from '../../server.js'
+import { answerOidcDiscovery } from './answer-oidc-discovery.js'
 import { runInRealMode, serveCountries } from './real-mode.js'
 
 export async function startTestServer() {
@@ -19,6 +20,7 @@ export const startRealModeServer = () => {
   runInRealMode()
 
   beforeAll(async () => {
+    answerOidcDiscovery()
     startedServer = await startTestServer()
   })
 

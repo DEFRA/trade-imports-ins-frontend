@@ -1,4 +1,14 @@
-import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_NOT_FOUND
+} from '../../lib/http-status.js'
+import {
+  ADDRESS_TYPES,
+  ROLES,
+  ROLES_BY_ADDRESS_TYPE,
+  addressTypeOfRole
+} from './address-types.js'
+import { TYPED_SEED } from './typed-seed.js'
 
 const OBJECT_ID_LENGTH = 24
 
@@ -7,7 +17,7 @@ const addressesByOrganisation = new Map()
 const newObjectId = () =>
   crypto.randomUUID().replaceAll('-', '').slice(0, OBJECT_ID_LENGTH)
 
-const buildSeedAddress = (index) => ({
+const buildSeedAddress = (index, details = {}) => ({
   id: String(index).padStart(OBJECT_ID_LENGTH, '0'),
   name: `Stub Farm ${index}`,
   addressLine1: `${index} Stub Way`,
@@ -18,12 +28,22 @@ const buildSeedAddress = (index) => ({
   countryCode: 'GB',
   email: `stub-farm-${index}@example.com`,
   phone: '01234567890',
-  deleted: false
+  roles: [ROLES.PLACE_OF_ORIGIN, ROLES.CONSIGNOR],
+  deleted: false,
+  ...details
 })
+
+const typedSeedAddresses = () =>
+  Object.values(TYPED_SEED).map((details, index) =>
+    buildSeedAddress(index + 1, details)
+  )
 
 const seedAddressesFor = (organisationId) => {
   if (organisationId.endsWith('-empty')) {
     return []
+  }
+  if (organisationId.endsWith('-typed')) {
+    return typedSeedAddresses()
   }
   if (organisationId.endsWith('-paginated')) {
     const paginatedSeedCount = 30
@@ -49,9 +69,18 @@ const notFound = () =>
 
 const isLive = (address) => !address.deleted
 
-const matchesSearch = (address, { searchTerm, countryCodes = [] }) => {
+const holdsAnyOf = (address, roles) =>
+  address.roles.some((role) => roles.includes(role))
+
+const passesRoleFilter = (address, roles) =>
+  roles.length === 0 || holdsAnyOf(address, roles)
+
+const matchesSearch = (
+  address,
+  { searchTerm, countryCodes = [], searchRoles = [] }
+) => {
   const term = searchTerm?.trim().toLowerCase()
-  if (!term && countryCodes.length === 0) {
+  if (!term && countryCodes.length === 0 && searchRoles.length === 0) {
     return true
   }
   const textSearchFields = [
@@ -67,7 +96,11 @@ const matchesSearch = (address, { searchTerm, countryCodes = [] }) => {
     textSearchFields.some((field) =>
       (address[field] ?? '').toLowerCase().includes(term)
     )
-  return textMatches || countryCodes.includes(address.countryCode)
+  return (
+    textMatches ||
+    countryCodes.includes(address.countryCode) ||
+    holdsAnyOf(address, searchRoles)
+  )
 }
 
 const pageOfMatches = (matches, { page, pageSize }) => ({
@@ -80,15 +113,47 @@ const pageOfMatches = (matches, { page, pageSize }) => ({
 
 export const listAddresses = async (
   organisationId,
-  { page = 1, pageSize, ...search } = {}
+  { page = 1, pageSize, roles = [], ...search } = {}
 ) => {
   const matches = addressesOf(organisationId)
     .filter(isLive)
+    .filter((address) => passesRoleFilter(address, roles))
     .filter((address) => matchesSearch(address, search))
   return pageOfMatches(matches, { page, pageSize })
 }
 
+const RECEIVING_ROLES =
+  ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
+
+const refusalsOf = ({ roles = [], countryCode }) => {
+  if (roles.length === 0) {
+    return { roles: ['Select what this address can be used for'] }
+  }
+  if (new Set(roles.map(addressTypeOfRole)).size > 1) {
+    return { roles: ['An address can only have roles from one group'] }
+  }
+  if (holdsAnyOf({ roles }, RECEIVING_ROLES) && countryCode !== 'GB') {
+    return {
+      countryCode: [
+        'A consignee, importer or place of destination must be in the United Kingdom'
+      ]
+    }
+  }
+  return null
+}
+
+const refuseInvalid = (address) => {
+  const errors = refusalsOf(address)
+  if (errors) {
+    throw Object.assign(new Error('Validation failed'), {
+      status: HTTP_STATUS_BAD_REQUEST,
+      body: { errors }
+    })
+  }
+}
+
 export const createAddress = async (organisationId, address) => {
+  refuseInvalid(address)
   const created = { id: newObjectId(), ...address, deleted: false }
   addressesOf(organisationId).unshift(created)
   return created
@@ -112,6 +177,7 @@ export const updateAddress = async (organisationId, addressId, address) => {
   if (index === -1) {
     throw notFound()
   }
+  refuseInvalid(address)
   addresses[index] = { ...addresses[index], ...address }
   return addresses[index]
 }

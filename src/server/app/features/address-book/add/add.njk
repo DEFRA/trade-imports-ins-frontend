@@ -1,5 +1,6 @@
 {% extends "shared/layout.njk" %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
 {% from "address-book/address-fields.njk" import addressFields %}
 
 {% block journeyContent %}
@@ -23,6 +24,24 @@
       countryItems: countryItems,
       errors: errors
     }) }}
+
+    {% if rolesQuestion %}
+      <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+      {{ govukCheckboxes({
+        name: "roles",
+        idPrefix: "roles",
+        fieldset: {
+          legend: {
+            text: rolesQuestion.legend,
+            classes: "govuk-fieldset__legend--m"
+          }
+        },
+        hint: { text: rolesQuestion.hint },
+        items: rolesQuestion.items,
+        errorMessage: errors.roles and { text: errors.roles }
+      }) }}
+    {% endif %}
 
     {% if addMode == addModes.ROLE_HANDSHAKE %}
       <div class="govuk-button-group">

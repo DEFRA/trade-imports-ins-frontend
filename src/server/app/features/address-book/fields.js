@@ -19,8 +19,8 @@ export const FIELD_RULES = {
   county: { maxLength: 100, required: false },
   postcode: { maxLength: 12, required: true },
   countryCode: { required: true, oneOfCountryCodes: true },
-  phone: { maxLength: 20, required: true },
-  email: { maxLength: 254, required: true, email: true }
+  email: { maxLength: 254, required: true, email: true },
+  phone: { maxLength: 20, required: true }
 }
 
 export const FIELDS = Object.keys(FIELD_RULES)
@@ -50,7 +50,12 @@ export const postalLinesOf = (address) =>
 export const formValuesOf = (address = {}) =>
   Object.fromEntries(FIELDS.map((field) => [field, address[field] ?? '']))
 
+export const postedRolesOf = (payload) => [payload.roles ?? []].flat()
+
 const { errors } = copyFor({ en, cy })
+
+export const rolesErrorsOf = (keptRoles) =>
+  keptRoles.length > 0 ? null : { roles: errors.roles.required }
 
 const maxLengthOf = (field) => FIELD_RULES[field].maxLength
 

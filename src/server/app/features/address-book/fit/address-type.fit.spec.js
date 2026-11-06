@@ -1,0 +1,253 @@
+import { expect, test } from '@playwright/test'
+
+import { signIn } from '../../../../../../fit/sign-in.js'
+import { signInAndOpen } from './sign-in-and-open.js'
+import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
+import {
+  addressAddPath,
+  addressBookPath,
+  addressTypePath
+} from '../../../shared/paths.js'
+import { GB_COUNTRY } from '../address-countries.js'
+import { copy } from '../copy/copy.en.js'
+import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
+import {
+  addressTypeRadio,
+  addValidAddressToFreshOrganisation,
+  backLink,
+  chooseAddressType,
+  fieldLabels,
+  fieldLabelsInFormOrder,
+  malformedEmail,
+  openAddForm,
+  refuseSaveThenReopenAddForm,
+  roleCheckbox,
+  validAddress
+} from './address-form.js'
+import { openAddressBookList } from './address-book-list.js'
+import { expectNoSeriousOrCriticalViolations } from './axe.js'
+
+const { addressType: typeCopy, errors } = copy
+const ADDRESS_TYPE_VALUES = Object.values(ADDRESS_TYPES)
+const TEXT_FIELD_LABELS = fieldLabelsInFormOrder.filter(
+  (label) => label !== fieldLabels.countryCode
+)
+
+const typePageHeading = (page) =>
+  page.getByRole('heading', { level: 1, name: typeCopy.title })
+
+const addFormHeading = (page) =>
+  page.getByRole('heading', { level: 1, name: copy.add.title })
+
+const continueButton = (page) =>
+  page.getByRole('button', { name: typeCopy.continue })
+
+const addressTypeGroup = (page) =>
+  page.getByRole('group', { name: typeCopy.title })
+
+const openTypePageFromList = async (page, organisationId) => {
+  await openAddressBookList(page, { organisationId })
+  await page.getByRole('button', { name: copy.list.add }).click()
+}
+
+const expectNoTypeChosen = async (page) => {
+  for (const addressType of ADDRESS_TYPE_VALUES) {
+    await expect(addressTypeRadio(page, addressType)).not.toBeChecked()
+  }
+}
+
+test.describe('choose an address type', () => {
+  test('opens from Add a new address with the caption, heading, the three types and their hints in order, and Back to the address book', async ({
+    page
+  }) => {
+    await openTypePageFromList(page, 'stub-org-type-render')
+
+    await expect(
+      page.getByText(typeCopy.caption, { exact: true })
+    ).toBeVisible()
+    await expect(typePageHeading(page)).toBeVisible()
+    const radios = page.getByRole('radio')
+    await expect(radios).toHaveCount(ADDRESS_TYPE_VALUES.length)
+    for (const [index, addressType] of ADDRESS_TYPE_VALUES.entries()) {
+      const { label, hint } = typeCopy.options[addressType]
+      await expect(radios.nth(index)).toHaveAccessibleName(label)
+      await expect(radios.nth(index)).toHaveAccessibleDescription(hint)
+    }
+    await expect(continueButton(page)).toBeVisible()
+    await expect(backLink(page)).toHaveAttribute('href', addressBookPath())
+    await expectNoTypeChosen(page)
+    await expectNoSeriousOrCriticalViolations(page, 'Choose an address type')
+  })
+
+  test('Continue with nothing chosen shows the problem summary and the inline error, and the summary link focuses the first type', async ({
+    page
+  }) => {
+    await signInAndOpen(page, 'stub-org-type-error', addressTypePath())
+
+    await continueButton(page).click()
+
+    const summary = page.getByRole('alert')
+    await expect(summary.getByRole('heading')).toHaveText('There is a problem')
+    await expect(addressTypeGroup(page)).toContainText(
+      errors.addressType.required
+    )
+    await expectNoSeriousOrCriticalViolations(
+      page,
+      'Choose an address type with an error'
+    )
+    await summary
+      .getByRole('link', { name: errors.addressType.required, exact: true })
+      .click()
+    await expect(
+      addressTypeRadio(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
+    ).toBeFocused()
+  })
+
+  test('Origin or Consignor opens the address form with United Kingdom selected, Back shows it chosen and a new add starts with none chosen', async ({
+    page
+  }) => {
+    await openTypePageFromList(page, 'stub-org-type-origin')
+
+    await chooseAddressType(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
+
+    await expect(page).toHaveURL(addressAddPath())
+    await expect(
+      page.getByText(copy.add.caption, { exact: true })
+    ).toBeVisible()
+    await expect(addFormHeading(page)).toBeVisible()
+    await expect(page.locator(JOURNEY_STRIP)).toHaveCount(0)
+    const country = page.getByLabel(fieldLabels.countryCode)
+    await expect(country).toHaveValue(GB_COUNTRY.code)
+    await expect(country.getByRole('option').first()).toHaveText(
+      copy.form.countryPlaceholder
+    )
+
+    await backLink(page).click()
+
+    await expect(page).toHaveURL(addressTypePath())
+    await expect(
+      addressTypeRadio(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
+    ).toBeChecked()
+
+    await page.goto(addressBookPath())
+    await page.getByRole('button', { name: copy.list.add }).click()
+
+    await expectNoTypeChosen(page)
+  })
+
+  for (const addressType of [
+    ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+    ADDRESS_TYPES.BRANCH
+  ]) {
+    test(`${typeCopy.options[addressType].label} opens the address form and Back shows it chosen`, async ({
+      page
+    }) => {
+      await signInAndOpen(
+        page,
+        `stub-org-type-${addressType}`,
+        addressTypePath()
+      )
+
+      await chooseAddressType(page, addressType)
+
+      await expect(page).toHaveURL(addressAddPath())
+      await expect(addFormHeading(page)).toBeVisible()
+
+      await backLink(page).click()
+
+      await expect(addressTypeRadio(page, addressType)).toBeChecked()
+    })
+  }
+
+  test('opening the address form with no type chosen lands on Choose an address type', async ({
+    page
+  }) => {
+    await signInAndOpen(page, 'stub-org-type-guard', addressAddPath())
+
+    await expect(page).toHaveURL(addressTypePath())
+    await expect(typePageHeading(page)).toBeVisible()
+  })
+
+  test('after an address is saved the next add starts with no type chosen and empty text fields', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix: 'stub-org-type-saved'
+    })
+    await page.getByRole('button', { name: copy.list.add }).click()
+
+    await expectNoTypeChosen(page)
+
+    await chooseAddressType(page)
+
+    for (const label of TEXT_FIELD_LABELS) {
+      await expect(page.getByLabel(label)).toHaveValue('')
+    }
+  })
+})
+
+const ROLE_TO_TICK_BY_ADDRESS_TYPE = {
+  [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: 'PLACE_OF_ORIGIN',
+  [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: 'CONSIGNEE',
+  [ADDRESS_TYPES.BRANCH]: 'BRANCH_ADDRESS'
+}
+
+const expectEnteredAddressKept = async (page, role) => {
+  const entered = { ...validAddress, email: malformedEmail }
+  for (const [field, value] of Object.entries(entered)) {
+    await expect(page.getByLabel(fieldLabels[field])).toHaveValue(value)
+  }
+  await expect(roleCheckbox(page, role)).toBeChecked()
+}
+
+test.describe('going back from the address form to choose an address type', () => {
+  for (const addressType of Object.keys(ROLE_TO_TICK_BY_ADDRESS_TYPE)) {
+    test(`after a refused save of ${typeCopy.options[addressType].label}, choosing it again shows the address, the contact details and the ticked role entered`, async ({
+      page
+    }) => {
+      const role = ROLE_TO_TICK_BY_ADDRESS_TYPE[addressType]
+      await signIn(page, {
+        organisationId: `stub-org-type-kept-${addressType}`
+      })
+
+      await refuseSaveThenReopenAddForm(page, { addressType, role })
+
+      await expectEnteredAddressKept(page, role)
+    })
+  }
+})
+
+test.describe('choose an address type without JavaScript', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('after a refused save of Branch, choosing it again shows the address, the contact details and the ticked role entered', async ({
+    page
+  }) => {
+    const addressType = ADDRESS_TYPES.BRANCH
+    const role = ROLE_TO_TICK_BY_ADDRESS_TYPE[addressType]
+    await signIn(page, { organisationId: 'stub-org-type-kept-no-js' })
+
+    await refuseSaveThenReopenAddForm(page, { addressType, role })
+
+    await expectEnteredAddressKept(page, role)
+  })
+
+  test('refuses Continue with nothing chosen, then opens the address form and Back shows the type chosen', async ({
+    page
+  }) => {
+    await openTypePageFromList(page, 'stub-org-type-no-js')
+
+    await continueButton(page).click()
+
+    await expect(addressTypeGroup(page)).toContainText(
+      errors.addressType.required
+    )
+
+    await openAddForm(page, ADDRESS_TYPES.BRANCH)
+    await expect(addFormHeading(page)).toBeVisible()
+
+    await backLink(page).click()
+
+    await expect(addressTypeRadio(page, ADDRESS_TYPES.BRANCH)).toBeChecked()
+  })
+})

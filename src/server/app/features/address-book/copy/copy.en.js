@@ -1,4 +1,6 @@
 const SELECT_COUNTRY = 'Select a country'
+const ADD_A_NEW_ADDRESS = 'Add a new address'
+const ADDRESS_TYPE = 'Address type'
 
 export const copy = {
   list: {
@@ -9,13 +11,50 @@ export const copy = {
       label: 'Search',
       hint: 'Search by name, address or country',
       button: 'Search',
-      clear: 'Clear search'
+      clear: 'Clear search',
+      role: {
+        label: 'Type',
+        placeholder: 'Select one'
+      }
     },
-    add: 'Add a new address',
+    add: ADD_A_NEW_ADDRESS,
     results: (from, to, total) => `Showing ${from}-${to} of ${total}`,
     noResults: 'Showing 0 of 0',
+    tabsLabel: 'Address types',
+    tabs: {
+      ORIGIN_OR_CONSIGNOR: {
+        label: 'Origin and Consignor',
+        heading: 'Origin and Consignor addresses'
+      },
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
+        label: 'Destination, Consignee and Importer',
+        heading: 'Destination, Consignee and Importer addresses'
+      },
+      BRANCH: {
+        label: 'Branch',
+        heading: 'Branch addresses'
+      }
+    },
+    roles: {
+      PLACE_OF_ORIGIN: {
+        columnLabel: 'Place of origin',
+        optionLabel: 'Place of Origin'
+      },
+      CONSIGNOR: { columnLabel: 'Consignor', optionLabel: 'Consignor' },
+      CONSIGNEE: { columnLabel: 'Consignee', optionLabel: 'Consignee' },
+      IMPORTER: { columnLabel: 'Importer', optionLabel: 'Importer' },
+      PLACE_OF_DESTINATION: {
+        columnLabel: 'Place of destination',
+        optionLabel: 'Place of Destination'
+      },
+      BRANCH_ADDRESS: {
+        columnLabel: 'Branch',
+        optionLabel: 'Branch Address'
+      }
+    },
     table: {
       name: 'Name',
+      role: 'Type',
       address: 'Address',
       country: 'Country',
       action: 'Action',
@@ -40,11 +79,46 @@ export const copy = {
       county: 'County (optional)',
       postcode: 'Postcode or Zip code',
       countryCode: 'Country',
-      phone: 'Phone number',
-      email: 'Email address'
+      email: 'Email address',
+      phone: 'Phone number'
     },
     phoneHint: 'For international numbers include the country code',
     countryPlaceholder: SELECT_COUNTRY
+  },
+  addressType: {
+    caption: ADD_A_NEW_ADDRESS,
+    title: 'Choose an address type',
+    options: {
+      ORIGIN_OR_CONSIGNOR: {
+        label: 'Origin or Consignor',
+        hint: 'Place of origin, Consignor'
+      },
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
+        label: 'Destination, Consignee or Importer',
+        hint: 'Place of destination, Consignee, Importer'
+      },
+      BRANCH: { label: 'Branch', hint: 'Branch address' }
+    },
+    continue: 'Continue'
+  },
+  roles: {
+    journeyLegend: 'What else should this address be used for?',
+    journeyHint: (roleLabel) =>
+      `This address is being added as ${/^[AEIOU]/.test(roleLabel) ? 'an' : 'a'} ${roleLabel} address. Select any other roles or addresses this address should be used for.`,
+    legendByAddressType: {
+      ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
+      DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE,
+      BRANCH: ADDRESS_TYPE
+    },
+    hint: 'Select where this address can be used',
+    options: {
+      PLACE_OF_ORIGIN: { label: 'Place of origin' },
+      CONSIGNOR: { label: 'Consignor' },
+      CONSIGNEE: { label: 'Consignee' },
+      IMPORTER: { label: 'Importer' },
+      PLACE_OF_DESTINATION: { label: 'Place of destination' },
+      BRANCH_ADDRESS: { label: 'Branch address' }
+    }
   },
   add: {
     title: 'Add address and contact details',
@@ -75,6 +149,12 @@ export const copy = {
     cancel: 'No, cancel'
   },
   errors: {
+    addressType: {
+      required: 'Select an address type'
+    },
+    roles: {
+      required: 'Select what this address can be used for'
+    },
     name: {
       required: 'Enter a name or organisation',
       maxLength: (max) => `Name must be ${max} characters or fewer`

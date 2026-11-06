@@ -5,13 +5,14 @@ import { copy as sharedCopy } from '../shared/copy.en.js'
 import { copy as addressBookCopy } from './address-book/copy/copy.en.js'
 import { copy as dashboardCopy } from './dashboard/copy/copy.en.js'
 import {
-  addressAddPath,
+  addressTypePath,
   addressBookPath,
   addressDeletePath,
   addressEditPath,
   addressPath,
   dashboardPath
 } from '../shared/paths.js'
+import { openAddForm } from './address-book/fit/address-form.js'
 import { seedAddress } from './address-book/fit/seed-address.js'
 
 const { serviceName, govukSuffix, errorTitlePrefix } = sharedCopy.layout
@@ -75,10 +76,35 @@ test.describe('page title', () => {
     )
   })
 
+  test('titles the address type page Choose an address type', async ({
+    page
+  }) => {
+    await page.goto(addressTypePath())
+
+    await expect(page).toHaveTitle(
+      `${addressBookCopy.addressType.title} - ${serviceName} - ${govukSuffix}`
+    )
+  })
+
+  test('puts the error prefix in front of the address type page title when no type is chosen', async ({
+    page
+  }) => {
+    await page.goto(addressTypePath())
+
+    await page
+      .getByRole('button', { name: addressBookCopy.addressType.continue })
+      .click()
+
+    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(page).toHaveTitle(
+      `${errorTitlePrefix}${addressBookCopy.addressType.title} - ${serviceName} - ${govukSuffix}`
+    )
+  })
+
   test('puts the error prefix in front of the whole title when the page shows errors', async ({
     page
   }) => {
-    await page.goto(addressAddPath())
+    await openAddForm(page)
 
     await page.getByRole('button', { name: addressBookCopy.add.save }).click()
 

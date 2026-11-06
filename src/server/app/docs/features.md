@@ -16,7 +16,7 @@ below.
 `dashboard.fit.spec.js` beside the controller.
 
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
-`add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
+`address-type/`, `add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
 `<page>.njk` and `<page>.controller.test.js`. Group-wide modules sit at the
 root:
 
@@ -31,27 +31,61 @@ root:
   `ADDRESS_FIELDS` through `addressFieldText`. Each field's `required` sets both whether a blank value is
   refused and whether the view always shows its row. Each field's
   `maxLength` and `required` match the address book API's `AddressRequest`
-  validation, so the form refuses what the API would refuse.
+  validation, so the form refuses what the API would refuse. The same file owns
+  the roles question's rules: `postedRolesOf` (the posted `roles` as a list) and
+  `rolesErrorsOf` (the required-role error when none is kept; the add
+  controller keeps the posted roles the chosen address type offers through the
+  address book's `keepRolesOfferedBy`), and `storedRolesOf`, the roles an edited
+  address carries back to the API unchanged. `FIELD_RULES` holds the fields in
+  the order the form asks them, which is the order validation errors are
+  listed in.
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems` (a select that opens on a blank option),
-  `addFormCountryOffer` (the add form's select items, accepted country codes and form values for a handshake context:
+  `addFormCountryOffer` (the add form's select items, accepted country codes and form values, for a handshake context
+  and the chosen address type:
   United Kingdom alone, selected and accepted as the only country, with the
-  form values' country fixed to `GB`, when `journey-registry.js` says the
-  role's address must be in the United Kingdom, else the blank option, every
-  served country and the form values as given),
+  form values' country fixed to `GB`, when the handshake's party must be in the
+  United Kingdom according to `journey-registry.js` or, with no handshake, when
+  `addressTypeRequiresUnitedKingdom` holds the chosen type, else the blank
+  option, every served country and the form values as given),
   `buildEditCountrySelectItems` (the edit form's select, with a
   blank option only when the country it shows is not one the list offers) and
   `countryCodesMatching` (every country code whose name contains the search term).
 - [`journey-registry.js`](../features/address-book/journey-registry.js) —
   `JOURNEY_TYPES` (the registered journey types), `ADDRESS_LANDING` (select,
   return and cancel, the page the journey opens on return),
-  `isKnownJourneyType`, `requiresUnitedKingdomAddress` (whether the role's
-  address must be in the United Kingdom), `isConsignmentContact` (whether a
+  `isResolvableHandshake` (whether a handshake's journey type and fulfilment id
+  resolve to a party's role: the one check the query, payload and session
+  handshakes all pass), `requiresUnitedKingdomAddress`
+  (whether the role's address must be in the United Kingdom: the address type
+  of its role is one `addressTypeRequiresUnitedKingdom` holds, and the party is
+  not the consignment contact), `ownAndOtherRolesOfParty` (the party's own role and the
+  other roles on its side, in `ROLES_BY_ADDRESS_TYPE` order, which feeds the add
+  page's checkboxes; no own role and no other roles for a fulfilment id the map
+  does not list), `rolesToSaveForParty`
+  (the roles a journey-mode save carries: the party's own
+  role (`roleOfParty`) plus the posted roles its address type offers, through
+  the address book's `keepRolesOfferedBy`), `isConsignmentContact` (whether a
   handshake is the consignment contact's, so the add page offers the contact's
   controls rather than a role's), `buildReturnUrl` (the journey's address-return
   URL, with an optional address id and `landing`) and
   `CONSIGNMENT_CONTACT_FULFILMENT_ID` (the consignment contact's fulfilment id).
+  The `gbn-ag` registry entry's `roleByPartyFulfilmentId` map is the one map
+  from each party's fulfilment id, the five roles and the consignment contact,
+  to the party's own role, which its address is always saved with alongside any
+  ticked roles its side offers; `ownAndOtherRolesOfParty`,
+  `rolesToSaveForParty` and `requiresUnitedKingdomAddress` read it.
+- [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
+  `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address
+  type and the roles its Type select offers in order; its label and panel
+  heading are `copy.list.tabs[addressType]`), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and Consignor tab),
+  `resolveTab` (the tab a requested address type names, else nothing) and
+  `resolveRole` (the requested role when the tab offers it, else nothing). The
+  list controller serves the default tab when `resolveTab` finds none, and
+  logs a requested address type it replaced. The address type values (`ADDRESS_TYPES`) and the roles each
+  lists (`ROLES_BY_ADDRESS_TYPE`) belong to `services/address-book`, imported
+  through its barrel.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
@@ -76,14 +110,24 @@ root:
   `Boom.internal()`.
 - [`success-message.js`](../features/address-book/success-message.js) —
   yar-backed, read-once.
+- [`add-in-progress.js`](../features/address-book/add-in-progress.js) —
+  yar-backed state of the add in progress: `storeChosenAddressType` stores
+  the address type chosen on the type page beside any entry already stored,
+  `storedChosenAddressType` reads the type back (only a value in `ADDRESS_TYPES`,
+  else nothing), `storeEnteredAddress` and `storedEnteredAddress` store and read
+  the field values and `tickedRoles` posted with the add form, and `clearAddInProgress`
+  removes everything, on a new add and on a save.
 
-Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
+Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with six
 specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
 `dashboard.js`, `return-query.js` (`withReturn`), `seed-address.js` and
 `sign-in-and-open.js` (`signInAndOpen`, which every spec's open helper is
 built on). `view-model/list.js` owns the list's
-name lines, postal lines and results line, which the list controller builds
-into table cells.
+name lines, Type label, postal lines and results line, which the list
+controller builds into table cells, the roles whose Type label contains the
+search term (`rolesWhoseLabelContains`, which the search also matches), and the
+list's hrefs, which carry the tab, the search, the Type and the page. A tab
+link carries the tab and the current search only.
 
 ## Paths
 
@@ -91,8 +135,9 @@ into table cells.
 URL, with one exception: the temporary `address-lookup-spike` feature
 keeps its own `'/address-lookup-spike'` literal in its controller (see
 below). Each public URL has a builder (`dashboardPath()`, `addressBookPath()`,
-`addressAddPath()`, `addressPath(id)`, `addressEditPath(id)`,
-`addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin
+`addressAddPath()`, `addressTypePath()`, `addressTypeStartPath()` (the
+type page with the marker that starts a new add), `addressPath(id)`,
+`addressEditPath(id)`, `addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin
 carrying the Hapi `{id}` placeholder. Ids are `encodeURIComponent`ed.
 Controllers pass a `*RoutePath()` to `kit.pageRoutes` and put every href
 the template needs into the view model (`listHref`, `addHref`, `editHref`,
@@ -151,6 +196,40 @@ adds to that shape for a journey:
   journey) or `CONSIGNMENT_CONTACT` (the consignment contact's journey).
   `backHrefFor` gives the Back link and the journey strip shows for both
   handshake modes.
+- From the address book (`ADDRESS_BOOK` mode) the GET and the POST need an
+  address type chosen on the type page, else the one guard,
+  `redirectIfNoAddressTypeChosen`, logs and redirects to the type page; a
+  handshake opens the form directly. Back goes to the type page. The form
+  opens with the entry kept from an earlier POST (its field values and ticked
+  roles) or, with none, United Kingdom selected; the POST keeps what was posted
+  before any check, so a refused save and a Back to the type page leave the
+  entry for the form to reopen with. A successful save clears the add in
+  progress. A type that must be in the United Kingdom (Destination, Consignee
+  or Importer, and Branch) shows United Kingdom alone, whatever was kept or
+  posted, and a save whose posted country was replaced with United Kingdom is logged once at info.
+- In `ADDRESS_BOOK` mode after the contact fields the form shows the roles question: a visible
+  section break, then checkboxes named `roles` (the first option's id is `roles`,
+  so the error summary link focuses it) under the legend `copy.roles` holds for
+  the chosen type, offering the chosen type's roles from
+  `ROLES_BY_ADDRESS_TYPE`, labelled from `copy.roles`. `roleItemsOf` builds the
+  checkbox items from an ordered list of roles and the ticked roles, and each
+  mode passes its own order: the address book add passes its type's roles with
+  the place roles `address-types.js` marks first, and a role handshake passes
+  the party's other roles in `ROLES_BY_ADDRESS_TYPE`'s order. The POST checks the
+  roles only once the address and contact fields pass; it keeps the posted roles
+  the chosen type offers (logging any it discards at info), re-renders with
+  the required-role error when none is kept, and otherwise saves the validated
+  fields with the kept roles and redirects to the
+  address book list on that type's tab. In `ROLE_HANDSHAKE` mode the form shows
+  the "What else should this address be used for?" question after the same
+  visible section break, with a hint naming only the party's own role ("This
+  address is being added as a <Role> address…") and checkboxes for the other
+  roles on its side, all unticked and optional: no error is raised for it, the
+  ticked roles stay ticked when the page is shown again with errors, and the
+  save carries `rolesToSaveForParty`: the party's own role and the
+  ticked roles the party's page offers (logging any it discards at info, with
+  the notification and fulfilment ids). The consignment contact's form has no
+  roles question.
 - `cancelUrlFor(addMode, handshakeContext)` is the one owner of where Cancel
   goes: the address book, a role's journey with the `cancel` landing, or the
   consignment contact's journey with no landing.
@@ -174,7 +253,9 @@ or the delete POST throws `boomFor(err, () => logger.error(...))`.
 
 The edit POST reads `findLiveAddress` before it validates, and redirects a
 not-live address the same way, sending nothing. It does the same for a 404
-from `updateAddress`. It rethrows a Boom untouched, so reference data with no
+from `updateAddress`. It saves the validated fields
+with the stored address's roles, because the address book
+replaces the whole record; the edit page shows neither. It rethrows a Boom untouched, so reference data with no
 countries still serves the 503 page, and re-renders every other failure,
 including a failed live read, as the POST shape above describes.
 
@@ -229,7 +310,10 @@ Build a service-backed rule (`requiredOneOf('countryCode', codes, …)`)
 inside the POST handler from the country codes the form offered (the add
 form's `addFormCountryOffer` gives them). Persist `value`,
 never the raw payload — `formValuesOf(payload)` is validated so only the
-nine address fields reach the API.
+nine address fields reach the API, together with the
+roles kept for it (the kept roles on an add, the party's own role
+plus the ticked roles its page offers on a journey add, and the
+stored address's roles on an edit). No address type is sent.
 [`address-id-params.js`](../features/address-book/address-id-params.js)
 stays on Joi directly because Hapi's `validate.params` takes a Joi schema.
 
@@ -260,7 +344,7 @@ characters, which is how the lookup returns and expects it, so `sw1a1aa`
 still finds a match.
 
 `map-to-address-fields.js` maps one lookup result onto the address
-book's fields in `address-book/address-schema.js`. Nothing is saved; the
+book's fields in `features/address-book/fields.js`. Nothing is saved; the
 mapping is a proposal for the permanent build. The lookup returns
 nothing shaped like the form, and the spike shows three gaps:
 

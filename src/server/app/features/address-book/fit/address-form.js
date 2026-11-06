@@ -4,10 +4,31 @@ import { copy } from '../copy/copy.en.js'
 import { FIELD_RULES } from '../fields.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { countries } from '../../../services/_capture/fixtures.js'
-import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
+import {
+  ADDRESS_TYPES,
+  ROLES_BY_ADDRESS_TYPE
+} from '../../../services/address-book/index.js'
+import {
+  addressAddPath,
+  addressBookPath,
+  addressTypePath
+} from '../../../shared/paths.js'
 import { signInAndOpen } from './sign-in-and-open.js'
+import { JOURNEY_HANDSHAKES_BY_PARTY } from '../../../../common/test-helpers/journey-handshake.js'
 
 export const fieldLabels = copy.form.fields
+
+export const fieldLabelsInFormOrder = [
+  fieldLabels.name,
+  fieldLabels.addressLine1,
+  fieldLabels.addressLine2,
+  fieldLabels.townOrCity,
+  fieldLabels.county,
+  fieldLabels.postcode,
+  fieldLabels.countryCode,
+  fieldLabels.email,
+  fieldLabels.phone
+]
 
 export const addressFormCountryNames = [
   ...countries.map(({ name }) => name),
@@ -42,18 +63,125 @@ export async function fillValidAddress(page, overrides = {}) {
   }
 }
 
+export const addressTypeRadio = (page, addressType) =>
+  page.getByRole('radio', {
+    name: copy.addressType.options[addressType].label,
+    exact: true
+  })
+
+export const backLink = (page) =>
+  page.getByRole('link', { name: 'Back', exact: true })
+
+export const saveAndContinueButton = (page) =>
+  page.getByRole('button', { name: 'Save and continue' })
+
+export const chooseAddressType = async (
+  page,
+  addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+) => {
+  await addressTypeRadio(page, addressType).check()
+  await page.getByRole('button', { name: copy.addressType.continue }).click()
+}
+
+const chooseAddressTypeThenExpectAddForm = async (page, addressType) => {
+  await chooseAddressType(page, addressType)
+  await expect(page).toHaveURL(addressAddPath())
+}
+
+export const openAddForm = async (
+  page,
+  addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+) => {
+  await page.goto(addressTypePath())
+  await chooseAddressTypeThenExpectAddForm(page, addressType)
+}
+
+export const signInAndOpenAddForm = async (
+  page,
+  organisationId,
+  addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+) => {
+  await signInAndOpen(page, organisationId, addressTypePath())
+  await chooseAddressTypeThenExpectAddForm(page, addressType)
+}
+
+export const roleCheckbox = (page, role) =>
+  page.getByRole('checkbox', {
+    name: copy.roles.options[role].label,
+    exact: true
+  })
+
+export const tickRoles = async (page, roles) => {
+  for (const role of roles) {
+    await roleCheckbox(page, role).check()
+  }
+}
+
+export const expectInDocumentOrder = async (page, locators) => {
+  await expect
+    .poll(async () => {
+      const elements = await Promise.all(
+        locators.map((locator) => locator.elementHandle())
+      )
+      return page.evaluate(
+        (candidates) =>
+          candidates.every(
+            (element, index) =>
+              index === 0 ||
+              Boolean(
+                candidates[index - 1].compareDocumentPosition(element) &
+                element.DOCUMENT_POSITION_FOLLOWING
+              )
+          ),
+        elements
+      )
+    })
+    .toBe(true)
+}
+
+export const malformedEmail = 'not-an-email'
+
+export const refuseSaveThenReopenAddForm = async (
+  page,
+  { addressType, role }
+) => {
+  await openAddForm(page, addressType)
+  await fillValidAddress(page, { email: malformedEmail })
+  await tickRoles(page, [role])
+  await saveAndContinueButton(page).click()
+  await expect(page.getByRole('alert')).toBeVisible()
+  await backLink(page).click()
+  await expect(page).toHaveURL(addressTypePath())
+  await chooseAddressType(page, addressType)
+  await expect(page).toHaveURL(addressAddPath())
+}
+
+export const addressTypeListUrl = (addressType) =>
+  `${addressBookPath()}?${new URLSearchParams({ addressType })}`
+
+export const originOrConsignorListUrl = addressTypeListUrl(
+  ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
+)
+
 export const addValidAddressToFreshOrganisation = async (
   page,
-  { organisationPrefix, overrides = {} }
+  {
+    organisationPrefix,
+    overrides = {},
+    addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+    roles = [ROLES_BY_ADDRESS_TYPE[addressType][0]],
+    emptyBook = false
+  }
 ) => {
-  await signInAndOpen(
+  await signInAndOpenAddForm(
     page,
-    `${organisationPrefix}-${crypto.randomUUID()}`,
-    addressAddPath()
+    `${organisationPrefix}-${crypto.randomUUID()}${emptyBook ? '-empty' : ''}`,
+    addressType
   )
   await fillValidAddress(page, overrides)
-  await page.getByRole('button', { name: 'Save and continue' }).click()
-  await expect(page).toHaveURL(addressBookPath())
+  await tickRoles(page, roles)
+  await saveAndContinueButton(page).click()
+  await expect(page).toHaveURL(addressTypeListUrl(addressType))
 }
 
 export const validAddressViewLink = (page) =>
@@ -135,3 +263,15 @@ export const maxLengthValidations = [
     'Email address must be 254 characters or fewer'
   ]
 ]
+
+export const openAddFormFromJourney = async (
+  page,
+  organisationId,
+  handshake = JOURNEY_HANDSHAKES_BY_PARTY.consignor
+) => {
+  await signInAndOpen(
+    page,
+    organisationId,
+    `${addressAddPath()}?${new URLSearchParams(handshake)}`
+  )
+}

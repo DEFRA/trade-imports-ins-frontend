@@ -13,10 +13,21 @@ export const expectUnitedKingdomAloneSelected = ($) => {
   expect($(SELECTED_COUNTRY_OPTION).attr('value')).toBe(GB_COUNTRY.code)
 }
 
-export const expectPlaceholderThenCountriesNoneSelected = ($, countryNames) => {
+const expectPlaceholderThenCountries = ($, countryNames) =>
   expect(textsOf($, COUNTRY_OPTIONS)).toEqual([
     copy.form.countryPlaceholder,
     ...countryNames
   ])
+
+export const expectPlaceholderThenCountriesNoneSelected = ($, countryNames) => {
+  expectPlaceholderThenCountries($, countryNames)
   expect($(SELECTED_COUNTRY_OPTION)).toHaveLength(0)
+}
+
+export const expectPlaceholderThenCountriesUnitedKingdomSelected = (
+  $,
+  countryNames
+) => {
+  expectPlaceholderThenCountries($, countryNames)
+  expect($(SELECTED_COUNTRY_OPTION).attr('value')).toBe(GB_COUNTRY.code)
 }

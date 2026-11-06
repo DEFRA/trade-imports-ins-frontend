@@ -1,14 +1,9 @@
-import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
+import { beforeAll, afterAll, describe, expect, test } from 'vitest'
 
 import { createServer } from '../server/server.js'
 import { statusCodes } from '../server/common/constants/status-codes.js'
-import { mockOidcConfig } from '../server/common/test-helpers/mock-oidc-config.js'
 import { sessionAuth } from '../server/common/test-helpers/session-auth.js'
 import { config } from '../config/config.js'
-
-vi.mock('../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 describe('#csrfPlugin', () => {
   let server
@@ -27,7 +22,7 @@ describe('#csrfPlugin', () => {
     config.set('csrf.enabled', false)
   })
 
-  test('POST without crumb is rejected when csrf is enabled', async () => {
+  test('Should refuse a POST to the add form with 403 when CSRF is enabled and no crumb is sent', async () => {
     config.set('csrf.enabled', true)
 
     try {
@@ -52,10 +47,10 @@ describe('#csrfPlugin', () => {
     }
   })
 
-  test('add form renders hidden crumb field on GET', async () => {
+  test('Should render a hidden crumb field on the address type form', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/address-book/add',
+      url: '/address-book/add/address-type',
       auth: sessionAuth('csrf-get')
     })
 

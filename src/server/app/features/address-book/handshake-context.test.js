@@ -2,9 +2,11 @@ import { describe, expect, test } from 'vitest'
 import Boom from '@hapi/boom'
 
 import {
-  JOURNEY_HANDSHAKES_BY_ROLE,
+  JOURNEY_HANDSHAKES_BY_PARTY,
+  UNREGISTERED_JOURNEY_TYPE,
   handshakeContextOf
 } from '../../../common/test-helpers/journey-handshake.js'
+import { captureWarnLogs } from '../../../common/test-helpers/capture-info-logs.js'
 import {
   loadHandshakeContext,
   readHandshakePayload,
@@ -15,7 +17,7 @@ import {
 } from './handshake-context.js'
 
 const SESSION_KEY = 'addressBookHandshake'
-const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_ROLE.consignor
+const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_PARTY.consignor
 const PADDED_CONSIGNOR_HANDSHAKE = Object.fromEntries(
   Object.entries(CONSIGNOR_HANDSHAKE).map(([field, value]) => [
     field,
@@ -23,7 +25,13 @@ const PADDED_CONSIGNOR_HANDSHAKE = Object.fromEntries(
   ])
 )
 const INCOMPLETE_HANDSHAKE_ERROR = 'Incomplete journey handshake'
-const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
+const UNLISTED_FULFILMENT_ID = 'not-a-fulfilment-id'
+const INCOMPLETE_MESSAGE =
+  'Journey handshake refused, it is missing an id or its token'
+const SESSION_DISCARDED_MESSAGE =
+  'Session journey handshake discarded, the journey type or fulfilment id is not listed'
+
+const warnedWith = captureWarnLogs()
 
 const validContext = handshakeContextOf(CONSIGNOR_HANDSHAKE)
 
@@ -71,6 +79,17 @@ describe('readHandshakeQuery', () => {
     ).toThrow(Boom.notFound())
   })
 
+  test('throws when the fulfilment id is not listed for the journey type', () => {
+    expect(() =>
+      readHandshakeQuery(
+        mockRequest({
+          ...CONSIGNOR_HANDSHAKE,
+          'fulfilment-id': UNLISTED_FULFILMENT_ID
+        })
+      )
+    ).toThrow(Boom.notFound())
+  })
+
   test('returns trimmed handshake context for a valid query', () => {
     expect(
       readHandshakeQuery(mockRequest({ ...PADDED_CONSIGNOR_HANDSHAKE }))
@@ -96,6 +115,15 @@ describe('readHandshakePayload', () => {
       readHandshakePayload({
         ...CONSIGNOR_HANDSHAKE,
         'journey-type': UNREGISTERED_JOURNEY_TYPE
+      })
+    ).toThrow(Boom.notFound())
+  })
+
+  test('throws when the fulfilment id is not listed for the journey type', () => {
+    expect(() =>
+      readHandshakePayload({
+        ...CONSIGNOR_HANDSHAKE,
+        'fulfilment-id': UNLISTED_FULFILMENT_ID
       })
     ).toThrow(Boom.notFound())
   })
@@ -183,20 +211,59 @@ describe('resolveHandshakeContext', () => {
     expect(resolveHandshakeContext(request)).toEqual(validContext)
   })
 
-  test('clears and ignores a session whose journey type is no longer registered', () => {
+  test.each([
+    [
+      'whose journey type is no longer registered',
+      { journeyType: 'retired-journey' }
+    ],
+    [
+      'whose fulfilment id is not listed',
+      { fulfilmentId: UNLISTED_FULFILMENT_ID }
+    ]
+  ])(
+    'clears and ignores a session handshake %s, and logs it once at warn',
+    (_name, overrides) => {
+      const sessionContext = { ...validContext, ...overrides }
+      const request = mockRequest(
+        {},
+        { name: 'Farm' },
+        { [SESSION_KEY]: sessionContext }
+      )
+
+      expect(resolveHandshakeContext(request)).toBeNull()
+      expect(loadHandshakeContext(request)).toBeNull()
+      expect(warnedWith(SESSION_DISCARDED_MESSAGE)).toEqual([
+        {
+          fields: {
+            journeyType: sessionContext.journeyType,
+            notificationId: sessionContext.notificationId,
+            fulfilmentId: sessionContext.fulfilmentId
+          },
+          message: SESSION_DISCARDED_MESSAGE
+        }
+      ])
+    }
+  )
+
+  test('logs an incomplete payload handshake once at warn before refusing it', () => {
     const request = mockRequest(
       {},
-      { name: 'Farm' },
-      {
-        [SESSION_KEY]: {
-          ...validContext,
-          journeyType: 'retired-journey'
-        }
-      }
+      { 'journey-type': CONSIGNOR_HANDSHAKE['journey-type'], name: 'Farm' }
     )
 
-    expect(resolveHandshakeContext(request)).toBeNull()
-    expect(loadHandshakeContext(request)).toBeNull()
+    expect(() => resolveHandshakeContext(request)).toThrow(
+      Boom.badRequest(INCOMPLETE_HANDSHAKE_ERROR)
+    )
+    expect(warnedWith(INCOMPLETE_MESSAGE)).toEqual([
+      {
+        fields: {
+          journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
+          notificationId: '',
+          fulfilmentId: ''
+        },
+        message: INCOMPLETE_MESSAGE
+      }
+    ])
   })
 })
 

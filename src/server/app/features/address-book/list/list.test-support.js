@@ -13,10 +13,14 @@ import {
   textsOf
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
+import { ROLES_BY_ADDRESS_TYPE } from '../../../services/address-book/index.js'
+import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { LIST_PAGE_SIZE } from './list.controller.js'
 
-export const NO_RESULTS_LINE = 'Showing 0 of 0'
-export const TABLE_HEADINGS = ['Name', 'Address', 'Country', 'Action']
+export {
+  NO_RESULTS_LINE,
+  TABLE_HEADINGS
+} from '../fit/address-book-list-text.js'
 
 export const highlandAddress = {
   id: '1',
@@ -24,7 +28,8 @@ export const highlandAddress = {
   addressLine1: STORED_ADDRESS.addressLine1,
   townOrCity: STORED_ADDRESS.townOrCity,
   postcode: STORED_ADDRESS.postcode,
-  countryCode: STORED_ADDRESS.countryCode
+  countryCode: STORED_ADDRESS.countryCode,
+  roles: []
 }
 
 export const parisDepotAddress = {
@@ -33,7 +38,8 @@ export const parisDepotAddress = {
   addressLine1: '1 Rue de Rivoli',
   townOrCity: 'Paris',
   postcode: '75001',
-  countryCode: 'FR'
+  countryCode: 'FR',
+  roles: []
 }
 
 export const greenFarmAddress = {
@@ -42,7 +48,8 @@ export const greenFarmAddress = {
   addressLine1: '1 Road',
   townOrCity: 'Inverness',
   postcode: 'IV2 3JH',
-  countryCode: 'GB'
+  countryCode: 'GB',
+  roles: []
 }
 
 export const fullAddress = {
@@ -53,7 +60,8 @@ export const fullAddress = {
   townOrCity: 'Inverness',
   county: 'Highland',
   postcode: 'IV2 3JH',
-  countryCode: 'GB'
+  countryCode: 'GB',
+  roles: []
 }
 
 export const contentOf = ($) => $('.govuk-grid-column-full')
@@ -65,6 +73,36 @@ export const resultsLineOf = ($) =>
   textOf($, '[data-testid="address-book-results-label"]')
 
 export const tableHeadingsOf = ($) => textsOf($, 'thead th')
+
+export const subNavigationOf = ($) => $('nav.moj-sub-navigation')
+
+export const subNavigationLinksOf = ($) =>
+  $('nav.moj-sub-navigation a')
+    .map((_, anchor) => ({
+      text: textOf($, anchor),
+      href: $(anchor).attr('href'),
+      current: $(anchor).attr('aria-current') ?? null
+    }))
+    .get()
+
+export const typeSelectStateOf = ($) => {
+  const select = $('select[name="role"]')
+  const options = select.find('option')
+  return {
+    label: textOf($, $(`label[for="${select.attr('id')}"]`)),
+    optionTexts: options.map((_, option) => textOf($, option)).get(),
+    emptyValueTexts: options
+      .filter((_, option) => $(option).attr('value') === '')
+      .map((_, option) => textOf($, option))
+      .get(),
+    selectedTexts: options
+      .filter((_, option) => $(option).attr('selected') !== undefined)
+      .map((_, option) => textOf($, option))
+      .get()
+  }
+}
+
+export const panelHeadingTextOf = ($) => textOf($, contentOf($).children('h2'))
 
 export const bodyRowCountOf = ($) => $('tbody tr').length
 
@@ -83,10 +121,20 @@ export const startServerWithPageReader = () => {
   }
 }
 
-const interceptListRequest = (query) =>
+const roleQueryValueOf = (roles) => (roles.length === 1 ? roles[0] : roles)
+
+const interceptListRequest = ({
+  tabAddressType = DEFAULT_ADDRESS_BOOK_TAB.addressType,
+  role,
+  ...query
+}) =>
   addressBookApi()
     .get(addressesApiPath())
-    .query({ pageSize: String(LIST_PAGE_SIZE), ...query })
+    .query({
+      pageSize: String(LIST_PAGE_SIZE),
+      role: role ?? roleQueryValueOf(ROLES_BY_ADDRESS_TYPE[tabAddressType]),
+      ...query
+    })
 
 export const stubAddressPage = (query, addressPage) =>
   interceptListRequest(query).reply(statusCodes.ok, {
@@ -94,7 +142,10 @@ export const stubAddressPage = (query, addressPage) =>
     pageSize: LIST_PAGE_SIZE
   })
 
-export const stubAddressBookUnavailable = () =>
-  interceptListRequest({ page: '1' }).reply(statusCodes.serviceUnavailable, {
-    title: 'Service Unavailable'
-  })
+export const stubAddressBookUnavailable = (query = {}) =>
+  interceptListRequest({ page: '1', ...query }).reply(
+    statusCodes.serviceUnavailable,
+    {
+      title: 'Service Unavailable'
+    }
+  )

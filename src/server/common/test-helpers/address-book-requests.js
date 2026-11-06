@@ -1,5 +1,7 @@
 import { expect } from 'vitest'
 
+import { ADDRESS_TYPES } from '../../app/services/address-book/index.js'
+import { addressTypePath } from '../../app/shared/paths.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { addressBookApi } from './real-mode.js'
 import { ORGANISATION_ID, sessionAuth } from './session-auth.js'
@@ -17,7 +19,9 @@ export {
   addressBookPath,
   addressDeletePath,
   addressEditPath,
-  addressPath
+  addressPath,
+  addressTypePath,
+  addressTypeStartPath
 } from '../../app/shared/paths.js'
 
 export const addressesApiPath = (organisationId = ORGANISATION_ID) =>
@@ -62,10 +66,11 @@ export const STORED_ADDRESS = {
   countryCode: 'GB',
   phone: '+44 1463 234567',
   email: 'exports@example.com',
+  roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
   deleted: false
 }
 
-export const VALID_ADDRESS_PAYLOAD = {
+export const VALID_ADDRESS_FIELDS = {
   name: STORED_ADDRESS.name,
   addressLine1: STORED_ADDRESS.addressLine1,
   addressLine2: '',
@@ -75,6 +80,16 @@ export const VALID_ADDRESS_PAYLOAD = {
   countryCode: STORED_ADDRESS.countryCode,
   phone: STORED_ADDRESS.phone,
   email: STORED_ADDRESS.email
+}
+
+export const VALID_ADDRESS_RECORD = {
+  ...VALID_ADDRESS_FIELDS,
+  roles: STORED_ADDRESS.roles
+}
+
+export const VALID_ADDRESS_PAYLOAD = {
+  ...VALID_ADDRESS_FIELDS,
+  roles: 'PLACE_OF_ORIGIN'
 }
 
 export const INVALID_ADDRESS_PAYLOAD = {
@@ -87,7 +102,12 @@ export const INVALID_ADDRESS_PAYLOAD = {
   email: 'bad'
 }
 
-export const serveAddressCreated = (matchBody) =>
+const carriesRolesWithoutAddressType = (body) =>
+  body.roles?.length > 0 && !Object.hasOwn(body, 'addressType')
+
+export const serveAddressCreated = (
+  matchBody = carriesRolesWithoutAddressType
+) =>
   addressBookApi()
     .post(addressesApiPath(), matchBody)
     .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
@@ -111,11 +131,46 @@ export const pageOf = (items, overrides = {}) => ({
   ...overrides
 })
 
-export const getPage = (server, url, sessionId) =>
-  server.inject({ method: 'GET', url, auth: sessionAuth(sessionId) })
+const headersWithCookie = (cookie) => (cookie ? { cookie } : {})
 
-export const postPage = (server, url, sessionId, payload) =>
-  server.inject({ method: 'POST', url, auth: sessionAuth(sessionId), payload })
+export const cookieHeaderOf = (headers) =>
+  [headers['set-cookie']]
+    .flat()
+    .filter(Boolean)
+    .map((cookie) => cookie.split(';')[0])
+    .join('; ')
+
+export const getPage = (server, url, sessionId, cookie) =>
+  server.inject({
+    method: 'GET',
+    url,
+    auth: sessionAuth(sessionId),
+    headers: headersWithCookie(cookie)
+  })
+
+export const postPage = (server, url, sessionId, payload, cookie) =>
+  server.inject({
+    method: 'POST',
+    url,
+    auth: sessionAuth(sessionId),
+    payload,
+    headers: headersWithCookie(cookie)
+  })
+
+export const cookieAfterChoosingAddressType = async (
+  server,
+  sessionId,
+  { addressType = ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, cookie } = {}
+) => {
+  const { headers } = await postPage(
+    server,
+    addressTypePath(),
+    sessionId,
+    { addressType },
+    cookie
+  )
+  return cookieHeaderOf(headers) || cookie
+}
 
 export const getPageAsOtherOrganisation = (server, url, sessionId) =>
   server.inject({

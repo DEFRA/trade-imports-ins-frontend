@@ -34,6 +34,26 @@ describe('#copy', () => {
     expect(copy.add.caption).toBe('Add new address')
   })
 
+  it('Should word the roles question with its legend per address type, hint, one label per role and error', () => {
+    expect(copy.roles.legendByAddressType).toEqual({
+      ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
+      DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',
+      BRANCH: 'Address type'
+    })
+    expect(copy.roles.hint).toBe('Select where this address can be used')
+    expect(copy.roles.options).toEqual({
+      PLACE_OF_ORIGIN: { label: 'Place of origin' },
+      CONSIGNOR: { label: 'Consignor' },
+      CONSIGNEE: { label: 'Consignee' },
+      IMPORTER: { label: 'Importer' },
+      PLACE_OF_DESTINATION: { label: 'Place of destination' },
+      BRANCH_ADDRESS: { label: 'Branch address' }
+    })
+    expect(copy.errors.roles.required).toBe(
+      'Select what this address can be used for'
+    )
+  })
+
   it('Should word Save and select, Save and return to address page and Cancel and return to hub', () => {
     expect(copy.add.saveAndSelect).toBe('Save and select')
     expect(copy.add.saveAndReturnToAddressPage).toBe(
@@ -66,7 +86,7 @@ describe('#copy', () => {
     })
   })
 
-  it('Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line', () => {
+  it('Should word the list intro, filter disclosure, search field and hint, Type select label and placeholder, search button, Clear search link and empty results line', () => {
     expect(copy.list.intro).toBe(
       'Manage your addresses for use across all your import notifications'
     )
@@ -75,7 +95,11 @@ describe('#copy', () => {
       label: 'Search',
       hint: 'Search by name, address or country',
       button: 'Search',
-      clear: 'Clear search'
+      clear: 'Clear search',
+      role: {
+        label: 'Type',
+        placeholder: 'Select one'
+      }
     })
     expect(copy.list.noResults).toBe('Showing 0 of 0')
   })
@@ -165,7 +189,27 @@ describe('#copy', () => {
     expect(cy.edit.title).toBe('Golygu manylion cyfeiriad a manylion cyswllt')
   })
 
-  it('Should word the Welsh list title, intro, search, add link, results lines, table headings and View link', () => {
+  it('Should carry the Welsh for the delete page heading and confirm button', () => {
+    expect(cy.delete.title).toBe('Dileu’r cyfeiriad hwn?')
+    expect(cy.delete.confirm).toBe('Ie, dileu')
+  })
+
+  it('Should ask for the missing name, postcode, country or phone in its required message', () => {
+    expect(copy.errors.name.required).toBe('Enter a name or organisation')
+    expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
+    expect(copy.errors.countryCode.required).toBe('Select a country')
+    expect(copy.errors.phone.required).toBe('Enter a phone number')
+  })
+
+  it('Should cap the name at 255 characters in its maxLength message', () => {
+    expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
+      'Name must be 255 characters or fewer'
+    )
+  })
+})
+
+describe('#copy of the list page', () => {
+  it('Should word the Welsh list title, intro, search, add link, results lines, tabs, role labels, table headings and View link', () => {
     expect(
       leaves(cy.list).map(({ path, value }) => [
         path,
@@ -182,10 +226,38 @@ describe('#copy', () => {
       ['search.hint', 'Chwilio yn ôl enw, cyfeiriad neu wlad'],
       ['search.button', 'Chwilio'],
       ['search.clear', 'Clirio’r chwiliad'],
+      ['search.role.label', 'Math'],
+      ['search.role.placeholder', 'Dewiswch un'],
       ['add', 'Ychwanegu cyfeiriad newydd'],
       ['results', 'Yn dangos 1-2 o 3'],
       ['noResults', 'Yn dangos 0 o 0'],
+      ['tabsLabel', 'Mathau o gyfeiriad'],
+      ['tabs.ORIGIN_OR_CONSIGNOR.label', 'Tarddiad ac Anfonwr'],
+      ['tabs.ORIGIN_OR_CONSIGNOR.heading', 'Cyfeiriadau tarddiad ac anfonwr'],
+      [
+        'tabs.DESTINATION_CONSIGNEE_OR_IMPORTER.label',
+        'Cyrchfan, Derbynnydd a Mewnforiwr'
+      ],
+      [
+        'tabs.DESTINATION_CONSIGNEE_OR_IMPORTER.heading',
+        'Cyfeiriadau cyrchfan, derbynnydd a mewnforiwr'
+      ],
+      ['tabs.BRANCH.label', 'Cangen'],
+      ['tabs.BRANCH.heading', 'Cyfeiriadau cangen'],
+      ['roles.PLACE_OF_ORIGIN.columnLabel', 'Man tarddiad'],
+      ['roles.PLACE_OF_ORIGIN.optionLabel', 'Man Tarddiad'],
+      ['roles.CONSIGNOR.columnLabel', 'Anfonwr'],
+      ['roles.CONSIGNOR.optionLabel', 'Anfonwr'],
+      ['roles.CONSIGNEE.columnLabel', 'Derbynnydd'],
+      ['roles.CONSIGNEE.optionLabel', 'Derbynnydd'],
+      ['roles.IMPORTER.columnLabel', 'Mewnforiwr'],
+      ['roles.IMPORTER.optionLabel', 'Mewnforiwr'],
+      ['roles.PLACE_OF_DESTINATION.columnLabel', 'Man cyrchfan'],
+      ['roles.PLACE_OF_DESTINATION.optionLabel', 'Man Cyrchfan'],
+      ['roles.BRANCH_ADDRESS.columnLabel', 'Cangen'],
+      ['roles.BRANCH_ADDRESS.optionLabel', 'Cyfeiriad Cangen'],
       ['table.name', 'Enw'],
+      ['table.role', 'Math'],
       ['table.address', 'Cyfeiriad'],
       ['table.country', 'Gwlad'],
       ['table.action', 'Cam gweithredu'],
@@ -193,21 +265,89 @@ describe('#copy', () => {
     ])
   })
 
-  it('Should carry the Welsh for the delete page heading and confirm button', () => {
-    expect(cy.delete.title).toBe('Dileu’r cyfeiriad hwn?')
-    expect(cy.delete.confirm).toBe('Ie, dileu')
+  it('Should word the tab labels, panel headings, Type heading and role labels', () => {
+    expect(copy.list.tabs).toEqual({
+      ORIGIN_OR_CONSIGNOR: {
+        label: 'Origin and Consignor',
+        heading: 'Origin and Consignor addresses'
+      },
+      DESTINATION_CONSIGNEE_OR_IMPORTER: {
+        label: 'Destination, Consignee and Importer',
+        heading: 'Destination, Consignee and Importer addresses'
+      },
+      BRANCH: { label: 'Branch', heading: 'Branch addresses' }
+    })
+    expect(copy.list.table.role).toBe('Type')
+    expect(copy.list.roles).toEqual({
+      PLACE_OF_ORIGIN: {
+        columnLabel: 'Place of origin',
+        optionLabel: 'Place of Origin'
+      },
+      CONSIGNOR: { columnLabel: 'Consignor', optionLabel: 'Consignor' },
+      CONSIGNEE: { columnLabel: 'Consignee', optionLabel: 'Consignee' },
+      IMPORTER: { columnLabel: 'Importer', optionLabel: 'Importer' },
+      PLACE_OF_DESTINATION: {
+        columnLabel: 'Place of destination',
+        optionLabel: 'Place of Destination'
+      },
+      BRANCH_ADDRESS: {
+        columnLabel: 'Branch',
+        optionLabel: 'Branch Address'
+      }
+    })
+  })
+})
+
+describe('#copy of the address type page', () => {
+  it('Should word the caption, heading, each address type with its hint, the Continue button and the missing-type message', () => {
+    expect(copy.addressType).toEqual({
+      caption: 'Add a new address',
+      title: 'Choose an address type',
+      options: {
+        ORIGIN_OR_CONSIGNOR: {
+          label: 'Origin or Consignor',
+          hint: 'Place of origin, Consignor'
+        },
+        DESTINATION_CONSIGNEE_OR_IMPORTER: {
+          label: 'Destination, Consignee or Importer',
+          hint: 'Place of destination, Consignee, Importer'
+        },
+        BRANCH: { label: 'Branch', hint: 'Branch address' }
+      },
+      continue: 'Continue'
+    })
+    expect(copy.errors.addressType.required).toBe('Select an address type')
+  })
+})
+
+describe('#copy.roles journey question', () => {
+  const HINT_TAIL =
+    'Select any other roles or addresses this address should be used for.'
+
+  it('Should word the legend', () => {
+    expect(copy.roles.journeyLegend).toBe(
+      'What else should this address be used for?'
+    )
   })
 
-  it('Should ask for the missing name, postcode, country or phone in its required message', () => {
-    expect(copy.errors.name.required).toBe('Enter a name or organisation')
-    expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
-    expect(copy.errors.countryCode.required).toBe('Select a country')
-    expect(copy.errors.phone.required).toBe('Enter a phone number')
-  })
+  it.each([
+    ['Consignor', 'a'],
+    ['Importer', 'an']
+  ])(
+    'Should word the hint for the %s role with the article %s',
+    (roleLabel, article) => {
+      expect(copy.roles.journeyHint(roleLabel)).toBe(
+        `This address is being added as ${article} ${roleLabel} address. ${HINT_TAIL}`
+      )
+    }
+  )
 
-  it('Should cap the name at 255 characters in its maxLength message', () => {
-    expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
-      'Name must be 255 characters or fewer'
+  it('Should word the Welsh legend and a hint naming the Welsh role', () => {
+    expect(cy.roles.journeyLegend).toBe(
+      'Ar gyfer beth arall y dylid defnyddio’r cyfeiriad hwn?'
+    )
+    expect(cy.roles.journeyHint('Mewnforiwr')).toBe(
+      'Mae’r cyfeiriad hwn yn cael ei ychwanegu fel cyfeiriad Mewnforiwr. Dewiswch unrhyw rolau neu gyfeiriadau eraill y dylid defnyddio’r cyfeiriad hwn ar eu cyfer.'
     )
   })
 })

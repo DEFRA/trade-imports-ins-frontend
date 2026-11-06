@@ -1,10 +1,11 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../common/constants/status-codes.js'
 import {
   addressAddPath,
   addressBookPath,
   ADDRESS_ID,
+  cookieAfterChoosingAddressType,
   addressPath,
   addressEditPath,
   getPage,
@@ -12,13 +13,8 @@ import {
   postPage,
   serveStoredAddress
 } from '../../common/test-helpers/address-book-requests.js'
-import { mockOidcConfig } from '../../common/test-helpers/mock-oidc-config.js'
 import { referenceDataApi } from '../../common/test-helpers/real-mode.js'
 import { startRealModeServer } from '../../common/test-helpers/test-server.js'
-
-vi.mock('../../../auth/get-oidc-config.js', () => ({
-  getOidcConfig: vi.fn(() => Promise.resolve(mockOidcConfig))
-}))
 
 const ERROR_PAGE_TITLE =
   'Something went wrong - Import notification service - GOV.UK'
@@ -56,9 +52,13 @@ describe('#referenceDataOutage', () => {
 
   test('Should serve the add address form as a 503 error page', async () => {
     refuseCountries()
+    const cookie = await cookieAfterChoosingAddressType(
+      getServer(),
+      'outage-add'
+    )
 
     expectServiceUnavailablePage(
-      await getPage(getServer(), addressAddPath(), 'outage-add')
+      await getPage(getServer(), addressAddPath(), 'outage-add', cookie)
     )
   })
 

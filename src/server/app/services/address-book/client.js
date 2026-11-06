@@ -44,16 +44,29 @@ const throwOnErrorWithValidationDetail = async (response) => {
 
 export const listAddresses = async (
   organisationId,
-  { page = 1, pageSize, searchTerm, countryCodes = [] } = {}
+  {
+    page = 1,
+    pageSize,
+    searchTerm,
+    countryCodes = [],
+    roles = [],
+    searchRoles = []
+  } = {}
 ) => {
   const url = new URL(addressesUrl(organisationId))
   url.searchParams.set('page', String(page))
   url.searchParams.set('pageSize', String(pageSize))
+  for (const role of roles) {
+    url.searchParams.append('role', role)
+  }
   if (searchTerm) {
     url.searchParams.set('q', searchTerm)
   }
   for (const countryCode of countryCodes) {
     url.searchParams.append('countryCode', countryCode)
+  }
+  for (const searchRole of searchRoles) {
+    url.searchParams.append('searchRole', searchRole)
   }
 
   const response = await fetch(url.toString(), {

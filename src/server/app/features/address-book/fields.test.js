@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import {
   STORED_ADDRESS,
-  VALID_ADDRESS_PAYLOAD
+  VALID_ADDRESS_FIELDS
 } from '../../../common/test-helpers/address-book-requests.js'
 import { validate } from '../../lib/validate/index.js'
 import {
@@ -11,7 +11,9 @@ import {
   addressRules,
   formValuesOf,
   isRequiredField,
-  postalLinesOf
+  postalLinesOf,
+  postedRolesOf,
+  rolesErrorsOf
 } from './fields.js'
 import { copy } from './copy/copy.en.js'
 
@@ -23,7 +25,7 @@ const REQUIRED_FIELDS = FIELDS.filter(isRequiredField)
 const BOUNDED_FIELDS = FIELDS.filter((field) => FIELD_RULES[field].maxLength)
 
 const addressWith = (overrides = {}) => ({
-  ...VALID_ADDRESS_PAYLOAD,
+  ...VALID_ADDRESS_FIELDS,
   addressLine2: STORED_ADDRESS.addressLine2,
   county: STORED_ADDRESS.county,
   ...overrides
@@ -88,7 +90,15 @@ describe('#addressRules', () => {
       email: 'bad'
     })
 
-    expect(Object.keys(errors)).toEqual(REQUIRED_FIELDS)
+    expect(Object.keys(errors)).toEqual([
+      'name',
+      'addressLine1',
+      'townOrCity',
+      'postcode',
+      'countryCode',
+      'email',
+      'phone'
+    ])
     expect(errors.email).toBe(copy.errors.email.format)
   })
 
@@ -140,8 +150,8 @@ describe('#isRequiredField', () => {
       'townOrCity',
       'postcode',
       'countryCode',
-      'phone',
-      'email'
+      'email',
+      'phone'
     ])
   })
 })
@@ -156,8 +166,8 @@ describe('#formValuesOf', () => {
       county: '',
       postcode: '',
       countryCode: '',
-      phone: '',
-      email: ''
+      email: '',
+      phone: ''
     })
     expect(Object.keys(formValuesOf())).toEqual(FIELDS)
   })
@@ -169,7 +179,7 @@ describe('#formValuesOf', () => {
       county: null
     }
 
-    expect(formValuesOf(address)).toEqual(VALID_ADDRESS_PAYLOAD)
+    expect(formValuesOf(address)).toEqual(VALID_ADDRESS_FIELDS)
   })
 })
 
@@ -211,5 +221,29 @@ describe('#postalLinesOf', () => {
         postcode: 'AB1 2CD'
       })
     ).toEqual(['1 Road', 'Town', 'AB1 2CD'])
+  })
+})
+
+describe('#postedRolesOf', () => {
+  test.each([
+    ['nothing posted', {}, []],
+    ['one value', { roles: 'CONSIGNOR' }, ['CONSIGNOR']],
+    [
+      'many values',
+      { roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'] },
+      ['PLACE_OF_ORIGIN', 'CONSIGNOR']
+    ]
+  ])('Should give a list for %s', (_name, payload, expected) => {
+    expect(postedRolesOf(payload)).toEqual(expected)
+  })
+})
+
+describe('#rolesErrorsOf', () => {
+  test('Should give the roles error when no role is kept', () => {
+    expect(rolesErrorsOf([])).toEqual({ roles: copy.errors.roles.required })
+  })
+
+  test('Should give no errors when a role is kept', () => {
+    expect(rolesErrorsOf(['CONSIGNOR'])).toBeNull()
   })
 })
