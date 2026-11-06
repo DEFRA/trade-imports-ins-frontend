@@ -147,7 +147,8 @@ and `textOf(value)`.
 
 The notification type question keeps its test set-up beside the controller:
 [`requests.test-support.js`](../features/notification-type/requests.test-support.js)
-(`CRN`, and `requestsTo(server)`, which returns `getPage(user, query)` and
+(`CRN`, and `requestsTo(getServer)`, which takes the getter
+`startRealModeServer()` returns and returns `getPage(user, query)` and
 `postType(user, payload)`) and
 [`hand-overs.test-support.js`](../features/notification-type/hand-overs.test-support.js)
 (`handOversFor({ animalsBaseUrl, plantsBaseUrl })`,
@@ -216,11 +217,12 @@ missing or empty. `signInAndOpen(page, organisationId, path)`, beside it, signs
 in and opens a page, and is the helper every FIT uses for both.
 [`fit/axe.js`](../../../../fit/axe.js) — the repo's one axe helper beside it,
 `expectNoSeriousOrCriticalViolations`, used by every FIT spec that runs axe.
+[`fit/error-focus.js`](../../../../fit/error-focus.js) — `expectErrorFocusOn`:
+the error summary link is clicked and the field it names takes focus.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
 `fieldLabels`, `addressFormCountryNames` (the captured countries fixture's
 names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
-`addValidAddressToFreshOrganisation`, `validAddressViewLink`,
-`expectErrorFocusOn`, the two
+`addValidAddressToFreshOrganisation`, `validAddressViewLink`, the two
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
 `openAddressBookList`, `expectAddressBookList`,

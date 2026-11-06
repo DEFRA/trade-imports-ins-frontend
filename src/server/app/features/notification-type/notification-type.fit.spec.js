@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import { config } from '../../../../config/config.js'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../fit/axe.js'
+import { expectErrorFocusOn } from '../../../../../fit/error-focus.js'
 import { signInAndOpen } from '../../../../../fit/sign-in.js'
 import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
 import {
@@ -62,13 +63,13 @@ test.describe('notification type question', () => {
 
     await continueButton(page).click()
 
-    await expect(page.getByRole('alert')).toBeVisible()
-    await expect(
-      page
-        .getByRole('alert')
-        .getByRole('link', { name: 'Select what you are importing' })
-    ).toHaveAttribute('href', '#notificationType')
     await expect(page).toHaveTitle(/^Error: /)
+    await expectErrorFocusOn(page, {
+      message: 'Select what you are importing',
+      label: 'Live animals',
+      expectedValue: 'live-animals',
+      url: notificationTypePath()
+    })
   })
 
   test('shows the alpha phase banner with an email feedback link', async ({

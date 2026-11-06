@@ -145,7 +145,7 @@ auto-waiting, and use no sleeps and no page objects. Use
 "feedback" link also matches "Back" without `exact`.
 
 Cover: initial render, happy-path save and redirect, each validation rule
-(via `expectErrorFocusOn`), preserved values, and cancel/back navigation.
+(via `expectErrorFocusOn` from `fit/error-focus.js`), preserved values, and cancel/back navigation.
 
 ## Accessibility test
 

@@ -3,7 +3,6 @@ import { test, expect } from '@playwright/test'
 import {
   addValidAddressToFreshOrganisation,
   addressFormCountryNames,
-  expectErrorFocusOn,
   fieldLabels,
   fillValidAddress,
   maxLengthValidations,
@@ -19,6 +18,7 @@ import { GB_COUNTRY } from '../address-countries.js'
 import { copy } from '../copy/copy.en.js'
 import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
+import { expectErrorFocusOn } from '../../../../../../fit/error-focus.js'
 import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 import {
   AUTOCOMPLETE_BY_FIELD,

@@ -27,8 +27,10 @@ const PLANTS_BASE_URL = 'http://localhost:3003'
 const HAND_OVER_MESSAGE =
   'Notification type chosen, handing over to the journey frontend'
 const RETURN_MESSAGE = 'Notification type kept, returning to the notification'
-const NOT_RECOGNISED_MESSAGE =
-  'Returning notification not recognised, question opened with nothing chosen'
+const GET_NOT_RECOGNISED_MESSAGE =
+  'Returning notification not recognised, type question opened with nothing chosen'
+const POST_NOT_RECOGNISED_MESSAGE =
+  'Returning notification not recognised, handled as a new notification'
 const CHECKED_OPTION = '.govuk-radios__input:checked'
 const ID_FIELD = 'input[name="notification-id"]'
 const TYPE_FIELD = 'input[name="current-notification-type"]'
@@ -134,6 +136,19 @@ describe('#notificationTypeController', { concurrent: false }, () => {
       expect(statusCode).toBe(statusCodes.redirectFound)
       expect(headers.location).toBe(location)
       expect(loggedWith(RETURN_MESSAGE)).toEqual([])
+      expect(loggedWith(HAND_OVER_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            crn: CRN,
+            notificationType: value,
+            destination: location,
+            leftNotificationReference: SAMPLE_REFERENCE,
+            leftNotificationType: LIVE_ANIMALS
+          },
+          message: HAND_OVER_MESSAGE
+        }
+      ])
     }
   )
 
@@ -146,6 +161,7 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     const $ = load(result)
     expect(statusCode).toBe(statusCodes.badRequest)
     expect($(ID_FIELD).attr('value')).toBe(SAMPLE_REFERENCE)
+    expect($(TYPE_FIELD).attr('value')).toBe(LIVE_ANIMALS)
     expect($(CHECKED_OPTION)).toHaveLength(0)
   })
 
@@ -253,7 +269,7 @@ describe(
   () => {
     const getServer = startRealModeServer()
     const { entriesWith: warnedWith } = recordModuleLoggerWarn()
-    const { getPage } = requestsTo(getServer)
+    const { getPage, postType } = requestsTo(getServer)
 
     test('GET with a live animals notification checks Live animals alone and carries the reference and type in hidden fields', async () => {
       const { result } = await getPage('type-returning', RETURNING_QUERY)
@@ -293,14 +309,33 @@ describe(
         `notification-id=${SAMPLE_REFERENCE}&current-notification-type=unknown`
       )
 
-      expect(warnedWith(NOT_RECOGNISED_MESSAGE)).toEqual([
+      expect(warnedWith(GET_NOT_RECOGNISED_MESSAGE)).toEqual([
         {
           fields: {
             organisationId: ORGANISATION_ID,
             notificationReference: SAMPLE_REFERENCE,
             currentNotificationType: 'unknown'
           },
-          message: NOT_RECOGNISED_MESSAGE
+          message: GET_NOT_RECOGNISED_MESSAGE
+        }
+      ])
+    })
+
+    test('POST with a reference and a type that takes nothing back logs once that the returning notification is handled as new', async () => {
+      await postType('type-post-unrecognised', {
+        notificationType: LIVE_ANIMALS,
+        'notification-id': SAMPLE_REFERENCE,
+        'current-notification-type': 'unknown'
+      })
+
+      expect(warnedWith(POST_NOT_RECOGNISED_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            notificationReference: SAMPLE_REFERENCE,
+            currentNotificationType: 'unknown'
+          },
+          message: POST_NOT_RECOGNISED_MESSAGE
         }
       ])
     })
@@ -312,7 +347,7 @@ describe(
         'current-notification-type=unknown'
       )
 
-      expect(warnedWith(NOT_RECOGNISED_MESSAGE)).toEqual([])
+      expect(warnedWith(GET_NOT_RECOGNISED_MESSAGE)).toEqual([])
     })
   }
 )

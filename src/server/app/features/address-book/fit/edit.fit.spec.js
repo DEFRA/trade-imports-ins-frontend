@@ -1,13 +1,10 @@
 import { test, expect } from '@playwright/test'
 
 import { expectAddressBookList } from './address-book-list.js'
-import {
-  fieldLabels,
-  expectErrorFocusOn,
-  setFieldValue
-} from './address-form.js'
+import { fieldLabels, setFieldValue } from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import { expectDashboard } from '../../dashboard/fit/dashboard.js'
+import { expectErrorFocusOn } from '../../../../../../fit/error-focus.js'
 import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 import { withReturn } from './return-query.js'
 import {

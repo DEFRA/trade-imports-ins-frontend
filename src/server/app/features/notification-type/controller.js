@@ -25,29 +25,28 @@ const rules = requiredOneOf(
   copy.errors.notificationType
 )
 
-const readReturningNotification = (source) => {
+const readReturningNotification = (
+  request,
+  source,
+  { unrecognisedMessage }
+) => {
   const reference = trimmedField(source, 'notification-id')
   const type = trimmedField(source, 'current-notification-type')
-  return reference && takesNotificationBack(type)
-    ? { reference, type }
-    : undefined
-}
-
-const warnWhenReturningNotificationNotRecognised = (request, source) => {
-  const reference = trimmedField(source, 'notification-id')
-  if (reference && !readReturningNotification(source)) {
+  if (!reference) {
+    return undefined
+  }
+  if (!takesNotificationBack(type)) {
     logger.warn(
       {
         organisationId: kit.requireOrganisationId(request),
         notificationReference: reference,
-        currentNotificationType: trimmedField(
-          source,
-          'current-notification-type'
-        )
+        currentNotificationType: type
       },
-      'Returning notification not recognised, question opened with nothing chosen'
+      unrecognisedMessage
     )
+    return undefined
   }
+  return { reference, type }
 }
 
 const itemsOf = (selected) =>
@@ -70,8 +69,14 @@ const buildView = (h, { selected, returningNotification, errors = {} } = {}) =>
     .header('Cache-Control', 'no-store')
 
 const get = (request, h) => {
-  warnWhenReturningNotificationNotRecognised(request, request.query)
-  const returningNotification = readReturningNotification(request.query)
+  const returningNotification = readReturningNotification(
+    request,
+    request.query,
+    {
+      unrecognisedMessage:
+        'Returning notification not recognised, type question opened with nothing chosen'
+    }
+  )
   return buildView(h, {
     selected: returningNotification?.type,
     returningNotification
@@ -105,11 +110,23 @@ const returnToNotification = (request, h, returningNotification) => {
   return h.redirect(destination)
 }
 
-const handOverToJourney = (request, h, notificationType) => {
+const handOverToJourney = (
+  request,
+  h,
+  notificationType,
+  returningNotification
+) => {
   const destination = startUrlFor(notificationType)
   logDestination(
     request,
-    { notificationType, destination },
+    {
+      notificationType,
+      destination,
+      ...(returningNotification && {
+        leftNotificationReference: returningNotification.reference,
+        leftNotificationType: returningNotification.type
+      })
+    },
     'Notification type chosen, handing over to the journey frontend'
   )
   return h.redirect(destination)
@@ -117,8 +134,14 @@ const handOverToJourney = (request, h, notificationType) => {
 
 const post = (request, h) => {
   const selected = request.payload?.[FIELD]
-  warnWhenReturningNotificationNotRecognised(request, request.payload)
-  const returningNotification = readReturningNotification(request.payload)
+  const returningNotification = readReturningNotification(
+    request,
+    request.payload,
+    {
+      unrecognisedMessage:
+        'Returning notification not recognised, handled as a new notification'
+    }
+  )
   const { errors, value } = validate(rules, { [FIELD]: selected })
   if (errors) {
     return buildView(h, { selected, returningNotification, errors }).code(
@@ -127,7 +150,7 @@ const post = (request, h) => {
   }
   return value[FIELD] === returningNotification?.type
     ? returnToNotification(request, h, returningNotification)
-    : handOverToJourney(request, h, value[FIELD])
+    : handOverToJourney(request, h, value[FIELD], returningNotification)
 }
 
 export const routes = kit.pageRoutes(notificationTypePath(), { get, post })

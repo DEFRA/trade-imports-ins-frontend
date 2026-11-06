@@ -59,22 +59,6 @@ export const addValidAddressToFreshOrganisation = async (
 export const validAddressViewLink = (page) =>
   page.getByRole('link', { name: `View ${validAddress.name}` })
 
-export const errorLink = (page, message) =>
-  page.getByRole('alert').getByRole('link', { name: message, exact: true })
-
-export async function expectErrorFocusOn(
-  page,
-  { message, label, expectedValue, url }
-) {
-  await expect(page).toHaveURL(url)
-  const link = errorLink(page, message)
-  await expect(link).toBeVisible()
-  await link.click()
-  const control = page.getByLabel(label)
-  await expect(control).toBeFocused()
-  await expect(control).toHaveValue(expectedValue)
-}
-
 export const requiredValidations = [
   ['name', fieldLabels.name, 'Enter a name or organisation'],
   ['addressLine1', fieldLabels.addressLine1, 'Enter address line 1'],
