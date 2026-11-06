@@ -206,7 +206,7 @@ describe('#dashboard — search, sort and errors', () => {
     expect(scope.isDone()).toBe(true)
   })
 
-  test('a middle page of many shows the first, neighbouring and last page links with an ellipsis for each gap, each keeping the sort', async () => {
+  test('a middle page of many shows Previous, the first, neighbouring and last page links with an ellipsis for each gap, and Next, every link keeping the sort', async () => {
     notificationsRequest({ page: '10', sort: 'lastUpdated,asc' }).reply(
       200,
       pageOf([SUBMITTED_NOTIFICATION], {
@@ -241,6 +241,8 @@ describe('#dashboard — search, sort and errors', () => {
       pageHref(11),
       pageHref(20)
     ])
+    expect($('.govuk-pagination__prev a').attr('href')).toBe(pageHref(9))
+    expect($('.govuk-pagination__next a').attr('href')).toBe(pageHref(11))
   })
 
   test('an unrecognised sort value falls back to the default rather than reaching the backend', async () => {
