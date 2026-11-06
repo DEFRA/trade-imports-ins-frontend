@@ -11,6 +11,12 @@ const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
 const ARRIVAL_DATE = '2026-09-10'
+const SUBMITTED_NOTIFICATION = {
+  referenceNumber: REFERENCE_NUMBER,
+  status: 'SUBMITTED',
+  originCountry: 'GB',
+  arrivalDate: ARRIVAL_DATE
+}
 const COUNTRIES = [
   { code: 'GB', name: 'United Kingdom' },
   { code: 'FR', name: 'France' }
@@ -69,12 +75,7 @@ describe('#dashboard', () => {
       200,
       pageOf(
         [
-          {
-            referenceNumber: REFERENCE_NUMBER,
-            status: 'SUBMITTED',
-            originCountry: 'GB',
-            arrivalDate: ARRIVAL_DATE
-          },
+          SUBMITTED_NOTIFICATION,
           {
             referenceNumber: OTHER_REFERENCE_NUMBER,
             status: 'DRAFT',
@@ -97,17 +98,7 @@ describe('#dashboard', () => {
   })
 
   test('selecting a submitted notification links into the notification-view page', async () => {
-    notificationsRequest().reply(
-      200,
-      pageOf([
-        {
-          referenceNumber: REFERENCE_NUMBER,
-          status: 'SUBMITTED',
-          originCountry: 'GB',
-          arrivalDate: ARRIVAL_DATE
-        }
-      ])
-    )
+    notificationsRequest().reply(200, pageOf([SUBMITTED_NOTIFICATION]))
 
     const { result } = await getServer().inject({
       method: 'GET',
@@ -153,17 +144,7 @@ describe('#dashboard — search, sort and errors', () => {
     const scope = notificationsRequest({
       ...DEFAULT_QUERY,
       referenceNumber: REFERENCE_NUMBER
-    }).reply(
-      200,
-      pageOf([
-        {
-          referenceNumber: REFERENCE_NUMBER,
-          status: 'SUBMITTED',
-          originCountry: 'GB',
-          arrivalDate: ARRIVAL_DATE
-        }
-      ])
-    )
+    }).reply(200, pageOf([SUBMITTED_NOTIFICATION]))
 
     const { result } = await getServer().inject({
       method: 'GET',
@@ -223,6 +204,45 @@ describe('#dashboard — search, sort and errors', () => {
     })
 
     expect(scope.isDone()).toBe(true)
+  })
+
+  test('a middle page of many shows Previous, the first, neighbouring and last page links with an ellipsis for each gap, and Next, every link keeping the sort', async () => {
+    notificationsRequest({ page: '10', sort: 'lastUpdated,asc' }).reply(
+      200,
+      pageOf([SUBMITTED_NOTIFICATION], {
+        page: 10,
+        totalElements: 500,
+        totalPages: 20
+      })
+    )
+
+    const { result } = await getServer().inject({
+      method: 'GET',
+      url: '/?page=10&sort=lastUpdated,asc',
+      auth: sessionAuth('dashboard-many-pages')
+    })
+
+    const $ = load(result)
+    const pageHref = (page) => `/?sort=lastUpdated%2Casc&page=${page}`
+    expect(
+      $('.govuk-pagination__item')
+        .map((_, item) => $(item).text().trim())
+        .get()
+    ).toEqual(['1', '⋯', '9', '10', '11', '⋯', '20'])
+    expect($('.govuk-pagination__item--current').text().trim()).toBe('10')
+    expect(
+      $('.govuk-pagination__item a')
+        .map((_, link) => $(link).attr('href'))
+        .get()
+    ).toEqual([
+      '/?sort=lastUpdated%2Casc',
+      pageHref(9),
+      pageHref(10),
+      pageHref(11),
+      pageHref(20)
+    ])
+    expect($('.govuk-pagination__prev a').attr('href')).toBe(pageHref(9))
+    expect($('.govuk-pagination__next a').attr('href')).toBe(pageHref(11))
   })
 
   test('an unrecognised sort value falls back to the default rather than reaching the backend', async () => {
