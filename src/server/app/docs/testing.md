@@ -7,9 +7,11 @@ Run commands from the repository root.
 `npm test` builds the client (`pretest`) then runs Vitest with coverage.
 `npm run test:watch` does neither.
 [`vitest.config.js`](../../../../vitest.config.js): globals, Node
-environment, and **`STUB_MODE=true` for the whole suite** — a test that
-needs the HTTP clients opts into real mode itself. The `test` and
-`test:watch` scripts set `TZ=UTC`. Tests sit beside their subject.
+environment, **`STUB_MODE=true` for the whole suite** — a test that
+needs the HTTP clients opts into real mode itself — `TZ=UTC`, and
+`AWS_EMF_ENVIRONMENT=Local`, so metrics are written to the console the
+metric tests read. A bare `npx vitest run` gets the same environment as
+`npm test`. Tests sit beside their subject.
 
 Date tests in [`lib/validate/calendar.test.js`](../lib/validate/calendar.test.js)
 move the process zone with
@@ -18,8 +20,8 @@ that reads the process zone gives the same day as code that does not, so a
 zone mistake cannot fail a test there. Each zone guards one kind of input:
 
 - `WEST_OF_UTC` (`America/New_York`) guards a midnight-UTC instant. Read in
-  the process zone, it falls on the day before. The `formatDateText` case
-  covers this.
+  the process zone, it falls on the day before. The `formatDateText`,
+  `addUtcDays` and `addUtcMonths` cases cover this.
 - `EAST_OF_UTC` (`Pacific/Auckland`) guards a date-only string parsed as
   local midnight. Read as UTC, it falls on the day before. The
   `parseDateText` case covers this.
@@ -50,6 +52,11 @@ for the pattern, and the helpers in
 [`common/test-helpers/`](../../common/test-helpers/): `real-mode.js`
 (`runInRealMode()`, `refuseOutboundHttp()`, `addressBookApi()`,
 `referenceDataApi()`, `insBackendApi()`, `serveCountries(list)`),
+`module-logger-lines.js` (`recordModuleLoggerInfo()`,
+`recordModuleLoggerWarn()` and `recordModuleLoggerError()`, which record the
+info, warn or error lines the module-level logger writes during each test of
+the enclosing `describe`, and return `entriesWith(message)`, the lines logged
+with that message),
 `address-book-requests.js`, the one owner of the address book tests'
 set-up: page paths (`addressBookPath()`, `addressAddPath()`,
 `addressTypePath()`, `addressTypeStartPath()`, `addressPath(id)`,
@@ -102,9 +109,6 @@ party's own role, and `UNREGISTERED_JOURNEY_TYPE`, a journey type the
 registry does not list, `UNITED_KINGDOM_PARTIES`, the parties whose address
 must be in the United Kingdom, and `ANY_COUNTRY_PARTIES`, the parties whose
 address may be in any country),
-`answer-oidc-discovery.js` (`answerOidcDiscovery()`, which answers the Defra
-ID OIDC discovery request once with `mockOidcConfig`; `startRealModeServer()`
-calls it before each server start, so no test calls it itself),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
 notificationId)`, the Draft tag and notification id in the
 journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
@@ -121,10 +125,6 @@ shows),
 and `normalisedText(text)`, a rendered element's text trimmed with its
 whitespace collapsed to single spaces, which every Vitest test reads text
 through),
-`capture-info-logs.js` (`captureInfoLogs()`, `captureWarnLogs()` and
-`captureErrorLogs()`, each of which records the logger's
-entries at its level for a describe block and returns a function that reads those
-logged with a message),
 `open-empty-address-book-with-cookies.js`
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
 opens the address book list with the cookies a POST set so a test can
@@ -139,7 +139,41 @@ names the stub lists at that page size),
 (`mockAuthConfig(importOriginal)`), `test-server.js`
 (`startTestServer()`, `stopTestServer(server)`, `startRealModeServer()`,
 `startRealModeServerServingCountries(countries)`, which returns a getter
-for the started server).
+for the started server), `restore-config-after-each.js`
+(`restoreConfigAfterEach(keys)`, which restores the named config keys after
+each test) and `serve-oidc-discovery.js`. That file exports
+`serveOidcDiscovery()`, which serves the OIDC discovery document at the
+network boundary, and `startRealModeServer()` calls it. It also exports
+`discoveryUrlRequest({ persist, ...scopeOptions })`, the nock interceptor at
+the configured discovery URL, for a test that matches a header, delays the
+reply or fails it. It also exports
+`runAgainstMockOidcDiscoveryUrl({ restoringConfigKeys })`, which refuses
+outbound HTTP, restores the discovery URL and the named config keys after each
+test, and sets the discovery URL to a mock host before each test, and
+`runAgainstServedOidcDiscovery(document, { restoringConfigKeys })`, which does
+the same and also serves the given discovery document before each test.
+`emf-documents.js` exports `readEmfDocuments(logSpy)`, the EMF documents
+written to a console.log spy, and `awaitEmfDocumentForOperation(logSpy,
+operation)`, which waits for and returns the EMF document for one external
+call's operation. The last file, `stack-defra-id-rewrite.js`, exports
+`setStackDefraIdRewrite()`, which sets the workspace stack's Defra ID
+hostname rewrite (enabled, from `host.docker.internal` and
+`trade-imports-defra-id-stub`, to `localhost`), and
+`STACK_DEFRA_ID_REWRITE_KEYS`, the three config keys to restore.
+
+[`shared/copy-leaves.test-support.js`](../shared/copy-leaves.test-support.js)
+holds `itHoldsTextAtEveryLeaf({ en, cy })`, which every copy bundle test calls,
+and `sampleCopyText(value)`.
+
+The notification type question keeps its test set-up beside the controller:
+[`requests.test-support.js`](../features/notification-type/requests.test-support.js)
+(`CRN`, and `requestsTo(getServer)`, which takes the getter
+`startRealModeServer()` returns and returns `getPage(user, query)` and
+`postType(user, payload)`) and
+[`hand-overs.test-support.js`](../features/notification-type/hand-overs.test-support.js)
+(`handOversFor({ animalsBaseUrl, plantsBaseUrl })`,
+`expectedReturnUrl({ animalsBaseUrl, reference })`, `SAMPLE_REFERENCE` and
+`LABELS_IN_ORDER`).
 
 [`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
 holds the list's fixtures, nock stubs and Cheerio readers:
@@ -206,7 +240,15 @@ when the stack is up; `npm run test:fit:ci` does. Run `npm run
 playwright:install` once (Chromium).
 
 Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
-`signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
+`signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`. The
+organisation id is required: `signIn` throws, before navigating, when it is
+missing or empty. `signInAndOpen(page, organisationId, path)`, beside it, signs
+in and opens a page, and is the helper every FIT uses for both.
+[`fit/axe.js`](../../../../fit/axe.js) — the repo's one axe helper beside it,
+`expectNoSeriousOrCriticalViolations`, used by every FIT spec that runs axe.
+[`fit/error-focus.js`](../../../../fit/error-focus.js) — `expectErrorFocusOn`:
+the error summary link is clicked and the field it names takes focus, and
+`errorLink`, the error summary link with a message.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
 `fieldLabels`, `fieldLabelsInFormOrder` (the nine labels in page order), `addressFormCountryNames` (the captured countries fixture's
 names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
@@ -229,8 +271,7 @@ with the type's first role, Place of
 origin, and lands on that type's list; `emptyBook: true` signs in to an
 organisation the stub seeds no address for), `refuseSaveThenReopenAddForm`
 (saves a form with a malformed email, follows Back and chooses the type again), `malformedEmail` (an email value the form refuses as malformed),
-`validAddressViewLink`,
-`expectErrorFocusOn`, the two
+`validAddressViewLink`, the two
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
 `UNKNOWN_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE` and
@@ -247,10 +288,13 @@ Playwright locator for the Type select; the Cheerio reader in
 an address type tab's link), `openFilterDisclosure`,
 `expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery`,
 `resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
-[`dashboard.js`](../features/address-book/fit/dashboard.js) —
-`expectDashboard`.
-[`axe.js`](../features/address-book/fit/axe.js) — the address-book group's
-shared axe helper, `expectNoSeriousOrCriticalViolations`.
+[`dashboard.js`](../features/dashboard/fit/dashboard.js) —
+`expectDashboard`, `dashboardSearchField`, `searchDashboardFor`.
+[`notification-type.js`](../features/notification-type/fit/notification-type.js) —
+`expectUnselectedNotificationType`: the browser is on the type question, with
+its four options in order and none chosen.
+`expectOnlyNotificationTypeChecked`: the browser is on the type question with
+the one named option chosen.
 [`seed-address.js`](../features/address-book/fit/seed-address.js) —
 `seedAddress`, the address the stub seeds for an ordinary organisation,
 its `seedAddressLines`, and the unknown and malformed ids.
@@ -262,7 +306,10 @@ Every test signs in with its own organisation id, because the
 address-book stub keys its data by organisation; the `-empty`,
 `-paginated` and `-typed` suffixes select those seeds (thirty addresses,
 four pages of eight; addresses holding roles of all three address
-types). No sleeps, no page objects, and
+types). The INS backend stub also seeds by organisation: the `-empty` suffix
+gives the dashboard no notifications. `isEmptySeedOrganisation` in
+[`services/stub-seed.js`](../services/stub-seed.js) decides the `-empty` suffix
+for both stubs. No sleeps, no page objects, and
 `exact: true` on "Back". On failure read
 `test-results/<spec>/error-context.md` and the HTML report in
 `playwright-report/`.

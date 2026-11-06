@@ -19,7 +19,7 @@ spec. `features/address-book/add` adds a service call and the address fields.
 - [`features/address-book/add/add.controller.test.js`](../features/address-book/add/add.controller.test.js)
 - [`features/address-book/fit/add.fit.spec.js`](../features/address-book/fit/add.fit.spec.js)
 - [`features/address-book/fit/address-form.js`](../features/address-book/fit/address-form.js)
-- [`features/address-book/fit/axe.js`](../features/address-book/fit/axe.js)
+- [`fit/axe.js`](../../../../fit/axe.js)
 - [`features/address-book/copy/copy.en.js`](../features/address-book/copy/copy.en.js)
 - [`features/address-book/copy/copy.cy.js`](../features/address-book/copy/copy.cy.js)
 - [`features/address-book/copy/copy.test.js`](../features/address-book/copy/copy.test.js)
@@ -35,8 +35,10 @@ import from them. Read the files above, not the journey paths.
 ## 1. Name the path
 
 Add a builder to `shared/paths.js` (and a `*RoutePath()` twin if the page
-is parameterised). Add its case to `shared/paths.test.js`. The URL appears
-nowhere else.
+is parameterised). Add its case to `shared/paths.test.js`. This service's own
+page paths are written nowhere else; only `destinations.js`, `set-base-url.js`
+and `journey-registry.js` write URLs on the animals and plants frontends (see
+[Paths](features.md#paths)).
 
 ## 2. Create the feature folder
 
@@ -121,12 +123,14 @@ entry module under `src/client/javascripts/`, name it as an `entry` in
 Write `controller.test.js` in the shape of
 [`add/add.controller.test.js`](../features/address-book/add/add.controller.test.js):
 
-- `describe(name, { concurrent: false }, fn)` holding
-  `const server = startRealModeServerServingCountries(COUNTRIES)` from
-  `test-server.js`, which runs in real mode, answers the Defra ID OIDC
-  discovery request, starts the server and stops it after the describe.
-- `config.set('csrf.enabled', false)` in `beforeEach`.
-- `server().inject` with `auth: sessionAuth('<unique id>')`.
+- `describe(name, { concurrent: false }, fn)`.
+- Start the server with `const getServer = startRealModeServer()` (or
+  `startRealModeServerServingCountries(countries)`) from
+  `common/test-helpers/test-server.js`, which runs in real mode, serves
+  OIDC discovery through `serveOidcDiscovery()`, starts the server and
+  stops it after the describe. Then use `restoreConfigAfterEach([...keys])`
+  and `recordModuleLoggerInfo()` where needed.
+- `getServer().inject` with `auth: sessionAuth('<unique id>')`.
 - nock scopes from `real-mode.js` for every upstream call, asserted with
   `scope.isDone()`.
 - coverage: GET render, every validation rule's message, raw values
@@ -141,31 +145,32 @@ pin catches copy drift.
 
 Add `features/<name>/<name>.fit.spec.js` beside the controller, or, for a
 page joining a group, a spec in the group's `fit/`.
-`import { signIn } from '<relative>/fit/sign-in.js'`. Every test
+`import { signInAndOpen } from '<relative>/fit/sign-in.js'`. Every test
 signs in with its own organisation id (`stub-org-<page>-<case>`, with
 `crypto.randomUUID()` when the test writes), because the address-book
 stub keys its data by organisation — the `-empty`, `-paginated` and
 `-typed` suffixes select the empty, 30-record and typed-record seeds,
-and anything else gets one seed at `SEED_ADDRESS_ID`. Use raw role, label and copy locators, rely on
+and anything else gets one seed at `SEED_ADDRESS_ID`. The INS backend
+stub's `-empty` suffix likewise gives the dashboard no notifications;
+`isEmptySeedOrganisation` in `services/stub-seed.js` decides the `-empty`
+suffix for both stubs. Use raw role, label and copy locators, rely on
 auto-waiting, and use no sleeps and no page objects. Use
 `getByRole('link', { name: 'Back', exact: true })` — the phase banner's
 "feedback" link also matches "Back" without `exact`.
 
 Cover: initial render, happy-path save and redirect, each validation rule
-(via `expectErrorFocusOn`), preserved values, and cancel/back navigation.
+(via `expectErrorFocusOn` from `fit/error-focus.js`), preserved values, and cancel/back navigation.
 
 ## Accessibility test
 
 Check the initial render and the validation-error state (`await
 expect(page.getByRole('alert')).toBeVisible()` first). For a page joining
-`address-book`, import `expectNoSeriousOrCriticalViolations` from the group's
-[`fit/axe.js`](../features/address-book/fit/axe.js) and call it with
-`(page, name)`. For a new single-page feature, define
-`expectNoSeriousOrCriticalViolations` inline at the top of
-`features/<name>/<name>.fit.spec.js`, the way
+`address-book`, or a new single-page feature, import
+`expectNoSeriousOrCriticalViolations` from the repo's one axe helper,
+[`fit/axe.js`](../../../../fit/axe.js), and call it with `(page, name)`, the way
 [`features/dashboard/dashboard.fit.spec.js`](../features/dashboard/dashboard.fit.spec.js)
-does. Either way it checks `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` and
-`wcag22aa`, and fails on a serious or critical violation.
+does. It checks `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` and `wcag22aa`, and
+fails on a serious or critical violation. Never define a second copy inline.
 
 ## 9. Run every check
 

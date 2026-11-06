@@ -10,5 +10,6 @@ export const statusCodes = {
   imATeapot: 418,
   payloadTooLarge: 413,
   internalServerError: 500,
-  serviceUnavailable: 503
+  serviceUnavailable: 503,
+  gatewayTimeout: 504
 }

@@ -1,4 +1,4 @@
-import { addDays, addMonths, isValid, parse } from 'date-fns'
+import { isValid, parse } from 'date-fns'
 
 export const isRealDate = (year, month, day) => {
   const monthsInYear = 12
@@ -38,10 +38,29 @@ export const utcMidnightOfDayInZone = (date, timeZone) => {
   )
 }
 
-export const addUtcDays = (date, days) => addDays(startOfUtcDay(date), days)
+export const addUtcDays = (date, days) =>
+  new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate() + days
+    )
+  )
 
-export const addUtcMonths = (date, months) =>
-  addMonths(startOfUtcDay(date), months)
+export const addUtcMonths = (date, months) => {
+  const targetYear = date.getUTCFullYear()
+  const targetMonth = date.getUTCMonth() + months
+  const lastDayOfTargetMonth = new Date(
+    Date.UTC(targetYear, targetMonth + 1, 0)
+  ).getUTCDate()
+  return new Date(
+    Date.UTC(
+      targetYear,
+      targetMonth,
+      Math.min(date.getUTCDate(), lastDayOfTargetMonth)
+    )
+  )
+}
 
 export const parseDateText = (raw) => {
   const dateTextFormat = 'd/M/yyyy'

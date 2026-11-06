@@ -1,7 +1,25 @@
 import { createServer } from '../../server.js'
 import { config } from '../../../config/config.js'
+import { useRetryingKeepAliveAgentForWreck } from '../../../auth/wreck-agent.js'
+import { allowOneSecondPerAddressWhenConnecting } from './connect-attempt.js'
+import { createLogger } from './logging/logger.js'
 
 async function startServer() {
+  allowOneSecondPerAddressWhenConnecting()
+  const logger = createLogger()
+  if (config.get('httpProxy')) {
+    logger.info(
+      { keepAliveAgent: false, reason: 'httpProxy' },
+      'HTTP proxy configured; Wreck keeps its own agent'
+    )
+  } else {
+    useRetryingKeepAliveAgentForWreck(logger)
+    logger.info(
+      { keepAliveAgent: true },
+      'Wreck plain-HTTP calls use the retrying keep-alive agent'
+    )
+  }
+
   const server = await createServer()
   await server.start()
 

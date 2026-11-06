@@ -1,4 +1,7 @@
-import { SET_BASES } from '../../../common/constants/journey-set-bases.js'
+import {
+  SET_BASES,
+  SET_FRONTEND_BASE_URL_KEYS
+} from '../../../common/constants/journey-set-bases.js'
 import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
 import {
   ROLES,
@@ -26,7 +29,7 @@ const RETURN_PATH_TEMPLATE =
 
 const registry = Object.freeze({
   [JOURNEY_TYPES.GBN_AG]: {
-    baseUrlConfigKey: 'tradeImportsAnimalsFrontend.baseUrl',
+    baseUrlConfigKey: SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS],
     setBase: SET_BASES.LIVE_ANIMALS,
     returnPathTemplate: RETURN_PATH_TEMPLATE,
     consignmentContactFulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID,

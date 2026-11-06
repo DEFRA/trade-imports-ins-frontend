@@ -5,7 +5,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     clearMocks: true,
-    env: { STUB_MODE: 'true' },
+    env: { STUB_MODE: 'true', TZ: 'UTC', AWS_EMF_ENVIRONMENT: 'Local' },
     exclude: [...configDefaults.exclude, 'fit/**', '**/*.fit.spec.js'],
     coverage: {
       provider: 'v8',

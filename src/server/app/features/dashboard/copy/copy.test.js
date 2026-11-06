@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { itHoldsCopyAtEveryLeaf } from '../../../shared/copy-leaves.test-support.js'
+import { itHoldsTextAtEveryLeaf } from '../../../shared/copy-leaves.test-support.js'
 import { SORT_OPTIONS } from '../view-model/list.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
 
 describe('#copy', () => {
-  itHoldsCopyAtEveryLeaf(copy, cy)
+  itHoldsTextAtEveryLeaf({ en: copy, cy })
 
   it.each([
     ['en', copy],
@@ -24,13 +24,17 @@ describe('#copy', () => {
     expect(copy.results(26, 40, 40)).toBe('Showing 26-40 of 40')
   })
 
-  it('Should word the title, search label, no-results line, empty text and start button', () => {
+  it('Should word the title, search label, no-results line and empty text', () => {
     expect(copy.title).toBe('Dashboard')
     expect(copy.search.label).toBe('Search by notification reference')
     expect(copy.search.noResults).toBe('No notifications found')
-    expect(copy.empty).toEqual({
-      text: 'There are no notifications yet.',
-      startButton: 'Start a new notification'
-    })
+    expect(copy.empty).toEqual({ text: 'There are no notifications yet.' })
+  })
+
+  it.each([
+    ['en', copy, 'Create new'],
+    ['cy', cy, 'Creu newydd']
+  ])('Should label the Create new button in %s', (_locale, bundle, label) => {
+    expect(bundle.createNew).toBe(label)
   })
 })

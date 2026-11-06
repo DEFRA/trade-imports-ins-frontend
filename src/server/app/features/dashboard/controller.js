@@ -11,11 +11,11 @@ import {
   parsePage,
   buildResultsLabel
 } from '../../shared/list-page.js'
-import { dashboardPath } from '../../shared/paths.js'
+import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
+import { organisationIdOf } from '../../../common/helpers/organisation-id.js'
 import {
   SORT_OPTIONS,
-  buildStartNewNotificationLink,
   dashboardPageHref,
   mapNotificationRows
 } from './view-model/list.js'
@@ -75,7 +75,7 @@ const buildView = (
     sortOptions: sortOptionsOf(sort),
     referenceNumber,
     hasSearch,
-    startNewNotificationHref: buildStartNewNotificationLink(),
+    createNewHref: notificationTypePath(),
     ...model
   })
 
@@ -88,7 +88,7 @@ const get = async (request, toolkit) => {
 
   try {
     const countries = await getCountries()
-    const response = await listNotifications({
+    const response = await listNotifications(organisationIdOf(request), {
       page,
       sort,
       referenceNumber: hasSearch ? referenceNumber : undefined

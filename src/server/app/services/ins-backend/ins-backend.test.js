@@ -19,6 +19,7 @@ const TRACE_ID = 'trace-123'
 const NOTIFICATIONS_PATH = '/notifications'
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
+const STUB_SEED_ORGANISATION_ID = 'stub-org-notifications'
 
 const emptyPage = (page) => ({
   content: [],
@@ -50,7 +51,9 @@ describe('against the real INS backend', () => {
         totalPages: 1
       })
 
-    const result = await listNotifications({ page: 1 })
+    const result = await listNotifications(STUB_SEED_ORGANISATION_ID, {
+      page: 1
+    })
 
     expect(result.totalElements).toBe(1)
     expect(result.content[0].referenceNumber).toBe(REFERENCE_NUMBER)
@@ -67,7 +70,7 @@ describe('against the real INS backend', () => {
       })
       .reply(200, emptyPage(2))
 
-    await listNotifications({
+    await listNotifications(STUB_SEED_ORGANISATION_ID, {
       page: 2,
       sort: 'arrivalDate,asc',
       referenceNumber: OTHER_REFERENCE_NUMBER
@@ -76,7 +79,7 @@ describe('against the real INS backend', () => {
     expect(scope.isDone()).toBe(true)
   })
 
-  test('Should not send an organisation header — the dashboard is deliberately unscoped', async () => {
+  test('Should send the request without an organisation header', async () => {
     const scope = insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query({ page: '1' })
@@ -87,7 +90,7 @@ describe('against the real INS backend', () => {
         return [200, emptyPage(1)]
       })
 
-    await listNotifications({ page: 1 })
+    await listNotifications(STUB_SEED_ORGANISATION_ID, { page: 1 })
 
     expect(scope.isDone()).toBe(true)
   })
@@ -98,7 +101,9 @@ describe('against the real INS backend', () => {
       .query({ page: '1' })
       .reply(500, { title: 'Internal Server Error' })
 
-    await expect(listNotifications({ page: 1 })).rejects.toMatchObject({
+    await expect(
+      listNotifications(STUB_SEED_ORGANISATION_ID, { page: 1 })
+    ).rejects.toMatchObject({
       status: 500,
       message: 'Internal Server Error'
     })
@@ -109,7 +114,10 @@ describe('in stub mode', () => {
   refuseOutboundHttp()
 
   test('Should serve the canned notifications without a request', async () => {
-    const { content, totalElements } = await listNotifications({ page: 1 })
+    const { content, totalElements } = await listNotifications(
+      STUB_SEED_ORGANISATION_ID,
+      { page: 1 }
+    )
 
     expect(totalElements).toBe(3)
     expect(content.map((n) => n.referenceNumber)).toEqual([

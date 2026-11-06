@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { signIn } from '../../../../../../fit/sign-in.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signIn, signInAndOpen } from '../../../../../../fit/sign-in.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
   addressAddPath,
@@ -25,7 +24,7 @@ import {
   validAddress
 } from './address-form.js'
 import { openAddressBookList } from './address-book-list.js'
-import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 
 const { addressType: typeCopy, errors } = copy
 const ADDRESS_TYPE_VALUES = Object.values(ADDRESS_TYPES)

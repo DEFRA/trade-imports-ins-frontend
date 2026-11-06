@@ -1,26 +1,30 @@
 import { load } from 'cheerio'
 import { describe, expect, test } from 'vitest'
 
+import { config } from '../../../../config/config.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { sessionAuth } from '../../../common/test-helpers/session-auth.js'
 import { insBackendApi } from '../../../common/test-helpers/real-mode.js'
 import { startRealModeServerServingCountries } from '../../../common/test-helpers/test-server.js'
+import { notificationTypePath } from '../../shared/paths.js'
 
+const COUNTRIES = [
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'FR', name: 'France' }
+]
+const ANIMALS_BASE_URL = config.get('tradeImportsAnimalsFrontend.baseUrl')
 const NOTIFICATIONS_PATH = '/notifications'
 const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
 const ARRIVAL_DATE = '2026-09-10'
+const CREATE_NEW_SELECTOR = 'main a[role="button"]'
 const SUBMITTED_NOTIFICATION = {
   referenceNumber: REFERENCE_NUMBER,
   status: 'SUBMITTED',
   originCountry: 'GB',
   arrivalDate: ARRIVAL_DATE
 }
-const COUNTRIES = [
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'FR', name: 'France' }
-]
 
 const notificationsRequest = (query = DEFAULT_QUERY) =>
   insBackendApi().get(NOTIFICATIONS_PATH).query(query)
@@ -35,10 +39,24 @@ const pageOf = (content, overrides = {}) => ({
   ...overrides
 })
 
+const expectOneCreateNewButton = (result) => {
+  const buttons = load(result)(CREATE_NEW_SELECTOR)
+
+  expect(buttons).toHaveLength(1)
+  expect(buttons.text().trim()).toBe('Create new')
+  expect(buttons.attr('href')).toBe(notificationTypePath())
+  return buttons
+}
+
+const documentOrderOf = (result, selectors) =>
+  load(result)(selectors.join(','))
+    .toArray()
+    .map((element) => element.tagName)
+
 describe('#dashboard', () => {
   const getServer = startRealModeServerServingCountries(COUNTRIES)
 
-  test('renders notifications with reference, status, origin, commodity and arrival date', async () => {
+  test('renders notifications with reference, status, origin, commodity and arrival date, and a standard Create new button between the heading and the search and table', async () => {
     notificationsRequest().reply(
       200,
       pageOf([
@@ -68,6 +86,15 @@ describe('#dashboard', () => {
     expect(result).toContain('>Cattle</td>')
     expect(result).toContain('10 Sep 2026')
     expect(result).toContain('Showing 1-1 of 1')
+    expect(expectOneCreateNewButton(result).attr('class')).toBe('govuk-button')
+    expect(
+      documentOrderOf(result, [
+        'h1',
+        CREATE_NEW_SELECTOR,
+        'input[type="search"]',
+        'table'
+      ])
+    ).toEqual(['h1', 'a', 'input', 'table'])
   })
 
   test('notifications from more than one status all appear in the same list', async () => {
@@ -107,11 +134,11 @@ describe('#dashboard', () => {
     })
 
     expect(result).toContain(
-      `href="http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view"`
+      `href="${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view"`
     )
   })
 
-  test('selecting a draft notification links back into the journey hub, not notification-view', async () => {
+  test('selecting a draft notification links to the notification journey hub', async () => {
     notificationsRequest().reply(
       200,
       pageOf([
@@ -130,17 +157,20 @@ describe('#dashboard', () => {
       auth: sessionAuth('dashboard-draft-link')
     })
 
-    expect(result).toContain(
-      `href="http://localhost:3000/live-animals/notifications/${OTHER_REFERENCE_NUMBER}"`
-    )
-    expect(result).not.toContain('notification-view')
+    expect(
+      load(result)('td a.govuk-link')
+        .map((_index, link) => link.attribs.href)
+        .toArray()
+    ).toEqual([
+      `${ANIMALS_BASE_URL}/live-animals/notifications/${OTHER_REFERENCE_NUMBER}`
+    ])
   })
 })
 
 describe('#dashboard — search, sort and errors', () => {
   const getServer = startRealModeServerServingCountries(COUNTRIES)
 
-  test('searching by complete reference asks the backend for that reference and shows it', async () => {
+  test('searching by complete reference asks the backend for that reference, shows it and still offers Create new', async () => {
     const scope = notificationsRequest({
       ...DEFAULT_QUERY,
       referenceNumber: REFERENCE_NUMBER
@@ -156,9 +186,10 @@ describe('#dashboard — search, sort and errors', () => {
 
     expect(scope.isDone()).toBe(true)
     expect(referenceCell.text().trim()).toBe(REFERENCE_NUMBER)
+    expectOneCreateNewButton(result)
   })
 
-  test('no matching notification shows "No notifications found"', async () => {
+  test('no matching notification shows "No notifications found" and still offers Create new', async () => {
     notificationsRequest({
       ...DEFAULT_QUERY,
       referenceNumber: 'GBN-AG-26-999999'
@@ -172,9 +203,10 @@ describe('#dashboard — search, sort and errors', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('No notifications found')
+    expectOneCreateNewButton(result)
   })
 
-  test('empty aggregated store shows an empty state with a way to start a new notification', async () => {
+  test('empty aggregated store shows the empty text and the Create new button', async () => {
     notificationsRequest().reply(200, pageOf([]))
 
     const { result, statusCode } = await getServer().inject({
@@ -185,9 +217,7 @@ describe('#dashboard — search, sort and errors', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('There are no notifications yet.')
-    expect(result).toContain('Start a new notification')
-    expect(result).toContain('href="http://localhost:3000/live-animals"')
-    expect(result).not.toContain('No notifications found')
+    expectOneCreateNewButton(result)
   })
 
   test('sort and referenceNumber are forwarded to the backend', async () => {
@@ -257,7 +287,7 @@ describe('#dashboard — search, sort and errors', () => {
     expect(scope.isDone()).toBe(true)
   })
 
-  test('shows the recoverable-error banner when the backend call fails', async () => {
+  test('shows the recoverable-error banner and the Create new button under the heading when the backend call fails', async () => {
     notificationsRequest().reply(500, { title: 'Internal Server Error' })
 
     const { result, statusCode } = await getServer().inject({
@@ -271,6 +301,13 @@ describe('#dashboard — search, sort and errors', () => {
     expect(result).toContain(
       'Sorry, there is a problem with the service. Try again in a few minutes.'
     )
-    expect(result).not.toContain('govuk-error-summary')
+    expectOneCreateNewButton(result)
+    expect(
+      documentOrderOf(result, [
+        'h1',
+        CREATE_NEW_SELECTOR,
+        'input[type="search"]'
+      ])
+    ).toEqual(['h1', 'a', 'input'])
   })
 })

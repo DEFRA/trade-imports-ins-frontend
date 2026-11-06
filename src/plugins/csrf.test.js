@@ -2,6 +2,7 @@ import { beforeAll, afterAll, describe, expect, test } from 'vitest'
 
 import { createServer } from '../server/server.js'
 import { statusCodes } from '../server/common/constants/status-codes.js'
+import { serveOidcDiscovery } from '../server/common/test-helpers/serve-oidc-discovery.js'
 import { sessionAuth } from '../server/common/test-helpers/session-auth.js'
 import { config } from '../config/config.js'
 
@@ -9,6 +10,7 @@ describe('#csrfPlugin', () => {
   let server
 
   beforeAll(async () => {
+    serveOidcDiscovery()
     server = await createServer()
     await server.initialize()
   })

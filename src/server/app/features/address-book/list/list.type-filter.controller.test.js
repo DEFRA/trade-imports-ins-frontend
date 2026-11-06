@@ -5,7 +5,7 @@ import {
   addressBookPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
+import { recordModuleLoggerInfo } from '../../../../common/test-helpers/module-logger-lines.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
@@ -27,7 +27,7 @@ const IGNORED_ROLE_MESSAGE =
 
 describe('#addressBookListTypeFilter', () => {
   const readPage = startServerWithPageReader()
-  const infoLogs = captureInfoLogs()
+  const { entriesWith: infoLogs } = recordModuleLoggerInfo()
 
   test.each([
     [

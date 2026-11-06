@@ -38,4 +38,4 @@ async function refreshTokens(refreshToken) {
   return responsePayload
 }
 
-export { refreshTokens }
+export { refreshTokens, TOKEN_ENDPOINT_TIMEOUT_MS }

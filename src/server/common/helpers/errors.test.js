@@ -4,11 +4,13 @@ import { vi } from 'vitest'
 import { catchAll } from './errors.js'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../constants/status-codes.js'
+import { serveOidcDiscovery } from '../test-helpers/serve-oidc-discovery.js'
 
 describe('#errors', () => {
   let server
 
   beforeAll(async () => {
+    serveOidcDiscovery()
     server = await createServer()
     server.route({
       method: 'GET',

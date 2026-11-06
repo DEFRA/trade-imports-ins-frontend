@@ -68,6 +68,12 @@ describe('#addUtcDays', () => {
   it('crosses a leap day', () => {
     expect(addUtcDays(utc(2028, 2, 28), 1)).toEqual(utc(2028, 2, 29))
   })
+
+  it('lands on midnight UTC across a clock change when the process zone is west of UTC', () => {
+    runInZone(WEST_OF_UTC, () => {
+      expect(addUtcDays(utc(2026, 11, 1), 1)).toEqual(utc(2026, 11, 2))
+    })
+  })
 })
 
 describe('#addUtcMonths', () => {
@@ -81,6 +87,12 @@ describe('#addUtcMonths', () => {
 
   it('moves backward across a year boundary', () => {
     expect(addUtcMonths(utc(2026, 2, 15), -3)).toEqual(utc(2025, 11, 15))
+  })
+
+  it('clamps to the last UTC day of a shorter target month when the process zone is west of UTC', () => {
+    runInZone(WEST_OF_UTC, () => {
+      expect(addUtcMonths(utc(2026, 8, 31), 6)).toEqual(utc(2027, 2, 28))
+    })
   })
 })
 

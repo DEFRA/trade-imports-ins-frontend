@@ -5,6 +5,8 @@ import { listNotifications } from './stub.js'
 const STUB_1 = 'agg-stub-1'
 const STUB_2 = 'agg-stub-2'
 const STUB_3 = 'agg-stub-3'
+const STUB_SEED_ORGANISATION_ID = 'stub-org-notifications'
+const EMPTY_STUB_SEED_ORGANISATION_ID = 'stub-org-notifications-empty'
 
 describe('#listNotifications (stub)', () => {
   describe('listNotifications sorting', () => {
@@ -14,7 +16,7 @@ describe('#listNotifications (stub)', () => {
       ['lastUpdated,desc', [STUB_3, STUB_2, STUB_1]],
       ['lastUpdated,asc', [STUB_1, STUB_2, STUB_3]]
     ])('sorts by %s', async (sort, expectedOrder) => {
-      const { content } = await listNotifications({
+      const { content } = await listNotifications(STUB_SEED_ORGANISATION_ID, {
         page: 1,
         sort
       })
@@ -25,7 +27,7 @@ describe('#listNotifications (stub)', () => {
     })
 
     test('falls back to the arrivalDate,desc default when sort is omitted', async () => {
-      const { content } = await listNotifications({
+      const { content } = await listNotifications(STUB_SEED_ORGANISATION_ID, {
         page: 1
       })
 
@@ -39,7 +41,9 @@ describe('#listNotifications (stub)', () => {
 
   describe('listNotifications date shapes', () => {
     test('returns arrivalDate as an ISO date and lastUpdated as a UTC instant', async () => {
-      const { content } = await listNotifications({ page: 1 })
+      const { content } = await listNotifications(STUB_SEED_ORGANISATION_ID, {
+        page: 1
+      })
 
       expect(
         content.map(({ arrivalDate, lastUpdated }) => ({
@@ -56,7 +60,7 @@ describe('#listNotifications (stub)', () => {
 
   describe('listNotifications visibility', () => {
     test('excludes DELETED-status rows from the results and totals', async () => {
-      const result = await listNotifications({
+      const result = await listNotifications(STUB_SEED_ORGANISATION_ID, {
         page: 1
       })
 
@@ -67,9 +71,21 @@ describe('#listNotifications (stub)', () => {
     })
   })
 
+  describe('listNotifications seeds', () => {
+    test('gives an organisation whose id ends -empty an empty page', async () => {
+      const result = await listNotifications(EMPTY_STUB_SEED_ORGANISATION_ID, {
+        page: 1
+      })
+
+      expect(result.content).toEqual([])
+      expect(result.numberOfElements).toBe(0)
+      expect(result.totalElements).toBe(0)
+    })
+  })
+
   describe('listNotifications pagination', () => {
     test('returns all visible rows on page 1 when under one page size', async () => {
-      const result = await listNotifications({
+      const result = await listNotifications(STUB_SEED_ORGANISATION_ID, {
         page: 1
       })
 
@@ -79,7 +95,7 @@ describe('#listNotifications (stub)', () => {
     })
 
     test('returns an empty page past the last page, preserving totals', async () => {
-      const result = await listNotifications({
+      const result = await listNotifications(STUB_SEED_ORGANISATION_ID, {
         page: 2
       })
 

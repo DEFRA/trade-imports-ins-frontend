@@ -24,8 +24,11 @@ static files.
   Bell entirely.
 - [`src/plugins/csrf.js`](../../../plugins/csrf.js) — CSRF protection via
   `@hapi/crumb`, disabled during test runs.
-- [`src/auth/`](../../../auth/) — token verification, permissions lookup and
-  safe-redirect checking.
+- [`src/auth/`](../../../auth/) — token verification, permissions lookup,
+  safe-redirect checking and the one Defra ID hostname rewrite
+  ([`defra-id-hostnames.js`](../../../auth/defra-id-hostnames.js)), shared by
+  the sign-in token and key endpoints, the sign-out URL and the
+  content-security-policy form-action.
 - [`src/config/config.js`](../../../config/config.js) — convict
   configuration, validated strict at boot.
 - [`src/config/nunjucks/`](../../../config/nunjucks/nunjucks.js) — the
@@ -36,9 +39,11 @@ static files.
   serve.
 
 **Process start-up**: [`src/index.js`](../../../index.js) calls
-`allowOneSecondPerAddressWhenConnecting()`
+`startServer()`
+([`common/helpers/start-server.js`](../../common/helpers/start-server.js)),
+which calls `allowOneSecondPerAddressWhenConnecting()`
 ([`common/helpers/connect-attempt.js`](../../common/helpers/connect-attempt.js))
-before it starts the server. It raises Node's process-wide happy-eyeballs
+before it creates the server. It raises Node's process-wide happy-eyeballs
 connect attempt per address from 250ms to one second, for every outbound
 client: Wreck, Bell and `fetch`. In the workspace stack and CI, services
 reach each other through `host.docker.internal`, which resolves to an IPv4
@@ -74,8 +79,8 @@ barrel.
 
 Four directories:
 
-- `features/` — one folder per feature: `dashboard/`, `address-book/`,
-  `address-lookup-spike/` (temporary, dev/local only).
+- `features/` — one folder per feature: `dashboard/`, `notification-type/`,
+  `address-book/`, `address-lookup-spike/` (temporary, dev/local only).
 - `services/` — one folder per upstream: `address-book/`, `countries/`,
   `ins-backend/`, `address-lookup/`, each `index.js` + `client.js` +
   `stub.js`.

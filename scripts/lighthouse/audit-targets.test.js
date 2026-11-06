@@ -16,6 +16,7 @@ const ORIGIN = 'http://localhost:3002'
 const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 
 const DASHBOARD_PATH = '/'
+const NOTIFICATION_TYPE_PATH = '/notification-type'
 const LIST_PATH = '/address-book'
 const ADD_PATH = '/address-book/add'
 const ADDRESS_TYPE_PATH = '/address-book/add/address-type'
@@ -25,6 +26,7 @@ const DELETE_PATH = '/address-book/{id}/delete'
 
 const REGISTERED_PATHS = [
   DASHBOARD_PATH,
+  NOTIFICATION_TYPE_PATH,
   LIST_PATH,
   ADD_PATH,
   ADDRESS_TYPE_PATH,
@@ -70,6 +72,7 @@ describe('#auditPaths', () => {
   test('Should audit every page the service registers today on the seeded address', () => {
     expect(auditPaths(ADDRESS_ID)).toEqual([
       DASHBOARD_PATH,
+      NOTIFICATION_TYPE_PATH,
       LIST_PATH,
       ADD_PATH,
       ADDRESS_TYPE_PATH,
@@ -157,6 +160,7 @@ describe('#reportNames', () => {
     expect(Object.keys(names)).toEqual(urls)
     expect(Object.values(names)).toEqual([
       'home',
+      'notification_type',
       'address_book',
       'address_book_add',
       'address_book_add_address_type',

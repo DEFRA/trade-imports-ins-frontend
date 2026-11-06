@@ -7,10 +7,11 @@ and `routes.js` registers what `features/index.js` exports.
 
 ## The served surface
 
-The application registers eleven routes, exactly as
+The application registers thirteen routes, exactly as
 [`routes.test.js`](../routes.test.js) pins them:
 
 - `GET /`
+- `GET /notification-type`, `POST /notification-type`
 - `GET /address-book`
 - `GET /address-book/add`, `POST /address-book/add`
 - `GET /address-book/add/address-type`, `POST /address-book/add/address-type`
@@ -30,7 +31,14 @@ and `/public/*`. In stub mode `/auth/*` is `/auth/sign-in`,
 `/auth/stub-sign-in` and `/auth/sign-out`, served by the stub plugin without
 an identity provider. The dashboard's row links leave the service for the
 animals frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`), which owns the
-notification a row represents.
+notification a row represents. Choosing a type on `/notification-type` leaves
+the service too: the POST redirects to the start entry of the animals or
+plants frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`,
+`TRADE_IMPORTS_PLANTS_FRONTEND_URL`), which creates the draft. A live animals
+notification's origin page opens the question with the notification's
+reference and type (`notification-id` and `current-notification-type`) in the
+query. The question then shows that type chosen, and keeping it redirects to
+that notification's origin page instead of the start entry.
 
 ## Guides
 

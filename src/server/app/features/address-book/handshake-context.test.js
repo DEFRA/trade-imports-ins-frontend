@@ -6,7 +6,7 @@ import {
   UNREGISTERED_JOURNEY_TYPE,
   handshakeContextOf
 } from '../../../common/test-helpers/journey-handshake.js'
-import { captureWarnLogs } from '../../../common/test-helpers/capture-info-logs.js'
+import { recordModuleLoggerWarn } from '../../../common/test-helpers/module-logger-lines.js'
 import {
   loadHandshakeContext,
   readHandshakePayload,
@@ -31,7 +31,7 @@ const INCOMPLETE_MESSAGE =
 const SESSION_DISCARDED_MESSAGE =
   'Session journey handshake discarded, the journey type or fulfilment id is not listed'
 
-const warnedWith = captureWarnLogs()
+const { entriesWith: warnedWith } = recordModuleLoggerWarn()
 
 const validContext = handshakeContextOf(CONSIGNOR_HANDSHAKE)
 

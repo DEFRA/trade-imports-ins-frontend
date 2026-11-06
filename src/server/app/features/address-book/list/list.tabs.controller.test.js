@@ -5,7 +5,7 @@ import {
   addressBookPath,
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
+import { recordModuleLoggerInfo } from '../../../../common/test-helpers/module-logger-lines.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
@@ -67,7 +67,7 @@ describe('#addressBookListTabs', () => {
   describe('logging the address type it serves in place of the one asked', () => {
     const IGNORED_ADDRESS_TYPE_MESSAGE =
       'Address book list ignored an address type it does not offer'
-    const infoLogs = captureInfoLogs()
+    const { entriesWith: infoLogs } = recordModuleLoggerInfo()
 
     test('logs an unknown address type once, with the organisation and the address type served', async () => {
       stubAddressPage(

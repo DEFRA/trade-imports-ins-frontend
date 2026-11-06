@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { itHoldsCopyAtEveryLeaf } from '../../../shared/copy-leaves.test-support.js'
+import { itHoldsTextAtEveryLeaf } from '../../../shared/copy-leaves.test-support.js'
 import { copy } from './copy.en.js'
 import { copy as cy } from './copy.cy.js'
 
 describe('#copy', () => {
-  itHoldsCopyAtEveryLeaf(copy, cy)
+  itHoldsTextAtEveryLeaf({ en: copy, cy })
 
   it('Should word the title, form label, required-term error, returned count, failed reason, milliseconds and match line', () => {
     expect(copy.title).toBe('Address lookup spike')

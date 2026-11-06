@@ -13,7 +13,19 @@ below.
 
 **`dashboard/`** is the single-page shape: `controller.js`, `template.njk`,
 `controller.test.js`, `copy/`, `view-model/list.js` (plus its test), and
-`dashboard.fit.spec.js` beside the controller.
+`dashboard.fit.spec.js` beside the controller, and `fit/dashboard.js`
+(`expectDashboard`, `dashboardSearchField`, `searchDashboardFor`).
+
+**`notification-type/`** is also a single-page feature: `controller.js`,
+`template.njk`, `controller.test.js`, `copy/` and
+`notification-type.fit.spec.js` and `fit/notification-type.js`
+(`expectUnselectedNotificationType`, the FIT check of the question that the
+dashboard and question specs share, and `expectOnlyNotificationTypeChecked`,
+the FIT check of the question opened for a returning notification), with
+`destinations.js` (and its test) in place of a view model. `destinations.js`
+owns which notification types the question offers, in what order, the start URL
+each hands over to, which types take a notification back, and the URL that
+returns one to its origin page.
 
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
 `address-type/`, `add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
@@ -119,10 +131,10 @@ root:
   removes everything, on a new add and on a save.
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with six
-specs plus the fixtures `address-book-list.js`, `address-form.js`, `axe.js`,
-`dashboard.js`, `return-query.js` (`withReturn`), `seed-address.js` and
-`sign-in-and-open.js` (`signInAndOpen`, which every spec's open helper is
-built on). `view-model/list.js` owns the list's
+specs plus the fixtures `address-book-list.js`, `address-book-list-text.js`,
+`address-form.js`, `return-query.js` (`withReturn`) and `seed-address.js`.
+Every spec signs in and opens its page with `signInAndOpen`, which lives in
+`fit/sign-in.js` beside `signIn`. `view-model/list.js` owns the list's
 name lines, Type label, postal lines and results line, which the list
 controller builds into table cells, the roles whose Type label contains the
 search term (`rolesWhoseLabelContains`, which the search also matches), and the
@@ -131,10 +143,17 @@ link carries the tab and the current search only.
 
 ## Paths
 
-[`shared/paths.js`](../shared/paths.js) is the only module that writes a
-URL, with one exception: the temporary `address-lookup-spike` feature
-keeps its own `'/address-lookup-spike'` literal in its controller (see
-below). Each public URL has a builder (`dashboardPath()`, `addressBookPath()`,
+[`shared/paths.js`](../shared/paths.js) is the only module that writes this
+service's own page paths, with one exception: the temporary
+`address-lookup-spike` feature keeps its own `'/address-lookup-spike'` literal
+in its controller (see below). URLs on the animals and plants frontends have
+three owners:
+[`features/notification-type/destinations.js`](../features/notification-type/destinations.js)
+owns the hand-over and return URLs to those frontends,
+[`common/helpers/set-base-url.js`](../../common/helpers/set-base-url.js)
+(`buildNotificationUrl`) owns the `/notifications/<ref>` URLs on them, and
+[`features/address-book/journey-registry.js`](../features/address-book/journey-registry.js)
+owns the address-return path template. Each public URL has a builder (`dashboardPath()`, `notificationTypePath()`, `addressBookPath()`,
 `addressAddPath()`, `addressTypePath()`, `addressTypeStartPath()` (the
 type page with the marker that starts a new add), `addressPath(id)`,
 `addressEditPath(id)`, `addressDeletePath(id)`), and each parameterised one a `*RoutePath()` twin
@@ -267,7 +286,8 @@ non-empty string or a string-returning function (parameterised copy, for
 example `successBanner.added(name)`); `cy` must have the same paths, leaf
 kinds and function arities as `en`, and every string leaf must differ from
 its English counterpart unless listed in
-`copy-parity.test.js`'s `IDENTICAL_ALLOWLIST`, which is empty; no copy file
+`copy-parity.test.js`'s `IDENTICAL_ALLOWLIST`, which holds one entry,
+`shared:layout.govukSuffix`; no copy file
 may sit at a feature root.
 
 The controller resolves `const copy = copyFor({ en, cy })` from

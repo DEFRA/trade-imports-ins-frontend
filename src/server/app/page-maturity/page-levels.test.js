@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+import { serveOidcDiscovery } from '../../common/test-helpers/serve-oidc-discovery.js'
 import {
   startTestServer,
   stopTestServer
@@ -12,6 +13,7 @@ describe('page maturity page levels', () => {
   let server
 
   beforeAll(async () => {
+    serveOidcDiscovery()
     server = await startTestServer()
   })
 

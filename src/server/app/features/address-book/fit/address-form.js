@@ -13,7 +13,7 @@ import {
   addressBookPath,
   addressTypePath
 } from '../../../shared/paths.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 import { JOURNEY_HANDSHAKES_BY_PARTY } from '../../../../common/test-helpers/journey-handshake.js'
 
 export const fieldLabels = copy.form.fields
@@ -186,22 +186,6 @@ export const addValidAddressToFreshOrganisation = async (
 
 export const validAddressViewLink = (page) =>
   page.getByRole('link', { name: `View ${validAddress.name}` })
-
-export const errorLink = (page, message) =>
-  page.getByRole('alert').getByRole('link', { name: message, exact: true })
-
-export async function expectErrorFocusOn(
-  page,
-  { message, label, expectedValue, url }
-) {
-  await expect(page).toHaveURL(url)
-  const link = errorLink(page, message)
-  await expect(link).toBeVisible()
-  await link.click()
-  const control = page.getByLabel(label)
-  await expect(control).toBeFocused()
-  await expect(control).toHaveValue(expectedValue)
-}
 
 export const requiredValidations = [
   ['name', fieldLabels.name, 'Enter a name or organisation'],

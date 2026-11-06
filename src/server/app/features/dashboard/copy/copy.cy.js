@@ -1,6 +1,7 @@
 // MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.
 export const copy = {
   title: 'Dangosfwrdd',
+  createNew: 'Creu newydd',
   search: {
     label: 'Chwilio yn ôl cyfeirnod yr hysbysiad',
     button: 'Chwilio',
@@ -29,7 +30,6 @@ export const copy = {
     view: 'Gweld'
   },
   empty: {
-    text: 'Nid oes unrhyw hysbysiadau eto.',
-    startButton: 'Dechrau hysbysiad newydd'
+    text: 'Nid oes unrhyw hysbysiadau eto.'
   }
 }

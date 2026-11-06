@@ -1,3 +1,4 @@
+import { isEmptySeedOrganisation } from '../stub-seed.js'
 import {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_NOT_FOUND
@@ -39,7 +40,7 @@ const typedSeedAddresses = () =>
   )
 
 const seedAddressesFor = (organisationId) => {
-  if (organisationId.endsWith('-empty')) {
+  if (isEmptySeedOrganisation(organisationId)) {
     return []
   }
   if (organisationId.endsWith('-typed')) {

@@ -13,7 +13,7 @@ import {
   getPage,
   postPage
 } from '../../../../common/test-helpers/address-book-requests.js'
-import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
+import { recordModuleLoggerInfo } from '../../../../common/test-helpers/module-logger-lines.js'
 import {
   textOf,
   textsOf
@@ -41,7 +41,7 @@ const checkedValuesOf = ($) =>
 
 describe('#addressTypeController', { concurrent: false }, () => {
   const getServer = startRealModeServer()
-  const loggedWith = captureInfoLogs()
+  const { entriesWith: loggedWith } = recordModuleLoggerInfo()
 
   test('GET shows the caption, the heading, a visually hidden legend, the three address types with their hints in order and none chosen, Continue and Back to the address book', async () => {
     const { result, statusCode, headers } = await getPage(

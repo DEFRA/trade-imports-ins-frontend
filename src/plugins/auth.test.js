@@ -1,3 +1,4 @@
+import Jwt from '@hapi/jwt'
 import { describe, expect, test, vi, beforeEach } from 'vitest'
 import { authPlugin, getBellOptions, getCookieOptions } from './auth.js'
 
@@ -6,9 +7,6 @@ const configGetMock = vi.hoisted(() => vi.fn())
 const refreshTokensMock = vi.hoisted(() => vi.fn())
 const getSafeRedirectMock = vi.hoisted(() => vi.fn())
 const isStubModeMock = vi.hoisted(() => vi.fn())
-
-const jwtDecodeMock = vi.hoisted(() => vi.fn())
-const jwtVerifyTimeMock = vi.hoisted(() => vi.fn())
 
 vi.mock('../auth/get-oidc-config-with-retry.js', () => ({
   getOidcConfigWithRetry: getOidcConfigWithRetryMock
@@ -40,16 +38,18 @@ vi.mock('../server/common/helpers/logging/logger.js', () => ({
   })
 }))
 
-vi.mock('@hapi/jwt', () => ({
-  default: {
-    token: {
-      decode: jwtDecodeMock,
-      verifyTime: jwtVerifyTimeMock
-    }
-  }
-}))
-
 const AUTH_COOKIE_NAME = 'test-auth-cookie'
+
+const tokenExpiringIn = (ttlSec, payload = {}) =>
+  Jwt.token.generate(
+    payload,
+    { key: 'test-token-signing-secret', algorithm: 'HS256' },
+    { ttlSec }
+  )
+
+const SECONDS_PER_HOUR = 3600
+const unexpiredToken = tokenExpiringIn(SECONDS_PER_HOUR)
+const expiredToken = tokenExpiringIn(-SECONDS_PER_HOUR)
 
 describe('auth plugin', () => {
   const oidcConfig = {
@@ -246,25 +246,18 @@ describe('auth plugin', () => {
   test('getBellOptions.provider.profile maps decoded JWT payload to credentials.profile', () => {
     const options = getBellOptions(oidcConfig)
 
-    const credentials = { token: 'jwt-token' }
-    jwtDecodeMock.mockReturnValue({
-      decoded: {
-        payload: {
-          contactId: 'CRN123',
-          firstName: 'Andrew',
-          lastName: 'Farmer',
-          currentRelationshipId: 'REL-1'
-        }
-      }
-    })
-
-    options.provider.profile(credentials)
-
-    expect(credentials.profile).toEqual({
+    const payload = {
       contactId: 'CRN123',
       firstName: 'Andrew',
       lastName: 'Farmer',
-      currentRelationshipId: 'REL-1',
+      currentRelationshipId: 'REL-1'
+    }
+    const credentials = { token: tokenExpiringIn(SECONDS_PER_HOUR, payload) }
+
+    options.provider.profile(credentials)
+
+    expect(credentials.profile).toMatchObject({
+      ...payload,
       crn: 'CRN123',
       name: 'Andrew Farmer',
       organisationId: 'REL-1'
@@ -349,14 +342,11 @@ describe('auth plugin', () => {
     test('validate returns isValid:true when token verification succeeds', async () => {
       const options = getCookieOptions()
       const userSession = {
-        token: 'token',
+        token: unexpiredToken,
         refreshToken: 'refresh-token'
       }
 
       const request = buildRequestWithCachedSession(userSession)
-
-      jwtDecodeMock.mockReturnValue({ exp: 999999 })
-      jwtVerifyTimeMock.mockImplementation(() => undefined)
 
       const res = await options.validate(request, { sessionId: 'session-1' })
 
@@ -368,16 +358,11 @@ describe('auth plugin', () => {
     test('validate refreshes tokens when verification fails and refreshTokens enabled', async () => {
       const options = getCookieOptions()
       const userSession = {
-        token: 'old-token',
+        token: expiredToken,
         refreshToken: 'old-refresh'
       }
 
       const request = buildRequestWithCachedSession(userSession)
-
-      jwtDecodeMock.mockReturnValue({ exp: 1 })
-      jwtVerifyTimeMock.mockImplementation(() => {
-        throw new Error('token expired')
-      })
 
       refreshTokensMock.mockResolvedValue({
         access_token: 'new-access-token',
@@ -424,16 +409,11 @@ describe('auth plugin', () => {
 
       const options = getCookieOptions()
       const userSession = {
-        token: 'old-token',
+        token: expiredToken,
         refreshToken: 'old-refresh'
       }
 
       const request = buildRequestWithCachedSession(userSession)
-
-      jwtDecodeMock.mockReturnValue({ exp: 1 })
-      jwtVerifyTimeMock.mockImplementation(() => {
-        throw new Error('token expired')
-      })
 
       const res = await options.validate(request, { sessionId: 'session-1' })
 
@@ -445,16 +425,12 @@ describe('auth plugin', () => {
     test('validate returns isValid:false when refreshTokens rejects', async () => {
       const options = getCookieOptions()
       const userSession = {
-        token: 'old-token',
+        token: expiredToken,
         refreshToken: 'old-refresh'
       }
 
       const request = buildRequestWithCachedSession(userSession)
 
-      jwtDecodeMock.mockReturnValue({ exp: 1 })
-      jwtVerifyTimeMock.mockImplementation(() => {
-        throw new Error('token expired')
-      })
       refreshTokensMock.mockRejectedValue(new Error('refresh failed'))
 
       const res = await options.validate(request, { sessionId: 'session-1' })

@@ -42,7 +42,7 @@ import {
   UNREGISTERED_JOURNEY_TYPE,
   ROLES_BY_PARTY
 } from '../../../../common/test-helpers/journey-handshake.js'
-import { captureInfoLogs } from '../../../../common/test-helpers/capture-info-logs.js'
+import { recordModuleLoggerInfo } from '../../../../common/test-helpers/module-logger-lines.js'
 import {
   addressTypeRequiresUnitedKingdom,
   ADDRESS_TYPES,
@@ -385,7 +385,7 @@ describe(
     const getServer = startRealModeServerServingCountries(COUNTRIES)
     const NO_TYPE_MESSAGE =
       'No address type chosen, sending the user to choose one'
-    const loggedWith = captureInfoLogs()
+    const { entriesWith: loggedWith } = recordModuleLoggerInfo()
 
     test('GET with no address type chosen redirects to the address type page and logs it once', async () => {
       const response = await getAdd(getServer(), 'add-get-no-type')
@@ -444,7 +444,7 @@ describe(
   { concurrent: false },
   () => {
     const getServer = startRealModeServerServingCountries(COUNTRIES)
-    const loggedWith = captureInfoLogs()
+    const { entriesWith: loggedWith } = recordModuleLoggerInfo()
     const FIRST_ROLE_OF = (addressType) => ROLES_BY_ADDRESS_TYPE[addressType][0]
     const ROLE_CHECKBOXES = 'input[name="roles"]'
 
@@ -698,7 +698,7 @@ describe(
   { concurrent: false },
   () => {
     const getServer = startRealModeServerServingCountries(COUNTRIES)
-    const loggedWith = captureInfoLogs()
+    const { entriesWith: loggedWith } = recordModuleLoggerInfo()
     const REPLACED_MESSAGE =
       'Posted country was replaced with the country the address must be in'
 
@@ -969,7 +969,7 @@ describe(
   { concurrent: false },
   () => {
     const getServer = startRealModeServerServingCountries(COUNTRIES)
-    const loggedWith = captureInfoLogs()
+    const { entriesWith: loggedWith } = recordModuleLoggerInfo()
 
     test.each(Object.entries(ROLES_BY_PARTY))(
       'POST from the %s handshake saves the address with only its own role when the posted role is from outside its side',
@@ -1250,7 +1250,7 @@ describe(
   { concurrent: false },
   () => {
     const getServer = startRealModeServerServingCountries(COUNTRIES)
-    const loggedWith = captureInfoLogs()
+    const { entriesWith: loggedWith } = recordModuleLoggerInfo()
 
     test('GET refuses an unrecognised journey type', async () => {
       const { statusCode } = await getAdd(

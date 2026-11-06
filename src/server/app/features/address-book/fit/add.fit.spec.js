@@ -5,8 +5,6 @@ import {
   addressFormCountryNames,
   addressTypeListUrl,
   backLink,
-  errorLink,
-  expectErrorFocusOn,
   expectInDocumentOrder,
   signInAndOpenAddForm,
   openAddFormFromJourney,
@@ -30,7 +28,7 @@ import {
   typeCellOf
 } from './address-book-list.js'
 import { copy } from '../copy/copy.en.js'
-import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { seedAddress } from './seed-address.js'
@@ -39,6 +37,10 @@ import {
   addressBookPath,
   addressTypePath
 } from '../../../shared/paths.js'
+import {
+  errorLink,
+  expectErrorFocusOn
+} from '../../../../../../fit/error-focus.js'
 import {
   AUTOCOMPLETE_BY_FIELD,
   FIELDS_WITHOUT_AUTOCOMPLETE

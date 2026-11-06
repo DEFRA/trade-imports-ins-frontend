@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 import { addValidAddressToFreshOrganisation } from './address-form.js'
-import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import {
   NO_RESULTS_LINE,
   ONE_MATCH_LINE,
@@ -24,7 +24,7 @@ import {
   TABLE_HEADINGS,
   typeCellOf
 } from './address-book-list.js'
-import { expectDashboard } from './dashboard.js'
+import { expectDashboard } from '../../dashboard/fit/dashboard.js'
 import { signIn } from '../../../../../../fit/sign-in.js'
 import { seedAddress, seedAddressLines } from './seed-address.js'
 import {
@@ -34,9 +34,6 @@ import {
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { addressBookPath, addressTypeStartPath } from '../../../shared/paths.js'
 
-const ORG_DEFAULT = 'stub-org-1'
-const ORG_EMPTY = 'stub-org-empty'
-const ORG_PAGINATED = 'stub-org-paginated'
 const ADD_A_NEW_ADDRESS = 'Add a new address'
 const FARM_12 = 'Stub Farm 12'
 const FIRST_PAGE_LINE = 'Showing 1-8 of 30'
@@ -49,7 +46,7 @@ test.describe('navigation', () => {
   test('Dashboard and Address book links are visible and navigate correctly', async ({
     page
   }) => {
-    await signIn(page, { organisationId: ORG_DEFAULT })
+    await signIn(page, { organisationId: 'stub-org-list-navigation' })
 
     await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible()
     const addressBookLink = page.getByRole('link', { name: 'Address book' })
@@ -72,7 +69,7 @@ test.describe('list and pagination', () => {
   test('renders the seed address in a table with Name, Type, Address, Country and Action columns', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, { organisationId: 'stub-org-list-columns' })
 
     const table = page.getByRole('table')
     await expect(table.getByRole('columnheader')).toHaveText(TABLE_HEADINGS)
@@ -93,7 +90,9 @@ test.describe('list and pagination', () => {
   test('clicking Add a new address opens Choose an address type', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-add-link'
+    })
 
     await page.getByRole('button', { name: ADD_A_NEW_ADDRESS }).click()
 
@@ -104,13 +103,15 @@ test.describe('list and pagination', () => {
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, { organisationId: 'stub-org-list-axe' })
 
     await expectNoSeriousOrCriticalViolations(page, 'Address book list')
   })
 
   test('lists 8 addresses a page', async ({ page }) => {
-    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-pages-paginated'
+    })
 
     await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
     await expect(page.getByRole('row')).toHaveCount(9)
@@ -125,7 +126,7 @@ test.describe('list and pagination', () => {
     page
   }) => {
     await openAddressBookList(page, {
-      organisationId: ORG_PAGINATED,
+      organisationId: 'stub-org-list-past-last-page-paginated',
       pageNumber: 99
     })
 
@@ -139,7 +140,7 @@ test.describe('list and pagination', () => {
 
   test('shows the first page when the page number is 0', async ({ page }) => {
     await openAddressBookList(page, {
-      organisationId: ORG_PAGINATED,
+      organisationId: 'stub-org-list-page-zero-paginated',
       pageNumber: 0
     })
 
@@ -149,7 +150,7 @@ test.describe('list and pagination', () => {
 
 test.describe('intro and cells', () => {
   test('shows the intro and the Add a new address button', async ({ page }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, { organisationId: 'stub-org-list-intro' })
 
     await expect(
       page.getByText(
@@ -165,7 +166,7 @@ test.describe('intro and cells', () => {
   test('shows the name on two lines and the address on one line per stored line', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, { organisationId: 'stub-org-list-cells' })
 
     const nameCell = page.getByRole('cell', {
       name: seedAddress.name,
@@ -276,7 +277,8 @@ test.describe('address type tabs', () => {
   test('lists the default seed address on the Origin and Consignor tab only', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    const organisationId = 'stub-org-list-default-tab-only'
+    await openAddressBookList(page, { organisationId })
     await expect(
       page.getByRole('cell', { name: seedAddress.name, exact: true })
     ).toBeVisible()
@@ -286,7 +288,7 @@ test.describe('address type tabs', () => {
       ADDRESS_TYPES.BRANCH
     ]) {
       await openAddressBookList(page, {
-        organisationId: ORG_DEFAULT,
+        organisationId,
         addressType
       })
 
@@ -348,7 +350,9 @@ test.describe('filter addresses', () => {
   test('keeps the Search field hidden until Filter addresses is opened, and hides it again when closed', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-disclosure'
+    })
 
     await expectFilterDisclosureOpensAndCloses(page)
   })
@@ -356,7 +360,7 @@ test.describe('filter addresses', () => {
   test('describes the Search field with the hint Search by name, address or country', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, { organisationId: 'stub-org-list-hint' })
 
     await openFilterDisclosure(page)
 
@@ -369,7 +373,9 @@ test.describe('filter addresses', () => {
     test(`lists only the matches, with the term in the address book URL, when submitted with ${how}`, async ({
       page
     }) => {
-      await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+      await openAddressBookList(page, {
+        organisationId: `stub-org-list-submit-${submitWith}-paginated`
+      })
 
       await searchAndExpectSingleMatch(page, 'farm 12', {
         submitWith,
@@ -381,7 +387,9 @@ test.describe('filter addresses', () => {
   test('lists the matches across all pages and keeps the term on the next page', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-next-page-paginated'
+    })
 
     await searchAndExpectMatches(page, 'Farm 1', {
       submitWith: 'button',
@@ -398,7 +406,9 @@ test.describe('filter addresses', () => {
   test('counts the matches of a search that fits on one page and shows no pagination', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-one-page-paginated'
+    })
 
     await searchAndExpectMatches(page, 'farm 3', {
       submitWith: 'button',
@@ -411,7 +421,9 @@ test.describe('filter addresses', () => {
   test('finds an address by a term inside its address line 1', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-address-line-paginated'
+    })
 
     await searchAndExpectSingleMatch(page, '12 stub way', {
       matchedCellText: FARM_12
@@ -432,7 +444,9 @@ test.describe('filter addresses', () => {
   test('leaves the list as it is while text is typed and not yet submitted', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-typing-paginated'
+    })
     await openFilterDisclosure(page)
 
     await searchFieldOf(page).fill('farm 12')
@@ -444,7 +458,9 @@ test.describe('filter addresses', () => {
   test('Clear search after a search returns to the whole selected tab with an empty Search field', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-clear-search'
+    })
     await searchAndExpectQuery(page, 'stub', { submitWith: 'button' })
 
     await page.getByRole('link', { name: 'Clear search' }).click()
@@ -459,7 +475,9 @@ test.describe('filter addresses', () => {
   test('has no serious or critical axe violations with the disclosure open', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-axe-disclosure'
+    })
     await openFilterDisclosure(page)
 
     await expectNoSeriousOrCriticalViolations(
@@ -473,7 +491,9 @@ test.describe('filter addresses without JavaScript', () => {
   test.use({ javaScriptEnabled: false })
 
   test('opens and closes the disclosure', async ({ page }) => {
-    await openAddressBookList(page, { organisationId: ORG_DEFAULT })
+    await openAddressBookList(page, {
+      organisationId: 'stub-org-list-no-js-disclosure'
+    })
 
     await expectFilterDisclosureOpensAndCloses(page)
   })
@@ -482,7 +502,9 @@ test.describe('filter addresses without JavaScript', () => {
     test(`lists only the matches, with the term in the address book URL, when submitted with ${how} and JavaScript is off`, async ({
       page
     }) => {
-      await openAddressBookList(page, { organisationId: ORG_PAGINATED })
+      await openAddressBookList(page, {
+        organisationId: `stub-org-list-no-js-submit-${submitWith}-paginated`
+      })
 
       await searchAndExpectSingleMatch(page, 'farm 12', {
         submitWith,
@@ -634,7 +656,7 @@ test.describe('empty book', () => {
   test('shows Showing 0 of 0 and the table headings with no rows', async ({
     page
   }) => {
-    await openAddressBookList(page, { organisationId: ORG_EMPTY })
+    await openAddressBookList(page, { organisationId: 'stub-org-list-empty' })
 
     await expectEmptyAddressBookList(page)
   })

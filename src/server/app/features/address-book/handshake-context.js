@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { createLogger } from '../../../common/helpers/logging/logger.js'
+import { trimmedField } from '../../../common/helpers/trimmed-field.js'
 import { isResolvableHandshake } from './journey-registry.js'
 
 const SESSION_KEY = 'addressBookHandshake'
@@ -12,16 +13,6 @@ const logHandshakeIds = (
   message
 ) => {
   logger.warn({ journeyType, notificationId, fulfilmentId }, message)
-}
-
-const queryValue = (request, name) => {
-  const value = request.query[name]
-  return typeof value === 'string' && value.trim() !== '' ? value.trim() : ''
-}
-
-const payloadValue = (payload, name) => {
-  const value = payload?.[name]
-  return typeof value === 'string' && value.trim() !== '' ? value.trim() : ''
 }
 
 const buildHandshakeContext = ({
@@ -60,10 +51,10 @@ const buildHandshakeContext = ({
 
 export const readHandshakeQuery = (request) =>
   buildHandshakeContext({
-    journeyType: queryValue(request, 'journey-type'),
-    notificationId: queryValue(request, 'notification-id'),
-    fulfilmentId: queryValue(request, 'fulfilment-id'),
-    handshakeToken: queryValue(request, 'handshake-token')
+    journeyType: trimmedField(request.query, 'journey-type'),
+    notificationId: trimmedField(request.query, 'notification-id'),
+    fulfilmentId: trimmedField(request.query, 'fulfilment-id'),
+    handshakeToken: trimmedField(request.query, 'handshake-token')
   })
 
 export const storeHandshakeContext = (request, context) => {
@@ -78,10 +69,10 @@ export const loadHandshakeContext = (request) => request.yar.get(SESSION_KEY)
 
 export const readHandshakePayload = (payload) =>
   buildHandshakeContext({
-    journeyType: payloadValue(payload, 'journey-type'),
-    notificationId: payloadValue(payload, 'notification-id'),
-    fulfilmentId: payloadValue(payload, 'fulfilment-id'),
-    handshakeToken: payloadValue(payload, 'handshake-token')
+    journeyType: trimmedField(payload, 'journey-type'),
+    notificationId: trimmedField(payload, 'notification-id'),
+    fulfilmentId: trimmedField(payload, 'fulfilment-id'),
+    handshakeToken: trimmedField(payload, 'handshake-token')
   })
 
 const validatedSessionContext = (request) => {

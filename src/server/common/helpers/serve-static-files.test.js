@@ -1,10 +1,12 @@
 import { statusCodes } from '../constants/status-codes.js'
+import { serveOidcDiscovery } from '../test-helpers/serve-oidc-discovery.js'
 import { startTestServer, stopTestServer } from '../test-helpers/test-server.js'
 
 describe('#serveStaticFiles', () => {
   let server
 
   beforeEach(async () => {
+    serveOidcDiscovery()
     server = await startTestServer()
   })
 

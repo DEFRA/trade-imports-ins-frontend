@@ -2,9 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { leaves } from '../../../shared/copy-leaves.js'
 import {
-  itHoldsCopyAtEveryLeaf,
-  SAMPLE_ARGUMENTS,
-  sampleText
+  itHoldsTextAtEveryLeaf,
+  sampleCopyText
 } from '../../../shared/copy-leaves.test-support.js'
 import { FIELDS, FIELD_RULES, isRequiredField } from '../fields.js'
 import { copy } from './copy.en.js'
@@ -18,7 +17,7 @@ const LOCALES = [
 ]
 
 describe('#copy', () => {
-  itHoldsCopyAtEveryLeaf(copy, cy)
+  itHoldsTextAtEveryLeaf({ en: copy, cy })
 
   it('Should word the add-details form with its section headings, country placeholder and cancel link', () => {
     expect(copy.form.addressHeading).toBe('Address')
@@ -211,10 +210,7 @@ describe('#copy', () => {
 describe('#copy of the list page', () => {
   it('Should word the Welsh list title, intro, search, add link, results lines, tabs, role labels, table headings and View link', () => {
     expect(
-      leaves(cy.list).map(({ path, value }) => [
-        path,
-        sampleText(value, SAMPLE_ARGUMENTS)
-      ])
+      leaves(cy.list).map(({ path, value }) => [path, sampleCopyText(value)])
     ).toEqual([
       ['title', 'Llyfr cyfeiriadau'],
       [

@@ -1,47 +1,25 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 
-const configState = vi.hoisted(() => {
-  const defaultAnimalsBaseUrl = 'http://localhost:3000'
-  return { defaultAnimalsBaseUrl, animalsBaseUrl: defaultAnimalsBaseUrl }
-})
+import { config } from '../../../../../config/config.js'
+import { recordModuleLoggerWarn } from '../../../../common/test-helpers/module-logger-lines.js'
+import { restoreConfigAfterEach } from '../../../../common/test-helpers/restore-config-after-each.js'
+import {
+  buildDashboardQueryString,
+  buildNotificationLink,
+  dashboardPageHref,
+  mapNotificationRows
+} from './list.js'
 
-vi.mock('../../../../../config/config.js', () => ({
-  config: {
-    get: vi.fn((key) => {
-      if (key === 'tradeImportsAnimalsFrontend.baseUrl') {
-        return configState.animalsBaseUrl
-      }
-      if (key === 'log') {
-        return { enabled: true, level: 'info', format: 'ecs', redact: [] }
-      }
-      return undefined
-    })
-  }
-}))
-
+const ANIMALS_BASE_URL_KEY = 'tradeImportsAnimalsFrontend.baseUrl'
+const ANIMALS_BASE_URL = 'http://localhost:3000'
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const LAST_UPDATED_OLDEST_FIRST = 'lastUpdated,asc'
 
-const logLines = vi.hoisted(() => [])
+restoreConfigAfterEach([ANIMALS_BASE_URL_KEY])
 
-vi.mock('pino', async (importOriginal) => {
-  const { pino } = await importOriginal()
-  const lineRecorder = { write: (line) => logLines.push(JSON.parse(line)) }
-  return { pino: (options) => pino(options, lineRecorder) }
+beforeEach(() => {
+  config.set(ANIMALS_BASE_URL_KEY, ANIMALS_BASE_URL)
 })
-
-afterEach(() => {
-  configState.animalsBaseUrl = configState.defaultAnimalsBaseUrl
-  logLines.length = 0
-})
-
-const {
-  buildDashboardQueryString,
-  buildNotificationLink,
-  buildStartNewNotificationLink,
-  dashboardPageHref,
-  mapNotificationRows
-} = await import('./list.js')
 
 describe('#buildDashboardQueryString', () => {
   test('is empty with no arguments', () => {
@@ -88,7 +66,7 @@ describe('#dashboardPageHref', () => {
 describe('#buildNotificationLink', () => {
   test('SUBMITTED notifications link to the read-only notification-view page', () => {
     expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
-      `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
+      `${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
     )
   })
 
@@ -96,43 +74,29 @@ describe('#buildNotificationLink', () => {
     '%s notifications link back to the journey hub, not notification-view',
     (status) => {
       expect(buildNotificationLink(status, 'GBN-AG-26-000002')).toBe(
-        'http://localhost:3000/live-animals/notifications/GBN-AG-26-000002'
+        `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-000002`
       )
     }
   )
 
   test('encodes the reference number in the path', () => {
     expect(buildNotificationLink('SUBMITTED', 'GBN AG/1')).toBe(
-      'http://localhost:3000/live-animals/notifications/GBN%20AG%2F1/notification-view'
+      `${ANIMALS_BASE_URL}/live-animals/notifications/GBN%20AG%2F1/notification-view`
     )
   })
 
   test('does not double the slash when the configured base URL ends in one', () => {
-    configState.animalsBaseUrl = 'http://localhost:3000/'
+    config.set(ANIMALS_BASE_URL_KEY, `${ANIMALS_BASE_URL}/`)
 
     expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
-      `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
-    )
-  })
-})
-
-describe('#buildStartNewNotificationLink', () => {
-  test("links to the live-animals set's base, not the journey frontend root", () => {
-    expect(buildStartNewNotificationLink()).toBe(
-      'http://localhost:3000/live-animals'
-    )
-  })
-
-  test('does not double the slash when the configured base URL ends in one', () => {
-    configState.animalsBaseUrl = 'http://localhost:3000/'
-
-    expect(buildStartNewNotificationLink()).toBe(
-      'http://localhost:3000/live-animals'
+      `${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
     )
   })
 })
 
 describe('#mapNotificationRows', () => {
+  const { entries: warned } = recordModuleLoggerWarn()
+
   test('maps backend fields to row view-model, resolving country names and building the link', () => {
     const rows = mapNotificationRows(
       [
@@ -154,7 +118,7 @@ describe('#mapNotificationRows', () => {
         originCountry: 'France',
         commodity: '',
         arrivalDate: '10 Sep 2026',
-        href: `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
+        href: `${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
       }
     ])
   })
@@ -184,14 +148,15 @@ describe('#mapNotificationRows', () => {
     ])
 
     expect(row.arrivalDate).toBe('')
-    expect(logLines).toEqual([
-      expect.objectContaining({
-        'log.level': 'warn',
-        referenceNumber: REFERENCE_NUMBER,
-        arrivalDate: '2026-02-30',
+    expect(warned).toEqual([
+      {
+        fields: {
+          referenceNumber: REFERENCE_NUMBER,
+          arrivalDate: '2026-02-30'
+        },
         message:
           'Arrival date from the backend is not a calendar date, showing it blank'
-      })
+      }
     ])
   })
 
@@ -204,7 +169,7 @@ describe('#mapNotificationRows', () => {
       }
     ])
 
-    expect(logLines).toEqual([])
+    expect(warned).toEqual([])
   })
 
   test('shows a missing arrival date blank without warning', () => {
@@ -213,6 +178,6 @@ describe('#mapNotificationRows', () => {
     ])
 
     expect(row.arrivalDate).toBe('')
-    expect(logLines).toEqual([])
+    expect(warned).toEqual([])
   })
 })

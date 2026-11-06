@@ -2,7 +2,7 @@ import { expect } from '@playwright/test'
 
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { addressBookPath } from '../../../shared/paths.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 
 import { NO_RESULTS_LINE, TABLE_HEADINGS } from './address-book-list-text.js'
 

@@ -4,8 +4,8 @@ import {
   expectAddressBookList,
   expectEmptyAddressBookList
 } from './address-book-list.js'
-import { expectNoSeriousOrCriticalViolations } from './axe.js'
-import { expectDashboard } from './dashboard.js'
+import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
+import { expectDashboard } from '../../dashboard/fit/dashboard.js'
 import { withReturn } from './return-query.js'
 import {
   seedAddress,
@@ -19,7 +19,7 @@ import {
   addressPath,
   dashboardPath
 } from '../../../shared/paths.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 
 const CONFIRM_PAGE_TITLE = 'Delete this address?'
 const CANCEL_LINK = 'No, cancel'
@@ -38,9 +38,11 @@ const openDeleteConfirmation = (
   organisationId,
   { addressId = seedAddress.id, returnTo } = {}
 ) =>
-  signInAndOpen(page, organisationId, addressDeletePath(addressId), {
-    returnTo
-  })
+  signInAndOpen(
+    page,
+    organisationId,
+    withReturn(addressDeletePath(addressId), returnTo)
+  )
 
 test.describe('delete address', () => {
   test('summarises the address being deleted and asks for confirmation', async ({

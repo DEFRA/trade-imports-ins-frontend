@@ -4,13 +4,13 @@ import {
   expectAddressBookList,
   openAddressBookList
 } from './address-book-list.js'
-import { expectNoSeriousOrCriticalViolations } from './axe.js'
+import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import {
   addValidAddressToFreshOrganisation,
   validAddress,
   validAddressViewLink
 } from './address-form.js'
-import { expectDashboard } from './dashboard.js'
+import { expectDashboard } from '../../dashboard/fit/dashboard.js'
 import { withReturn } from './return-query.js'
 import {
   seedAddress,
@@ -24,7 +24,7 @@ import {
   addressPath,
   dashboardPath
 } from '../../../shared/paths.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 
 const seedViewPath = addressPath(seedAddress.id)
 const seedEditPath = addressEditPath(seedAddress.id)
@@ -40,7 +40,12 @@ const openAddressDetails = (
   page,
   organisationId,
   { addressId = seedAddress.id, returnTo } = {}
-) => signInAndOpen(page, organisationId, addressPath(addressId), { returnTo })
+) =>
+  signInAndOpen(
+    page,
+    organisationId,
+    withReturn(addressPath(addressId), returnTo)
+  )
 
 test.describe('view address', () => {
   test('clicking View on a row opens that address details page', async ({

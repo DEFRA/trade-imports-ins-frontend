@@ -11,6 +11,7 @@ Every GET route the service registers, derived from
 [`routes.test.js`](../routes.test.js) pins:
 
 - `/` — the dashboard
+- `/notification-type` — the question that opens a new notification
 - `/address-book` — the list
 - `/address-book/add`
 - `/address-book/add/address-type` — choose an address type
@@ -55,7 +56,7 @@ landed on.
 
 `lighthouse:run` (`run-audit.js`) clears the previous run's reports, runs
 `lhci autorun`, then renames each report from the LHCI filename pattern to
-the page's own stable name from the targets file: `home`, `address_book`,
+the page's own stable name from the targets file: `home`, `notification_type`, `address_book`,
 `address_book_add`, `address_book_add_address_type`, `address_book_id`, `address_book_id_edit`,
 `address_book_id_delete`.
 

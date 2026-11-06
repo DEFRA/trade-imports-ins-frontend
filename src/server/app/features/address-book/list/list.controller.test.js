@@ -7,9 +7,9 @@ import {
   pageOf
 } from '../../../../common/test-helpers/address-book-requests.js'
 import {
-  captureErrorLogs,
-  captureInfoLogs
-} from '../../../../common/test-helpers/capture-info-logs.js'
+  recordModuleLoggerError,
+  recordModuleLoggerInfo
+} from '../../../../common/test-helpers/module-logger-lines.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
@@ -36,7 +36,7 @@ const LOAD_FAILED_MESSAGE = 'Failed to load address book'
 
 describe('#addressBookListController', () => {
   const readPage = startServerWithPageReader()
-  const infoLogs = captureInfoLogs()
+  const { entriesWith: infoLogs } = recordModuleLoggerInfo()
 
   test("renders the results count, column headings, and each address's View link and country label", async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress, parisDepotAddress]))
@@ -241,7 +241,7 @@ describe('#addressBookListController', () => {
 
 describe('#addressBookListController when the address book cannot be reached', () => {
   const readPage = startServerWithPageReader()
-  const errorLogs = captureErrorLogs()
+  const { entriesWith: errorLogs } = recordModuleLoggerError()
 
   test('returns 500 with the heading, intro, Add button and filter but no results line or table, and logs the failure once', async () => {
     stubAddressBookUnavailable()
