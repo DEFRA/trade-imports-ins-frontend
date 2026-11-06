@@ -30,7 +30,7 @@ describe('#copyFor', () => {
 })
 
 describe('unauthorised-page copy', () => {
-  it('Should carry the sign-in failure wording the auth controller renders', () => {
+  it('Should word the unauthorised page title, heading, body prefix and sign-in link', () => {
     expect(sharedEn.unauthorised).toEqual({
       title: 'Unable to sign in',
       heading: 'Sorry, we are unable to sign you in.',
@@ -47,7 +47,7 @@ describe('unauthorised-page copy', () => {
 })
 
 describe('error-page copy', () => {
-  it('Should carry one message per status the catch-all names, and the fallback', () => {
+  it('Should word the not-found, forbidden, unauthorized, bad-request and unexpected error pages in English', () => {
     expect(sharedEn.errorPage).toEqual({
       notFound: 'Page not found',
       forbidden: 'Forbidden',
@@ -59,7 +59,7 @@ describe('error-page copy', () => {
 })
 
 describe('layout copy', () => {
-  it('Should name the service and the four navigation items the fit specs click', () => {
+  it('Should name the service, menu button, dashboard, address book, manage account and log out in English', () => {
     expect(sharedEn.layout.serviceName).toBe('Import notification service')
     expect(sharedEn.layout.serviceNavigation).toEqual({
       menuButton: 'Menu',

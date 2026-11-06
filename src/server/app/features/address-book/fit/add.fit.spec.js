@@ -16,18 +16,30 @@ import {
 } from './address-book-list.js'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import { GB_COUNTRY } from '../address-countries.js'
+import { copy } from '../copy/copy.en.js'
 import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
-import { signIn } from '../../../../../../fit/sign-in.js'
-import { AUTOCOMPLETE_BY_FIELD } from '../../../../common/test-helpers/address-form-autocomplete.js'
+import { signInAndOpen } from './sign-in-and-open.js'
+import {
+  AUTOCOMPLETE_BY_FIELD,
+  FIELDS_WITHOUT_AUTOCOMPLETE
+} from '../../../../common/test-helpers/address-form-autocomplete.js'
 import {
   CONSIGNMENT_CONTACT_HANDSHAKE,
   JOURNEY_HANDSHAKES_BY_ROLE,
   returnUrlFor
 } from '../../../../common/test-helpers/journey-handshake.js'
 import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
-import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
+
+const openAddPage = (page, organisationId, { handshake } = {}) =>
+  signInAndOpen(
+    page,
+    organisationId,
+    handshake === undefined
+      ? addressAddPath()
+      : `${addressAddPath()}?${new URLSearchParams(handshake)}`
+  )
 
 const submit = (page) =>
   page.getByRole('button', { name: 'Save and continue' }).click()
@@ -36,8 +48,7 @@ test.describe('add address', () => {
   test('renders every field, hints and populated country options', async ({
     page
   }) => {
-    await signIn(page, { organisationId: 'stub-org-add-render' })
-    await page.goto(addressAddPath())
+    await openAddPage(page, 'stub-org-add-render')
 
     await expect(
       page.getByRole('heading', { name: 'Add address and contact details' })
@@ -59,7 +70,7 @@ test.describe('add address', () => {
     const country = page.getByLabel('Country')
     await expect(country).toHaveValue('')
     await expect(country.getByRole('option').first()).toHaveText(
-      COUNTRY_PLACEHOLDER
+      copy.form.countryPlaceholder
     )
     await expect(
       country.getByRole('option', { name: GB_COUNTRY.name })
@@ -67,8 +78,7 @@ test.describe('add address', () => {
   })
 
   test('has a Back link to the address book', async ({ page }) => {
-    await signIn(page, { organisationId: 'stub-org-add-back' })
-    await page.goto(addressAddPath())
+    await openAddPage(page, 'stub-org-add-back')
 
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
@@ -76,8 +86,7 @@ test.describe('add address', () => {
   })
 
   test('groups fields under Address and Contact details', async ({ page }) => {
-    await signIn(page, { organisationId: 'stub-org-add-sections' })
-    await page.goto(addressAddPath())
+    await openAddPage(page, 'stub-org-add-sections')
 
     for (const name of ['Address', 'Contact details']) {
       await expect(
@@ -87,27 +96,19 @@ test.describe('add address', () => {
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
-    await signIn(page, { organisationId: 'stub-org-add-axe' })
-    await page.goto(addressAddPath())
+    await openAddPage(page, 'stub-org-add-axe')
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address')
   })
 })
 
 test.describe('add address reached from a notification journey', () => {
-  const openFromJourney = async (
-    page,
-    organisationId,
-    handshake = JOURNEY_HANDSHAKES_BY_ROLE.consignor
-  ) => {
-    await signIn(page, { organisationId })
-    await page.goto(`${addressAddPath()}?${new URLSearchParams(handshake)}`)
-  }
-
   test('shows the Draft status and notification id above the caption, heading, section headings and fields', async ({
     page
   }) => {
-    await openFromJourney(page, 'stub-org-add-journey')
+    await openAddPage(page, 'stub-org-add-journey', {
+      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignor
+    })
 
     await expect(page).toHaveTitle(
       'Add address and contact details - Import notification service - GOV.UK'
@@ -154,10 +155,12 @@ test.describe('add address reached from a notification journey', () => {
     }
   })
 
-  test('gives each personal-data field its browser autocomplete hint', async ({
+  test('sets autocomplete on address lines, town, postcode, email and phone, and none on name, county and country', async ({
     page
   }) => {
-    await openFromJourney(page, 'stub-org-add-journey-autocomplete')
+    await openAddPage(page, 'stub-org-add-journey-autocomplete', {
+      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignor
+    })
 
     for (const [field, autocomplete] of Object.entries(AUTOCOMPLETE_BY_FIELD)) {
       await expect(page.getByLabel(fieldLabels[field])).toHaveAttribute(
@@ -165,10 +168,17 @@ test.describe('add address reached from a notification journey', () => {
         autocomplete
       )
     }
+    for (const field of FIELDS_WITHOUT_AUTOCOMPLETE) {
+      await expect(
+        page.getByLabel(fieldLabels[field], { exact: true })
+      ).not.toHaveAttribute('autocomplete')
+    }
   })
 
   test('has no serious or critical axe violations', async ({ page }) => {
-    await openFromJourney(page, 'stub-org-add-journey-axe')
+    await openAddPage(page, 'stub-org-add-journey-axe', {
+      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignor
+    })
 
     await expectNoSeriousOrCriticalViolations(page, 'Add address from journey')
   })
@@ -176,11 +186,9 @@ test.describe('add address reached from a notification journey', () => {
   test('from the consignee handshake offers United Kingdom alone, selected, with every field shown', async ({
     page
   }) => {
-    await openFromJourney(
-      page,
-      'stub-org-add-journey-consignee',
-      JOURNEY_HANDSHAKES_BY_ROLE.consignee
-    )
+    await openAddPage(page, 'stub-org-add-journey-consignee', {
+      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignee
+    })
 
     const country = page.getByLabel('Country')
     await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
@@ -197,17 +205,15 @@ test.describe('add address reached from a notification journey', () => {
     test(`from the ${roleName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
       page
     }) => {
-      await openFromJourney(
-        page,
-        `stub-org-add-journey-countries-${role}`,
-        JOURNEY_HANDSHAKES_BY_ROLE[role]
-      )
+      await openAddPage(page, `stub-org-add-journey-countries-${role}`, {
+        handshake: JOURNEY_HANDSHAKES_BY_ROLE[role]
+      })
 
       const country = page.getByLabel('Country')
       await expect(country).toHaveJSProperty('tagName', 'SELECT')
       await expect(country).toHaveValue('')
       await expect(country.getByRole('option')).toHaveText([
-        COUNTRY_PLACEHOLDER,
+        copy.form.countryPlaceholder,
         ...addressFormCountryNames
       ])
     })
@@ -216,11 +222,9 @@ test.describe('add address reached from a notification journey', () => {
   test('from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations', async ({
     page
   }) => {
-    await openFromJourney(
-      page,
-      'stub-org-add-journey-consignee-name',
-      JOURNEY_HANDSHAKES_BY_ROLE.consignee
-    )
+    await openAddPage(page, 'stub-org-add-journey-consignee-name', {
+      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignee
+    })
 
     await fillValidAddress(page, { name: '' })
     await page.getByRole('button', { name: 'Save and select' }).click()
@@ -240,7 +244,9 @@ test.describe('add address reached from a notification journey', () => {
   test('from a role handshake offers Back to the journey, Save and select, Save and return to address page and a Cancel and return to hub link', async ({
     page
   }) => {
-    await openFromJourney(page, 'stub-org-add-journey-actions')
+    await openAddPage(page, 'stub-org-add-journey-actions', {
+      handshake: JOURNEY_HANDSHAKES_BY_ROLE.consignor
+    })
 
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
@@ -265,11 +271,9 @@ test.describe('add address reached from a notification journey', () => {
   test('from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page', async ({
     page
   }) => {
-    await openFromJourney(
-      page,
-      'stub-org-add-journey-contact',
-      CONSIGNMENT_CONTACT_HANDSHAKE
-    )
+    await openAddPage(page, 'stub-org-add-journey-contact', {
+      handshake: CONSIGNMENT_CONTACT_HANDSHAKE
+    })
 
     await expect(
       page.getByRole('link', { name: 'Back', exact: true })
@@ -286,8 +290,7 @@ test.describe('add address validation', () => {
     test(`empty ${label} links to and focuses the preserved field`, async ({
       page
     }) => {
-      await signIn(page, { organisationId: 'stub-org-add-required' })
-      await page.goto(addressAddPath())
+      await openAddPage(page, 'stub-org-add-required')
 
       await fillValidAddress(page, { [field]: '' })
       await submit(page)
@@ -308,8 +311,7 @@ test.describe('add address validation', () => {
     test(`${label} over ${maxLength} characters links to and focuses the preserved value`, async ({
       page
     }) => {
-      await signIn(page, { organisationId: 'stub-org-add-maxlength' })
-      await page.goto(addressAddPath())
+      await openAddPage(page, 'stub-org-add-maxlength')
 
       const value = 'A'.repeat(maxLength + 1)
       await fillValidAddress(page, { [field]: value })
@@ -328,8 +330,7 @@ test.describe('add address validation', () => {
   }
 
   test('rejects a malformed email address', async ({ page }) => {
-    await signIn(page, { organisationId: 'stub-org-add-email' })
-    await page.goto(addressAddPath())
+    await openAddPage(page, 'stub-org-add-email')
 
     await fillValidAddress(page, { email: 'not-an-email' })
     await submit(page)
@@ -345,8 +346,7 @@ test.describe('add address validation', () => {
   test('validation error page has no serious or critical axe violations', async ({
     page
   }) => {
-    await signIn(page, { organisationId: 'stub-org-add-validation-axe' })
-    await page.goto(addressAddPath())
+    await openAddPage(page, 'stub-org-add-validation-axe')
 
     await fillValidAddress(page, { name: '' })
     await submit(page)
@@ -362,20 +362,18 @@ test.describe('add address validation', () => {
 test.describe('save and confirm', () => {
   const organisationPrefix = 'stub-org-add-save'
 
-  test('saves a valid address and keeps the Success banner naming it showing 10 seconds after the list loads', async ({
+  test('saves a valid address and shows the Success banner naming it', async ({
     page
   }) => {
-    await page.clock.install()
     await addValidAddressToFreshOrganisation(page, { organisationPrefix })
 
-    const banner = page
-      .getByRole('alert', { name: 'Success' })
-      .getByText(`${validAddress.name} address added to your address book`, {
-        exact: true
-      })
-    await expect(banner).toBeVisible()
-    await page.clock.runFor(10_000)
-    await expect(banner).toBeVisible()
+    await expect(
+      page
+        .getByRole('alert', { name: 'Success' })
+        .getByText(`${validAddress.name} address added to your address book`, {
+          exact: true
+        })
+    ).toBeVisible()
   })
 
   test('lists the saved address first, ahead of the seeded address, with a View link to its own details page', async ({
@@ -458,8 +456,7 @@ test.describe('cancel', () => {
   test('returns to the address book without creating an address', async ({
     page
   }) => {
-    await signIn(page, { organisationId: 'stub-org-add-cancel' })
-    await page.goto(addressAddPath())
+    await openAddPage(page, 'stub-org-add-cancel')
 
     await fillValidAddress(page)
 

@@ -14,7 +14,7 @@ const NOTIFICATIONS_PATH = '/notifications'
 const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
-const ARRIVAL_DATE = '2026-09-10T00:00:00Z'
+const ARRIVAL_DATE = '2026-09-10'
 const CREATE_NEW_SELECTOR = 'main a[role="button"]'
 
 const pageOf = (content, overrides = {}) => ({
@@ -42,7 +42,7 @@ const documentOrderOf = (result, selectors) =>
     .map((element) => element.tagName)
 
 describe('#dashboard', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test('renders notifications with reference, status, origin, commodity and arrival date, and a standard Create new button between the heading and the search and table', async () => {
     insBackendApi()
@@ -55,13 +55,13 @@ describe('#dashboard', () => {
             referenceNumber: REFERENCE_NUMBER,
             status: 'SUBMITTED',
             originCountry: 'FR',
-            commodity: null,
+            commodity: 'Cattle',
             arrivalDate: ARRIVAL_DATE
           }
         ])
       )
 
-    const { result, statusCode } = await server().inject({
+    const { result, statusCode } = await getServer().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-with-notifications')
@@ -73,6 +73,8 @@ describe('#dashboard', () => {
     expect(result).toContain(REFERENCE_NUMBER)
     expect(result).toContain('SUBMITTED')
     expect(result).toContain('France')
+    expect(result).not.toContain('>FR<')
+    expect(result).toContain('>Cattle</td>')
     expect(result).toContain('10 Sep 2026')
     expect(result).toContain('Showing 1-1 of 1')
     expect(expectOneCreateNewButton(result).attr('class')).toBe('govuk-button')
@@ -104,14 +106,14 @@ describe('#dashboard', () => {
               referenceNumber: OTHER_REFERENCE_NUMBER,
               status: 'DRAFT',
               originCountry: 'GB',
-              arrivalDate: '2026-09-11T00:00:00Z'
+              arrivalDate: '2026-09-11'
             }
           ],
           { totalElements: 2, totalPages: 1 }
         )
       )
 
-    const { result } = await server().inject({
+    const { result } = await getServer().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-two-statuses')
@@ -137,7 +139,7 @@ describe('#dashboard', () => {
         ])
       )
 
-    const { result } = await server().inject({
+    const { result } = await getServer().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-submitted-link')
@@ -164,7 +166,7 @@ describe('#dashboard', () => {
         ])
       )
 
-    const { result } = await server().inject({
+    const { result } = await getServer().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-draft-link')
@@ -181,9 +183,9 @@ describe('#dashboard', () => {
 })
 
 describe('#dashboard — search, sort and errors', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
-  test('searching by complete reference returns only the matching notification and still offers Create new', async () => {
+  test('searching by complete reference asks the backend for that reference, shows it and still offers Create new', async () => {
     const scope = insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query({ ...DEFAULT_QUERY, referenceNumber: REFERENCE_NUMBER })
@@ -199,14 +201,16 @@ describe('#dashboard — search, sort and errors', () => {
         ])
       )
 
-    const { result } = await server().inject({
+    const { result } = await getServer().inject({
       method: 'GET',
       url: `/?referenceNumber=${REFERENCE_NUMBER}`,
       auth: sessionAuth('dashboard-search-match')
     })
 
+    const referenceCell = load(result)('.govuk-table__body td').first()
+
     expect(scope.isDone()).toBe(true)
-    expect(result).toContain(REFERENCE_NUMBER)
+    expect(referenceCell.text().trim()).toBe(REFERENCE_NUMBER)
     expectOneCreateNewButton(result)
   })
 
@@ -216,7 +220,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query({ ...DEFAULT_QUERY, referenceNumber: 'GBN-AG-26-999999' })
       .reply(200, pageOf([]))
 
-    const { result, statusCode } = await server().inject({
+    const { result, statusCode } = await getServer().inject({
       method: 'GET',
       url: '/?referenceNumber=GBN-AG-26-999999',
       auth: sessionAuth('dashboard-search-no-match')
@@ -233,7 +237,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query(DEFAULT_QUERY)
       .reply(200, pageOf([]))
 
-    const { result, statusCode } = await server().inject({
+    const { result, statusCode } = await getServer().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-empty-store')
@@ -254,7 +258,7 @@ describe('#dashboard — search, sort and errors', () => {
       })
       .reply(200, pageOf([]))
 
-    await server().inject({
+    await getServer().inject({
       method: 'GET',
       url: `/?sort=lastUpdated,asc&referenceNumber=${REFERENCE_NUMBER}`,
       auth: sessionAuth('dashboard-sort-forward')
@@ -269,7 +273,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query(DEFAULT_QUERY)
       .reply(200, pageOf([]))
 
-    await server().inject({
+    await getServer().inject({
       method: 'GET',
       url: '/?sort=not-a-real-option',
       auth: sessionAuth('dashboard-sort-invalid')
@@ -284,7 +288,7 @@ describe('#dashboard — search, sort and errors', () => {
       .query(DEFAULT_QUERY)
       .reply(500, { title: 'Internal Server Error' })
 
-    const { result, statusCode } = await server().inject({
+    const { result, statusCode } = await getServer().inject({
       method: 'GET',
       url: '/',
       auth: sessionAuth('dashboard-error')

@@ -4,7 +4,6 @@ import {
   refuseOutboundHttp,
   serveCountries
 } from '../../../common/test-helpers/real-mode.js'
-import { COUNTRY_PLACEHOLDER } from '../../../common/test-helpers/country-placeholder.js'
 import {
   ANY_COUNTRY_ROLES,
   handshakeContextOf,
@@ -19,6 +18,7 @@ import {
   countryCodesMatching,
   GB_COUNTRY
 } from './address-countries.js'
+import { copy } from './copy/copy.en.js'
 
 const originalMode = process.env.STUB_MODE
 const FRANCE = { code: 'FR', name: 'France' }
@@ -98,7 +98,7 @@ describe('#addFormCountryOffer', () => {
 
       const offer = await addFormCountryOffer({
         handshakeContext: handshakeContextOf(JOURNEY_HANDSHAKES_BY_ROLE[role]),
-        placeholder: COUNTRY_PLACEHOLDER,
+        placeholder: copy.form.countryPlaceholder,
         formValues: postedValues
       })
 
@@ -118,18 +118,18 @@ describe('#addFormCountryOffer', () => {
 
       const offer = await addFormCountryOffer({
         handshakeContext,
-        placeholder: COUNTRY_PLACEHOLDER,
+        placeholder: copy.form.countryPlaceholder,
         formValues: postedValues
       })
 
       expect(offer).toEqual({
         countryItems: [
-          { value: '', text: COUNTRY_PLACEHOLDER },
+          { value: '', text: copy.form.countryPlaceholder },
           { value: FRANCE.code, text: FRANCE.name },
           { value: GB_COUNTRY.code, text: GB_COUNTRY.name }
         ],
         countryCodes: ['FR', GB_COUNTRY.code],
-        formValues: postedValues
+        formValues: { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
       })
     }
   )
@@ -137,18 +137,25 @@ describe('#addFormCountryOffer', () => {
 
 describe('#buildCountrySelectItems', () => {
   test('Should put the placeholder option before the country options', () => {
-    expect(buildCountrySelectItems(GB_AND_FRANCE, COUNTRY_PLACEHOLDER)).toEqual(
-      [{ value: '', text: COUNTRY_PLACEHOLDER }, ...GB_AND_FRANCE_ITEMS]
-    )
+    expect(
+      buildCountrySelectItems(GB_AND_FRANCE, copy.form.countryPlaceholder)
+    ).toEqual([
+      { value: '', text: copy.form.countryPlaceholder },
+      ...GB_AND_FRANCE_ITEMS
+    ])
   })
 })
 
 describe('#buildEditCountrySelectItems', () => {
-  const blankOption = { value: '', text: COUNTRY_PLACEHOLDER }
+  const blankOption = { value: '', text: copy.form.countryPlaceholder }
 
   test('Should offer only the countries when the shown country is one of them', () => {
     expect(
-      buildEditCountrySelectItems(GB_AND_FRANCE, 'FR', COUNTRY_PLACEHOLDER)
+      buildEditCountrySelectItems(
+        GB_AND_FRANCE,
+        'FR',
+        copy.form.countryPlaceholder
+      )
     ).toEqual(GB_AND_FRANCE_ITEMS)
   })
 
@@ -163,7 +170,7 @@ describe('#buildEditCountrySelectItems', () => {
         buildEditCountrySelectItems(
           GB_AND_FRANCE,
           shownCountryCode,
-          COUNTRY_PLACEHOLDER
+          copy.form.countryPlaceholder
         )
       ).toEqual([blankOption, ...GB_AND_FRANCE_ITEMS])
     }
@@ -181,6 +188,9 @@ describe('#countryCodesMatching', () => {
 
   test('Should return the alpha-2 code of every country whose name contains the term, ignoring case and surrounding spaces', () => {
     expect(countryCodesMatching(' FRAN ', COUNTRIES)).toEqual(['FR'])
+    expect(countryCodesMatching('Kingdom', COUNTRIES)).toEqual([
+      GB_COUNTRY.code
+    ])
     expect(countryCodesMatching('united', COUNTRIES)).toEqual([
       GB_COUNTRY.code,
       'US',

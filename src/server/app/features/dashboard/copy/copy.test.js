@@ -20,11 +20,11 @@ describe('#copy', () => {
     }
   )
 
-  it('Should show the results range as from-to of total', () => {
+  it('Should word the results range as Showing {from}-{to} of {total}', () => {
     expect(copy.results(26, 40, 40)).toBe('Showing 26-40 of 40')
   })
 
-  it('Should carry the title, search wording and empty-state text', () => {
+  it('Should word the title, search label, no-results line and empty text', () => {
     expect(copy.title).toBe('Dashboard')
     expect(copy.search.label).toBe('Search by notification reference')
     expect(copy.search.noResults).toBe('No notifications found')

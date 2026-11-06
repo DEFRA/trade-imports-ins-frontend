@@ -4,15 +4,15 @@ const NOTIFICATION_TYPE_URL = '/notification-type'
 
 export const CRN = '1100598138'
 
-export const requestsTo = (server) => ({
+export const requestsTo = (getServer) => ({
   getPage: (user, query) =>
-    server().inject({
+    getServer().inject({
       method: 'GET',
       url: query ? `${NOTIFICATION_TYPE_URL}?${query}` : NOTIFICATION_TYPE_URL,
       auth: sessionAuth(user, { crn: CRN })
     }),
   postType: (user, payload) =>
-    server().inject({
+    getServer().inject({
       method: 'POST',
       url: NOTIFICATION_TYPE_URL,
       auth: sessionAuth(user, { crn: CRN }),

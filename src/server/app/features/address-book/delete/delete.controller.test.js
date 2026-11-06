@@ -6,20 +6,20 @@ import { statusCodes } from '../../../../common/constants/status-codes.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import { textOf } from '../../../../common/test-helpers/rendered-text.js'
 import {
-  ADDRESS_BOOK_PATH,
+  addressBookPath,
   ADDRESS_ID,
   addressApiPath,
-  addressPagePath,
+  addressPath,
   BACK_LINK,
   COUNTRIES,
-  deleteAddressPagePath,
+  addressDeletePath,
   expectRedirectTo,
   expectServerErrorPage,
   getPage,
+  interceptAddressBookRequest,
   MALFORMED_ADDRESS_ID,
   ORGANISATION_ID_HEADER,
   postPage,
-  RETURN_HOME,
   serveAddressBookServerError,
   serveAddressNotFound,
   serveStoredAddress,
@@ -28,6 +28,7 @@ import {
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
+import { pathWithReturn } from '../return-to.js'
 import {
   addressSummaryLines,
   deletedSuccessMessage
@@ -35,13 +36,17 @@ import {
 
 const UK_NAME = 'United Kingdom'
 
-const getDelete = (server, sessionId, query = '') =>
-  getPage(server, `${deleteAddressPagePath(ADDRESS_ID)}${query}`, sessionId)
+const getDelete = (server, sessionId, returnTo) =>
+  getPage(
+    server,
+    pathWithReturn(addressDeletePath(ADDRESS_ID), returnTo),
+    sessionId
+  )
 
-const postDelete = (server, sessionId, query = '') =>
+const postDelete = (server, sessionId, returnTo) =>
   postPage(
     server,
-    `${deleteAddressPagePath(ADDRESS_ID)}${query}`,
+    pathWithReturn(addressDeletePath(ADDRESS_ID), returnTo),
     sessionId,
     {}
   )
@@ -110,12 +115,12 @@ describe('#deletedSuccessMessage', () => {
 })
 
 describe('GET /address-book/{addressId}/delete', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should render the confirmation with one Address summary row, the warning, Yes, delete and a No, cancel link', async () => {
     serveStoredAddress()
 
-    const { result, statusCode } = await getDelete(server(), 'delete-get')
+    const { result, statusCode } = await getDelete(getServer(), 'delete-get')
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
@@ -149,7 +154,7 @@ describe('GET /address-book/{addressId}/delete', () => {
     expect(confirmButton.hasClass('govuk-button--warning')).toBe(true)
     const cancelLink = $('.govuk-button-group a.govuk-link')
     expect(textOf($, cancelLink)).toBe('No, cancel')
-    expect(cancelLink.attr('href')).toBe(addressPagePath(ADDRESS_ID))
+    expect(cancelLink.attr('href')).toBe(addressPath(ADDRESS_ID))
     expect($('.govuk-button--secondary')).toHaveLength(0)
   })
 
@@ -164,7 +169,10 @@ describe('GET /address-book/{addressId}/delete', () => {
       deleted: false
     })
 
-    const { result, statusCode } = await getDelete(server(), 'delete-get-blank')
+    const { result, statusCode } = await getDelete(
+      getServer(),
+      'delete-get-blank'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(textOf(load(result), SUMMARY_VALUE)).toBe('Not applicable')
@@ -182,7 +190,7 @@ describe('GET /address-book/{addressId}/delete', () => {
     })
 
     const { result, statusCode } = await getDelete(
-      server(),
+      getServer(),
       'delete-get-escaping'
     )
 
@@ -198,8 +206,8 @@ describe('GET /address-book/{addressId}/delete', () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await getDelete(server(), 'delete-get-404'),
-      ADDRESS_BOOK_PATH
+      await getDelete(getServer(), 'delete-get-404'),
+      addressBookPath()
     )
   })
 
@@ -207,26 +215,26 @@ describe('GET /address-book/{addressId}/delete', () => {
     serveStoredAddress({ ...STORED_ADDRESS, deleted: true })
 
     expectRedirectTo(
-      await getDelete(server(), 'delete-get-tombstone'),
-      ADDRESS_BOOK_PATH
+      await getDelete(getServer(), 'delete-get-tombstone'),
+      addressBookPath()
     )
   })
 
   test('Should redirect to the address book for a malformed address id', async () => {
     expectRedirectTo(
       await getPage(
-        server(),
-        deleteAddressPagePath(MALFORMED_ADDRESS_ID),
+        getServer(),
+        addressDeletePath(MALFORMED_ADDRESS_ID),
         'delete-get-bad-id'
       ),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
   test('Should return 500 when the address book answers the lookup with a server error', async () => {
     serveAddressBookServerError(addressApiPath(ADDRESS_ID))
 
-    expectServerErrorPage(await getDelete(server(), 'delete-get-500'))
+    expectServerErrorPage(await getDelete(getServer(), 'delete-get-500'))
   })
 
   describe('with a return', () => {
@@ -234,14 +242,14 @@ describe('GET /address-book/{addressId}/delete', () => {
       serveStoredAddress()
 
       const { result, statusCode } = await getDelete(
-        server(),
+        getServer(),
         'delete-get-return',
-        RETURN_HOME
+        '/'
       )
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      const addressPageHref = `${addressPagePath(ADDRESS_ID)}${RETURN_HOME}`
+      const addressPageHref = pathWithReturn(addressPath(ADDRESS_ID), '/')
       expect($(BACK_LINK).attr('href')).toBe(addressPageHref)
       expect($('.govuk-button-group a.govuk-link').attr('href')).toBe(
         addressPageHref
@@ -251,39 +259,47 @@ describe('GET /address-book/{addressId}/delete', () => {
 })
 
 describe('POST /address-book/{addressId}/delete', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   const interceptDeleteOf = (addressId) =>
     addressBookApi().delete(addressApiPath(addressId))
 
+  const interceptUnwantedDelete = () =>
+    interceptAddressBookRequest('DELETE', addressApiPath(ADDRESS_ID))
+
   test('Should redirect to the address book without deleting a soft-deleted tombstone', async () => {
     serveStoredAddress({ ...STORED_ADDRESS, deleted: true })
+    const deletion = interceptUnwantedDelete()
 
     expectRedirectTo(
-      await postDelete(server(), 'delete-post-tombstone'),
-      ADDRESS_BOOK_PATH
+      await postDelete(getServer(), 'delete-post-tombstone'),
+      addressBookPath()
     )
+    deletion.expectNotSent()
   })
 
   test('Should redirect to the address book without deleting an unknown id', async () => {
     serveAddressNotFound(ADDRESS_ID)
+    const deletion = interceptUnwantedDelete()
 
     expectRedirectTo(
-      await postDelete(server(), 'delete-post-unknown'),
-      ADDRESS_BOOK_PATH
+      await postDelete(getServer(), 'delete-post-unknown'),
+      addressBookPath()
     )
+    deletion.expectNotSent()
   })
 
   test('Should treat a 404 from the delete itself as already deleted', async () => {
     serveStoredAddress()
-    interceptDeleteOf(ADDRESS_ID).reply(statusCodes.notFound, {
+    const scope = interceptDeleteOf(ADDRESS_ID).reply(statusCodes.notFound, {
       message: 'Not found'
     })
 
     expectRedirectTo(
-      await postDelete(server(), 'delete-post-404'),
-      ADDRESS_BOOK_PATH
+      await postDelete(getServer(), 'delete-post-404'),
+      addressBookPath()
     )
+    expect(scope.isDone()).toBe(true)
   })
 
   test('Should return 500 when the address book rejects the delete with a server error', async () => {
@@ -292,7 +308,7 @@ describe('POST /address-book/{addressId}/delete', () => {
       title: 'Service Unavailable'
     })
 
-    expectServerErrorPage(await postDelete(server(), 'delete-post-500'))
+    expectServerErrorPage(await postDelete(getServer(), 'delete-post-500'))
   })
 
   test('Should send the delete for the organisation and redirect to the address book', async () => {
@@ -302,8 +318,8 @@ describe('POST /address-book/{addressId}/delete', () => {
       .reply(statusCodes.noContent)
 
     expectRedirectTo(
-      await postDelete(server(), 'delete-post-confirm'),
-      ADDRESS_BOOK_PATH
+      await postDelete(getServer(), 'delete-post-confirm'),
+      addressBookPath()
     )
     expect(scope.isDone()).toBe(true)
   })
@@ -312,10 +328,10 @@ describe('POST /address-book/{addressId}/delete', () => {
     serveStoredAddress()
     interceptDeleteOf(ADDRESS_ID).reply(statusCodes.noContent)
 
-    const { headers } = await postDelete(server(), 'delete-post-banner')
+    const { headers } = await postDelete(getServer(), 'delete-post-banner')
 
     const listResponse = await openEmptyAddressBookWithCookiesFrom(
-      server(),
+      getServer(),
       'delete-post-banner',
       headers
     )
@@ -330,7 +346,7 @@ describe('POST /address-book/{addressId}/delete', () => {
       const scope = interceptDeleteOf(ADDRESS_ID).reply(statusCodes.noContent)
 
       expectRedirectTo(
-        await postDelete(server(), 'delete-post-return', RETURN_HOME),
+        await postDelete(getServer(), 'delete-post-return', '/'),
         '/'
       )
       expect(scope.isDone()).toBe(true)
@@ -341,13 +357,13 @@ describe('POST /address-book/{addressId}/delete', () => {
       interceptDeleteOf(ADDRESS_ID).reply(statusCodes.noContent)
 
       const { headers } = await postDelete(
-        server(),
+        getServer(),
         'delete-post-return-banner',
-        RETURN_HOME
+        '/'
       )
 
       const listResponse = await openEmptyAddressBookWithCookiesFrom(
-        server(),
+        getServer(),
         'delete-post-return-banner',
         headers
       )
@@ -360,11 +376,11 @@ describe('POST /address-book/{addressId}/delete', () => {
 
       expectRedirectTo(
         await postDelete(
-          server(),
+          getServer(),
           'delete-post-return-own-page',
-          `?return=${encodeURIComponent(addressPagePath(ADDRESS_ID))}`
+          addressPath(ADDRESS_ID)
         ),
-        ADDRESS_BOOK_PATH
+        addressBookPath()
       )
     })
 
@@ -374,22 +390,20 @@ describe('POST /address-book/{addressId}/delete', () => {
       interceptDeleteOf(ADDRESS_ID).reply(statusCodes.noContent)
 
       expectRedirectTo(
-        await postDelete(
-          server(),
-          'delete-post-return-animals',
-          `?return=${encodeURIComponent(animalsUrl)}`
-        ),
+        await postDelete(getServer(), 'delete-post-return-animals', animalsUrl),
         animalsUrl
       )
     })
 
     test('Should land on an honoured return without deleting an unknown id', async () => {
       serveAddressNotFound(ADDRESS_ID)
+      const deletion = interceptUnwantedDelete()
 
       expectRedirectTo(
-        await postDelete(server(), 'delete-post-return-unknown', RETURN_HOME),
+        await postDelete(getServer(), 'delete-post-return-unknown', '/'),
         '/'
       )
+      deletion.expectNotSent()
     })
   })
 })

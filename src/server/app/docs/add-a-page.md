@@ -110,14 +110,14 @@ Write `controller.test.js` in the shape of
 [`add/add.controller.test.js`](../features/address-book/add/add.controller.test.js):
 
 - `describe(name, { concurrent: false }, fn)`.
-- Start the server with `const server = startRealModeServer()` (or
+- Start the server with `const getServer = startRealModeServer()` (or
   `startRealModeServerServingCountries(countries)`) from
   `common/test-helpers/test-server.js`, which serves OIDC discovery through
   `serveOidcDiscovery()`. Then use `restoreConfigAfterEach([...keys])` and
   `recordModuleLoggerInfo()` where needed.
 - `config.set('csrf.enabled', false)` and `serveCountries(...)` in
   `beforeEach`.
-- `server.inject` with `auth: sessionAuth('<unique id>')`.
+- `getServer().inject` with `auth: sessionAuth('<unique id>')`.
 - nock scopes from `real-mode.js` for every upstream call, asserted with
   `scope.isDone()`.
 - coverage: GET render, every validation rule's message, raw values

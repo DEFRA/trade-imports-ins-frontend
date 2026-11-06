@@ -7,9 +7,29 @@ Run commands from the repository root.
 `npm test` builds the client (`pretest`) then runs Vitest with coverage.
 `npm run test:watch` does neither.
 [`vitest.config.js`](../../../../vitest.config.js): globals, Node
-environment, and **`STUB_MODE=true` for the whole suite** — a test that
-needs the HTTP clients opts into real mode itself. The `test` and
-`test:watch` scripts set `TZ=UTC`. Tests sit beside their subject.
+environment, **`STUB_MODE=true` for the whole suite** — a test that
+needs the HTTP clients opts into real mode itself — `TZ=UTC`, and
+`AWS_EMF_ENVIRONMENT=Local`, so metrics are written to the console the
+metric tests read. A bare `npx vitest run` gets the same environment as
+`npm test`. Tests sit beside their subject.
+
+Date tests in [`lib/validate/calendar.test.js`](../lib/validate/calendar.test.js)
+move the process zone with
+[`runInZone`](../../common/test-helpers/run-in-zone.js). Under `TZ=UTC`, code
+that reads the process zone gives the same day as code that does not, so a
+zone mistake cannot fail a test there. Each zone guards one kind of input:
+
+- `WEST_OF_UTC` (`America/New_York`) guards a midnight-UTC instant. Read in
+  the process zone, it falls on the day before. The `formatDateText`,
+  `addUtcDays` and `addUtcMonths` cases cover this.
+- `EAST_OF_UTC` (`Pacific/Auckland`) guards a date-only string parsed as
+  local midnight. Read as UTC, it falls on the day before. The
+  `parseDateText` case covers this.
+
+Each mistake shows in one zone only, so a zone case runs in the zone that
+catches it. A function that creates no Date in the process zone, such as
+`formatDisplayCalendarDate`, gets no zone case: no zone can change its
+answer.
 
 Convention checks:
 
@@ -36,9 +56,10 @@ for the pattern, and the helpers in
 `recordModuleLoggerWarn()`, which record the info or warn lines the
 module-level logger writes during each test of the enclosing `describe`),
 `address-book-requests.js`, the one owner of the address book tests'
-set-up: page paths (`ADDRESS_BOOK_PATH`, `ADD_ADDRESS_PATH`,
-`addressPagePath(addressId)`, `editAddressPagePath(addressId)`,
-`deleteAddressPagePath(addressId)`, `RETURN_HOME`), address book API paths
+set-up: page paths (`addressBookPath()`, `addressAddPath()`,
+`addressPath(id)`, `addressEditPath(id)` and `addressDeletePath(id)`,
+re-exported from `app/shared/paths.js`; a test that needs a return query
+builds it with `pathWithReturn` from `return-to.js`), address book API paths
 (`addressesApiPath(organisationId)`, `addressApiPath(addressId,
 organisationId)`, both defaulting to the session organisation), fixtures
 (`ADDRESS_ID`, `STORED_ADDRESS`, `VALID_ADDRESS_PAYLOAD`,
@@ -46,7 +67,7 @@ organisationId)`, both defaulting to the session organisation), fixtures
 field labels in page order, written out as literals), `COUNTRIES`,
 `MALFORMED_ADDRESS_ID`,
 `ORGANISATION_ID_HEADER`, `OTHER_ORGANISATION_ID`), selectors (`BACK_LINK`,
-`COUNTRY_OPTIONS`, `SELECTED_COUNTRY`), requests (`getPage()`,
+`COUNTRY_OPTIONS`, `SELECTED_COUNTRY_OPTION`), requests (`getPage()`,
 `postPage()`, `getPageAsOtherOrganisation()`), address book API stubs
 (`pageOf(items, overrides)`, `serveStoredAddress(address)`,
 `serveAddressNotFound(addressId)`, `serveAddressBookServerError(path)`,
@@ -62,7 +83,8 @@ add and edit forms' field widths),
 `expect-address-form-autocomplete.js`
 (`expectAddressFormAutocomplete(result)`, the add and edit forms' browser
 autocomplete hints, read from `address-form-autocomplete.js`'s
-`AUTOCOMPLETE_BY_FIELD`, which the fit specs import too),
+`AUTOCOMPLETE_BY_FIELD` and `FIELDS_WITHOUT_AUTOCOMPLETE`, which the fit
+specs import too),
 `journey-handshake.js` (`handshakeContextOf(handshake)`, the handshake
 context the app builds from a handshake's query or form fields,
 `JOURNEY_HANDSHAKES_BY_ROLE`, one complete journey
@@ -79,9 +101,10 @@ which the fit specs import too),
 `expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`
 and `expectPlaceholderThenCountriesNoneSelected($, countryNames)`, the add form's
 Country select),
-`expect-address-form-errors.js` (`expectSummaryLinks(result)` and
-`expectSummaryAndFieldErrors($, errors)`, the error summary links and the
-messages beside the fields),
+`expect-address-form-errors.js` (`expectSummaryAndFieldErrors($, errors)`,
+the exact error summary links and the messages beside the fields, and
+`INVALID_ADDRESS_PAYLOAD_ERRORS`, the errors `INVALID_ADDRESS_PAYLOAD`
+shows),
 `rendered-text.js` (`textOf($, selectorOrElement)`, `textsOf($, selector)`
 and `normalisedText(text)`, a rendered element's text trimmed with its
 whitespace collapsed to single spaces, which every Vitest test reads text

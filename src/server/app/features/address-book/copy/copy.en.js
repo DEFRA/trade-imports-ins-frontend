@@ -52,9 +52,9 @@ export const copy = {
     save: 'Save and continue',
     saveAndSelect: 'Save and select',
     saveAndReturnToAddressPage: 'Save and return to address page',
-    cancel: 'Cancel and return to address book',
+    cancelAndReturnToAddressBook: 'Cancel and return to address book',
     cancelAndReturnToAddressPage: 'Cancel and return to address page',
-    cancelToHub: 'Cancel and return to hub'
+    cancelAndReturnToHub: 'Cancel and return to hub'
   },
   edit: {
     title: 'Edit address and contact details',
@@ -102,7 +102,7 @@ export const copy = {
     },
     phone: {
       required: 'Enter a phone number',
-      maxLength: (max) => `Telephone number must be ${max} characters or fewer`
+      maxLength: (max) => `Phone number must be ${max} characters or fewer`
     },
     email: {
       required: 'Enter an email address',

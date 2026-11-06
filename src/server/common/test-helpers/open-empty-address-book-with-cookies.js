@@ -1,6 +1,6 @@
 import { statusCodes } from '../constants/status-codes.js'
 import {
-  ADDRESS_BOOK_PATH,
+  addressBookPath,
   addressesApiPath,
   pageOf
 } from './address-book-requests.js'
@@ -26,7 +26,7 @@ export const openEmptyAddressBookWithCookiesFrom = (
     .reply(statusCodes.ok, pageOf([]))
   return server.inject({
     method: 'GET',
-    url: ADDRESS_BOOK_PATH,
+    url: addressBookPath(),
     auth: sessionAuth(sessionId),
     headers: { cookie: cookieHeaderOf(postHeaders) }
   })

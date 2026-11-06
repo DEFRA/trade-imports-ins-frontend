@@ -107,7 +107,10 @@ describe('against the real address book', () => {
         VALID_ADDRESS_PAYLOAD
       )
 
-      expect(createdAddress.id).toBe(ADDRESS_ID)
+      expect(createdAddress).toEqual({
+        id: ADDRESS_ID,
+        ...VALID_ADDRESS_PAYLOAD
+      })
       expect(scope.isDone()).toBe(true)
     })
 
@@ -147,17 +150,18 @@ describe('against the real address book', () => {
 
     test('Should encode the organisation and address ids in the path', async () => {
       const organisationIdWithSlash = 'org/id'
+      const addressIdWithSlash = 'address/id'
       const scope = addressBookApi()
         .get(
           addressApiPath(
-            encodeURIComponent(ADDRESS_ID),
+            encodeURIComponent(addressIdWithSlash),
             encodeURIComponent(organisationIdWithSlash)
           )
         )
         .matchHeader(ORGANISATION_ID_HEADER, organisationIdWithSlash)
-        .reply(200, { id: ADDRESS_ID, name: 'Farm', deleted: false })
+        .reply(200, { id: addressIdWithSlash, name: 'Farm', deleted: false })
 
-      await addressBook.getAddress(organisationIdWithSlash, ADDRESS_ID)
+      await addressBook.getAddress(organisationIdWithSlash, addressIdWithSlash)
 
       expect(scope.isDone()).toBe(true)
     })
@@ -176,7 +180,10 @@ describe('against the real address book', () => {
         VALID_ADDRESS_PAYLOAD
       )
 
-      expect(updatedAddress.id).toBe(ADDRESS_ID)
+      expect(updatedAddress).toEqual({
+        id: ADDRESS_ID,
+        ...VALID_ADDRESS_PAYLOAD
+      })
       expect(scope.isDone()).toBe(true)
     })
 

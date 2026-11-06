@@ -54,7 +54,7 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     'tradeImportsAnimalsFrontend.baseUrl',
     'tradeImportsPlantsFrontend.baseUrl'
   ])
-  const server = startRealModeServer()
+  const getServer = startRealModeServer()
   const { entries: loggedInfo, entriesWith: loggedWith } =
     recordModuleLoggerInfo()
 
@@ -64,7 +64,7 @@ describe('#notificationTypeController', { concurrent: false }, () => {
     config.set('tradeImportsPlantsFrontend.baseUrl', PLANTS_BASE_URL)
   })
 
-  const { getPage, postType } = requestsTo(server)
+  const { getPage, postType } = requestsTo(getServer)
 
   test('GET titles the page and puts the caption and question in the heading legend', async () => {
     const { result, statusCode, headers } = await getPage('type-get')
@@ -251,9 +251,9 @@ describe(
   '#notificationTypeController returning notification',
   { concurrent: false },
   () => {
-    const server = startRealModeServer()
+    const getServer = startRealModeServer()
     const { entriesWith: warnedWith } = recordModuleLoggerWarn()
-    const { getPage } = requestsTo(server)
+    const { getPage } = requestsTo(getServer)
 
     test('GET with a live animals notification checks Live animals alone and carries the reference and type in hidden fields', async () => {
       const { result } = await getPage('type-returning', RETURNING_QUERY)

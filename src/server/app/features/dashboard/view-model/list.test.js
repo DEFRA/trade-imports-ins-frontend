@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../../config/config.js'
+import { recordModuleLoggerWarn } from '../../../../common/test-helpers/module-logger-lines.js'
 import { restoreConfigAfterEach } from '../../../../common/test-helpers/restore-config-after-each.js'
 import {
   buildDashboardQueryString,
   buildNotificationLink,
   dashboardPageHref,
-  formatDisplayDate,
   mapNotificationRows
 } from './list.js'
 
@@ -94,21 +94,9 @@ describe('#buildNotificationLink', () => {
   })
 })
 
-describe('#formatDisplayDate', () => {
-  test('formats an ISO string as "d MMM yyyy"', () => {
-    expect(formatDisplayDate('2026-09-10T00:00:00Z')).toBe('10 Sep 2026')
-  })
-
-  test('returns an empty string for a missing value', () => {
-    expect(formatDisplayDate(undefined)).toBe('')
-  })
-
-  test('returns an empty string for an invalid value', () => {
-    expect(formatDisplayDate('not-a-date')).toBe('')
-  })
-})
-
 describe('#mapNotificationRows', () => {
+  const { entries: warned } = recordModuleLoggerWarn()
+
   test('maps backend fields to row view-model, resolving country names and building the link', () => {
     const rows = mapNotificationRows(
       [
@@ -117,7 +105,7 @@ describe('#mapNotificationRows', () => {
           status: 'SUBMITTED',
           originCountry: 'FR',
           commodity: null,
-          arrivalDate: '2026-09-10T00:00:00Z'
+          arrivalDate: '2026-09-10'
         }
       ],
       { FR: 'France' }
@@ -148,5 +136,48 @@ describe('#mapNotificationRows', () => {
     )
 
     expect(row.originCountry).toBe('ZZ')
+  })
+
+  test('shows an unparseable arrival date blank and warns with the reference and raw value', () => {
+    const [row] = mapNotificationRows([
+      {
+        referenceNumber: REFERENCE_NUMBER,
+        status: 'SUBMITTED',
+        arrivalDate: '2026-02-30'
+      }
+    ])
+
+    expect(row.arrivalDate).toBe('')
+    expect(warned).toEqual([
+      {
+        fields: {
+          referenceNumber: REFERENCE_NUMBER,
+          arrivalDate: '2026-02-30'
+        },
+        message:
+          'Arrival date from the backend is not a calendar date, showing it blank'
+      }
+    ])
+  })
+
+  test('does not warn for a valid arrival date', () => {
+    mapNotificationRows([
+      {
+        referenceNumber: REFERENCE_NUMBER,
+        status: 'SUBMITTED',
+        arrivalDate: '2026-09-10'
+      }
+    ])
+
+    expect(warned).toEqual([])
+  })
+
+  test('shows a missing arrival date blank without warning', () => {
+    const [row] = mapNotificationRows([
+      { referenceNumber: REFERENCE_NUMBER, status: 'DRAFT' }
+    ])
+
+    expect(row.arrivalDate).toBe('')
+    expect(warned).toEqual([])
   })
 })

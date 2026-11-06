@@ -23,7 +23,9 @@ describe('#copy', () => {
     expect(copy.form.addressHeading).toBe('Address')
     expect(copy.form.contactHeading).toBe('Contact details')
     expect(copy.form.countryPlaceholder).toBe('Select a country')
-    expect(copy.add.cancel).toBe('Cancel and return to address book')
+    expect(copy.add.cancelAndReturnToAddressBook).toBe(
+      'Cancel and return to address book'
+    )
   })
 
   it('Should word the add page title and caption', () => {
@@ -31,21 +33,21 @@ describe('#copy', () => {
     expect(copy.add.caption).toBe('Add new address')
   })
 
-  it('Should word the journey-mode add actions', () => {
+  it('Should word Save and select, Save and return to address page and Cancel and return to hub', () => {
     expect(copy.add.saveAndSelect).toBe('Save and select')
     expect(copy.add.saveAndReturnToAddressPage).toBe(
       'Save and return to address page'
     )
-    expect(copy.add.cancelToHub).toBe('Cancel and return to hub')
+    expect(copy.add.cancelAndReturnToHub).toBe('Cancel and return to hub')
   })
 
-  it('Should word the Welsh add page title, caption and journey-mode actions', () => {
+  it('Should word the Welsh add page title, caption, Save and select, Save and return to address page and Cancel and return to hub', () => {
     const {
       title,
       caption,
       saveAndSelect,
       saveAndReturnToAddressPage,
-      cancelToHub
+      cancelAndReturnToHub
     } = cy.add
 
     expect({
@@ -53,13 +55,13 @@ describe('#copy', () => {
       caption,
       saveAndSelect,
       saveAndReturnToAddressPage,
-      cancelToHub
+      cancelAndReturnToHub
     }).toEqual({
       title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
       caption: 'Ychwanegu cyfeiriad newydd',
       saveAndSelect: 'Cadw a dewis',
       saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
-      cancelToHub: 'Canslo a dychwelyd i’r hyb'
+      cancelAndReturnToHub: 'Canslo a dychwelyd i’r hyb'
     })
   })
 
@@ -118,7 +120,7 @@ describe('#copy', () => {
     }
   )
 
-  it('Should name the address in each success banner', () => {
+  it('Should word the added, updated, deleted and unnamed deleted banners', () => {
     expect(copy.successBanner.added(ADDRESS_NAME)).toBe(
       'Green Farm address added to your address book'
     )
@@ -131,7 +133,8 @@ describe('#copy', () => {
     expect(copy.successBanner.deletedUnnamed).toBe('Address deleted')
   })
 
-  it('Should word the delete confirmation with its summary label, warning, fallback and Yes, delete and No, cancel', () => {
+  it('Should word the delete heading, summary label, confirmation sentence, warning, fallback and Yes, delete and No, cancel', () => {
+    expect(copy.delete.title).toBe('Delete this address?')
     expect(copy.delete.summaryAddress).toBe('Address')
     expect(copy.delete.confirmation).toBe(
       'Confirm that you want to delete this address.'
@@ -142,13 +145,6 @@ describe('#copy', () => {
     expect(copy.delete.notApplicable).toBe('Not applicable')
     expect(copy.delete.confirm).toBe('Yes, delete')
     expect(copy.delete.cancel).toBe('No, cancel')
-  })
-
-  it('Should word the delete heading and cap the name at 255 characters', () => {
-    expect(copy.delete.title).toBe('Delete this address?')
-    expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
-      'Name must be 255 characters or fewer'
-    )
   })
 
   it('Should word the Welsh added, updated, deleted and unnamed deleted banners', () => {
@@ -203,5 +199,11 @@ describe('#copy', () => {
     expect(copy.errors.postcode.required).toBe('Enter a postcode or Zip code')
     expect(copy.errors.countryCode.required).toBe('Select a country')
     expect(copy.errors.phone.required).toBe('Enter a phone number')
+  })
+
+  it('Should cap the name at 255 characters in its maxLength message', () => {
+    expect(copy.errors.name.maxLength(FIELD_RULES.name.maxLength)).toBe(
+      'Name must be 255 characters or fewer'
+    )
   })
 })

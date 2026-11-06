@@ -3,24 +3,24 @@ import { describe, expect, test } from 'vitest'
 
 import { statusCodes } from '../../../../common/constants/status-codes.js'
 import {
-  ADDRESS_BOOK_PATH,
+  addressBookPath,
   ADDRESS_FORM_LABELS,
   ADDRESS_ID,
   addressApiPath,
-  addressPagePath,
+  addressPath,
   BACK_LINK,
   COUNTRIES,
   COUNTRY_OPTIONS,
-  editAddressPagePath,
+  addressEditPath,
   expectRedirectTo,
   expectServerErrorPage,
   getPage,
   getPageAsOtherOrganisation,
+  interceptAddressBookRequest,
   INVALID_ADDRESS_PAYLOAD,
   MALFORMED_ADDRESS_ID,
   postPage,
-  RETURN_HOME,
-  SELECTED_COUNTRY,
+  SELECTED_COUNTRY_OPTION,
   serveAddressBookServerError,
   serveAddressNotFound,
   serveAddressNotFoundForOtherOrganisation,
@@ -31,10 +31,10 @@ import {
 import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/expect-address-form-autocomplete.js'
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import {
-  expectSummaryLinks,
+  expectSummaryAndFieldErrors,
+  INVALID_ADDRESS_PAYLOAD_ERRORS,
   REQUIRED_MESSAGES
 } from '../../../../common/test-helpers/expect-address-form-errors.js'
-import { COUNTRY_PLACEHOLDER } from '../../../../common/test-helpers/country-placeholder.js'
 import { openEmptyAddressBookWithCookiesFrom } from '../../../../common/test-helpers/open-empty-address-book-with-cookies.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
@@ -43,19 +43,25 @@ import {
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
 import { GB_COUNTRY } from '../address-countries.js'
+import { copy } from '../copy/copy.en.js'
+import { pathWithReturn } from '../return-to.js'
 
 const UPDATED_NAME = 'Updated Farm Ltd'
 const UNOFFERED_COUNTRY_CODE = 'XX'
 const RECOVERABLE_ERROR_MESSAGE =
   'Sorry, there is a problem with the service. Try again in a few minutes.'
 
-const getEdit = (server, sessionId, query = '') =>
-  getPage(server, `${editAddressPagePath(ADDRESS_ID)}${query}`, sessionId)
+const getEdit = (server, sessionId, returnTo) =>
+  getPage(
+    server,
+    pathWithReturn(addressEditPath(ADDRESS_ID), returnTo),
+    sessionId
+  )
 
-const postEdit = (server, sessionId, payload, query = '') =>
+const postEdit = (server, sessionId, payload, returnTo) =>
   postPage(
     server,
-    `${editAddressPagePath(ADDRESS_ID)}${query}`,
+    pathWithReturn(addressEditPath(ADDRESS_ID), returnTo),
     sessionId,
     payload
   )
@@ -66,12 +72,12 @@ const countryValuesOf = ($) =>
     .get()
 
 describe('GET /address-book/{addressId}/edit', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should head the page and title the browser Edit address and contact details', async () => {
     serveStoredAddress()
 
-    const { result, statusCode } = await getEdit(server(), 'edit-get-title')
+    const { result, statusCode } = await getEdit(getServer(), 'edit-get-title')
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
@@ -84,7 +90,7 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should ask for exactly the nine address fields in the add form order, prefilled, under the Address and Contact details headings', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(server(), 'edit-get-labels')
+    const { result } = await getEdit(getServer(), 'edit-get-labels')
 
     const $ = load(result)
     expect(textsOf($, 'form h2')).toEqual(['Address', 'Contact details'])
@@ -96,7 +102,7 @@ describe('GET /address-book/{addressId}/edit', () => {
       townOrCity: $('#townOrCity').val(),
       county: $('#county').val(),
       postcode: $('#postcode').val(),
-      countryCode: $(SELECTED_COUNTRY).attr('value'),
+      countryCode: $(SELECTED_COUNTRY_OPTION).attr('value'),
       email: $('#email').val(),
       phone: $('#phone').val()
     }).toEqual({
@@ -115,15 +121,15 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should lay out the fields at the add form widths', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(server(), 'edit-get-widths')
+    const { result } = await getEdit(getServer(), 'edit-get-widths')
 
     expectAddressFormWidths(result)
   })
 
-  test('Should give each personal-data field its browser autocomplete hint and none to County or Country', async () => {
+  test('Should set autocomplete on address lines, town, postcode, email and phone, and none on name, county and country', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(server(), 'edit-get-autocomplete')
+    const { result } = await getEdit(getServer(), 'edit-get-autocomplete')
 
     expectAddressFormAutocomplete(result)
   })
@@ -131,7 +137,7 @@ describe('GET /address-book/{addressId}/edit', () => {
   test('Should offer exactly the countries by name with no blank option and the stored country selected', async () => {
     serveStoredAddress({ ...STORED_ADDRESS, countryCode: 'FR' })
 
-    const { result } = await getEdit(server(), 'edit-get-country-offered')
+    const { result } = await getEdit(getServer(), 'edit-get-country-offered')
 
     const $ = load(result)
     expect(countryValuesOf($)).toEqual(['FR', 'DE', 'CH', GB_COUNTRY.code])
@@ -141,7 +147,7 @@ describe('GET /address-book/{addressId}/edit', () => {
       'Switzerland',
       GB_COUNTRY.name
     ])
-    expect($(SELECTED_COUNTRY).attr('value')).toBe('FR')
+    expect($(SELECTED_COUNTRY_OPTION).attr('value')).toBe('FR')
   })
 
   test('Should open on one blank option with no country selected when the stored country is not offered', async () => {
@@ -150,32 +156,28 @@ describe('GET /address-book/{addressId}/edit', () => {
       countryCode: UNOFFERED_COUNTRY_CODE
     })
 
-    const { result } = await getEdit(server(), 'edit-get-country-unoffered')
+    const { result } = await getEdit(getServer(), 'edit-get-country-unoffered')
 
     const $ = load(result)
     expect(countryValuesOf($)).toEqual(['', 'FR', 'DE', 'CH', GB_COUNTRY.code])
-    expect(textOf($, $(COUNTRY_OPTIONS).first())).toBe(COUNTRY_PLACEHOLDER)
-    expect($(SELECTED_COUNTRY)).toHaveLength(0)
+    expect(textOf($, $(COUNTRY_OPTIONS).first())).toBe(
+      copy.form.countryPlaceholder
+    )
+    expect($(SELECTED_COUNTRY_OPTION)).toHaveLength(0)
   })
 
   test('Should link Back to the address view page when the edit was opened with no return', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(server(), 'edit-get-back-default')
+    const { result } = await getEdit(getServer(), 'edit-get-back-default')
 
-    expect(load(result)(BACK_LINK).attr('href')).toBe(
-      addressPagePath(ADDRESS_ID)
-    )
+    expect(load(result)(BACK_LINK).attr('href')).toBe(addressPath(ADDRESS_ID))
   })
 
   test('Should link Back to the page the edit was opened from', async () => {
     serveStoredAddress()
 
-    const { result } = await getEdit(
-      server(),
-      'edit-get-back-return',
-      RETURN_HOME
-    )
+    const { result } = await getEdit(getServer(), 'edit-get-back-return', '/')
 
     expect(load(result)(BACK_LINK).attr('href')).toBe('/')
   })
@@ -184,8 +186,8 @@ describe('GET /address-book/{addressId}/edit', () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await getEdit(server(), 'edit-get-unknown'),
-      ADDRESS_BOOK_PATH
+      await getEdit(getServer(), 'edit-get-unknown'),
+      addressBookPath()
     )
   })
 
@@ -193,8 +195,8 @@ describe('GET /address-book/{addressId}/edit', () => {
     serveStoredAddress({ ...STORED_ADDRESS, deleted: true })
 
     expectRedirectTo(
-      await getEdit(server(), 'edit-get-deleted'),
-      ADDRESS_BOOK_PATH
+      await getEdit(getServer(), 'edit-get-deleted'),
+      addressBookPath()
     )
   })
 
@@ -202,30 +204,36 @@ describe('GET /address-book/{addressId}/edit', () => {
     const scope = serveAddressNotFoundForOtherOrganisation(ADDRESS_ID)
 
     const response = await getPageAsOtherOrganisation(
-      server(),
-      editAddressPagePath(ADDRESS_ID),
+      getServer(),
+      addressEditPath(ADDRESS_ID),
       'edit-get-other-organisation'
     )
 
     expect(scope.isDone()).toBe(true)
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
   })
 
   test('Should redirect to the address book for a malformed address id without reaching the address book', async () => {
+    const lookup = interceptAddressBookRequest(
+      'GET',
+      addressApiPath(MALFORMED_ADDRESS_ID)
+    )
+
     const response = await getPage(
-      server(),
-      editAddressPagePath(MALFORMED_ADDRESS_ID),
+      getServer(),
+      addressEditPath(MALFORMED_ADDRESS_ID),
       'edit-get-malformed'
     )
 
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
+    lookup.expectNotSent()
   })
 
   test('Should redirect to the page the edit was opened from when the address is unknown', async () => {
     serveAddressNotFound(ADDRESS_ID)
 
     expectRedirectTo(
-      await getEdit(server(), 'edit-get-unknown-return', RETURN_HOME),
+      await getEdit(getServer(), 'edit-get-unknown-return', '/'),
       '/'
     )
   })
@@ -235,23 +243,26 @@ describe('GET /address-book/{addressId}/edit', () => {
 
     expectRedirectTo(
       await getEdit(
-        server(),
+        getServer(),
         'edit-get-unknown-own-page',
-        `?return=${encodeURIComponent(addressPagePath(ADDRESS_ID))}`
+        addressPath(ADDRESS_ID)
       ),
-      ADDRESS_BOOK_PATH
+      addressBookPath()
     )
   })
 
   test('Should return 500 when the address book cannot be reached', async () => {
     serveAddressBookServerError(addressApiPath(ADDRESS_ID))
 
-    expectServerErrorPage(await getEdit(server(), 'edit-get-500'))
+    expectServerErrorPage(await getEdit(getServer(), 'edit-get-500'))
   })
 })
 
 describe('POST /address-book/{addressId}/edit', () => {
-  const server = startRealModeServerServingCountries(COUNTRIES)
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
+
+  const interceptUnwantedUpdate = () =>
+    interceptAddressBookRequest('PUT', addressApiPath(ADDRESS_ID))
 
   test('Should send the whole edited address to the address book and redirect to the address book', async () => {
     serveStoredAddress()
@@ -263,12 +274,12 @@ describe('POST /address-book/{addressId}/edit', () => {
       })
       .reply(200, { ...STORED_ADDRESS, name: UPDATED_NAME })
 
-    const response = await postEdit(server(), 'edit-post-success', {
+    const response = await postEdit(getServer(), 'edit-post-success', {
       ...VALID_ADDRESS_PAYLOAD,
       name: UPDATED_NAME
     })
 
-    expectRedirectTo(response, ADDRESS_BOOK_PATH)
+    expectRedirectTo(response, addressBookPath())
     expect(scope.isDone()).toBe(true)
     expect(sent).toEqual({ ...VALID_ADDRESS_PAYLOAD, name: UPDATED_NAME })
   })
@@ -279,13 +290,13 @@ describe('POST /address-book/{addressId}/edit', () => {
       .put(addressApiPath(ADDRESS_ID))
       .reply(200, { ...STORED_ADDRESS, name: 'GREEN VALLEY FARM' })
 
-    const { headers } = await postEdit(server(), 'edit-post-banner', {
+    const { headers } = await postEdit(getServer(), 'edit-post-banner', {
       ...VALID_ADDRESS_PAYLOAD,
       name: 'green valley farm'
     })
 
     const listResponse = await openEmptyAddressBookWithCookiesFrom(
-      server(),
+      getServer(),
       'edit-post-banner',
       headers
     )
@@ -294,22 +305,19 @@ describe('POST /address-book/{addressId}/edit', () => {
     ).toContain('GREEN VALLEY FARM address updated')
   })
 
-  test('Should re-render the form with the posted values and the summary links when the data is invalid', async () => {
+  test('Should re-render the form with the posted email and the summary links when the data is invalid', async () => {
     serveStoredAddress()
 
     const { result, statusCode } = await postEdit(
-      server(),
+      getServer(),
       'edit-post-invalid',
       INVALID_ADDRESS_PAYLOAD
     )
 
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(result).toContain('There is a problem')
-    expectSummaryLinks(result)
-    expect(result).toContain('href="#email"')
-    expect(result).toContain('Enter an email address in the correct format')
-    expect(result).toContain('govuk-error-message')
     const $ = load(result)
+    expectSummaryAndFieldErrors($, INVALID_ADDRESS_PAYLOAD_ERRORS)
     expect($('head > title').text()).toContain(
       'Error: Edit address and contact details'
     )
@@ -318,15 +326,17 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should refuse a country the reference data does not list with Select a country, sending nothing', async () => {
     const scope = serveStoredAddress()
+    const update = interceptUnwantedUpdate()
 
     const { result, statusCode } = await postEdit(
-      server(),
+      getServer(),
       'edit-post-country-unoffered',
       { ...VALID_ADDRESS_PAYLOAD, countryCode: UNOFFERED_COUNTRY_CODE }
     )
 
     expect(statusCode).toBe(statusCodes.badRequest)
     expect(scope.isDone()).toBe(true)
+    update.expectNotSent()
     const $ = load(result)
     expect(textOf($, '.govuk-error-summary a[href="#countryCode"]')).toBe(
       REQUIRED_MESSAGES.countryCode
@@ -339,11 +349,13 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should redirect to the address book and send nothing when the address is not live', async () => {
     serveAddressNotFound(ADDRESS_ID)
+    const update = interceptUnwantedUpdate()
 
     expectRedirectTo(
-      await postEdit(server(), 'edit-post-not-live', VALID_ADDRESS_PAYLOAD),
-      ADDRESS_BOOK_PATH
+      await postEdit(getServer(), 'edit-post-not-live', VALID_ADDRESS_PAYLOAD),
+      addressBookPath()
     )
+    update.expectNotSent()
   })
 
   test('Should redirect to the page the edit was opened from when the address is not live', async () => {
@@ -351,10 +363,10 @@ describe('POST /address-book/{addressId}/edit', () => {
 
     expectRedirectTo(
       await postEdit(
-        server(),
+        getServer(),
         'edit-post-not-live-return',
         VALID_ADDRESS_PAYLOAD,
-        RETURN_HOME
+        '/'
       ),
       '/'
     )
@@ -362,14 +374,19 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should redirect to the address book when the address is deleted between the read and the update', async () => {
     serveStoredAddress()
-    addressBookApi()
+    const scope = addressBookApi()
       .put(addressApiPath(ADDRESS_ID))
       .reply(404, { message: 'Not found' })
 
     expectRedirectTo(
-      await postEdit(server(), 'edit-post-update-404', VALID_ADDRESS_PAYLOAD),
-      ADDRESS_BOOK_PATH
+      await postEdit(
+        getServer(),
+        'edit-post-update-404',
+        VALID_ADDRESS_PAYLOAD
+      ),
+      addressBookPath()
     )
+    expect(scope.isDone()).toBe(true)
   })
 
   test('Should show the recoverable-error banner and keep the posted values when the address book rejects the update with a server error', async () => {
@@ -378,10 +395,14 @@ describe('POST /address-book/{addressId}/edit', () => {
       .put(addressApiPath(ADDRESS_ID))
       .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
 
-    const { result, statusCode } = await postEdit(server(), 'edit-post-500', {
-      ...VALID_ADDRESS_PAYLOAD,
-      name: UPDATED_NAME
-    })
+    const { result, statusCode } = await postEdit(
+      getServer(),
+      'edit-post-500',
+      {
+        ...VALID_ADDRESS_PAYLOAD,
+        name: UPDATED_NAME
+      }
+    )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
     expect(result).toContain('govuk-notification-banner')
@@ -391,34 +412,43 @@ describe('POST /address-book/{addressId}/edit', () => {
 
   test('Should show the recoverable-error banner, keep the posted values and send nothing when the live read fails with a server error', async () => {
     serveAddressBookServerError(addressApiPath(ADDRESS_ID))
+    const update = interceptUnwantedUpdate()
 
     const { result, statusCode } = await postEdit(
-      server(),
+      getServer(),
       'edit-post-live-read-500',
-      VALID_ADDRESS_PAYLOAD
+      { ...VALID_ADDRESS_PAYLOAD, name: UPDATED_NAME }
     )
 
     expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toContain('govuk-notification-banner')
     expect(result).toContain(RECOVERABLE_ERROR_MESSAGE)
-    expect(result).toContain(`value="${STORED_ADDRESS.name}"`)
+    expect(load(result)('#name').val()).toBe(UPDATED_NAME)
+    update.expectNotSent()
   })
 
   test('Should go to the view page on Cancel with no return, sending nothing', async () => {
+    const update = interceptUnwantedUpdate()
+
     expectRedirectTo(
-      await postEdit(server(), 'edit-post-cancel', { cancel: 'true' }),
-      addressPagePath(ADDRESS_ID)
+      await postEdit(getServer(), 'edit-post-cancel', { cancel: 'true' }),
+      addressPath(ADDRESS_ID)
     )
+    update.expectNotSent()
   })
 
   test('Should go to the page the edit was opened from on Cancel, sending nothing', async () => {
+    const update = interceptUnwantedUpdate()
+
     expectRedirectTo(
       await postEdit(
-        server(),
+        getServer(),
         'edit-post-cancel-return',
         { cancel: 'true' },
-        RETURN_HOME
+        '/'
       ),
       '/'
     )
+    update.expectNotSent()
   })
 })
