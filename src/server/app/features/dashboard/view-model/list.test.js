@@ -66,7 +66,7 @@ describe('#dashboardPageHref', () => {
 describe('#buildNotificationLink', () => {
   test('SUBMITTED notifications link to the read-only notification-view page', () => {
     expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
-      `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
+      `${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
     )
   })
 
@@ -74,14 +74,14 @@ describe('#buildNotificationLink', () => {
     '%s notifications link back to the journey hub, not notification-view',
     (status) => {
       expect(buildNotificationLink(status, 'GBN-AG-26-000002')).toBe(
-        'http://localhost:3000/live-animals/notifications/GBN-AG-26-000002'
+        `${ANIMALS_BASE_URL}/live-animals/notifications/GBN-AG-26-000002`
       )
     }
   )
 
   test('encodes the reference number in the path', () => {
     expect(buildNotificationLink('SUBMITTED', 'GBN AG/1')).toBe(
-      'http://localhost:3000/live-animals/notifications/GBN%20AG%2F1/notification-view'
+      `${ANIMALS_BASE_URL}/live-animals/notifications/GBN%20AG%2F1/notification-view`
     )
   })
 
@@ -89,7 +89,7 @@ describe('#buildNotificationLink', () => {
     config.set(ANIMALS_BASE_URL_KEY, `${ANIMALS_BASE_URL}/`)
 
     expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
-      `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
+      `${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
     )
   })
 })
@@ -118,7 +118,7 @@ describe('#mapNotificationRows', () => {
         originCountry: 'France',
         commodity: '',
         arrivalDate: '10 Sep 2026',
-        href: `http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
+        href: `${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
       }
     ])
   })

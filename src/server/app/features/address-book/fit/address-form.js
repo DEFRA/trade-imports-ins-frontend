@@ -5,7 +5,7 @@ import { FIELD_RULES } from '../fields.js'
 import { GB_COUNTRY } from '../address-countries.js'
 import { countries } from '../../../services/_capture/fixtures.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 
 export const fieldLabels = copy.form.fields
 

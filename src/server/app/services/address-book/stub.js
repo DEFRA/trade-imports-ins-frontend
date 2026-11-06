@@ -1,3 +1,4 @@
+import { isEmptySeedOrganisation } from '../stub-seed.js'
 import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
 
 const OBJECT_ID_LENGTH = 24
@@ -22,7 +23,7 @@ const buildSeedAddress = (index) => ({
 })
 
 const seedAddressesFor = (organisationId) => {
-  if (organisationId.endsWith('-empty')) {
+  if (isEmptySeedOrganisation(organisationId)) {
     return []
   }
   if (organisationId.endsWith('-paginated')) {

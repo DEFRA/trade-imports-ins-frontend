@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { signIn } from '../../../../fit/sign-in.js'
+import { signInAndOpen } from '../../../../fit/sign-in.js'
 import { copy as sharedCopy } from '../shared/copy.en.js'
 import { copy as addressBookCopy } from './address-book/copy/copy.en.js'
 import { copy as dashboardCopy } from './dashboard/copy/copy.en.js'
@@ -17,14 +17,10 @@ import { seedAddress } from './address-book/fit/seed-address.js'
 const { serviceName, govukSuffix, errorTitlePrefix } = sharedCopy.layout
 
 test.describe('page title', () => {
-  test.beforeEach(async ({ page }) => {
-    await signIn(page)
-  })
-
   test('titles the home Dashboard, then the service name and GOV.UK, joined by hyphens', async ({
     page
   }) => {
-    await page.goto(dashboardPath())
+    await signInAndOpen(page, 'stub-org-page-title-dashboard', dashboardPath())
 
     await expect(
       page.getByRole('heading', {
@@ -39,7 +35,11 @@ test.describe('page title', () => {
   })
 
   test('titles the address book page the same way', async ({ page }) => {
-    await page.goto(addressBookPath())
+    await signInAndOpen(
+      page,
+      'stub-org-page-title-address-book',
+      addressBookPath()
+    )
 
     await expect(
       page.getByRole('heading', { name: addressBookCopy.list.title })
@@ -50,7 +50,11 @@ test.describe('page title', () => {
   })
 
   test("titles an address's own page with its name", async ({ page }) => {
-    await page.goto(addressPath(seedAddress.id))
+    await signInAndOpen(
+      page,
+      'stub-org-page-title-address',
+      addressPath(seedAddress.id)
+    )
 
     await expect(page).toHaveTitle(
       `${seedAddress.name} - ${serviceName} - ${govukSuffix}`
@@ -58,7 +62,11 @@ test.describe('page title', () => {
   })
 
   test('titles the delete page Delete this address?', async ({ page }) => {
-    await page.goto(addressDeletePath(seedAddress.id))
+    await signInAndOpen(
+      page,
+      'stub-org-page-title-delete',
+      addressDeletePath(seedAddress.id)
+    )
 
     await expect(page).toHaveTitle(
       'Delete this address? - Import notification service - GOV.UK'
@@ -68,7 +76,11 @@ test.describe('page title', () => {
   test('titles the edit page Edit address and contact details', async ({
     page
   }) => {
-    await page.goto(addressEditPath(seedAddress.id))
+    await signInAndOpen(
+      page,
+      'stub-org-page-title-edit',
+      addressEditPath(seedAddress.id)
+    )
 
     await expect(page).toHaveTitle(
       'Edit address and contact details - Import notification service - GOV.UK'
@@ -78,7 +90,7 @@ test.describe('page title', () => {
   test('puts the error prefix in front of the whole title when the page shows errors', async ({
     page
   }) => {
-    await page.goto(addressAddPath())
+    await signInAndOpen(page, 'stub-org-page-title-error', addressAddPath())
 
     await page.getByRole('button', { name: addressBookCopy.add.save }).click()
 
@@ -91,7 +103,7 @@ test.describe('page title', () => {
   test('titles a missing page Page not found - Import notification service - GOV.UK', async ({
     page
   }) => {
-    await page.goto('/no-such-page')
+    await signInAndOpen(page, 'stub-org-page-title-not-found', '/no-such-page')
 
     await expect(page).toHaveTitle(
       `${sharedCopy.errorPage.notFound} - ${serviceName} - ${govukSuffix}`

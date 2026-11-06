@@ -91,9 +91,9 @@ root:
 
 Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with five
 specs plus the fixtures `address-book-list.js`, `address-form.js`,
-`return-query.js` (`withReturn`), `seed-address.js` and
-`sign-in-and-open.js` (`signInAndOpen`, which every spec's open helper is
-built on). `view-model/list.js` owns the list's
+`return-query.js` (`withReturn`) and `seed-address.js`. Every spec signs in and
+opens its page with `signInAndOpen`, which lives in `fit/sign-in.js` beside
+`signIn`. `view-model/list.js` owns the list's
 name lines, postal lines and results line, which the list controller builds
 into table cells.
 

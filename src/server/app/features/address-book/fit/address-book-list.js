@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test'
 
 import { addressBookPath } from '../../../shared/paths.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 
 export const openAddressBookList = async (
   page,

@@ -210,7 +210,10 @@ when the stack is up; `npm run test:fit:ci` does. Run `npm run
 playwright:install` once (Chromium).
 
 Helpers: [`fit/sign-in.js`](../../../../fit/sign-in.js) —
-`signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`.
+`signIn(page, { organisationId })` navigates to `/auth/stub-sign-in`. The
+organisation id is required: `signIn` throws, before navigating, when it is
+missing or empty. `signInAndOpen(page, organisationId, path)`, beside it, signs
+in and opens a page, and is the helper every FIT uses for both.
 [`fit/axe.js`](../../../../fit/axe.js) — the repo's one axe helper beside it,
 `expectNoSeriousOrCriticalViolations`, used by every FIT spec that runs axe.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
@@ -240,7 +243,11 @@ its `seedAddressLines`, and the unknown and malformed ids.
 
 Every test signs in with its own organisation id, because the
 address-book stub keys its data by organisation; the `-empty` and
-`-paginated` suffixes select those seeds (thirty addresses, four pages of eight). No sleeps, no page objects, and
+`-paginated` suffixes select those seeds (thirty addresses, four pages of eight).
+The INS backend stub also seeds by organisation: the `-empty` suffix gives the
+dashboard no notifications. `isEmptySeedOrganisation` in
+[`services/stub-seed.js`](../services/stub-seed.js) decides the `-empty` suffix
+for both stubs. No sleeps, no page objects, and
 `exact: true` on "Back". On failure read
 `test-results/<spec>/error-context.md` and the HTML report in
 `playwright-report/`.

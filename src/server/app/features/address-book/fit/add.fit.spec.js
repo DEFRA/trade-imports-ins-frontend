@@ -19,7 +19,7 @@ import { GB_COUNTRY } from '../address-countries.js'
 import { copy } from '../copy/copy.en.js'
 import { seedAddress } from './seed-address.js'
 import { addressAddPath, addressBookPath } from '../../../shared/paths.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 import {
   AUTOCOMPLETE_BY_FIELD,
   FIELDS_WITHOUT_AUTOCOMPLETE

@@ -24,7 +24,7 @@ import {
   addressPath,
   dashboardPath
 } from '../../../shared/paths.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 
 const seedViewPath = addressPath(seedAddress.id)
 const seedEditPath = addressEditPath(seedAddress.id)
@@ -40,7 +40,12 @@ const openAddressDetails = (
   page,
   organisationId,
   { addressId = seedAddress.id, returnTo } = {}
-) => signInAndOpen(page, organisationId, addressPath(addressId), { returnTo })
+) =>
+  signInAndOpen(
+    page,
+    organisationId,
+    withReturn(addressPath(addressId), returnTo)
+  )
 
 test.describe('view address', () => {
   test('clicking View on a row opens that address details page', async ({

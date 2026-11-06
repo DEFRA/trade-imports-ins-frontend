@@ -1,3 +1,5 @@
+import { isEmptySeedOrganisation } from '../stub-seed.js'
+
 const DELETED_STATUS = 'DELETED'
 
 const NOTIFICATIONS = [
@@ -51,12 +53,14 @@ const sortComparator = (sort) => {
     multiplier * (new Date(left[sortField]) - new Date(right[sortField]))
 }
 
-export const listNotifications = async ({
-  page = 1,
-  sort,
-  referenceNumber
-} = {}) => {
-  const visible = NOTIFICATIONS.filter(
+const seedNotificationsFor = (organisationId) =>
+  isEmptySeedOrganisation(organisationId) ? [] : NOTIFICATIONS
+
+export const listNotifications = async (
+  organisationId,
+  { page = 1, sort, referenceNumber } = {}
+) => {
+  const visible = seedNotificationsFor(organisationId).filter(
     (notification) => notification.status !== DELETED_STATUS
   )
 

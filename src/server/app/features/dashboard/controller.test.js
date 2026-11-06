@@ -1,6 +1,7 @@
 import { load } from 'cheerio'
 import { describe, expect, test } from 'vitest'
 
+import { config } from '../../../../config/config.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { sessionAuth } from '../../../common/test-helpers/session-auth.js'
 import { insBackendApi } from '../../../common/test-helpers/real-mode.js'
@@ -10,6 +11,7 @@ const COUNTRIES = [
   { code: 'GB', name: 'United Kingdom' },
   { code: 'FR', name: 'France' }
 ]
+const ANIMALS_BASE_URL = config.get('tradeImportsAnimalsFrontend.baseUrl')
 const NOTIFICATIONS_PATH = '/notifications'
 const DEFAULT_QUERY = { page: '1', sort: 'arrivalDate,desc' }
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
@@ -146,7 +148,7 @@ describe('#dashboard', () => {
     })
 
     expect(result).toContain(
-      `href="http://localhost:3000/live-animals/notifications/${REFERENCE_NUMBER}/notification-view"`
+      `href="${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view"`
     )
   })
 
@@ -177,7 +179,7 @@ describe('#dashboard', () => {
         .map((_index, link) => link.attribs.href)
         .toArray()
     ).toEqual([
-      `http://localhost:3000/live-animals/notifications/${OTHER_REFERENCE_NUMBER}`
+      `${ANIMALS_BASE_URL}/live-animals/notifications/${OTHER_REFERENCE_NUMBER}`
     ])
   })
 })

@@ -8,7 +8,8 @@ import {
 } from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import { expectDashboard } from '../../dashboard/fit/dashboard.js'
-import { signInAndOpen } from './sign-in-and-open.js'
+import { signInAndOpen } from '../../../../../../fit/sign-in.js'
+import { withReturn } from './return-query.js'
 import {
   seedAddress,
   MALFORMED_ADDRESS_ID,
@@ -32,9 +33,11 @@ const openEditForm = (
   organisationId,
   { addressId = seedAddressId, returnTo } = {}
 ) =>
-  signInAndOpen(page, organisationId, addressEditPath(addressId), {
-    returnTo
-  })
+  signInAndOpen(
+    page,
+    organisationId,
+    withReturn(addressEditPath(addressId), returnTo)
+  )
 
 const save = (page) =>
   page.getByRole('button', { name: 'Save changes' }).click()
