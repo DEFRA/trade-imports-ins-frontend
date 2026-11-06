@@ -2,10 +2,9 @@ import { vi } from 'vitest'
 import { config } from '../config/config.js'
 import { getOidcConfig, OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
 import { readEmfDocuments } from '../server/common/test-helpers/emf-documents.js'
-import { refuseOutboundHttp } from '../server/common/test-helpers/real-mode.js'
-import { restoreConfigAfterEach } from '../server/common/test-helpers/restore-config-after-each.js'
 import {
   discoveryUrlRequest,
+  runAgainstMockOidcDiscoveryUrl,
   serveOidcDiscovery
 } from '../server/common/test-helpers/serve-oidc-discovery.js'
 import { statusCodes } from '../server/common/constants/status-codes.js'
@@ -30,19 +29,13 @@ describe('#getOidcConfig', () => {
 
   let logSpy
 
-  refuseOutboundHttp()
-  restoreConfigAfterEach([
-    'defraId.oidcDiscoveryUrl',
-    ...STACK_DEFRA_ID_REWRITE_KEYS
-  ])
+  runAgainstMockOidcDiscoveryUrl({
+    restoringConfigKeys: STACK_DEFRA_ID_REWRITE_KEYS
+  })
 
   beforeEach(() => {
     getTraceIdMock.mockReset()
     getTraceIdMock.mockReturnValue(traceId)
-    config.set(
-      'defraId.oidcDiscoveryUrl',
-      'https://real-auth-server/idp/.well-known/openid-configuration'
-    )
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
   })
 

@@ -103,7 +103,16 @@ each test) and `serve-oidc-discovery.js`. That file exports
 network boundary, and `startRealModeServer()` calls it. It also exports
 `discoveryUrlRequest({ persist, ...scopeOptions })`, the nock interceptor at
 the configured discovery URL, for a test that matches a header, delays the
-reply or fails it. The last file, `stack-defra-id-rewrite.js`, exports
+reply or fails it. It also exports
+`runAgainstMockOidcDiscoveryUrl({ restoringConfigKeys })`, which refuses
+outbound HTTP, restores the discovery URL and the named config keys after each
+test, and sets the discovery URL to a mock host before each test, and
+`runAgainstServedOidcDiscovery(document, { restoringConfigKeys })`, which does
+the same and also serves the given discovery document before each test.
+`emf-documents.js` exports `readEmfDocuments(logSpy)`, the EMF documents
+written to a console.log spy, and `awaitEmfDocumentForOperation(logSpy,
+operation)`, which waits for and returns the EMF document for one external
+call's operation. The last file, `stack-defra-id-rewrite.js`, exports
 `setStackDefraIdRewrite()`, which sets the workspace stack's Defra ID
 hostname rewrite (enabled, from `host.docker.internal` and
 `trade-imports-defra-id-stub`, to `localhost`), and

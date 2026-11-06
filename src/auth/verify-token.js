@@ -18,9 +18,12 @@ async function verifyToken(token) {
       timeout: OIDC_DOCUMENT_TIMEOUT_MS
     })
   )
-  const { keys } = payload
+  const [signingJwk] = payload.keys
+  if (!signingJwk) {
+    throw new Error('No signing key served')
+  }
 
-  const pem = createPublicKey({ key: keys[0], format: 'jwk' }).export({
+  const pem = createPublicKey({ key: signingJwk, format: 'jwk' }).export({
     type: 'spki',
     format: 'pem'
   })

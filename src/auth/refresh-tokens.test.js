@@ -1,51 +1,52 @@
 import { vi } from 'vitest'
-import { refreshTokens } from './refresh-tokens.js'
-import { readEmfDocuments } from '../server/common/test-helpers/emf-documents.js'
-
-const wreckPostMock = vi.hoisted(() => vi.fn())
-vi.mock('@hapi/wreck', () => ({
-  default: {
-    post: wreckPostMock
-  }
-}))
-
-const getOidcConfigMock = vi.hoisted(() => vi.fn())
-vi.mock('./get-oidc-config.js', () => ({
-  getOidcConfig: getOidcConfigMock
-}))
-
-const configGetMock = vi.hoisted(() => vi.fn())
-vi.mock('../config/config.js', () => ({
-  config: {
-    get: configGetMock
-  }
-}))
+import nock from 'nock'
+import { config } from '../config/config.js'
+import { refreshTokens, TOKEN_ENDPOINT_TIMEOUT_MS } from './refresh-tokens.js'
+import { awaitEmfDocumentForOperation } from '../server/common/test-helpers/emf-documents.js'
+import { runAgainstServedOidcDiscovery } from '../server/common/test-helpers/serve-oidc-discovery.js'
+import { statusCodes } from '../server/common/constants/status-codes.js'
 
 const getTraceIdMock = vi.hoisted(() => vi.fn())
+
 vi.mock('@defra/hapi-tracing', () => ({
   getTraceId: getTraceIdMock
 }))
 
-vi.mock('../server/common/helpers/logging/logger.js', () => ({
-  createLogger: () => ({
-    warn: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn()
-  })
-}))
-
-describe('refreshTokens', () => {
-  const tracingHeader = 'x-cdp-request-id'
+describe('#refreshTokens', () => {
   const traceId = 'test-trace-id'
+  const tokenOrigin = 'https://mock-auth-server'
+  const tokenPath = '/oauth/token'
+  const clientId = 'client-id'
+  const clientSecret = 'client-secret'
+  const redirectUrl = 'http://localhost/callback'
+  const refreshToken = 'REFRESH_TOKEN_123'
+  const issuedTokens = {
+    access_token: 'NEW_ACCESS',
+    refresh_token: 'NEW_REFRESH'
+  }
 
   let logSpy
 
+  runAgainstServedOidcDiscovery(
+    { token_endpoint: `${tokenOrigin}${tokenPath}` },
+    {
+      restoringConfigKeys: [
+        'defraId.clientId',
+        'defraId.clientSecret',
+        'defraId.redirectUrl'
+      ]
+    }
+  )
+
+  const tokenEndpointRequest = ({ body, ...scopeOptions } = {}) =>
+    nock(tokenOrigin, scopeOptions).post(tokenPath, body)
+
   beforeEach(() => {
-    wreckPostMock.mockReset()
-    getOidcConfigMock.mockReset()
-    configGetMock.mockReset()
     getTraceIdMock.mockReset()
     getTraceIdMock.mockReturnValue(traceId)
+    config.set('defraId.clientId', clientId)
+    config.set('defraId.clientSecret', clientSecret)
+    config.set('defraId.redirectUrl', redirectUrl)
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
   })
 
@@ -53,124 +54,68 @@ describe('refreshTokens', () => {
     logSpy.mockRestore()
   })
 
-  test('measures the refresh as defra-id token-refresh', async () => {
-    getOidcConfigMock.mockResolvedValue({
-      token_endpoint: 'https://mock-auth-server/oauth/token'
-    })
-    configGetMock.mockImplementation((key) => {
-      if (key === 'tracing.header') return tracingHeader
-      if (key === 'metrics.namespace') return 'trade-imports-ins-frontend'
-    })
-    wreckPostMock.mockResolvedValue({ payload: {} })
+  test('Should post the refresh grant to the token endpoint and return the issued tokens', async () => {
+    const scope = tokenEndpointRequest({
+      reqheaders: {
+        'content-type': 'application/x-www-form-urlencoded',
+        [config.get('tracing.header')]: traceId
+      },
+      body: {
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'refresh_token',
+        scope: `openid offline_access ${clientId}`,
+        refresh_token: refreshToken,
+        redirect_uri: redirectUrl
+      }
+    }).reply(statusCodes.ok, issuedTokens)
 
-    await refreshTokens('rt')
+    const result = await refreshTokens(refreshToken)
 
-    await vi.waitFor(() => expect(readEmfDocuments(logSpy)).toHaveLength(1))
-    const [document] = readEmfDocuments(logSpy)
+    expect(scope.isDone()).toBe(true)
+    expect(result).toEqual(issuedTokens)
+  })
+
+  test('Should send an empty tracing header when the request has no trace id', async () => {
+    getTraceIdMock.mockReturnValue(undefined)
+    const scope = tokenEndpointRequest({
+      reqheaders: { [config.get('tracing.header')]: (value) => value === '' }
+    }).reply(statusCodes.ok, issuedTokens)
+
+    await refreshTokens(refreshToken)
+
+    expect(scope.isDone()).toBe(true)
+  })
+
+  test('Should measure the refresh as defra-id token-refresh', async () => {
+    tokenEndpointRequest().reply(statusCodes.ok, issuedTokens)
+
+    await refreshTokens(refreshToken)
+
+    const document = await awaitEmfDocumentForOperation(logSpy, 'token-refresh')
     expect(document.Dependency).toBe('defra-id')
-    expect(document.Operation).toBe('token-refresh')
     expect(document.Interface).toBe('SYN-13')
     expect(document.ExternalCallFailure).toBe(0)
   })
 
-  test('posts refresh token to token endpoint and returns payload', async () => {
-    const tokenEndpoint = 'https://mock-auth-server/oauth/token'
-    getOidcConfigMock.mockResolvedValue({ token_endpoint: tokenEndpoint })
+  test('Should reject and measure a failure when the token endpoint fails', async () => {
+    tokenEndpointRequest().replyWithError('post failed')
 
-    const clientId = 'client-id'
-    const clientSecret = 'client-secret'
-    const redirectUrl = 'http://localhost/callback'
+    await expect(refreshTokens(refreshToken)).rejects.toThrow('post failed')
 
-    configGetMock.mockImplementation((key) => {
-      switch (key) {
-        case 'defraId.clientId':
-          return clientId
-        case 'defraId.clientSecret':
-          return clientSecret
-        case 'defraId.redirectUrl':
-          return redirectUrl
-        case 'tracing.header':
-          return tracingHeader
-        default:
-          return undefined
-      }
-    })
-
-    const refreshToken = 'REFRESH_TOKEN_123'
-    const payload = {
-      access_token: 'NEW_ACCESS',
-      refresh_token: 'NEW_REFRESH'
-    }
-
-    wreckPostMock.mockResolvedValue({ payload })
-
-    const result = await refreshTokens(refreshToken)
-
-    expect(result).toEqual(payload)
-
-    const expectedBody = new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'refresh_token',
-      scope: `openid offline_access ${clientId}`,
-      refresh_token: refreshToken,
-      redirect_uri: redirectUrl
-    }).toString()
-
-    expect(getOidcConfigMock).toHaveBeenCalledTimes(1)
-    expect(wreckPostMock).toHaveBeenCalledTimes(1)
-    expect(wreckPostMock).toHaveBeenCalledWith(tokenEndpoint, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        [tracingHeader]: traceId
-      },
-      payload: expectedBody,
-      json: true,
-      timeout: 3000
-    })
-  })
-
-  test('sends an empty tracing header when the request has no trace id', async () => {
-    getTraceIdMock.mockReturnValue(undefined)
-    getOidcConfigMock.mockResolvedValue({
-      token_endpoint: 'https://mock-auth-server/oauth/token'
-    })
-    configGetMock.mockImplementation((key) =>
-      key === 'tracing.header' ? tracingHeader : undefined
-    )
-    wreckPostMock.mockResolvedValue({ payload: {} })
-
-    await refreshTokens('rt')
-
-    expect(wreckPostMock).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({ [tracingHeader]: '' })
-      })
-    )
-  })
-
-  test('propagates errors from Wreck.post', async () => {
-    const tokenEndpoint = 'https://mock-auth-server/oauth/token'
-    getOidcConfigMock.mockResolvedValue({ token_endpoint: tokenEndpoint })
-
-    configGetMock.mockImplementation((key) => {
-      if (key === 'defraId.clientId') return 'client-id'
-      if (key === 'defraId.clientSecret') return 'client-secret'
-      if (key === 'defraId.redirectUrl') return 'http://localhost/callback'
-      if (key === 'tracing.header') return tracingHeader
-      if (key === 'metrics.namespace') return 'trade-imports-ins-frontend'
-      return undefined
-    })
-
-    wreckPostMock.mockRejectedValue(new Error('post failed'))
-
-    await expect(refreshTokens('rt')).rejects.toThrow('post failed')
-
-    await vi.waitFor(() => expect(readEmfDocuments(logSpy)).toHaveLength(1))
-    const [document] = readEmfDocuments(logSpy)
-    expect(document.Operation).toBe('token-refresh')
+    const document = await awaitEmfDocumentForOperation(logSpy, 'token-refresh')
+    expect(document.Interface).toBe('SYN-13')
     expect(document.ExternalCallFailure).toBe(1)
     expect(document.Outcome).toBe('failure')
+  })
+
+  test('Should give up when the token endpoint reply comes later than the timeout', async () => {
+    tokenEndpointRequest()
+      .delay(TOKEN_ENDPOINT_TIMEOUT_MS + 500)
+      .reply(statusCodes.ok, issuedTokens)
+
+    await expect(refreshTokens(refreshToken)).rejects.toMatchObject({
+      output: { statusCode: statusCodes.gatewayTimeout }
+    })
   })
 })
