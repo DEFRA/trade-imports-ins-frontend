@@ -56,7 +56,7 @@ const expectNoTypeChosen = async (page) => {
 }
 
 test.describe('choose an address type', () => {
-  test('opens from Add a new address with the caption, heading, the three types and their hints in order, and Back to the address book', async ({
+  test('opens from Add a new address with the caption, heading, the four types and their hints in order, and Back to the address book', async ({
     page
   }) => {
     await openTypePageFromList(page, 'stub-org-type-render')

@@ -4,6 +4,7 @@ import * as client from './client.js'
 import * as stub from './stub.js'
 
 export {
+  ADDRESS_FORM_TYPES,
   ADDRESS_TYPES,
   PLACE_ROLES,
   ROLES,

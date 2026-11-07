@@ -5,7 +5,7 @@ import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.j
 import {
   NO_RESULTS_LINE,
   ONE_MATCH_LINE,
-  UNKNOWN_ADDRESS_TYPE,
+  UNSUPPORTED_ADDRESS_TYPE,
   expectEmptyAddressBookList,
   expectNamesListed,
   openFilterDisclosure,
@@ -212,15 +212,22 @@ const TABS = [
   }
 ]
 
-const [ORIGIN_TAB, , BRANCH_TAB] = TABS
+const [ORIGIN_TAB, DESTINATION_TAB, BRANCH_TAB] = TABS
+
+const ADDRESS_BOOK_TAB_LABELS = [
+  ORIGIN_TAB.label,
+  DESTINATION_TAB.label,
+  'Transporter',
+  BRANCH_TAB.label
+]
 
 const expectTabsInOrderWithSelected = async (page, selectedLabel) => {
-  await expect(tabLinksOf(page)).toHaveText(TABS.map(({ label }) => label))
+  await expect(tabLinksOf(page)).toHaveText(ADDRESS_BOOK_TAB_LABELS)
   await expect(selectedTabOf(page)).toHaveText(selectedLabel)
 }
 
 test.describe('address type tabs', () => {
-  test('shows the three tabs in order with Origin and Consignor selected when no tab is chosen', async ({
+  test('shows the four tabs in order with Origin and Consignor selected when no tab is chosen', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
@@ -234,7 +241,7 @@ test.describe('address type tabs', () => {
   }) => {
     await openAddressBookList(page, {
       organisationId: ORG_TYPED,
-      addressType: UNKNOWN_ADDRESS_TYPE
+      addressType: UNSUPPORTED_ADDRESS_TYPE
     })
 
     await expectTabsInOrderWithSelected(page, ORIGIN_TAB.label)

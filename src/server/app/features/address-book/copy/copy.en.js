@@ -1,6 +1,19 @@
 const SELECT_COUNTRY = 'Select a country'
 const ADD_A_NEW_ADDRESS = 'Add a new address'
 const ADDRESS_TYPE = 'Address type'
+const ADD_A_NEW_TRANSPORTER = 'Add a new transporter'
+const NAME_OR_ORGANISATION = 'Name or organisation'
+const ADDRESS_LINE_1 = 'Address line 1'
+const ADDRESS_LINE_2 = 'Address line 2 (optional)'
+const TOWN_OR_CITY = 'Town or city'
+const COUNTY = 'County (optional)'
+const POSTCODE = 'Postcode or Zip code'
+const EMAIL_ADDRESS = 'Email address'
+const PHONE_NUMBER = 'Phone number'
+const PHONE_HINT = 'For international numbers include the country code'
+const SAVE_AND_CONTINUE = 'Save and continue'
+const ADDRESS_HEADING = 'Address'
+const CONTACT_HEADING = 'Contact details'
 
 export const copy = {
   list: {
@@ -30,10 +43,18 @@ export const copy = {
         label: 'Destination, Consignee and Importer',
         heading: 'Destination, Consignee and Importer addresses'
       },
+      TRANSPORTER: {
+        label: 'Transporter',
+        heading: 'Transporters'
+      },
       BRANCH: {
         label: 'Branch',
         heading: 'Branch addresses'
       }
+    },
+    transporterTypes: {
+      PRIVATE: 'Private',
+      COMMERCIAL: 'Commercial'
     },
     roles: {
       PLACE_OF_ORIGIN: {
@@ -57,32 +78,35 @@ export const copy = {
       role: 'Type',
       address: 'Address',
       country: 'Country',
+      approvalNumber: 'Approval number',
       action: 'Action',
       view: 'View'
     }
   },
+  notApplicable: 'Not applicable',
   successBanner: {
     title: 'Success',
     added: (name) => `${name} address added to your address book`,
+    transporterAdded: (name) => `${name} added to your address book`,
     updated: (name) => `${name} address updated`,
     deleted: (name) => `${name} address deleted`,
     deletedUnnamed: 'Address deleted'
   },
   form: {
-    addressHeading: 'Address',
-    contactHeading: 'Contact details',
+    addressHeading: ADDRESS_HEADING,
+    contactHeading: CONTACT_HEADING,
     fields: {
-      name: 'Name or organisation',
-      addressLine1: 'Address line 1',
-      addressLine2: 'Address line 2 (optional)',
-      townOrCity: 'Town or city',
-      county: 'County (optional)',
-      postcode: 'Postcode or Zip code',
+      name: NAME_OR_ORGANISATION,
+      addressLine1: ADDRESS_LINE_1,
+      addressLine2: ADDRESS_LINE_2,
+      townOrCity: TOWN_OR_CITY,
+      county: COUNTY,
+      postcode: POSTCODE,
       countryCode: 'Country',
-      email: 'Email address',
-      phone: 'Phone number'
+      email: EMAIL_ADDRESS,
+      phone: PHONE_NUMBER
     },
-    phoneHint: 'For international numbers include the country code',
+    phoneHint: PHONE_HINT,
     countryPlaceholder: SELECT_COUNTRY
   },
   addressType: {
@@ -97,9 +121,64 @@ export const copy = {
         label: 'Destination, Consignee or Importer',
         hint: 'Place of destination, Consignee, Importer'
       },
+      TRANSPORTER: { label: 'Transporter', hint: 'Private, Commercial' },
       BRANCH: { label: 'Branch', hint: 'Branch address' }
     },
     continue: 'Continue'
+  },
+  transporterType: {
+    caption: ADD_A_NEW_TRANSPORTER,
+    title: 'Choose a transporter type',
+    warning:
+      'Check the transporter list before adding new transporters to avoid duplicates.',
+    options: {
+      PRIVATE: { label: 'Private transporter' },
+      COMMERCIAL: {
+        label: 'Commercial',
+        hint: 'This can only be a commercial transporter from Northern Ireland.'
+      }
+    },
+    continue: 'Continue'
+  },
+  privateTransporterForm: {
+    caption: ADD_A_NEW_TRANSPORTER,
+    title: 'Add a private transporter',
+    addressHeading: ADDRESS_HEADING,
+    contactHeading: CONTACT_HEADING,
+    fields: {
+      name: NAME_OR_ORGANISATION,
+      addressLine1: ADDRESS_LINE_1,
+      addressLine2: ADDRESS_LINE_2,
+      townOrCity: TOWN_OR_CITY,
+      county: COUNTY,
+      postcode: POSTCODE,
+      countryCode: 'Country',
+      email: EMAIL_ADDRESS,
+      phone: PHONE_NUMBER
+    },
+    phoneHint: PHONE_HINT,
+    countryPlaceholder: SELECT_COUNTRY,
+    save: SAVE_AND_CONTINUE
+  },
+  commercialTransporterForm: {
+    caption: ADD_A_NEW_TRANSPORTER,
+    title: 'Add a commercial transporter',
+    addressHeading: ADDRESS_HEADING,
+    contactHeading: CONTACT_HEADING,
+    country: 'Northern Ireland',
+    fields: {
+      name: NAME_OR_ORGANISATION,
+      approvalNumber: 'Approval number',
+      addressLine1: ADDRESS_LINE_1,
+      addressLine2: ADDRESS_LINE_2,
+      townOrCity: TOWN_OR_CITY,
+      county: COUNTY,
+      postcode: POSTCODE,
+      email: EMAIL_ADDRESS,
+      phone: PHONE_NUMBER
+    },
+    phoneHint: PHONE_HINT,
+    save: SAVE_AND_CONTINUE
   },
   roles: {
     journeyLegend: 'What else should this address be used for?',
@@ -123,7 +202,7 @@ export const copy = {
   add: {
     title: 'Add address and contact details',
     caption: 'Add new address',
-    save: 'Save and continue',
+    save: SAVE_AND_CONTINUE,
     saveAndSelect: 'Save and select',
     saveAndReturnToAddressPage: 'Save and return to address page',
     cancelAndReturnToAddressBook: 'Cancel and return to address book',
@@ -144,7 +223,6 @@ export const copy = {
     summaryAddress: 'Address',
     confirmation: 'Confirm that you want to delete this address.',
     warning: 'Deletions are permanent and you cannot undo this.',
-    notApplicable: 'Not applicable',
     confirm: 'Yes, delete',
     cancel: 'No, cancel'
   },
@@ -152,6 +230,15 @@ export const copy = {
     addressType: {
       required: 'Select an address type'
     },
+    transporterType: {
+      required: 'Select what kind of transporter it is'
+    },
+    approvalNumber: {
+      required: 'Enter the approval number',
+      maxLength: (max) => `Approval number must be ${max} characters or fewer`,
+      notApplicable: 'A private transporter must not have an approval number'
+    },
+    countryFixed: 'A commercial transporter must be in Northern Ireland',
     roles: {
       required: 'Select what this address can be used for'
     },

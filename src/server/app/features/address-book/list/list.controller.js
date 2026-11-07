@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { listAddresses } from '../../../services/address-book/index.js'
+import { listTransporters } from '../../../services/transporters/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
@@ -23,6 +24,7 @@ import {
 import {
   ADDRESS_BOOK_TABS,
   DEFAULT_ADDRESS_BOOK_TAB,
+  listsByRole,
   resolveTab,
   resolveRole
 } from '../address-book-tabs.js'
@@ -31,8 +33,10 @@ import { takeSuccessMessage } from '../success-message.js'
 import {
   addressBookPageHref,
   mapAddressRows,
+  mapTransporterRows,
   resultsLabelOf,
-  rolesWhoseLabelContains
+  rolesWhoseLabelContains,
+  transporterTypesWhoseLabelContains
 } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
@@ -43,10 +47,33 @@ const logger = createLogger()
 const view = 'address-book/list/list'
 const copy = copyFor({ en, cy })
 
-const viewLink = (address) =>
-  `<a class="govuk-link" href="${addressPath(address.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
+const viewLink = (record) =>
+  `<a class="govuk-link" href="${addressPath(record.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(record.name)}</span></a>`
 
-const tableRowsOf = (addresses) =>
+const actionHeadCell = () => ({
+  html: `<span class="govuk-visually-hidden">${copy.list.table.action}</span>`
+})
+
+const ADDRESS_TABLE_HEAD = [
+  { text: copy.list.table.name },
+  { text: copy.list.table.role },
+  { text: copy.list.table.address },
+  { text: copy.list.table.country },
+  actionHeadCell()
+]
+
+const TRANSPORTER_TABLE_HEAD = [
+  { text: copy.list.table.name },
+  { text: copy.list.table.address },
+  { text: copy.list.table.approvalNumber },
+  { text: copy.list.table.role },
+  actionHeadCell()
+]
+
+const tableHeadFor = (tab) =>
+  listsByRole(tab) ? ADDRESS_TABLE_HEAD : TRANSPORTER_TABLE_HEAD
+
+const addressTableRowsOf = (addresses) =>
   addresses.map((address) => [
     { html: linesHtml(address.nameLines) },
     { text: address.roleLabelsText },
@@ -55,11 +82,20 @@ const tableRowsOf = (addresses) =>
     { html: viewLink(address) }
   ])
 
-const paginationOf = (addressPage) => ({
-  page: addressPage.page,
-  pageSize: addressPage.pageSize,
-  totalItems: addressPage.totalItems,
-  totalPages: addressPage.totalPages
+const transporterTableRowsOf = (transporters) =>
+  transporters.map((transporter) => [
+    { html: linesHtml(transporter.nameLines) },
+    { html: linesHtml(transporter.postalLines, { lineEnding: ',' }) },
+    { text: transporter.approvalNumberText },
+    { text: transporter.typeLabel },
+    {}
+  ])
+
+const paginationOf = (page) => ({
+  page: page.page,
+  pageSize: page.pageSize,
+  totalItems: page.totalItems,
+  totalPages: page.totalPages
 })
 
 const subNavigationItemsOf = (selectedTab, searchTerm) =>
@@ -69,14 +105,17 @@ const subNavigationItemsOf = (selectedTab, searchTerm) =>
     active: tab === selectedTab
   }))
 
-const roleItemsOf = (selectedTab, selectedRole) => [
-  { value: '', text: copy.list.search.role.placeholder },
-  ...selectedTab.roles.map((role) => ({
-    value: role,
-    text: copy.list.roles[role].optionLabel,
-    selected: role === selectedRole
-  }))
-]
+const roleItemsOf = (selectedTab, selectedRole) =>
+  listsByRole(selectedTab)
+    ? [
+        { value: '', text: copy.list.search.role.placeholder },
+        ...selectedTab.roles.map((role) => ({
+          value: role,
+          text: copy.list.roles[role].optionLabel,
+          selected: role === selectedRole
+        }))
+      ]
+    : null
 
 const buildView = (toolkit, { recoverableError = false, ...model }) =>
   toolkit.view(view, {
@@ -88,27 +127,22 @@ const buildView = (toolkit, { recoverableError = false, ...model }) =>
     ...model
   })
 
-const loadAddressPage = async (organisationId, { page, ...listFilters }) => {
-  const requestedAddressPage = await listAddresses(organisationId, {
+const loadPage = async (organisationId, listFn, { page, ...listFilters }) => {
+  const requestedPage = await listFn(organisationId, {
     page,
     pageSize: LIST_PAGE_SIZE,
     ...listFilters
   })
-  const servedPage = clampPage(page, requestedAddressPage.totalPages)
+  const servedPage = clampPage(page, requestedPage.totalPages)
   if (servedPage === page) {
-    return requestedAddressPage
+    return requestedPage
   }
 
   logger.info(
-    {
-      organisationId,
-      roles: listFilters.roles,
-      requestedPage: page,
-      servedPage
-    },
+    { organisationId, ...listFilters, requestedPage: page, servedPage },
     'Address book page is past the last page, serving the last page'
   )
-  return listAddresses(organisationId, {
+  return listFn(organisationId, {
     page: servedPage,
     pageSize: LIST_PAGE_SIZE,
     ...listFilters
@@ -133,6 +167,50 @@ const selectTab = (organisationId, requestedAddressType) => {
   return DEFAULT_ADDRESS_BOOK_TAB
 }
 
+const addressModel = async (
+  organisationId,
+  { page, searchTerm, role, selectedTab }
+) => {
+  const countries = await getAddressFormCountries()
+  const countryCodes = countryCodesMatching(searchTerm, countries)
+  const searchRoles = rolesWhoseLabelContains(searchTerm, copy.list.roles)
+  const addressPage = await loadPage(organisationId, listAddresses, {
+    page,
+    searchTerm,
+    countryCodes,
+    searchRoles,
+    roles: role ? [role] : selectedTab.roles
+  })
+  const records = mapAddressRows(
+    addressPage.items ?? [],
+    countries,
+    copy.list.roles
+  )
+  return { page: addressPage, tableRows: addressTableRowsOf(records) }
+}
+
+const transporterModel = async (organisationId, { page, searchTerm }) => {
+  const countries = await getAddressFormCountries()
+  const countryCodes = countryCodesMatching(searchTerm, countries)
+  const searchTypes = transporterTypesWhoseLabelContains(
+    searchTerm,
+    copy.list.transporterTypes
+  )
+  const transporterPage = await loadPage(organisationId, listTransporters, {
+    page,
+    searchTerm,
+    countryCodes,
+    searchTypes
+  })
+  const records = mapTransporterRows(transporterPage.items ?? [], {
+    countries,
+    copyByTransporterType: copy.list.transporterTypes,
+    fixedCommercialCountryLabel: copy.commercialTransporterForm.country,
+    notApplicableWord: copy.notApplicable
+  })
+  return { page: transporterPage, tableRows: transporterTableRowsOf(records) }
+}
+
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const page = parsePage(request.query.page)
@@ -140,8 +218,10 @@ const get = async (request, toolkit) => {
   const selectedTab = selectTab(organisationId, request.query.addressType)
   const { addressType } = selectedTab
   const requestedRole = request.query.role
-  const role = resolveRole(selectedTab, requestedRole)
-  if (requestedRole && !role) {
+  const role = listsByRole(selectedTab)
+    ? resolveRole(selectedTab, requestedRole)
+    : undefined
+  if (requestedRole && listsByRole(selectedTab) && !role) {
     logger.info(
       { organisationId, addressType, requestedRole },
       'Address book list ignored a role the tab does not offer'
@@ -150,29 +230,23 @@ const get = async (request, toolkit) => {
   const successMessage = takeSuccessMessage(request)
 
   try {
-    const countries = await getAddressFormCountries()
-    const countryCodes = countryCodesMatching(searchTerm, countries)
-    const searchRoles = rolesWhoseLabelContains(searchTerm, copy.list.roles)
-    const addressPage = await loadAddressPage(organisationId, {
-      page,
-      searchTerm,
-      countryCodes,
-      searchRoles,
-      roles: role ? [role] : selectedTab.roles
-    })
-    const pagination = paginationOf(addressPage)
-    const addresses = mapAddressRows(
-      addressPage.items ?? [],
-      countries,
-      copy.list.roles
-    )
+    const { page: loadedPage, tableRows } = listsByRole(selectedTab)
+      ? await addressModel(organisationId, {
+          page,
+          searchTerm,
+          role,
+          selectedTab
+        })
+      : await transporterModel(organisationId, { page, searchTerm })
+    const pagination = paginationOf(loadedPage)
 
     return buildView(toolkit, {
       listLoaded: true,
       subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
       panelHeading: copy.list.tabs[selectedTab.addressType].heading,
+      tableHead: tableHeadFor(selectedTab),
       clearSearchHref: addressBookPageHref(1, { addressType, role }),
-      tableRows: tableRowsOf(addresses),
+      tableRows,
       resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
         addressBookPageHref(targetPage, {

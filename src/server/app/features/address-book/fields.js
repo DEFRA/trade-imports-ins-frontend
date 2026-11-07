@@ -1,15 +1,8 @@
-import {
-  compose,
-  maxEmail,
-  maxText,
-  oneOf,
-  requiredEmail,
-  requiredMaxText,
-  requiredOneOf
-} from '../../lib/validate/index.js'
+import { compose, oneOf, requiredOneOf } from '../../lib/validate/index.js'
 import { copyFor } from '../../shared/copy.js'
 import { copy as en } from './copy/copy.en.js'
 import { copy as cy } from './copy/copy.cy.js'
+import { fieldRuleFor } from './field-rule.js'
 
 export const FIELD_RULES = {
   name: { maxLength: 255, required: true },
@@ -57,33 +50,6 @@ const { errors } = copyFor({ en, cy })
 export const rolesErrorsOf = (keptRoles) =>
   keptRoles.length > 0 ? null : { roles: errors.roles.required }
 
-const maxLengthOf = (field) => FIELD_RULES[field].maxLength
-
-const maxLengthMessageFor = (field) =>
-  errors[field].maxLength(maxLengthOf(field))
-
-const requiredTextRule = (field) =>
-  requiredMaxText(field, maxLengthOf(field), {
-    required: errors[field].required,
-    maxLength: maxLengthMessageFor(field)
-  })
-
-const optionalTextRule = (field) =>
-  maxText(field, maxLengthOf(field), maxLengthMessageFor(field))
-
-const emailMessagesFor = (field) => ({
-  required: errors[field].required,
-  maxLength: maxLengthMessageFor(field),
-  format: errors[field].format
-})
-
-const emailRule = (field) =>
-  (isRequiredField(field) ? requiredEmail : maxEmail)(
-    field,
-    maxLengthOf(field),
-    emailMessagesFor(field)
-  )
-
 const countryRule = (field, countryCodes) =>
   (isRequiredField(field) ? requiredOneOf : oneOf)(
     field,
@@ -91,18 +57,12 @@ const countryRule = (field, countryCodes) =>
     errors[field].required
   )
 
-const textRule = (field) =>
-  isRequiredField(field) ? requiredTextRule(field) : optionalTextRule(field)
-
 const ruleFor = (field, countryCodes) => {
-  const { email, oneOfCountryCodes } = FIELD_RULES[field]
+  const { oneOfCountryCodes } = FIELD_RULES[field]
   if (oneOfCountryCodes) {
     return countryRule(field, countryCodes)
   }
-  if (email) {
-    return emailRule(field)
-  }
-  return textRule(field)
+  return fieldRuleFor(FIELD_RULES, errors, field)
 }
 
 export const addressRules = (countryCodes) =>

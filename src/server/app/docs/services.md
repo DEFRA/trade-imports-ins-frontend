@@ -21,10 +21,19 @@ each with its roles) and **`address-types.js`**, which exports:
 The barrel exports both. A feature imports only the barrel, and nothing
 imports any other file from outside its folder.
 
-The address book itself holds roles only. An address type is this service's
-grouping of roles for its screens (the add flow's first step, the list's tabs
-and the UK-only country): it is never sent to the address book or read from
-it, and an address's type is worked out from its roles.
+Three of the four address types group roles for this service's screens (the
+add flow's first step, the list's tabs and the UK-only country): a role set
+is never sent to the address book or read from it, and an address's type is
+worked out from its roles. The fourth, Transporter, names the service's
+transporters instead — their own records on their own address-book route,
+carrying no roles and an intrinsic private-or-commercial type — so it leads
+to the add-a-transporter pages rather than the address form, and the role map
+in `address-types.js` keeps only the three role-backed types.
+
+The [`transporters`](../services/transporters/) service follows the same
+barrel/client/stub shape and the same shared-request module as `address-book`
+(below), reading and writing the address book's transporter route rather than
+its address route.
 
 ## Run mode
 
@@ -79,6 +88,24 @@ the address holds no role or roles of more than one address type, and keyed
 role outside the United Kingdom. A delete
 marks the address deleted rather than removing it, so `getAddress` still
 returns it.
+
+### transporters
+
+[`index.js`](../services/transporters/index.js) exports `listTransporters(organisationId,
+listQuery)` and `createTransporter(organisationId, transporter)`, and
+re-exports `TRANSPORTER_TYPES` and `NORTHERN_IRELAND_COUNTRY_CODE` from
+`transporter-types.js`. The [client](../services/transporters/client.js)
+reads [`services/address-book-request.js`](../services/address-book-request.js)
+for what it shares with the addresses client — the organisation-scoped base
+URL and its missing-organisation refusal, the header set, and the raise that
+turns a 400 into a validation failure — and owns only its own `transporters`
+resource segment and query parameters. The [stub](../services/transporters/stub.js)
+keeps a `Map` per organisation, seeded empty, matches a search term against a
+transporter's name, address lines, town, county, postcode and approval
+number, narrows by country code and type, and refuses a create the way the
+address book refuses it: a missing approval number on a commercial
+transporter, one present on a private transporter, or a commercial country
+that is not Northern Ireland.
 
 ### countries
 

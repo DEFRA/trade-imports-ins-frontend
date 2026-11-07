@@ -11,11 +11,14 @@ import {
   addressRoutePath,
   addressTypePath,
   addressTypeStartPath,
+  commercialTransporterPath,
   dashboardPath,
   inAddressBookSection,
   inDashboardSection,
   isAddressTypeStart,
-  notificationTypePath
+  notificationTypePath,
+  privateTransporterPath,
+  transporterTypePath
 } from './paths.js'
 
 const ADDRESS_ID = '000000000000000000000001'
@@ -29,6 +32,9 @@ describe('public paths', () => {
       addressAddPath(),
       addressTypePath(),
       addressTypeStartPath(),
+      transporterTypePath(),
+      privateTransporterPath(),
+      commercialTransporterPath(),
       addressPath(ADDRESS_ID),
       addressEditPath(ADDRESS_ID),
       addressDeletePath(ADDRESS_ID)
@@ -39,6 +45,9 @@ describe('public paths', () => {
       '/address-book/add',
       '/address-book/add/address-type',
       '/address-book/add/address-type?start=true',
+      '/address-book/add/transporter',
+      '/address-book/add/transporter/private',
+      '/address-book/add/transporter/commercial',
       '/address-book/000000000000000000000001',
       '/address-book/000000000000000000000001/edit',
       '/address-book/000000000000000000000001/delete'

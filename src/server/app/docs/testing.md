@@ -274,7 +274,7 @@ organisation the stub seeds no address for), `refuseSaveThenReopenAddForm`
 `validAddressViewLink`, the two
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
-`UNKNOWN_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE` and
+`UNSUPPORTED_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE` and
 `TABLE_HEADINGS` (from `address-book-list-text.js`),
 `ONE_MATCH_LINE` (the results line for a single match), `typeCellOf` (the Type
 cell of the row naming an address),

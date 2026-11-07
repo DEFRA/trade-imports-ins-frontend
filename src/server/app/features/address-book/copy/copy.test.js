@@ -166,7 +166,7 @@ describe('#copy', () => {
     expect(copy.delete.warning).toBe(
       'Deletions are permanent and you cannot undo this.'
     )
-    expect(copy.delete.notApplicable).toBe('Not applicable')
+    expect(copy.notApplicable).toBe('Not applicable')
     expect(copy.delete.confirm).toBe('Yes, delete')
     expect(copy.delete.cancel).toBe('No, cancel')
   })
@@ -238,8 +238,12 @@ describe('#copy of the list page', () => {
         'tabs.DESTINATION_CONSIGNEE_OR_IMPORTER.heading',
         'Cyfeiriadau cyrchfan, derbynnydd a mewnforiwr'
       ],
+      ['tabs.TRANSPORTER.label', 'Cludydd'],
+      ['tabs.TRANSPORTER.heading', 'Cludwyr'],
       ['tabs.BRANCH.label', 'Cangen'],
       ['tabs.BRANCH.heading', 'Cyfeiriadau cangen'],
+      ['transporterTypes.PRIVATE', 'Preifat'],
+      ['transporterTypes.COMMERCIAL', 'Masnachol'],
       ['roles.PLACE_OF_ORIGIN.columnLabel', 'Man tarddiad'],
       ['roles.PLACE_OF_ORIGIN.optionLabel', 'Man Tarddiad'],
       ['roles.CONSIGNOR.columnLabel', 'Anfonwr'],
@@ -256,6 +260,7 @@ describe('#copy of the list page', () => {
       ['table.role', 'Math'],
       ['table.address', 'Cyfeiriad'],
       ['table.country', 'Gwlad'],
+      ['table.approvalNumber', 'Rhif cymeradwyo'],
       ['table.action', 'Cam gweithredu'],
       ['table.view', 'Gweld']
     ])
@@ -271,9 +276,15 @@ describe('#copy of the list page', () => {
         label: 'Destination, Consignee and Importer',
         heading: 'Destination, Consignee and Importer addresses'
       },
+      TRANSPORTER: { label: 'Transporter', heading: 'Transporters' },
       BRANCH: { label: 'Branch', heading: 'Branch addresses' }
     })
     expect(copy.list.table.role).toBe('Type')
+    expect(copy.list.table.approvalNumber).toBe('Approval number')
+    expect(copy.list.transporterTypes).toEqual({
+      PRIVATE: 'Private',
+      COMMERCIAL: 'Commercial'
+    })
     expect(copy.list.roles).toEqual({
       PLACE_OF_ORIGIN: {
         columnLabel: 'Place of origin',
@@ -308,6 +319,7 @@ describe('#copy of the address type page', () => {
           label: 'Destination, Consignee or Importer',
           hint: 'Place of destination, Consignee, Importer'
         },
+        TRANSPORTER: { label: 'Transporter', hint: 'Private, Commercial' },
         BRANCH: { label: 'Branch', hint: 'Branch address' }
       },
       continue: 'Continue'

@@ -53,14 +53,16 @@
     {{ govukButton({
       html: searchButtonHtml
     }) }}
-    {{ govukSelect({
-      id: "role",
-      name: "role",
-      label: {
-        text: copy.list.search.role.label
-      },
-      items: roleItems
-    }) }}
+    {% if roleItems %}
+      {{ govukSelect({
+        id: "role",
+        name: "role",
+        label: {
+          text: copy.list.search.role.label
+        },
+        items: roleItems
+      }) }}
+    {% endif %}
   {% endset %}
 
   <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">
@@ -90,13 +92,7 @@
     {% endif %}
 
     {{ govukTable({
-      head: [
-        { text: copy.list.table.name },
-        { text: copy.list.table.role },
-        { text: copy.list.table.address },
-        { text: copy.list.table.country },
-        { html: '<span class="govuk-visually-hidden">' + copy.list.table.action + '</span>' }
-      ],
+      head: tableHead,
       rows: tableRows
     }) }}
 

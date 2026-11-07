@@ -26,7 +26,13 @@ describe('promoted route authentication', () => {
       'GET /address-book/{id}/edit',
       'POST /address-book/{id}/edit',
       'GET /address-book/{id}/delete',
-      'POST /address-book/{id}/delete'
+      'POST /address-book/{id}/delete',
+      'GET /address-book/add/transporter',
+      'POST /address-book/add/transporter',
+      'GET /address-book/add/transporter/private',
+      'POST /address-book/add/transporter/private',
+      'GET /address-book/add/transporter/commercial',
+      'POST /address-book/add/transporter/commercial'
     ])
   })
 

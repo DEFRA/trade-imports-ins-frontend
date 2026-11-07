@@ -8,6 +8,10 @@ export const addressTypeStartPath = () =>
   `${addressTypePath()}?${new URLSearchParams(ADDRESS_TYPE_START_QUERY)}`
 export const isAddressTypeStart = (query) =>
   query.start === ADDRESS_TYPE_START_QUERY.start
+export const transporterTypePath = () => `${addressAddPath()}/transporter`
+export const privateTransporterPath = () => `${transporterTypePath()}/private`
+export const commercialTransporterPath = () =>
+  `${transporterTypePath()}/commercial`
 export const addressPath = (id) => `/address-book/${encodeURIComponent(id)}`
 export const addressRoutePath = () => '/address-book/{id}'
 export const addressEditPath = (id) => `${addressPath(id)}/edit`

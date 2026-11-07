@@ -14,20 +14,24 @@ import {
   DEFAULT_ADDRESS_BOOK_TAB
 } from '../address-book-tabs.js'
 import { copy } from '../copy/copy.en.js'
+import { UNSUPPORTED_ADDRESS_TYPE } from '../fit/address-book-list.js'
 import {
   contentOf,
   highlandAddress,
+  highlandTransporter,
   panelHeadingTextOf,
   rowCellsOf,
   startServerWithPageReader,
   stubAddressPage,
+  stubTransporterPage,
   subNavigationLinksOf,
   subNavigationOf
 } from './list.test-support.js'
 
-describe('#addressBookListTabs', () => {
-  const readPage = startServerWithPageReader()
+const ROLE_BACKED_TABS = ADDRESS_BOOK_TABS.filter((tab) => tab.roles)
+const readPage = startServerWithPageReader()
 
+describe('#addressBookListTabs', () => {
   test.each([
     [
       'no address type',
@@ -36,7 +40,7 @@ describe('#addressBookListTabs', () => {
     ],
     [
       'an unknown address type',
-      `${addressBookPath()}?addressType=TRANSPORTER`,
+      `${addressBookPath()}?addressType=${UNSUPPORTED_ADDRESS_TYPE}`,
       DEFAULT_ADDRESS_BOOK_TAB.addressType
     ],
     [
@@ -76,7 +80,7 @@ describe('#addressBookListTabs', () => {
       )
 
       await readPage(
-        `${addressBookPath()}?addressType=TRANSPORTER`,
+        `${addressBookPath()}?addressType=${UNSUPPORTED_ADDRESS_TYPE}`,
         'list-unknown-tab-log'
       )
 
@@ -84,7 +88,7 @@ describe('#addressBookListTabs', () => {
         {
           fields: {
             organisationId: ORGANISATION_ID,
-            requestedAddressType: 'TRANSPORTER',
+            requestedAddressType: UNSUPPORTED_ADDRESS_TYPE,
             addressType: DEFAULT_ADDRESS_BOOK_TAB.addressType
           },
           message: IGNORED_ADDRESS_TYPE_MESSAGE
@@ -135,7 +139,7 @@ describe('#addressBookListTabs', () => {
     }
   )
 
-  test('names the three tabs in order as links to the list on each tab, marking the Origin and Consignor tab as current', async () => {
+  test('names the four tabs in order as links to the list on each tab, marking the Origin and Consignor tab as current', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await readPage(addressBookPath(), 'list-tabs')
@@ -152,6 +156,11 @@ describe('#addressBookListTabs', () => {
         current: null
       },
       {
+        text: 'Transporter',
+        href: `${addressBookPath()}?addressType=TRANSPORTER`,
+        current: null
+      },
+      {
         text: 'Branch',
         href: `${addressBookPath()}?addressType=BRANCH`,
         current: null
@@ -164,7 +173,7 @@ describe('#addressBookListTabs', () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await readPage(
-      `${addressBookPath()}?addressType=TRANSPORTER`,
+      `${addressBookPath()}?addressType=${UNSUPPORTED_ADDRESS_TYPE}`,
       'list-unknown-tab'
     )
 
@@ -177,12 +186,12 @@ describe('#addressBookListTabs', () => {
       copy.list.tabs[DEFAULT_ADDRESS_BOOK_TAB.addressType].heading
     )
   })
+})
 
-  test.each(
-    ADDRESS_BOOK_TABS.map(({ addressType }, index) => [addressType, index])
-  )(
+describe('#addressBookListTabs — the selected tab', () => {
+  test.each(ROLE_BACKED_TABS.map(({ addressType }) => [addressType]))(
     'marks only the %s tab as current and heads its panel',
-    async (addressType, tabIndex) => {
+    async (addressType) => {
       stubAddressPage(
         { page: '1', tabAddressType: addressType },
         pageOf([highlandAddress])
@@ -196,14 +205,40 @@ describe('#addressBookListTabs', () => {
       expect(
         subNavigationLinksOf($).map(({ text, current }) => [text, current])
       ).toEqual(
-        ADDRESS_BOOK_TABS.map((tab, index) => [
+        ADDRESS_BOOK_TABS.map((tab) => [
           copy.list.tabs[tab.addressType].label,
-          index === tabIndex ? 'page' : null
+          tab.addressType === addressType ? 'page' : null
         ])
       )
       expect(panelHeadingTextOf($)).toBe(copy.list.tabs[addressType].heading)
     }
   )
+
+  test('marks only the Transporter tab as current, heads its panel and lists the organisation transporters', async () => {
+    stubTransporterPage({ page: '1' }, pageOf([highlandTransporter]))
+
+    const { $ } = await readPage(
+      `${addressBookPath()}?addressType=TRANSPORTER`,
+      'list-transporter-tab'
+    )
+
+    expect(
+      subNavigationLinksOf($).map(({ text, current }) => [text, current])
+    ).toEqual(
+      ADDRESS_BOOK_TABS.map((tab) => [
+        copy.list.tabs[tab.addressType].label,
+        tab.addressType === ADDRESS_TYPES.TRANSPORTER ? 'page' : null
+      ])
+    )
+    expect(panelHeadingTextOf($)).toBe(
+      copy.list.tabs[ADDRESS_TYPES.TRANSPORTER].heading
+    )
+    expect(textOf($, rowCellsOf($, 0).first())).toBe(highlandTransporter.name)
+    expect(textOf($, rowCellsOf($, 0).eq(2))).toBe(copy.notApplicable)
+    expect(textOf($, rowCellsOf($, 0).eq(3))).toBe(
+      copy.list.transporterTypes[highlandTransporter.type]
+    )
+  })
 
   test('holds the selected tab as a hidden addressType input in the filter form', async () => {
     stubAddressPage(
@@ -236,6 +271,7 @@ describe('#addressBookListTabs', () => {
     expect(subNavigationLinksOf($).map(({ href }) => href)).toEqual([
       `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR&q=farm`,
       `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=farm`,
+      `${addressBookPath()}?addressType=TRANSPORTER&q=farm`,
       `${addressBookPath()}?addressType=BRANCH&q=farm`
     ])
   })

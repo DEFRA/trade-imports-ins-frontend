@@ -1,0 +1,35 @@
+{% extends "shared/layout.njk" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+
+{% block journeyContent %}
+  {% include "shared/error-summary.njk" %}
+
+  <span class="govuk-caption-l">{{ copy.transporterType.caption }}</span>
+  <h1 class="govuk-heading-l">{{ copy.transporterType.title }}</h1>
+
+  {{ govukWarningText({
+    text: copy.transporterType.warning,
+    iconFallbackText: "Warning"
+  }) }}
+
+  <form method="post" novalidate>
+    <input type="hidden" name="crumb" value="{{ crumb }}" />
+
+    {{ govukRadios({
+      name: "transporterType",
+      idPrefix: "transporterType",
+      fieldset: {
+        legend: {
+          text: copy.transporterType.title,
+          classes: "govuk-visually-hidden"
+        }
+      },
+      items: radioItems,
+      errorMessage: errors.transporterType and { text: errors.transporterType }
+    }) }}
+
+    {{ govukButton({ text: copy.transporterType.continue }) }}
+  </form>
+{% endblock %}

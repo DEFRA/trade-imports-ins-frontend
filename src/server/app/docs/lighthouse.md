@@ -15,6 +15,9 @@ Every GET route the service registers, derived from
 - `/address-book` — the list
 - `/address-book/add`
 - `/address-book/add/address-type` — choose an address type
+- `/address-book/add/transporter` — choose a transporter type
+- `/address-book/add/transporter/private` — add a private transporter
+- `/address-book/add/transporter/commercial` — add a commercial transporter
 - `/address-book/{id}` — view
 - `/address-book/{id}/edit`
 - `/address-book/{id}/delete`

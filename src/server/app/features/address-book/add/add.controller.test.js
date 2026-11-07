@@ -45,6 +45,7 @@ import {
 import { recordModuleLoggerInfo } from '../../../../common/test-helpers/module-logger-lines.js'
 import {
   addressTypeRequiresUnitedKingdom,
+  ADDRESS_FORM_TYPES,
   ADDRESS_TYPES,
   ROLES_BY_ADDRESS_TYPE
 } from '../../../services/address-book/index.js'
@@ -384,7 +385,7 @@ describe(
   () => {
     const getServer = startRealModeServerServingCountries(COUNTRIES)
     const NO_TYPE_MESSAGE =
-      'No address type chosen, sending the user to choose one'
+      'No address type chosen that this form serves, sending the user to choose one'
     const { entriesWith: loggedWith } = recordModuleLoggerInfo()
 
     test('GET with no address type chosen redirects to the address type page and logs it once', async () => {
@@ -413,6 +414,33 @@ describe(
       expect(loggedWith(NO_TYPE_MESSAGE)).toEqual([
         {
           fields: { organisationId: ORGANISATION_ID, path: addressAddPath() },
+          message: NO_TYPE_MESSAGE
+        }
+      ])
+    })
+
+    test('GET with the Transporter type stored (which this form does not serve) redirects to the address type page and logs the stored type', async () => {
+      const cookie = await cookieAfterChoosingAddressType(
+        getServer(),
+        'add-get-transporter-type',
+        { addressType: ADDRESS_TYPES.TRANSPORTER }
+      )
+
+      const response = await getAdd(
+        getServer(),
+        'add-get-transporter-type',
+        undefined,
+        cookie
+      )
+
+      expectRedirectTo(response, addressTypePath())
+      expect(loggedWith(NO_TYPE_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            path: addressAddPath(),
+            storedAddressType: ADDRESS_TYPES.TRANSPORTER
+          },
           message: NO_TYPE_MESSAGE
         }
       ])
@@ -512,7 +540,7 @@ describe(
       }
     )
 
-    test.each(Object.values(ADDRESS_TYPES))(
+    test.each(ADDRESS_FORM_TYPES)(
       'POST after %s is chosen with valid fields and no role ticked shows the roles error inline and as the summary link to the first option, and sends nothing',
       async (addressType) => {
         const { roles: _noUse, ...fieldsOnly } = VALID_ADDRESS_PAYLOAD
@@ -604,7 +632,7 @@ describe(
       expect(textsOf(load(result), ERROR_SUMMARY_LINKS)).toEqual([ROLES_ERROR])
     })
 
-    test.each(Object.values(ADDRESS_TYPES))(
+    test.each(ADDRESS_FORM_TYPES)(
       'POST after %s is chosen saves the ticked role and lands on that type of the list',
       async (addressType) => {
         const { scope, captured } = serveAddressCreationCapturingBody()

@@ -1,7 +1,8 @@
 import { expect } from 'vitest'
 
 import { ADDRESS_TYPES } from '../../app/services/address-book/index.js'
-import { addressTypePath } from '../../app/shared/paths.js'
+import { TRANSPORTER_TYPES } from '../../app/services/transporters/index.js'
+import { addressTypePath, transporterTypePath } from '../../app/shared/paths.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { addressBookApi } from './real-mode.js'
 import { ORGANISATION_ID, sessionAuth } from './session-auth.js'
@@ -14,6 +15,8 @@ export const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
 export const OTHER_ORGANISATION_ID = '0c4e7a92-3b1d-4f58-a6e2-9d8b5c1f7a34'
 
+export const TRANSPORTER_ID = '775f1c2ab3e4d51a2c9d0e88'
+
 export {
   addressAddPath,
   addressBookPath,
@@ -21,7 +24,10 @@ export {
   addressEditPath,
   addressPath,
   addressTypePath,
-  addressTypeStartPath
+  addressTypeStartPath,
+  commercialTransporterPath,
+  privateTransporterPath,
+  transporterTypePath
 } from '../../app/shared/paths.js'
 
 export const addressesApiPath = (organisationId = ORGANISATION_ID) =>
@@ -29,6 +35,9 @@ export const addressesApiPath = (organisationId = ORGANISATION_ID) =>
 
 export const addressApiPath = (addressId, organisationId = ORGANISATION_ID) =>
   `${addressesApiPath(organisationId)}/${addressId}`
+
+export const transportersApiPath = (organisationId = ORGANISATION_ID) =>
+  `/organisation/${organisationId}/transporters`
 
 export const BACK_LINK = 'a.govuk-back-link'
 
@@ -122,6 +131,39 @@ export const serveAddressCreationCapturingBody = () => {
   return { scope, captured }
 }
 
+export const serveTransporterCreated = (matchBody = () => true) =>
+  addressBookApi()
+    .post(transportersApiPath(), matchBody)
+    .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
+    .reply(statusCodes.created, {
+      id: TRANSPORTER_ID,
+      name: 'Highland Haulage Ltd'
+    })
+
+export const serveTransporterCreationCapturingBody = () => {
+  const captured = {}
+  const scope = serveTransporterCreated((body) => {
+    captured.body = body
+    return true
+  })
+  return { scope, captured }
+}
+
+export const serveTransporterRefused = (errors) =>
+  addressBookApi()
+    .post(transportersApiPath())
+    .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
+    .reply(statusCodes.badRequest, {
+      type: 'https://api.cdp.defra.cloud/problems/validation-error',
+      errors
+    })
+
+export const serveTransporterCreationUnavailable = () =>
+  addressBookApi()
+    .post(transportersApiPath())
+    .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
+    .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
+
 export const pageOf = (items, overrides = {}) => ({
   items,
   page: 1,
@@ -167,6 +209,21 @@ export const cookieAfterChoosingAddressType = async (
     addressTypePath(),
     sessionId,
     { addressType },
+    cookie
+  )
+  return cookieHeaderOf(headers) || cookie
+}
+
+export const cookieAfterChoosingTransporterType = async (
+  server,
+  sessionId,
+  { transporterType = TRANSPORTER_TYPES.PRIVATE, cookie } = {}
+) => {
+  const { headers } = await postPage(
+    server,
+    transporterTypePath(),
+    sessionId,
+    { transporterType },
     cookie
   )
   return cookieHeaderOf(headers) || cookie

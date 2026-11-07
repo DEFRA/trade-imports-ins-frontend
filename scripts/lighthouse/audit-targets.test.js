@@ -23,6 +23,9 @@ const ADDRESS_TYPE_PATH = '/address-book/add/address-type'
 const VIEW_PATH = '/address-book/{id}'
 const EDIT_PATH = '/address-book/{id}/edit'
 const DELETE_PATH = '/address-book/{id}/delete'
+const TRANSPORTER_TYPE_PATH = '/address-book/add/transporter'
+const PRIVATE_TRANSPORTER_PATH = '/address-book/add/transporter/private'
+const COMMERCIAL_TRANSPORTER_PATH = '/address-book/add/transporter/commercial'
 
 const REGISTERED_PATHS = [
   DASHBOARD_PATH,
@@ -32,7 +35,10 @@ const REGISTERED_PATHS = [
   ADDRESS_TYPE_PATH,
   VIEW_PATH,
   EDIT_PATH,
-  DELETE_PATH
+  DELETE_PATH,
+  TRANSPORTER_TYPE_PATH,
+  PRIVATE_TRANSPORTER_PATH,
+  COMMERCIAL_TRANSPORTER_PATH
 ]
 
 const STATUS_PATH = '/address-book/{id}/status'
@@ -78,7 +84,10 @@ describe('#auditPaths', () => {
       ADDRESS_TYPE_PATH,
       `/address-book/${ADDRESS_ID}`,
       `/address-book/${ADDRESS_ID}/edit`,
-      `/address-book/${ADDRESS_ID}/delete`
+      `/address-book/${ADDRESS_ID}/delete`,
+      TRANSPORTER_TYPE_PATH,
+      PRIVATE_TRANSPORTER_PATH,
+      COMMERCIAL_TRANSPORTER_PATH
     ])
   })
 
@@ -166,7 +175,10 @@ describe('#reportNames', () => {
       'address_book_add_address_type',
       'address_book_id',
       'address_book_id_edit',
-      'address_book_id_delete'
+      'address_book_id_delete',
+      'address_book_add_transporter',
+      'address_book_add_transporter_private',
+      'address_book_add_transporter_commercial'
     ])
     expect(
       Object.values(names).filter((name) => name.includes(ADDRESS_ID))

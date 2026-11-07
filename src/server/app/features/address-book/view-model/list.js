@@ -68,3 +68,58 @@ export const mapAddressRows = (addresses, countries, copyByRole) =>
     postalLines: postalLinesOf(address),
     countryLabel: countryLabelOf(countries, address.countryCode)
   }))
+
+/** The Approval number cell's text: the stored number for a transporter that
+ * has one, and the not-applicable word for one that has none (a private
+ * transporter never carries one). */
+export const approvalNumberTextOf = (transporter, notApplicableWord) =>
+  transporter.approvalNumber ?? notApplicableWord
+
+export const transporterTypesWhoseLabelContains = (
+  searchTerm,
+  copyByTransporterType
+) => {
+  const term = searchTerm.toLowerCase()
+  if (!term) {
+    return []
+  }
+  return Object.entries(copyByTransporterType)
+    .filter(([, label]) => label.toLowerCase().includes(term))
+    .map(([transporterType]) => transporterType)
+}
+
+const COMMERCIAL_TRANSPORTER_TYPE = 'COMMERCIAL'
+
+const transporterCountryLabelOf = (
+  transporter,
+  countries,
+  fixedCommercialCountryLabel
+) =>
+  transporter.type === COMMERCIAL_TRANSPORTER_TYPE
+    ? fixedCommercialCountryLabel
+    : countryLabelOf(countries, transporter.countryCode)
+
+export const mapTransporterRows = (
+  transporters,
+  {
+    countries,
+    copyByTransporterType,
+    fixedCommercialCountryLabel,
+    notApplicableWord
+  }
+) =>
+  transporters.map((transporter) => ({
+    id: transporter.id,
+    name: transporter.name,
+    nameLines: nameLinesOf(transporter.name),
+    postalLines: [
+      ...postalLinesOf(transporter),
+      transporterCountryLabelOf(
+        transporter,
+        countries,
+        fixedCommercialCountryLabel
+      )
+    ],
+    approvalNumberText: approvalNumberTextOf(transporter, notApplicableWord),
+    typeLabel: copyByTransporterType[transporter.type] ?? transporter.type
+  }))

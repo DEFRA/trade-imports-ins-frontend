@@ -6,6 +6,9 @@ import * as addressBookAddressType from './address-book/address-type/address-typ
 import * as addressBookView from './address-book/view/view.controller.js'
 import * as addressBookEdit from './address-book/edit/edit.controller.js'
 import * as addressBookDelete from './address-book/delete/delete.controller.js'
+import * as transporterType from './address-book/transporter/transporter-type.controller.js'
+import * as privateTransporter from './address-book/transporter/private-transporter.controller.js'
+import * as commercialTransporter from './address-book/transporter/commercial-transporter.controller.js'
 
 export const allRoutes = [
   ...dashboard.routes,
@@ -15,5 +18,8 @@ export const allRoutes = [
   ...addressBookAddressType.routes,
   ...addressBookView.routes,
   ...addressBookEdit.routes,
-  ...addressBookDelete.routes
+  ...addressBookDelete.routes,
+  ...transporterType.routes,
+  ...privateTransporter.routes,
+  ...commercialTransporter.routes
 ]

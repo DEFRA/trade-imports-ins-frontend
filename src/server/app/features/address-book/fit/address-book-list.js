@@ -8,7 +8,7 @@ import { NO_RESULTS_LINE, TABLE_HEADINGS } from './address-book-list-text.js'
 
 export { NO_RESULTS_LINE, TABLE_HEADINGS }
 
-export const UNKNOWN_ADDRESS_TYPE = 'TRANSPORTER'
+export const UNSUPPORTED_ADDRESS_TYPE = 'UNSUPPORTED_ADDRESS_TYPE'
 export const ONE_MATCH_LINE = 'Showing 1-1 of 1'
 
 export const typeCellOf = (page, name) =>
@@ -16,6 +16,21 @@ export const typeCellOf = (page, name) =>
     .getByRole('row', { name: new RegExp(name) })
     .getByRole('cell')
     .nth(1)
+
+const TRANSPORTER_APPROVAL_NUMBER_CELL_INDEX = 2
+const TRANSPORTER_TYPE_CELL_INDEX = 3
+
+export const transporterApprovalNumberCellOf = (page, name) =>
+  page
+    .getByRole('row', { name: new RegExp(name) })
+    .getByRole('cell')
+    .nth(TRANSPORTER_APPROVAL_NUMBER_CELL_INDEX)
+
+export const transporterTypeCellOf = (page, name) =>
+  page
+    .getByRole('row', { name: new RegExp(name) })
+    .getByRole('cell')
+    .nth(TRANSPORTER_TYPE_CELL_INDEX)
 
 export const openAddressBookList = async (
   page,

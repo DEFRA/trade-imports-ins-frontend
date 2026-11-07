@@ -1,8 +1,12 @@
 import { isEmptySeedOrganisation } from '../stub-seed.js'
+import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
 import {
-  HTTP_STATUS_BAD_REQUEST,
-  HTTP_STATUS_NOT_FOUND
-} from '../../lib/http-status.js'
+  OBJECT_ID_LENGTH,
+  isLive,
+  newObjectId,
+  pageOfMatches,
+  throwIfInvalid
+} from '../stub-support.js'
 import {
   ADDRESS_TYPES,
   ROLES,
@@ -11,12 +15,7 @@ import {
 } from './address-types.js'
 import { TYPED_SEED } from './typed-seed.js'
 
-const OBJECT_ID_LENGTH = 24
-
 const addressesByOrganisation = new Map()
-
-const newObjectId = () =>
-  crypto.randomUUID().replaceAll('-', '').slice(0, OBJECT_ID_LENGTH)
 
 const buildSeedAddress = (index, details = {}) => ({
   id: String(index).padStart(OBJECT_ID_LENGTH, '0'),
@@ -68,8 +67,6 @@ const addressesOf = (organisationId) => {
 const notFound = () =>
   Object.assign(new Error('Not found'), { status: HTTP_STATUS_NOT_FOUND })
 
-const isLive = (address) => !address.deleted
-
 const holdsAnyOf = (address, roles) =>
   address.roles.some((role) => roles.includes(role))
 
@@ -104,14 +101,6 @@ const matchesSearch = (
   )
 }
 
-const pageOfMatches = (matches, { page, pageSize }) => ({
-  items: matches.slice((page - 1) * pageSize, page * pageSize),
-  page,
-  pageSize,
-  totalItems: matches.length,
-  totalPages: Math.ceil(matches.length / pageSize)
-})
-
 export const listAddresses = async (
   organisationId,
   { page = 1, pageSize, roles = [], ...search } = {}
@@ -143,18 +132,8 @@ const refusalsOf = ({ roles = [], countryCode }) => {
   return null
 }
 
-const refuseInvalid = (address) => {
-  const errors = refusalsOf(address)
-  if (errors) {
-    throw Object.assign(new Error('Validation failed'), {
-      status: HTTP_STATUS_BAD_REQUEST,
-      body: { errors }
-    })
-  }
-}
-
 export const createAddress = async (organisationId, address) => {
-  refuseInvalid(address)
+  throwIfInvalid(refusalsOf(address))
   const created = { id: newObjectId(), ...address, deleted: false }
   addressesOf(organisationId).unshift(created)
   return created
@@ -178,7 +157,7 @@ export const updateAddress = async (organisationId, addressId, address) => {
   if (index === -1) {
     throw notFound()
   }
-  refuseInvalid(address)
+  throwIfInvalid(refusalsOf(address))
   addresses[index] = { ...addresses[index], ...address }
   return addresses[index]
 }

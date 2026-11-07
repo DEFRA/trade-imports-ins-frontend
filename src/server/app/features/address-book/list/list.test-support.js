@@ -5,7 +5,8 @@ import {
   addressesApiPath,
   COUNTRIES,
   getPage,
-  STORED_ADDRESS
+  STORED_ADDRESS,
+  transportersApiPath
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
@@ -50,6 +51,16 @@ export const greenFarmAddress = {
   postcode: 'IV2 3JH',
   countryCode: 'GB',
   roles: []
+}
+
+export const highlandTransporter = {
+  id: '1',
+  name: STORED_ADDRESS.name,
+  addressLine1: STORED_ADDRESS.addressLine1,
+  townOrCity: STORED_ADDRESS.townOrCity,
+  postcode: STORED_ADDRESS.postcode,
+  countryCode: STORED_ADDRESS.countryCode,
+  type: 'PRIVATE'
 }
 
 export const fullAddress = {
@@ -149,3 +160,9 @@ export const stubAddressBookUnavailable = (query = {}) =>
       title: 'Service Unavailable'
     }
   )
+
+export const stubTransporterPage = (query, transporterPage) =>
+  addressBookApi()
+    .get(transportersApiPath())
+    .query({ pageSize: String(LIST_PAGE_SIZE), ...query })
+    .reply(statusCodes.ok, { ...transporterPage, pageSize: LIST_PAGE_SIZE })

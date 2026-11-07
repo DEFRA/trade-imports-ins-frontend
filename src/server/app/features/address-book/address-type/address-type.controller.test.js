@@ -20,8 +20,15 @@ import {
 } from '../../../../common/test-helpers/rendered-text.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { startRealModeServer } from '../../../../common/test-helpers/test-server.js'
-import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
-import { addressTypeStartPath } from '../../../shared/paths.js'
+import {
+  ADDRESS_FORM_TYPES,
+  ADDRESS_TYPES
+} from '../../../services/address-book/index.js'
+import {
+  addressTypeStartPath,
+  transporterTypePath
+} from '../../../shared/paths.js'
+import { UNSUPPORTED_ADDRESS_TYPE } from '../fit/address-book-list.js'
 
 const CAPTION = '.govuk-caption-l'
 const LEGEND = 'fieldset legend'
@@ -32,7 +39,6 @@ const RADIO_HINTS = '.govuk-radios__hint'
 const ERROR_LINKS = '.govuk-error-summary__list a'
 const INLINE_ERROR = '.govuk-error-message'
 const MISSING_TYPE_MESSAGE = 'Select an address type'
-const UNSUPPORTED_ADDRESS_TYPE = 'TRANSPORTER'
 
 const checkedValuesOf = ($) =>
   $(CHECKED_RADIOS)
@@ -43,7 +49,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
   const getServer = startRealModeServer()
   const { entriesWith: loggedWith } = recordModuleLoggerInfo()
 
-  test('GET shows the caption, the heading, a visually hidden legend, the three address types with their hints in order and none chosen, Continue and Back to the address book', async () => {
+  test('GET shows the caption, the heading, a visually hidden legend, the four address types with their hints in order and none chosen, Continue and Back to the address book', async () => {
     const { result, statusCode, headers } = await getPage(
       getServer(),
       addressTypePath(),
@@ -60,14 +66,16 @@ describe('#addressTypeController', { concurrent: false }, () => {
     expect(textsOf($, RADIO_LABELS)).toEqual([
       'Origin or Consignor',
       'Destination, Consignee or Importer',
+      'Transporter',
       'Branch'
     ])
     expect(textsOf($, RADIO_HINTS)).toEqual([
       'Place of origin, Consignor',
       'Place of destination, Consignee, Importer',
+      'Private, Commercial',
       'Branch address'
     ])
-    expect($(RADIOS)).toHaveLength(3)
+    expect($(RADIOS)).toHaveLength(4)
     expect(checkedValuesOf($)).toEqual([])
     expect(textsOf($, 'form button')).toEqual(['Continue'])
     expect($(BACK_LINK).attr('href')).toBe(addressBookPath())
@@ -107,7 +115,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
     expect(textsOf(load(result), ERROR_LINKS)).toEqual([MISSING_TYPE_MESSAGE])
   })
 
-  test.each(Object.values(ADDRESS_TYPES))(
+  test.each(ADDRESS_FORM_TYPES)(
     'POST of %s goes to the add form and the type page then shows it chosen',
     async (addressType) => {
       const sessionId = `type-post-${addressType}`
@@ -130,6 +138,34 @@ describe('#addressTypeController', { concurrent: false }, () => {
       expect(checkedValuesOf(load(result))).toEqual([addressType])
     }
   )
+
+  test('POST of Transporter leaves the add form behind and opens the add-a-transporter page, and logs the hand-over once', async () => {
+    const response = await postPage(
+      getServer(),
+      addressTypePath(),
+      'type-post-transporter',
+      {
+        addressType: ADDRESS_TYPES.TRANSPORTER
+      }
+    )
+
+    expectRedirectTo(response, transporterTypePath())
+    expect(
+      loggedWith(
+        'Address type question handed over to the add-a-transporter pages'
+      )
+    ).toEqual([
+      {
+        fields: {
+          organisationId: ORGANISATION_ID,
+          path: addressTypePath(),
+          addressType: ADDRESS_TYPES.TRANSPORTER
+        },
+        message:
+          'Address type question handed over to the add-a-transporter pages'
+      }
+    ])
+  })
 
   test('GET of the start address with a type already chosen shows none chosen', async () => {
     const cookie = await cookieAfterChoosingAddressType(

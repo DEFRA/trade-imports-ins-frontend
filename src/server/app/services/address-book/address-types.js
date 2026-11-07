@@ -1,8 +1,18 @@
 export const ADDRESS_TYPES = Object.freeze({
   ORIGIN_OR_CONSIGNOR: 'ORIGIN_OR_CONSIGNOR',
   DESTINATION_CONSIGNEE_OR_IMPORTER: 'DESTINATION_CONSIGNEE_OR_IMPORTER',
+  TRANSPORTER: 'TRANSPORTER',
   BRANCH: 'BRANCH'
 })
+
+/** The address types whose radio leads to the address form: every type that
+ * groups roles. The Transporter type leads to the add-a-transporter pages
+ * instead, so it is not one of these. */
+export const ADDRESS_FORM_TYPES = Object.freeze([
+  ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+  ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+  ADDRESS_TYPES.BRANCH
+])
 
 export const ROLES = Object.freeze({
   PLACE_OF_ORIGIN: 'PLACE_OF_ORIGIN',
@@ -32,7 +42,7 @@ export const keepRolesOfferedBy = (addressType, candidateRoles) =>
   )
 
 export const addressTypeOfRole = (role) =>
-  Object.values(ADDRESS_TYPES).find((addressType) =>
+  ADDRESS_FORM_TYPES.find((addressType) =>
     ROLES_BY_ADDRESS_TYPE[addressType].includes(role)
   )
 

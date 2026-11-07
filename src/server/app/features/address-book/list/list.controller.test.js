@@ -22,11 +22,13 @@ import {
   greenFarmAddress,
   highlandAddress,
   parisDepotAddress,
+  highlandTransporter,
   resultsLineOf,
   rowCellsOf,
   startServerWithPageReader,
   stubAddressBookUnavailable,
   stubAddressPage,
+  stubTransporterPage,
   tableHeadingsOf
 } from './list.test-support.js'
 
@@ -141,6 +143,9 @@ describe('#addressBookListController', () => {
       {
         fields: {
           organisationId: ORGANISATION_ID,
+          searchTerm: '',
+          countryCodes: [],
+          searchRoles: [],
           roles: DEFAULT_ADDRESS_BOOK_TAB.roles,
           requestedPage: 99,
           servedPage: 2
@@ -235,6 +240,44 @@ describe('#addressBookListController', () => {
       `${addressBookPath()}?addressType=BRANCH&q=green&page=2`,
       `${addressBookPath()}?addressType=BRANCH&q=green&page=3`,
       `${addressBookPath()}?addressType=BRANCH&q=green&page=4`
+    ])
+  })
+})
+
+describe('#addressBookListController — the Transporter tab', () => {
+  const readPage = startServerWithPageReader()
+  const { entriesWith: infoLogs } = recordModuleLoggerInfo()
+
+  test('shows the last page of transporters, asked for a second time, when the page number is past the last page, and logs the fallback once', async () => {
+    const pastLastPage = stubTransporterPage(
+      { page: '99' },
+      pageOf([], { page: 99, totalItems: 1, totalPages: 1 })
+    )
+    const lastPage = stubTransporterPage(
+      { page: '1' },
+      pageOf([highlandTransporter], { page: 1, totalItems: 1, totalPages: 1 })
+    )
+
+    const { statusCode } = await readPage(
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.TRANSPORTER}&page=99`,
+      'list-transporter-past-last-page'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(pastLastPage.isDone()).toBe(true)
+    expect(lastPage.isDone()).toBe(true)
+    expect(infoLogs(PAST_LAST_PAGE_MESSAGE)).toEqual([
+      {
+        fields: {
+          organisationId: ORGANISATION_ID,
+          searchTerm: '',
+          countryCodes: [],
+          searchTypes: [],
+          requestedPage: 99,
+          servedPage: 1
+        },
+        message: PAST_LAST_PAGE_MESSAGE
+      }
     ])
   })
 })

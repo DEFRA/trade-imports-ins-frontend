@@ -89,15 +89,20 @@ root:
   ticked roles its side offers; `ownAndOtherRolesOfParty`,
   `rolesToSaveForParty` and `requiresUnitedKingdomAddress` read it.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
-  `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address
-  type and the roles its Type select offers in order; its label and panel
-  heading are `copy.list.tabs[addressType]`), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and Consignor tab),
-  `resolveTab` (the tab a requested address type names, else nothing) and
-  `resolveRole` (the requested role when the tab offers it, else nothing). The
-  list controller serves the default tab when `resolveTab` finds none, and
-  logs a requested address type it replaced. The address type values (`ADDRESS_TYPES`) and the roles each
-  lists (`ROLES_BY_ADDRESS_TYPE`) belong to `services/address-book`, imported
-  through its barrel.
+  `ADDRESS_BOOK_TABS` (the list's four tabs in order, each saying what it
+  lists; a role-backed tab also carries the roles its Type select offers in
+  order, which the Transporter tab has none of; a tab's label and panel
+  heading are `copy.list.tabs[addressType]`), `ROLE_BACKED_ADDRESS_BOOK_TABS`
+  (the three for a loop that only makes sense against a role), `listsByRole`
+  (whether a tab lists by role), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and
+  Consignor tab), `resolveTab` (the tab a requested address type names, else
+  nothing) and `resolveRole` (the requested role when the tab offers it, else
+  nothing). The list controller serves the default tab when `resolveTab`
+  finds none, and logs a requested address type it replaced, and serves the
+  Transporter tab's own source and columns rather than an address list. The
+  address type values (`ADDRESS_TYPES`) and the role map each of the three
+  role-backed types groups (`ROLES_BY_ADDRESS_TYPE`) belong to
+  `services/address-book`, imported through its barrel.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`

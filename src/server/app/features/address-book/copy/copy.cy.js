@@ -2,6 +2,19 @@
 const SELECT_COUNTRY = 'Dewiswch wlad'
 const ADD_A_NEW_ADDRESS = 'Ychwanegu cyfeiriad newydd'
 const ADDRESS_TYPE = 'Math o gyfeiriad'
+const ADD_A_NEW_TRANSPORTER = 'Ychwanegu cludydd newydd'
+const ENW_NEU_SEFYDLIAD = 'Enw neu sefydliad'
+const LLINELL_GYFEIRIAD_1 = 'Llinell gyfeiriad 1'
+const LLINELL_GYFEIRIAD_2 = 'Llinell gyfeiriad 2 (dewisol)'
+const TREF_NEU_DDINAS = 'Tref neu ddinas'
+const SIR = 'Sir (dewisol)'
+const COD_POST = 'Cod post neu god zip'
+const CYFEIRIAD_E_BOST = 'Cyfeiriad e-bost'
+const RHIF_FFON = 'Rhif ffôn'
+const RHYNGWLADOL_HINT = 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad'
+const CADW_A_PHARHAU = 'Cadw a pharhau'
+const CYFEIRIAD_HEADING = 'Cyfeiriad'
+const MANYLION_CYSWLLT = 'Manylion cyswllt'
 
 export const copy = {
   list: {
@@ -32,10 +45,18 @@ export const copy = {
         label: 'Cyrchfan, Derbynnydd a Mewnforiwr',
         heading: 'Cyfeiriadau cyrchfan, derbynnydd a mewnforiwr'
       },
+      TRANSPORTER: {
+        label: 'Cludydd',
+        heading: 'Cludwyr'
+      },
       BRANCH: {
         label: 'Cangen',
         heading: 'Cyfeiriadau cangen'
       }
+    },
+    transporterTypes: {
+      PRIVATE: 'Preifat',
+      COMMERCIAL: 'Masnachol'
     },
     roles: {
       PLACE_OF_ORIGIN: {
@@ -59,33 +80,37 @@ export const copy = {
       role: 'Math',
       address: 'Cyfeiriad',
       country: 'Gwlad',
+      approvalNumber: 'Rhif cymeradwyo',
       action: 'Cam gweithredu',
       view: 'Gweld'
     }
   },
+  notApplicable: 'Amherthnasol',
   successBanner: {
     title: 'Llwyddiant',
     added: (name) =>
       `Cyfeiriad ${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
+    transporterAdded: (name) =>
+      `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
     updated: (name) => `Cyfeiriad ${name} wedi’i ddiweddaru`,
     deleted: (name) => `Cyfeiriad ${name} wedi’i ddileu`,
     deletedUnnamed: 'Cyfeiriad wedi’i ddileu'
   },
   form: {
-    addressHeading: 'Cyfeiriad',
-    contactHeading: 'Manylion cyswllt',
+    addressHeading: CYFEIRIAD_HEADING,
+    contactHeading: MANYLION_CYSWLLT,
     fields: {
-      name: 'Enw neu sefydliad',
-      addressLine1: 'Llinell gyfeiriad 1',
-      addressLine2: 'Llinell gyfeiriad 2 (dewisol)',
-      townOrCity: 'Tref neu ddinas',
-      county: 'Sir (dewisol)',
-      postcode: 'Cod post neu god zip',
+      name: ENW_NEU_SEFYDLIAD,
+      addressLine1: LLINELL_GYFEIRIAD_1,
+      addressLine2: LLINELL_GYFEIRIAD_2,
+      townOrCity: TREF_NEU_DDINAS,
+      county: SIR,
+      postcode: COD_POST,
       countryCode: 'Gwlad',
-      email: 'Cyfeiriad e-bost',
-      phone: 'Rhif ffôn'
+      email: CYFEIRIAD_E_BOST,
+      phone: RHIF_FFON
     },
-    phoneHint: 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad',
+    phoneHint: RHYNGWLADOL_HINT,
     countryPlaceholder: SELECT_COUNTRY
   },
   addressType: {
@@ -100,9 +125,64 @@ export const copy = {
         label: 'Cyrchfan, Derbynnydd neu Fewnforiwr',
         hint: 'Man cyrchfan, Derbynnydd, Mewnforiwr'
       },
+      TRANSPORTER: { label: 'Cludydd', hint: 'Preifat, Masnachol' },
       BRANCH: { label: 'Cangen', hint: 'Cyfeiriad cangen' }
     },
     continue: 'Parhau'
+  },
+  transporterType: {
+    caption: ADD_A_NEW_TRANSPORTER,
+    title: 'Dewiswch fath o gludydd',
+    warning:
+      'Gwiriwch y rhestr gludwyr cyn ychwanegu cludwyr newydd i osgoi dyblygu.',
+    options: {
+      PRIVATE: { label: 'Cludydd preifat' },
+      COMMERCIAL: {
+        label: 'Masnachol',
+        hint: 'Gall hyn fod yn gludydd masnachol o Ogledd Iwerddon yn unig.'
+      }
+    },
+    continue: 'Parhau'
+  },
+  privateTransporterForm: {
+    caption: ADD_A_NEW_TRANSPORTER,
+    title: 'Ychwanegu cludydd preifat',
+    addressHeading: CYFEIRIAD_HEADING,
+    contactHeading: MANYLION_CYSWLLT,
+    fields: {
+      name: ENW_NEU_SEFYDLIAD,
+      addressLine1: LLINELL_GYFEIRIAD_1,
+      addressLine2: LLINELL_GYFEIRIAD_2,
+      townOrCity: TREF_NEU_DDINAS,
+      county: SIR,
+      postcode: COD_POST,
+      countryCode: 'Gwlad',
+      email: CYFEIRIAD_E_BOST,
+      phone: RHIF_FFON
+    },
+    phoneHint: RHYNGWLADOL_HINT,
+    countryPlaceholder: SELECT_COUNTRY,
+    save: CADW_A_PHARHAU
+  },
+  commercialTransporterForm: {
+    caption: ADD_A_NEW_TRANSPORTER,
+    title: 'Ychwanegu cludydd masnachol',
+    addressHeading: CYFEIRIAD_HEADING,
+    contactHeading: MANYLION_CYSWLLT,
+    country: 'Gogledd Iwerddon',
+    fields: {
+      name: ENW_NEU_SEFYDLIAD,
+      approvalNumber: 'Rhif cymeradwyo',
+      addressLine1: LLINELL_GYFEIRIAD_1,
+      addressLine2: LLINELL_GYFEIRIAD_2,
+      townOrCity: TREF_NEU_DDINAS,
+      county: SIR,
+      postcode: COD_POST,
+      email: CYFEIRIAD_E_BOST,
+      phone: RHIF_FFON
+    },
+    phoneHint: RHYNGWLADOL_HINT,
+    save: CADW_A_PHARHAU
   },
   roles: {
     journeyLegend: 'Ar gyfer beth arall y dylid defnyddio’r cyfeiriad hwn?',
@@ -126,7 +206,7 @@ export const copy = {
   add: {
     title: 'Ychwanegu manylion cyfeiriad a manylion cyswllt',
     caption: ADD_A_NEW_ADDRESS,
-    save: 'Cadw a pharhau',
+    save: CADW_A_PHARHAU,
     saveAndSelect: 'Cadw a dewis',
     saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
     cancelAndReturnToAddressBook: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
@@ -147,7 +227,6 @@ export const copy = {
     summaryAddress: 'Cyfeiriad',
     confirmation: 'Cadarnhewch eich bod am ddileu’r cyfeiriad hwn.',
     warning: 'Mae dileadau’n barhaol ac ni allwch ddadwneud hyn.',
-    notApplicable: 'Amherthnasol',
     confirm: 'Ie, dileu',
     cancel: 'Na, canslo'
   },
@@ -155,6 +234,15 @@ export const copy = {
     addressType: {
       required: 'Dewiswch fath o gyfeiriad'
     },
+    transporterType: {
+      required: 'Dewiswch pa fath o gludydd ydyw'
+    },
+    approvalNumber: {
+      required: 'Rhowch y rhif cymeradwyo',
+      maxLength: (max) => `Rhaid i’r rhif cymeradwyo fod yn ${max} nod neu lai`,
+      notApplicable: 'Rhaid i gludydd preifat beidio â chael rhif cymeradwyo'
+    },
+    countryFixed: 'Rhaid i gludydd masnachol fod yng Ngogledd Iwerddon',
     roles: {
       required: 'Dewiswch ar gyfer beth y gellir defnyddio’r cyfeiriad hwn'
     },

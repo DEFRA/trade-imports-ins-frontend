@@ -1,0 +1,6 @@
+export const TRANSPORTER_TYPES = Object.freeze({
+  PRIVATE: 'PRIVATE',
+  COMMERCIAL: 'COMMERCIAL'
+})
+
+export const NORTHERN_IRELAND_COUNTRY_CODE = 'GB-NIR'
