@@ -26,7 +26,7 @@ import {
   DEFAULT_ADDRESS_BOOK_TAB,
   listsByRole,
   resolveTab,
-  resolveRole
+  resolveTypeFilterValue
 } from '../address-book-tabs.js'
 import { linesHtml } from '../lines-html.js'
 import { takeSuccessMessage } from '../success-message.js'
@@ -57,7 +57,7 @@ const actionHeadCell = () => ({
 
 const ADDRESS_TABLE_HEAD = [
   { text: copy.list.table.name },
-  { text: copy.list.table.role },
+  { text: copy.list.table.type },
   { text: copy.list.table.address },
   { text: copy.list.table.country },
   actionHeadCell()
@@ -67,7 +67,7 @@ const TRANSPORTER_TABLE_HEAD = [
   { text: copy.list.table.name },
   { text: copy.list.table.address },
   { text: copy.list.table.approvalNumber },
-  { text: copy.list.table.role },
+  { text: copy.list.table.type },
   actionHeadCell()
 ]
 
@@ -106,17 +106,19 @@ const subNavigationItemsOf = (selectedTab, searchTerm) =>
     active: tab === selectedTab
   }))
 
-const roleItemsOf = (selectedTab, selectedRole) =>
-  listsByRole(selectedTab)
-    ? [
-        { value: '', text: copy.list.search.role.placeholder },
-        ...selectedTab.roles.map((role) => ({
-          value: role,
-          text: copy.list.roles[role].optionLabel,
-          selected: role === selectedRole
-        }))
-      ]
-    : null
+const typeFilterItemsOf = (selectedTab, selectedValue) => {
+  const optionLabelOf = listsByRole(selectedTab)
+    ? (value) => copy.list.roles[value].optionLabel
+    : (value) => copy.list.transporterTypes[value]
+  return [
+    { value: '', text: copy.list.search.typeFilter.placeholder },
+    ...selectedTab.typeFilter.values.map((value) => ({
+      value,
+      text: optionLabelOf(value),
+      selected: value === selectedValue
+    }))
+  ]
+}
 
 const buildView = (toolkit, { recoverableError = false, ...model }) =>
   toolkit.view(view, {
@@ -190,7 +192,10 @@ const addressModel = async (
   return { page: addressPage, tableRows: addressTableRowsOf(records) }
 }
 
-const transporterModel = async (organisationId, { page, searchTerm }) => {
+const transporterModel = async (
+  organisationId,
+  { page, searchTerm, typeFilterValue }
+) => {
   const countries = await getAddressFormCountries()
   const countryCodes = transporterCountryCodesMatching(
     searchTerm,
@@ -205,7 +210,8 @@ const transporterModel = async (organisationId, { page, searchTerm }) => {
     page,
     searchTerm,
     countryCodes,
-    searchTypes
+    searchTypes,
+    types: typeFilterValue ? [typeFilterValue] : []
   })
   const records = mapTransporterRows(transporterPage.items ?? [], {
     countries,
@@ -221,15 +227,21 @@ const get = async (request, toolkit) => {
   const page = parsePage(request.query.page)
   const searchTerm = request.query.q?.trim() ?? ''
   const selectedTab = selectTab(organisationId, request.query.addressType)
-  const { addressType } = selectedTab
-  const requestedRole = request.query.role
-  const role = listsByRole(selectedTab)
-    ? resolveRole(selectedTab, requestedRole)
-    : undefined
-  if (requestedRole && listsByRole(selectedTab) && !role) {
+  const { addressType, typeFilter } = selectedTab
+  const requestedTypeFilterValue = request.query[typeFilter.param]
+  const typeFilterValue = resolveTypeFilterValue(
+    selectedTab,
+    requestedTypeFilterValue
+  )
+  if (requestedTypeFilterValue && !typeFilterValue) {
     logger.info(
-      { organisationId, addressType, requestedRole },
-      'Address book list ignored a role the tab does not offer'
+      {
+        organisationId,
+        addressType,
+        typeFilterParam: typeFilter.param,
+        requestedTypeFilterValue
+      },
+      'Address book list ignored a filter value the tab does not offer'
     )
   }
   const successMessage = takeSuccessMessage(request)
@@ -239,10 +251,14 @@ const get = async (request, toolkit) => {
       ? await addressModel(organisationId, {
           page,
           searchTerm,
-          role,
+          role: typeFilterValue,
           selectedTab
         })
-      : await transporterModel(organisationId, { page, searchTerm })
+      : await transporterModel(organisationId, {
+          page,
+          searchTerm,
+          typeFilterValue
+        })
     const pagination = paginationOf(loadedPage)
 
     return buildView(toolkit, {
@@ -250,18 +266,24 @@ const get = async (request, toolkit) => {
       subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
       panelHeading: copy.list.tabs[selectedTab.addressType].heading,
       tableHead: tableHeadFor(selectedTab),
-      clearSearchHref: addressBookPageHref(1, { addressType, role }),
+      clearSearchHref: addressBookPageHref(1, {
+        addressType,
+        filterParam: typeFilter.param,
+        filterValue: typeFilterValue
+      }),
       tableRows,
       resultsLabel: resultsLabelOf(pagination, copy.list),
       pagination: buildPaginationLinks(pagination, (targetPage) =>
         addressBookPageHref(targetPage, {
           addressType,
           searchTerm,
-          role
+          filterParam: typeFilter.param,
+          filterValue: typeFilterValue
         })
       ),
       addressType,
-      roleItems: roleItemsOf(selectedTab, role),
+      typeFilterParam: typeFilter.param,
+      typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
       searchTerm,
       successMessage
     })
@@ -270,13 +292,14 @@ const get = async (request, toolkit) => {
       throw err
     }
     logger.error(
-      { err, organisationId, addressType, role },
+      { err, organisationId, addressType, typeFilterValue },
       'Failed to load address book'
     )
     return buildView(toolkit, {
       listLoaded: false,
       addressType,
-      roleItems: roleItemsOf(selectedTab, role),
+      typeFilterParam: typeFilter.param,
+      typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
       searchTerm,
       successMessage,
       recoverableError: true

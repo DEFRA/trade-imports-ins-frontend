@@ -11,7 +11,8 @@ import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
   ADDRESS_BOOK_TABS,
-  DEFAULT_ADDRESS_BOOK_TAB
+  DEFAULT_ADDRESS_BOOK_TAB,
+  ROLE_BACKED_ADDRESS_BOOK_TABS
 } from '../address-book-tabs.js'
 import { copy } from '../copy/copy.en.js'
 import { UNSUPPORTED_ADDRESS_TYPE } from '../fit/address-book-list.js'
@@ -25,10 +26,10 @@ import {
   stubAddressPage,
   stubTransporterPage,
   subNavigationLinksOf,
-  subNavigationOf
+  subNavigationOf,
+  tableHeadingsOf
 } from './list.test-support.js'
 
-const ROLE_BACKED_TABS = ADDRESS_BOOK_TABS.filter((tab) => tab.roles)
 const readPage = startServerWithPageReader()
 
 describe('#addressBookListTabs', () => {
@@ -189,7 +190,9 @@ describe('#addressBookListTabs', () => {
 })
 
 describe('#addressBookListTabs — the selected tab', () => {
-  test.each(ROLE_BACKED_TABS.map(({ addressType }) => [addressType]))(
+  test.each(
+    ROLE_BACKED_ADDRESS_BOOK_TABS.map(({ addressType }) => [addressType])
+  )(
     'marks only the %s tab as current and heads its panel',
     async (addressType) => {
       stubAddressPage(
@@ -233,11 +236,29 @@ describe('#addressBookListTabs — the selected tab', () => {
     expect(panelHeadingTextOf($)).toBe(
       copy.list.tabs[ADDRESS_TYPES.TRANSPORTER].heading
     )
+    expect(tableHeadingsOf($)).toEqual([
+      copy.list.table.name,
+      copy.list.table.address,
+      copy.list.table.approvalNumber,
+      copy.list.table.type,
+      copy.list.table.action
+    ])
     expect(textOf($, rowCellsOf($, 0).first())).toBe(highlandTransporter.name)
     expect(textOf($, rowCellsOf($, 0).eq(2))).toBe(copy.notApplicable)
     expect(textOf($, rowCellsOf($, 0).eq(3))).toBe(
       copy.list.transporterTypes[highlandTransporter.type]
     )
+  })
+
+  test('heads the Transporter tab panel with "Transporter addresses"', async () => {
+    stubTransporterPage({ page: '1' }, pageOf([highlandTransporter]))
+
+    const { $ } = await readPage(
+      `${addressBookPath()}?addressType=TRANSPORTER`,
+      'list-transporter-panel-heading'
+    )
+
+    expect(panelHeadingTextOf($)).toBe('Transporter addresses')
   })
 
   test('holds the selected tab as a hidden addressType input in the filter form', async () => {

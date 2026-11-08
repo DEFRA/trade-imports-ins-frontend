@@ -27,7 +27,7 @@ export const copy = {
       hint: 'Chwilio yn ôl enw, cyfeiriad neu wlad',
       button: 'Chwilio',
       clear: 'Clirio’r chwiliad',
-      role: {
+      typeFilter: {
         label: 'Math',
         placeholder: 'Dewiswch un'
       }
@@ -47,7 +47,7 @@ export const copy = {
       },
       TRANSPORTER: {
         label: 'Cludydd',
-        heading: 'Cludwyr'
+        heading: 'Cyfeiriadau cludwyr'
       },
       BRANCH: {
         label: 'Cangen',
@@ -77,7 +77,7 @@ export const copy = {
     },
     table: {
       name: 'Enw',
-      role: 'Math',
+      type: 'Math',
       address: 'Cyfeiriad',
       country: 'Gwlad',
       approvalNumber: 'Rhif cymeradwyo',

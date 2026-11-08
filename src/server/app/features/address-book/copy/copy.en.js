@@ -25,7 +25,7 @@ export const copy = {
       hint: 'Search by name, address or country',
       button: 'Search',
       clear: 'Clear search',
-      role: {
+      typeFilter: {
         label: 'Type',
         placeholder: 'Select one'
       }
@@ -45,7 +45,7 @@ export const copy = {
       },
       TRANSPORTER: {
         label: 'Transporter',
-        heading: 'Transporters'
+        heading: 'Transporter addresses'
       },
       BRANCH: {
         label: 'Branch',
@@ -75,7 +75,7 @@ export const copy = {
     },
     table: {
       name: 'Name',
-      role: 'Type',
+      type: 'Type',
       address: 'Address',
       country: 'Country',
       approvalNumber: 'Approval number',

@@ -177,17 +177,22 @@ The notification type question keeps its test set-up beside the controller:
 
 [`list/list.test-support.js`](../features/address-book/list/list.test-support.js)
 holds the list's fixtures, nock stubs and Cheerio readers:
-`TABLE_HEADINGS` (the list table's column headings in order),
-`NO_RESULTS_LINE` (the results line for no matches; both come from
+the role-backed tabs' `TABLE_HEADINGS`, the Transporter tab's
+`TRANSPORTER_TABLE_HEADINGS` and `NO_RESULTS_LINE` (the results line for no
+matches; all three come from
 [`fit/address-book-list-text.js`](../features/address-book/fit/address-book-list-text.js),
 which the fit specs read too),
-`startServerWithPageReader()`, `stubAddressPage(query, addressPage)` (which
-stubs the request for the Origin and Consignor tab's roles unless the query's
-`tabAddressType`, the tab the page shows and never a value it sends, names another
-`addressType` or one `role`), `stubAddressBookUnavailable()`, `contentOf`,
-`tableHeadingsOf`, `subNavigationOf`, `subNavigationLinksOf`, `typeSelectStateOf`
-(the Type select's label, option texts, options with an empty value and chosen
-options), `panelHeadingTextOf`, `resultsLineOf`,
+`startServerWithPageReader()`, `stubAddressPage(query, addressPage)`,
+`stubAddressBookUnavailable()` and `stubTransporterPage(query,
+transporterPage)` (all three go through the one interceptor builder,
+`interceptListRequest`, which intercepts whichever route the query's
+`tabAddressType` names — the addresses route with that tab's roles, unless
+the query sends another `addressType` or one `role`, or the transporters
+route for the Transporter tab — so the unavailable stub fails that same
+route), `contentOf`, `tableHeadingsOf`, `subNavigationOf`,
+`subNavigationLinksOf`, `typeSelectStateOf` (the one Type select's label,
+option texts, options with an empty value and chosen options, whatever its
+query-parameter name), `panelHeadingTextOf`, `resultsLineOf`,
 `bodyRowCountOf`, `rowCellsOf` and `tagNamesOf`. A list
 controller test calls `const readPage = startServerWithPageReader()`, which
 starts the server serving `COUNTRIES` and returns a page reader, and reads
@@ -274,19 +279,25 @@ organisation the stub seeds no address for), `refuseSaveThenReopenAddForm`
 `validAddressViewLink`, the two
 validation tables.
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
-`UNSUPPORTED_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE` and
-`TABLE_HEADINGS` (from `address-book-list-text.js`),
-`ONE_MATCH_LINE` (the results line for a single match), `typeCellOf` (the Type
-cell of the row naming an address),
+`UNSUPPORTED_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE`
+and the role-backed tabs' `TABLE_HEADINGS` and the Transporter tab's
+`TRANSPORTER_TABLE_HEADINGS` (both re-exported from
+`address-book-list-text.js`), `ONE_MATCH_LINE` (the results line for a
+single match), `typeCellOf` (the Type cell of the row naming an address),
+`transporterAddressCellOf`, `transporterApprovalNumberCellOf` and
+`transporterTypeCellOf` (a transporter row's own cells by column),
 `openAddressBookList`, `tabLinksOf` (the address type tabs'
 links), `selectedTabOf` (the tab marked current), `tabPanelHeadingOf`
 (the selected tab's panel heading), `expectNamesListed`
 (the names in the list's Name column), `expectAddressBookList`,
-`expectEmptyAddressBookList`, `searchFieldOf`, `typeSelectOf` (the
+`expectEmptyAddressBookList` (asserts the role-backed `TABLE_HEADINGS`, not
+an inline copy of them), `searchFieldOf`, `typeSelectOf` (the
 Playwright locator for the Type select; the Cheerio reader in
 `list.test-support.js` is `typeSelectStateOf`), `followTab` (follows
 an address type tab's link), `openFilterDisclosure`,
-`expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery`,
+`expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery` (submits the
+search and, with a `typeFilter`, the Type select, for either filter
+parameter),
 `resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
 [`dashboard.js`](../features/dashboard/fit/dashboard.js) —
 `expectDashboard`, `dashboardSearchField`, `searchDashboardFor`.

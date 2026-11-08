@@ -53,16 +53,14 @@
     {{ govukButton({
       html: searchButtonHtml
     }) }}
-    {% if roleItems %}
-      {{ govukSelect({
-        id: "role",
-        name: "role",
-        label: {
-          text: copy.list.search.role.label
-        },
-        items: roleItems
-      }) }}
-    {% endif %}
+    {{ govukSelect({
+      id: typeFilterParam,
+      name: typeFilterParam,
+      label: {
+        text: copy.list.search.typeFilter.label
+      },
+      items: typeFilterItems
+    }) }}
   {% endset %}
 
   <form method="get" action="{{ listHref }}" class="govuk-!-margin-bottom-6">

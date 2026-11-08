@@ -90,19 +90,23 @@ root:
   `rolesToSaveForParty` and `requiresUnitedKingdomAddress` read it.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
   `ADDRESS_BOOK_TABS` (the list's four tabs in order, each saying what it
-  lists; a role-backed tab also carries the roles its Type select offers in
-  order, which the Transporter tab has none of; a tab's label and panel
-  heading are `copy.list.tabs[addressType]`), `ROLE_BACKED_ADDRESS_BOOK_TABS`
-  (the three for a loop that only makes sense against a role), `listsByRole`
-  (whether a tab lists by role), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and
-  Consignor tab), `resolveTab` (the tab a requested address type names, else
-  nothing) and `resolveRole` (the requested role when the tab offers it, else
-  nothing). The list controller serves the default tab when `resolveTab`
-  finds none, and logs a requested address type it replaced, and serves the
-  Transporter tab's own source and columns rather than an address list. The
-  address type values (`ADDRESS_TYPES`) and the role map each of the three
-  role-backed types groups (`ROLES_BY_ADDRESS_TYPE`) belong to
-  `services/address-book`, imported through its barrel.
+  lists and carrying the Type filter it offers — its query-parameter name and
+  its ordered values: `role` and the tab's roles for a role-backed tab,
+  `type` and the two transporter types, Commercial before Private, for the
+  Transporter tab; a tab's label and panel heading are
+  `copy.list.tabs[addressType]`), `ROLE_BACKED_ADDRESS_BOOK_TABS` (the three
+  for a loop that only makes sense against a role), `listsByRole` (whether a
+  tab lists by role), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and Consignor
+  tab), `resolveTab` (the tab a requested address type names, else nothing)
+  and `resolveTypeFilterValue` (the requested value when the selected tab's
+  Type filter offers it, else nothing). The list controller serves the
+  default tab when `resolveTab` finds none, and logs a requested address type
+  it replaced, and serves the Transporter tab's own source and columns rather
+  than an address list. The address type values (`ADDRESS_TYPES`) and the
+  role map each of the three role-backed types groups
+  (`ROLES_BY_ADDRESS_TYPE`) belong to `services/address-book`, imported
+  through its barrel; the transporter type values belong to
+  `services/transporters`, imported the same way.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
@@ -143,8 +147,9 @@ Every spec signs in and opens its page with `signInAndOpen`, which lives in
 name lines, Type label, postal lines and results line, which the list
 controller builds into table cells, the roles whose Type label contains the
 search term (`rolesWhoseLabelContains`, which the search also matches), and the
-list's hrefs, which carry the tab, the search, the Type and the page. A tab
-link carries the tab and the current search only.
+list's hrefs, which carry the tab, the search, the page and the chosen Type
+under the selected tab's own query parameter. A tab link carries the tab and
+the current search only.
 
 ## Paths
 

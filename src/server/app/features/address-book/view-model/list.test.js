@@ -72,15 +72,37 @@ describe('#buildAddressBookQueryString', () => {
     ).toBe('?addressType=BRANCH&q=green&page=2')
   })
 
-  test('Should carry the role after q and before the page param', () => {
+  test('Should carry the chosen filter value after q and before the page param', () => {
     expect(
       buildAddressBookQueryString({
         addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
         searchTerm: 'green',
-        role: 'CONSIGNOR',
+        filterParam: 'role',
+        filterValue: 'CONSIGNOR',
         page: 2
       })
     ).toBe('?addressType=ORIGIN_OR_CONSIGNOR&q=green&role=CONSIGNOR&page=2')
+  })
+
+  test('Should carry the Transporter tab filter value under its own parameter name', () => {
+    expect(
+      buildAddressBookQueryString({
+        addressType: ADDRESS_TYPES.TRANSPORTER,
+        searchTerm: 'green',
+        filterParam: 'type',
+        filterValue: 'COMMERCIAL',
+        page: 2
+      })
+    ).toBe('?addressType=TRANSPORTER&q=green&type=COMMERCIAL&page=2')
+  })
+
+  test('Should write no filter pair when no filter value is chosen', () => {
+    expect(
+      buildAddressBookQueryString({
+        addressType: ADDRESS_TYPES.BRANCH,
+        filterParam: 'role'
+      })
+    ).toBe('?addressType=BRANCH')
   })
 
   test('Should carry the address type alone on the first page with no search', () => {
@@ -120,7 +142,8 @@ describe('#addressBookPageHref', () => {
     const filters = {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       searchTerm: 'green',
-      role: 'IMPORTER'
+      filterParam: 'role',
+      filterValue: 'IMPORTER'
     }
 
     expect(addressBookPageHref(1, filters)).toBe(

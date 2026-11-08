@@ -1,14 +1,18 @@
 import { buildResultsLabel } from '../../../shared/list-page.js'
 import { addressBookPath } from '../../../shared/paths.js'
 import { countryCodesMatching, countryLabelOf } from '../address-countries.js'
-import { NORTHERN_IRELAND_COUNTRY_CODE } from '../../../services/transporters/transporter-types.js'
+import {
+  NORTHERN_IRELAND_COUNTRY_CODE,
+  TRANSPORTER_TYPES
+} from '../../../services/transporters/index.js'
 import { postalLinesOf } from '../fields.js'
 
 export const buildAddressBookQueryString = ({
   addressType,
   page,
   searchTerm,
-  role
+  filterParam,
+  filterValue
 } = {}) => {
   const params = new URLSearchParams()
   if (addressType) {
@@ -17,8 +21,8 @@ export const buildAddressBookQueryString = ({
   if (searchTerm) {
     params.set('q', searchTerm)
   }
-  if (role) {
-    params.set('role', role)
+  if (filterParam && filterValue) {
+    params.set(filterParam, filterValue)
   }
   if (page && page > 1) {
     params.set('page', String(page))
@@ -29,9 +33,9 @@ export const buildAddressBookQueryString = ({
 
 export const addressBookPageHref = (
   page,
-  { addressType, searchTerm, role } = {}
+  { addressType, searchTerm, filterParam, filterValue } = {}
 ) =>
-  `${addressBookPath()}${buildAddressBookQueryString({ addressType, searchTerm, role, page })}`
+  `${addressBookPath()}${buildAddressBookQueryString({ addressType, searchTerm, filterParam, filterValue, page })}`
 
 export const nameLinesOf = (name) => {
   const [firstWord, ...otherWords] = (name ?? '').split(/\s+/).filter(Boolean)
@@ -105,14 +109,12 @@ export const transporterCountryCodesMatching = (
   return [...new Set([...matched, NORTHERN_IRELAND_COUNTRY_CODE])]
 }
 
-const COMMERCIAL_TRANSPORTER_TYPE = 'COMMERCIAL'
-
 const transporterCountryLabelOf = (
   transporter,
   countries,
   fixedCommercialCountryLabel
 ) =>
-  transporter.type === COMMERCIAL_TRANSPORTER_TYPE
+  transporter.type === TRANSPORTER_TYPES.COMMERCIAL
     ? fixedCommercialCountryLabel
     : countryLabelOf(countries, transporter.countryCode)
 
