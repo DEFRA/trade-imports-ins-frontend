@@ -16,7 +16,6 @@ Every GET route the service registers, derived from
 - `/address-book/add`
 - `/address-book/add/address-type` — choose an address type
 - `/address-book/add/transporter` — choose a transporter type
-- `/address-book/add/transporter/private` — add a private transporter
 - `/address-book/add/transporter/commercial` — add a commercial transporter
 - `/address-book/{id}` — view
 - `/address-book/{id}/edit`
@@ -31,12 +30,22 @@ Origin or Consignor through `chooseAddressType` before they open the add form. T
 Place of origin, as the add page requires a role, and expects the save to land
 on the Origin and Consignor tab of the list.
 
+A transporter form renders only for the type the session holds, and a session holds
+one at a time, so the run cannot audit both from one URL list. It chooses commercial
+through `chooseTransporterType` — the fuller of the two, carrying every private field
+plus the approval number and the fixed country — and `SKIPPED` names the private form
+with that reason. **The private transporter form is therefore unaudited.** Auditing it
+too needs a second Lighthouse pass with the other type chosen, which is work of its own.
+
 `scripts/lighthouse/audit-targets.js` (with `audit-targets.test.js`) holds
-the derivation and two maps, both empty today: `SKIPPED`, for a GET route
-that must not be audited, with a reason; and `QUERY`, for a route that
-needs a query string before it renders. Both are checked against the live
+the derivation and two maps: `SKIPPED`, for a GET route that must not be
+audited, with a reason, naming the private transporter form today; and
+`QUERY`, for a route that needs a query string before it renders, empty
+today. Both are checked against the live
 route table, so a stale entry fails the run rather than quietly shrinking
-the audit. `scripts/lighthouse/seed-address.js` (with
+the audit. `scripts/lighthouse/seed-transporter-type.js` (with its own test)
+holds the audited transporter type and the one step that chooses it, failing
+unless it lands on the commercial form. `scripts/lighthouse/seed-address.js` (with
 `seed-address.test.js`) holds the seed address, the find-or-create walk
 through the list, type and add pages, and `chooseAddressType`, the one step
 that chooses Origin or Consignor on the type page and fails unless it lands

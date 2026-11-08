@@ -27,7 +27,9 @@ const TRANSPORTER_TYPE_PATH = '/address-book/add/transporter'
 const PRIVATE_TRANSPORTER_PATH = '/address-book/add/transporter/private'
 const COMMERCIAL_TRANSPORTER_PATH = '/address-book/add/transporter/commercial'
 
-const REGISTERED_PATHS = [
+// The private transporter form is the one route the skip list names: a session holds one
+// chosen transporter type at a time and the audit chooses commercial.
+const AUDITED_PATHS = [
   DASHBOARD_PATH,
   NOTIFICATION_TYPE_PATH,
   LIST_PATH,
@@ -37,7 +39,6 @@ const REGISTERED_PATHS = [
   EDIT_PATH,
   DELETE_PATH,
   TRANSPORTER_TYPE_PATH,
-  PRIVATE_TRANSPORTER_PATH,
   COMMERCIAL_TRANSPORTER_PATH
 ]
 
@@ -60,7 +61,7 @@ const withEntries = (map, entries, run) => {
 
 describe('#auditableRoutePaths', () => {
   test('Should name every GET route the service registers today, id unsubstituted', () => {
-    expect(auditableRoutePaths()).toEqual(REGISTERED_PATHS)
+    expect(auditableRoutePaths()).toEqual(AUDITED_PATHS)
   })
 
   test('Should leave out a route the skip list names', () => {
@@ -70,7 +71,7 @@ describe('#auditableRoutePaths', () => {
       () => auditableRoutePaths(withRoute(STATUS_PATH))
     )
 
-    expect(paths).toEqual(REGISTERED_PATHS)
+    expect(paths).toEqual(AUDITED_PATHS)
   })
 })
 
@@ -86,9 +87,15 @@ describe('#auditPaths', () => {
       `/address-book/${ADDRESS_ID}/edit`,
       `/address-book/${ADDRESS_ID}/delete`,
       TRANSPORTER_TYPE_PATH,
-      PRIVATE_TRANSPORTER_PATH,
       COMMERCIAL_TRANSPORTER_PATH
     ])
+  })
+
+  test('Should leave the private transporter form out, with the skip list saying why', () => {
+    expect(auditPaths(ADDRESS_ID)).not.toContain(PRIVATE_TRANSPORTER_PATH)
+    expect(SKIPPED.get(PRIVATE_TRANSPORTER_PATH)).toContain(
+      'one chosen transporter type at a time'
+    )
   })
 
   test('Should audit a page the moment the app registers a GET route for it', () => {
@@ -177,7 +184,6 @@ describe('#reportNames', () => {
       'address_book_id_edit',
       'address_book_id_delete',
       'address_book_add_transporter',
-      'address_book_add_transporter_private',
       'address_book_add_transporter_commercial'
     ])
     expect(
