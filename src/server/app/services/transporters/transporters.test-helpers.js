@@ -1,6 +1,8 @@
 import * as transporters from './index.js'
-import { TRANSPORTER_TYPES } from './transporter-types.js'
-import { NORTHERN_IRELAND_COUNTRY_CODE } from './transporter-types.js'
+import {
+  TRANSPORTER_TYPES,
+  NORTHERN_IRELAND_COUNTRY_CODE
+} from './transporter-types.js'
 
 const APPROVAL_NUMBER = 'UK/BELF/T2/00104115'
 
@@ -31,7 +33,10 @@ const commercialTransporter = (overrides = {}) => ({
 // Each stub test gets its own organisation id, because the stub keeps its records
 // in a module-level Map that outlives a single test.
 let nextOrganisation = 0
-const anOrganisation = () => `stub-org-${++nextOrganisation}`
+const anOrganisation = () => {
+  nextOrganisation += 1
+  return `stub-org-${nextOrganisation}`
+}
 
 export const createTwoTransporters = async (organisationId) => {
   await transporters.createTransporter(
