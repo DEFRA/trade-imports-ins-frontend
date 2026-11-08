@@ -36,6 +36,7 @@ import {
   mapTransporterRows,
   resultsLabelOf,
   rolesWhoseLabelContains,
+  transporterCountryCodesMatching,
   transporterTypesWhoseLabelContains
 } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -191,7 +192,11 @@ const addressModel = async (
 
 const transporterModel = async (organisationId, { page, searchTerm }) => {
   const countries = await getAddressFormCountries()
-  const countryCodes = countryCodesMatching(searchTerm, countries)
+  const countryCodes = transporterCountryCodesMatching(
+    searchTerm,
+    countries,
+    copy.commercialTransporterForm.country
+  )
   const searchTypes = transporterTypesWhoseLabelContains(
     searchTerm,
     copy.list.transporterTypes

@@ -12,6 +12,7 @@ import {
   resultsLabelOf,
   roleLabelsTextOf,
   rolesWhoseLabelContains,
+  transporterCountryCodesMatching,
   transporterTypesWhoseLabelContains
 } from './list.js'
 
@@ -246,6 +247,41 @@ describe('#transporterTypesWhoseLabelContains', () => {
     expect(
       transporterTypesWhoseLabelContains('', copy.list.transporterTypes)
     ).toEqual([])
+  })
+})
+
+describe('#transporterCountryCodesMatching', () => {
+  const COUNTRIES = [
+    { code: GB_COUNTRY_CODE, name: UNITED_KINGDOM_COUNTRY_LABEL },
+    { code: 'IE', name: 'Ireland' }
+  ]
+  const codesMatching = (searchTerm) =>
+    transporterCountryCodesMatching(
+      searchTerm,
+      COUNTRIES,
+      COMMERCIAL_TRANSPORTER_COUNTRY_LABEL
+    )
+
+  test('Should give the country a commercial transporter is stored under for the country label its row shows', () => {
+    expect(codesMatching(COMMERCIAL_TRANSPORTER_COUNTRY_LABEL)).toEqual([
+      'GB-NIR'
+    ])
+  })
+
+  test('Should give an address country whose name contains the term', () => {
+    expect(codesMatching('united king')).toEqual([GB_COUNTRY_CODE])
+  })
+
+  test('Should give both where the term matches an address country and the fixed label', () => {
+    expect(codesMatching('Ireland')).toEqual(['IE', 'GB-NIR'])
+  })
+
+  test('Should give no countries for a term neither carries', () => {
+    expect(codesMatching('aberdeen')).toEqual([])
+  })
+
+  test('Should give no countries for an empty term', () => {
+    expect(codesMatching('')).toEqual([])
   })
 })
 

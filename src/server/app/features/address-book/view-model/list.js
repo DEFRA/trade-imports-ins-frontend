@@ -1,6 +1,7 @@
 import { buildResultsLabel } from '../../../shared/list-page.js'
 import { addressBookPath } from '../../../shared/paths.js'
-import { countryLabelOf } from '../address-countries.js'
+import { countryCodesMatching, countryLabelOf } from '../address-countries.js'
+import { NORTHERN_IRELAND_COUNTRY_CODE } from '../../../services/transporters/transporter-types.js'
 import { postalLinesOf } from '../fields.js'
 
 export const buildAddressBookQueryString = ({
@@ -86,6 +87,22 @@ export const transporterTypesWhoseLabelContains = (
   return Object.entries(copyByTransporterType)
     .filter(([, label]) => label.toLowerCase().includes(term))
     .map(([transporterType]) => transporterType)
+}
+
+/** The country codes a transporter search term matches: every address country whose name
+ * contains it, and the code a commercial transporter is stored under when the term matches
+ * the fixed country label its row shows, which no address country carries. */
+export const transporterCountryCodesMatching = (
+  searchTerm,
+  countries,
+  fixedCommercialCountryLabel
+) => {
+  const term = searchTerm?.trim().toLowerCase()
+  const matched = countryCodesMatching(searchTerm, countries)
+  if (!term || !fixedCommercialCountryLabel?.toLowerCase().includes(term)) {
+    return matched
+  }
+  return [...new Set([...matched, NORTHERN_IRELAND_COUNTRY_CODE])]
 }
 
 const COMMERCIAL_TRANSPORTER_TYPE = 'COMMERCIAL'
