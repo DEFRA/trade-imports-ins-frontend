@@ -257,6 +257,20 @@ const loadListModel = (
       })
     : transporterModel(organisationId, { page, searchTerm, typeFilterValue })
 
+const sharedListViewFields = (
+  selectedTab,
+  { searchTerm, typeFilterValue, successMessage }
+) => {
+  const { addressType, typeFilter } = selectedTab
+  return {
+    addressType,
+    typeFilterParam: typeFilter.param,
+    typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
+    searchTerm,
+    successMessage
+  }
+}
+
 const loadedListView = (
   selectedTab,
   { loadedPage, tableRows, searchTerm, typeFilterValue, successMessage }
@@ -266,7 +280,7 @@ const loadedListView = (
   return {
     listLoaded: true,
     subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
-    panelHeading: copy.list.tabs[selectedTab.addressType].heading,
+    panelHeading: copy.list.tabs[addressType].heading,
     tableHead: tableHeadFor(selectedTab),
     clearSearchHref: addressBookPageHref(1, {
       addressType,
@@ -283,29 +297,26 @@ const loadedListView = (
         filterValue: typeFilterValue
       })
     ),
-    addressType,
-    typeFilterParam: typeFilter.param,
-    typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
-    searchTerm,
-    successMessage
+    ...sharedListViewFields(selectedTab, {
+      searchTerm,
+      typeFilterValue,
+      successMessage
+    })
   }
 }
 
 const failedListView = (
   selectedTab,
   { searchTerm, typeFilterValue, successMessage }
-) => {
-  const { addressType, typeFilter } = selectedTab
-  return {
-    listLoaded: false,
-    addressType,
-    typeFilterParam: typeFilter.param,
-    typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
+) => ({
+  listLoaded: false,
+  ...sharedListViewFields(selectedTab, {
     searchTerm,
-    successMessage,
-    recoverableError: true
-  }
-}
+    typeFilterValue,
+    successMessage
+  }),
+  recoverableError: true
+})
 
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
