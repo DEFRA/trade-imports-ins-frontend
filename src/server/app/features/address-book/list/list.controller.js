@@ -222,11 +222,7 @@ const transporterModel = async (
   return { page: transporterPage, tableRows: transporterTableRowsOf(records) }
 }
 
-const get = async (request, toolkit) => {
-  const organisationId = kit.requireOrganisationId(request)
-  const page = parsePage(request.query.page)
-  const searchTerm = request.query.q?.trim() ?? ''
-  const selectedTab = selectTab(organisationId, request.query.addressType)
+const selectTypeFilterValue = (organisationId, selectedTab, request) => {
   const { addressType, typeFilter } = selectedTab
   const requestedTypeFilterValue = request.query[typeFilter.param]
   const typeFilterValue = resolveTypeFilterValue(
@@ -244,66 +240,122 @@ const get = async (request, toolkit) => {
       'Address book list ignored a filter value the tab does not offer'
     )
   }
+  return typeFilterValue
+}
+
+const loadListModel = (
+  organisationId,
+  selectedTab,
+  { page, searchTerm, typeFilterValue }
+) =>
+  listsByRole(selectedTab)
+    ? addressModel(organisationId, {
+        page,
+        searchTerm,
+        role: typeFilterValue,
+        selectedTab
+      })
+    : transporterModel(organisationId, { page, searchTerm, typeFilterValue })
+
+const loadedListView = (
+  selectedTab,
+  { loadedPage, tableRows, searchTerm, typeFilterValue, successMessage }
+) => {
+  const { addressType, typeFilter } = selectedTab
+  const pagination = paginationOf(loadedPage)
+  return {
+    listLoaded: true,
+    subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
+    panelHeading: copy.list.tabs[selectedTab.addressType].heading,
+    tableHead: tableHeadFor(selectedTab),
+    clearSearchHref: addressBookPageHref(1, {
+      addressType,
+      filterParam: typeFilter.param,
+      filterValue: typeFilterValue
+    }),
+    tableRows,
+    resultsLabel: resultsLabelOf(pagination, copy.list),
+    pagination: buildPaginationLinks(pagination, (targetPage) =>
+      addressBookPageHref(targetPage, {
+        addressType,
+        searchTerm,
+        filterParam: typeFilter.param,
+        filterValue: typeFilterValue
+      })
+    ),
+    addressType,
+    typeFilterParam: typeFilter.param,
+    typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
+    searchTerm,
+    successMessage
+  }
+}
+
+const failedListView = (
+  selectedTab,
+  { searchTerm, typeFilterValue, successMessage }
+) => {
+  const { addressType, typeFilter } = selectedTab
+  return {
+    listLoaded: false,
+    addressType,
+    typeFilterParam: typeFilter.param,
+    typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
+    searchTerm,
+    successMessage,
+    recoverableError: true
+  }
+}
+
+const get = async (request, toolkit) => {
+  const organisationId = kit.requireOrganisationId(request)
+  const page = parsePage(request.query.page)
+  const searchTerm = request.query.q?.trim() ?? ''
+  const selectedTab = selectTab(organisationId, request.query.addressType)
+  const typeFilterValue = selectTypeFilterValue(
+    organisationId,
+    selectedTab,
+    request
+  )
   const successMessage = takeSuccessMessage(request)
 
   try {
-    const { page: loadedPage, tableRows } = listsByRole(selectedTab)
-      ? await addressModel(organisationId, {
-          page,
-          searchTerm,
-          role: typeFilterValue,
-          selectedTab
-        })
-      : await transporterModel(organisationId, {
-          page,
-          searchTerm,
-          typeFilterValue
-        })
-    const pagination = paginationOf(loadedPage)
-
-    return buildView(toolkit, {
-      listLoaded: true,
-      subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
-      panelHeading: copy.list.tabs[selectedTab.addressType].heading,
-      tableHead: tableHeadFor(selectedTab),
-      clearSearchHref: addressBookPageHref(1, {
-        addressType,
-        filterParam: typeFilter.param,
-        filterValue: typeFilterValue
-      }),
-      tableRows,
-      resultsLabel: resultsLabelOf(pagination, copy.list),
-      pagination: buildPaginationLinks(pagination, (targetPage) =>
-        addressBookPageHref(targetPage, {
-          addressType,
-          searchTerm,
-          filterParam: typeFilter.param,
-          filterValue: typeFilterValue
-        })
-      ),
-      addressType,
-      typeFilterParam: typeFilter.param,
-      typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
-      searchTerm,
-      successMessage
-    })
+    const { page: loadedPage, tableRows } = await loadListModel(
+      organisationId,
+      selectedTab,
+      { page, searchTerm, typeFilterValue }
+    )
+    return buildView(
+      toolkit,
+      loadedListView(selectedTab, {
+        loadedPage,
+        tableRows,
+        searchTerm,
+        typeFilterValue,
+        successMessage
+      })
+    )
   } catch (err) {
     if (Boom.isBoom(err)) {
       throw err
     }
     logger.error(
-      { err, organisationId, addressType, typeFilterValue },
+      {
+        err,
+        organisationId,
+        addressType: selectedTab.addressType,
+        typeFilterValue
+      },
       'Failed to load address book'
     )
-    return buildView(toolkit, {
-      listLoaded: false,
-      addressType,
-      typeFilterParam: typeFilter.param,
-      typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
-      searchTerm,
-      successMessage,
-      recoverableError: true
-    }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+    return buildView(
+      toolkit,
+      failedListView(selectedTab, {
+        searchTerm,
+        typeFilterValue,
+        successMessage
+      })
+    ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }
 
