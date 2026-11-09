@@ -98,7 +98,7 @@ describe('#honouredReturnOf', () => {
     }
   )
 
-  test('Should ignore an animals frontend URL in stub mode but still honour a path', () => {
+  test('Should ignore an animals frontend URL in stub mode but still honour a page of this service', () => {
     config.set('stubMode', true)
 
     expect(honouredReturnOf(requestWithReturn(LIVE_ANIMALS_URL))).toBeNull()
