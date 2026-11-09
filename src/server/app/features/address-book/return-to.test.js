@@ -27,6 +27,8 @@ const PLANTS_FRONTEND_ORIGIN = new URL(
 ).origin
 const LIVE_ANIMALS_URL = `${ANIMALS_FRONTEND_ORIGIN}/live-animals/notifications/abc`
 const GERMINAL_URL = `${ANIMALS_FRONTEND_ORIGIN}/germinal-products/notifications`
+const LIVE_ANIMALS_PICKER_PATH =
+  '/live-animals/notifications/abc/consignors/select?q=farm&page=2&change=1'
 
 const requestWithReturn = (returnQuery) => ({ query: { return: returnQuery } })
 
@@ -101,6 +103,29 @@ describe('#honouredReturnOf', () => {
 
     expect(honouredReturnOf(requestWithReturn(LIVE_ANIMALS_URL))).toBeNull()
     expect(honouredReturnOf(requestWithReturn('/'))).toBe('/')
+  })
+
+  test.each([LIVE_ANIMALS_PICKER_PATH, '/live-animals'])(
+    'Should honour the live-animals path %s as that page on the animals frontend outside stub mode',
+    (liveAnimalsPath) => {
+      expect(honouredReturnOf(requestWithReturn(liveAnimalsPath))).toBe(
+        `${ANIMALS_FRONTEND_ORIGIN}${liveAnimalsPath}`
+      )
+    }
+  )
+
+  test('Should ignore a live-animals path in stub mode rather than treat it as a page of this service', () => {
+    config.set('stubMode', true)
+
+    expect(
+      honouredReturnOf(requestWithReturn(LIVE_ANIMALS_PICKER_PATH))
+    ).toBeNull()
+  })
+
+  test('Should honour a path that only starts with the live-animals letters as a page of this service', () => {
+    expect(honouredReturnOf(requestWithReturn('/live-animalsx/y'))).toBe(
+      '/live-animalsx/y'
+    )
   })
 })
 

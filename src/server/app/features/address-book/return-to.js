@@ -30,8 +30,8 @@ const normalisedInsPath = (pathOrUrl) => {
 const pathnameOf = (pathOrUrl) =>
   pathOrUrl.startsWith('/') ? pathOrUrl.split(/[?#]/)[0] : null
 
-const animalsOrigin = () =>
-  new URL(config.get(SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS])).origin
+const animalsBaseUrl = () =>
+  config.get(SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS])
 
 const animalsUrl = (pathOrUrl) => {
   if (isStubMode()) {
@@ -39,10 +39,29 @@ const animalsUrl = (pathOrUrl) => {
   }
   try {
     const url = new URL(pathOrUrl)
-    return url.origin === animalsOrigin() ? url.href : null
+    return url.origin === new URL(animalsBaseUrl()).origin ? url.href : null
   } catch {
     return null
   }
+}
+
+const isLiveAnimalsPath = (path) => {
+  const pathname = pathnameOf(path)
+  return (
+    pathname === SET_BASES.LIVE_ANIMALS ||
+    pathname.startsWith(`${SET_BASES.LIVE_ANIMALS}/`)
+  )
+}
+
+const honouredPathOrUrl = (requestedReturn) => {
+  const path = normalisedInsPath(requestedReturn)
+  if (!path) {
+    return animalsUrl(requestedReturn)
+  }
+  if (!isLiveAnimalsPath(path)) {
+    return path
+  }
+  return isStubMode() ? null : new URL(path, animalsBaseUrl()).href
 }
 
 const logRefusedReturn = (request, reason) => {
@@ -66,10 +85,12 @@ export const honouredReturnOf = (request) => {
     logRefusedReturn(request, 'unsafe characters')
     return null
   }
-  const honouredReturn =
-    normalisedInsPath(requestedReturn) ?? animalsUrl(requestedReturn)
+  const honouredReturn = honouredPathOrUrl(requestedReturn)
   if (!honouredReturn) {
-    logRefusedReturn(request, 'not an INS path or an animals frontend URL')
+    logRefusedReturn(
+      request,
+      'not an INS path, a live-animals path or an animals frontend URL'
+    )
   }
   return honouredReturn
 }
