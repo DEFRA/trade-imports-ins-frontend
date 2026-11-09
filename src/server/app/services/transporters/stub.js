@@ -1,7 +1,7 @@
-import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
 import {
   isLive,
   newObjectId,
+  notFound,
   pageOfMatches,
   throwIfInvalid
 } from '../stub-support.js'
@@ -11,9 +11,6 @@ import {
 } from './transporter-types.js'
 
 const transportersByOrganisation = new Map()
-
-const notFound = () =>
-  Object.assign(new Error('Not found'), { status: HTTP_STATUS_NOT_FOUND })
 
 const seedTransportersFor = () => []
 

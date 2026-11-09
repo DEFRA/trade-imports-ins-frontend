@@ -49,8 +49,6 @@ const addressViewOf = (
   summaryRows: buildRows(address, countryLabel)
 })
 
-/** A transporter has no edit or delete route of its own yet, so its view
- * carries no editHref or deleteHref. */
 const transporterViewOf = (
   { transporter, countryLabel },
   returnDestination

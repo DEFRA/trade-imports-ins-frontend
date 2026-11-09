@@ -1,6 +1,12 @@
-import { HTTP_STATUS_BAD_REQUEST } from '../lib/http-status.js'
+import {
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_NOT_FOUND
+} from '../lib/http-status.js'
 
 export const OBJECT_ID_LENGTH = 24
+
+export const notFound = () =>
+  Object.assign(new Error('Not found'), { status: HTTP_STATUS_NOT_FOUND })
 
 export const newObjectId = () =>
   crypto.randomUUID().replaceAll('-', '').slice(0, OBJECT_ID_LENGTH)

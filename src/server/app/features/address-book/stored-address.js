@@ -6,10 +6,10 @@ import { countryLabelOf, getAddressFormCountries } from './address-countries.js'
 
 export const isNotFound = (err) => err.status === HTTP_STATUS_NOT_FOUND
 
-export const findLiveAddress = async (organisationId, addressId) => {
+export const findLiveRecord = async (loadRecord, organisationId, id) => {
   try {
-    const address = await getAddress(organisationId, addressId)
-    return address.deleted ? undefined : address
+    const record = await loadRecord(organisationId, id)
+    return record.deleted ? undefined : record
   } catch (err) {
     if (isNotFound(err)) {
       return undefined
@@ -18,19 +18,35 @@ export const findLiveAddress = async (organisationId, addressId) => {
   }
 }
 
-export const findLiveAddressWithCountryLabel = async (
+export const findLiveRecordWithCountryLabel = async (
+  loadRecord,
   organisationId,
-  addressId
+  id
 ) => {
-  const address = await findLiveAddress(organisationId, addressId)
-  if (!address) {
+  const record = await findLiveRecord(loadRecord, organisationId, id)
+  if (!record) {
     return undefined
   }
   const countries = await getAddressFormCountries()
   return {
-    address,
-    countryLabel: countryLabelOf(countries, address.countryCode)
+    record,
+    countryLabel: countryLabelOf(countries, record.countryCode)
   }
+}
+
+export const findLiveAddress = (organisationId, addressId) =>
+  findLiveRecord(getAddress, organisationId, addressId)
+
+export const findLiveAddressWithCountryLabel = async (
+  organisationId,
+  addressId
+) => {
+  const found = await findLiveRecordWithCountryLabel(
+    getAddress,
+    organisationId,
+    addressId
+  )
+  return found && { address: found.record, countryLabel: found.countryLabel }
 }
 
 const knownBoomOf = (err) => {

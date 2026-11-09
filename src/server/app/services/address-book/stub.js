@@ -1,9 +1,9 @@
 import { isEmptySeedOrganisation } from '../stub-seed.js'
-import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
 import {
   OBJECT_ID_LENGTH,
   isLive,
   newObjectId,
+  notFound,
   pageOfMatches,
   throwIfInvalid
 } from '../stub-support.js'
@@ -63,9 +63,6 @@ const addressesOf = (organisationId) => {
   }
   return addressesByOrganisation.get(organisationId)
 }
-
-const notFound = () =>
-  Object.assign(new Error('Not found'), { status: HTTP_STATUS_NOT_FOUND })
 
 const holdsAnyOf = (address, roles) =>
   address.roles.some((role) => roles.includes(role))
