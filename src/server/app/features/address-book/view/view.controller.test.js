@@ -20,10 +20,12 @@ import {
   interceptAddressBookRequest,
   MALFORMED_ADDRESS_ID,
   ORGANISATION_ID_HEADER,
+  OTHER_ORGANISATION_ID,
   serveAddressBookServerError,
   serveAddressNotFound,
   serveAddressNotFoundForOtherOrganisation,
   serveStoredAddress,
+  serveTransporterNotFound,
   STORED_ADDRESS
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
@@ -38,6 +40,9 @@ import { buildRows } from './view.controller.js'
 
 const UK_NAME = 'United Kingdom'
 const INS_HOME = '/'
+const BUTTON_GROUP = '.govuk-button-group'
+const SUMMARY_LIST_KEY = '.govuk-summary-list__key'
+const SUMMARY_LIST_VALUE = '.govuk-summary-list__value'
 
 const ADDRESS_LINE_2_LABEL = 'Address line 2 (optional)'
 const COUNTY_LABEL = 'County (optional)'
@@ -102,10 +107,8 @@ describe('GET /address-book/{addressId}', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(scope.isDone()).toBe(true)
     const $ = load(result)
-    expect(textsOf($, '.govuk-summary-list__key')).toEqual(ADDRESS_FORM_LABELS)
-    expect(textsOf($, '.govuk-summary-list__value')).toEqual(
-      STORED_ADDRESS_ROW_VALUES
-    )
+    expect(textsOf($, SUMMARY_LIST_KEY)).toEqual(ADDRESS_FORM_LABELS)
+    expect(textsOf($, SUMMARY_LIST_VALUE)).toEqual(STORED_ADDRESS_ROW_VALUES)
   })
 
   test('Should show Edit as a secondary button and Delete as a warning button in the button group', async () => {
@@ -117,7 +120,7 @@ describe('GET /address-book/{addressId}', () => {
       'view-get-buttons'
     )
 
-    const group = load(result)('.govuk-button-group')
+    const group = load(result)(BUTTON_GROUP)
     const editLink = group.find(`a[href="${addressEditPath(ADDRESS_ID)}"]`)
     const deleteLink = group.find(`a[href="${addressDeletePath(ADDRESS_ID)}"]`)
     expect(editLink).toHaveLength(1)
@@ -140,8 +143,9 @@ describe('GET /address-book/{addressId}', () => {
     )
   })
 
-  test('Should redirect to the address book when the address is not found', async () => {
+  test('Should redirect to the address book when neither an address nor a transporter is live at that id', async () => {
     serveAddressNotFound(ADDRESS_ID)
+    serveTransporterNotFound(ADDRESS_ID)
 
     expectRedirectTo(
       await getPage(getServer(), addressPath(ADDRESS_ID), 'view-not-found'),
@@ -151,6 +155,7 @@ describe('GET /address-book/{addressId}', () => {
 
   test("Should redirect to the address book for another organisation's address", async () => {
     const scope = serveAddressNotFoundForOtherOrganisation(ADDRESS_ID)
+    serveTransporterNotFound(ADDRESS_ID, OTHER_ORGANISATION_ID)
 
     const response = await getPageAsOtherOrganisation(
       getServer(),
@@ -180,6 +185,7 @@ describe('GET /address-book/{addressId}', () => {
 
   test('Should redirect to the address book for soft-deleted tombstones', async () => {
     serveStoredAddress({ ...STORED_ADDRESS, deleted: true })
+    serveTransporterNotFound(ADDRESS_ID)
 
     expectRedirectTo(
       await getPage(getServer(), addressPath(ADDRESS_ID), 'view-get-tombstone'),
@@ -211,7 +217,7 @@ describe('GET /address-book/{addressId} with a return', () => {
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
     expect($(BACK_LINK).attr('href')).toBe(INS_HOME)
-    const group = $('.govuk-button-group')
+    const group = $(BUTTON_GROUP)
     expect(
       group.find(
         `a[href="${pathWithReturn(addressEditPath(ADDRESS_ID), INS_HOME)}"]`
@@ -268,6 +274,7 @@ describe('GET /address-book/{addressId} with a return', () => {
 
   test('Should redirect to an honoured return when the address is not found', async () => {
     serveAddressNotFound(ADDRESS_ID)
+    serveTransporterNotFound(ADDRESS_ID)
 
     expectRedirectTo(
       await getPage(

@@ -23,8 +23,14 @@ const ADDRESS_TYPE_PATH = '/address-book/add/address-type'
 const VIEW_PATH = '/address-book/{id}'
 const EDIT_PATH = '/address-book/{id}/edit'
 const DELETE_PATH = '/address-book/{id}/delete'
+const TRANSPORTER_TYPE_PATH = '/address-book/add/transporter'
+const TRANSPORTER_VIEW_PATH = '/address-book/transporter/{id}'
+const TRANSPORTER_EDIT_PATH = '/address-book/transporter/{id}/edit'
+const TRANSPORTER_DELETE_PATH = '/address-book/transporter/{id}/delete'
+const PRIVATE_TRANSPORTER_PATH = '/address-book/add/transporter/private'
+const COMMERCIAL_TRANSPORTER_PATH = '/address-book/add/transporter/commercial'
 
-const REGISTERED_PATHS = [
+const AUDITED_PATHS = [
   DASHBOARD_PATH,
   NOTIFICATION_TYPE_PATH,
   LIST_PATH,
@@ -32,7 +38,9 @@ const REGISTERED_PATHS = [
   ADDRESS_TYPE_PATH,
   VIEW_PATH,
   EDIT_PATH,
-  DELETE_PATH
+  DELETE_PATH,
+  TRANSPORTER_TYPE_PATH,
+  COMMERCIAL_TRANSPORTER_PATH
 ]
 
 const STATUS_PATH = '/address-book/{id}/status'
@@ -54,7 +62,7 @@ const withEntries = (map, entries, run) => {
 
 describe('#auditableRoutePaths', () => {
   test('Should name every GET route the service registers today, id unsubstituted', () => {
-    expect(auditableRoutePaths()).toEqual(REGISTERED_PATHS)
+    expect(auditableRoutePaths()).toEqual(AUDITED_PATHS)
   })
 
   test('Should leave out a route the skip list names', () => {
@@ -64,7 +72,7 @@ describe('#auditableRoutePaths', () => {
       () => auditableRoutePaths(withRoute(STATUS_PATH))
     )
 
-    expect(paths).toEqual(REGISTERED_PATHS)
+    expect(paths).toEqual(AUDITED_PATHS)
   })
 })
 
@@ -78,8 +86,34 @@ describe('#auditPaths', () => {
       ADDRESS_TYPE_PATH,
       `/address-book/${ADDRESS_ID}`,
       `/address-book/${ADDRESS_ID}/edit`,
-      `/address-book/${ADDRESS_ID}/delete`
+      `/address-book/${ADDRESS_ID}/delete`,
+      TRANSPORTER_TYPE_PATH,
+      COMMERCIAL_TRANSPORTER_PATH
     ])
+  })
+
+  test('Should leave the private transporter form out, with the skip list saying why', () => {
+    expect(auditPaths(ADDRESS_ID)).not.toContain(PRIVATE_TRANSPORTER_PATH)
+    expect(SKIPPED.get(PRIVATE_TRANSPORTER_PATH)).toContain(
+      'one chosen transporter type at a time'
+    )
+  })
+
+  test("Should leave every transporter page out, with the skip list naming each one's cover", () => {
+    const paths = auditPaths(ADDRESS_ID)
+
+    expect(paths).not.toContain(TRANSPORTER_VIEW_PATH)
+    expect(paths).not.toContain(TRANSPORTER_EDIT_PATH)
+    expect(paths).not.toContain(TRANSPORTER_DELETE_PATH)
+    expect(SKIPPED.get(TRANSPORTER_VIEW_PATH)).toContain(
+      'transporter-view.fit.spec.js'
+    )
+    expect(SKIPPED.get(TRANSPORTER_EDIT_PATH)).toContain(
+      'transporter-edit.fit.spec.js'
+    )
+    expect(SKIPPED.get(TRANSPORTER_DELETE_PATH)).toContain(
+      'transporter-delete.fit.spec.js'
+    )
   })
 
   test('Should audit a page the moment the app registers a GET route for it', () => {
@@ -166,7 +200,9 @@ describe('#reportNames', () => {
       'address_book_add_address_type',
       'address_book_id',
       'address_book_id_edit',
-      'address_book_id_delete'
+      'address_book_id_delete',
+      'address_book_add_transporter',
+      'address_book_add_transporter_commercial'
     ])
     expect(
       Object.values(names).filter((name) => name.includes(ADDRESS_ID))

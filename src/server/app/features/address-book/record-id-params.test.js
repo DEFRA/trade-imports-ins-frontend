@@ -5,13 +5,13 @@ import {
   MALFORMED_ADDRESS_ID
 } from '../../../common/test-helpers/address-book-requests.js'
 import {
-  addressIdParams,
-  redirectingAddressIdRouteOptions
-} from './address-id-params.js'
+  recordIdParams,
+  redirectingRecordIdRouteOptions
+} from './record-id-params.js'
 
-describe('#addressIdParams', () => {
+describe('#recordIdParams', () => {
   test('accepts a 24-character hex Mongo ObjectId', () => {
-    const { error } = addressIdParams.validate({
+    const { error } = recordIdParams.validate({
       id: ADDRESS_ID
     })
 
@@ -19,17 +19,17 @@ describe('#addressIdParams', () => {
   })
 
   test('rejects malformed ids', () => {
-    const { error } = addressIdParams.validate({ id: MALFORMED_ADDRESS_ID })
+    const { error } = recordIdParams.validate({ id: MALFORMED_ADDRESS_ID })
 
     expect(error).toBeDefined()
-    expect(error.details[0].message).toBe('Enter a valid address id')
+    expect(error.details[0].message).toBe('Enter a valid record id')
   })
 })
 
-describe('#redirectingAddressIdRouteOptions', () => {
+describe('#redirectingRecordIdRouteOptions', () => {
   test('Should redirect from failAction to the path fallbackPathOf gives', () => {
     const fallbackPath = '/address-book'
-    const options = redirectingAddressIdRouteOptions(
+    const options = redirectingRecordIdRouteOptions(
       (request) => request.query.returnTo
     )
     const toolkit = {
@@ -45,10 +45,10 @@ describe('#redirectingAddressIdRouteOptions', () => {
     expect(failActionResponse).toEqual({ redirectedTo: fallbackPath })
   })
 
-  test('Should validate params with addressIdParams behind session auth', () => {
-    const options = redirectingAddressIdRouteOptions(() => '/address-book')
+  test('Should validate params with recordIdParams behind session auth', () => {
+    const options = redirectingRecordIdRouteOptions(() => '/address-book')
 
-    expect(options.validate.params).toBe(addressIdParams)
+    expect(options.validate.params).toBe(recordIdParams)
     expect(options.auth).toBe('session')
   })
 })

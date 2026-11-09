@@ -22,11 +22,13 @@ import {
   greenFarmAddress,
   highlandAddress,
   parisDepotAddress,
+  highlandTransporter,
   resultsLineOf,
   rowCellsOf,
   startServerWithPageReader,
   stubAddressBookUnavailable,
   stubAddressPage,
+  stubTransporterPage,
   tableHeadingsOf
 } from './list.test-support.js'
 
@@ -141,6 +143,9 @@ describe('#addressBookListController', () => {
       {
         fields: {
           organisationId: ORGANISATION_ID,
+          searchTermLength: 0,
+          countryCodes: [],
+          searchRoles: [],
           roles: DEFAULT_ADDRESS_BOOK_TAB.roles,
           requestedPage: 99,
           servedPage: 2
@@ -236,6 +241,115 @@ describe('#addressBookListController', () => {
       `${addressBookPath()}?addressType=BRANCH&q=green&page=3`,
       `${addressBookPath()}?addressType=BRANCH&q=green&page=4`
     ])
+  })
+})
+
+describe('#addressBookListController — search term privacy', () => {
+  const readPage = startServerWithPageReader()
+  const { entriesWith: infoLogs } = recordModuleLoggerInfo()
+
+  test('logs no trace of a typed search term when falling back past the last page', async () => {
+    const SEARCH_TERM = 'confidential-trader-name'
+    stubAddressPage(
+      { page: '99', q: SEARCH_TERM },
+      pageOf([], { page: 99, totalItems: 1, totalPages: 1 })
+    )
+    stubAddressPage(
+      { page: '1', q: SEARCH_TERM },
+      pageOf([highlandAddress], { page: 1, totalItems: 1, totalPages: 1 })
+    )
+
+    const { statusCode } = await readPage(
+      `${addressBookPath()}?page=99&q=${SEARCH_TERM}`,
+      'list-search-past-last-page'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const [logged] = infoLogs(PAST_LAST_PAGE_MESSAGE)
+    expect(JSON.stringify(logged.fields)).not.toContain(SEARCH_TERM)
+    expect(logged.fields.searchTermLength).toBe(SEARCH_TERM.length)
+  })
+})
+
+describe('#addressBookListController — the Transporter tab', () => {
+  const readPage = startServerWithPageReader()
+  const { entriesWith: infoLogs } = recordModuleLoggerInfo()
+
+  const stubTransporterPastLastPage = (query = {}) => ({
+    pastLastPage: stubTransporterPage(
+      { page: '99', ...query },
+      pageOf([], { page: 99, totalItems: 1, totalPages: 1 })
+    ),
+    lastPage: stubTransporterPage(
+      { page: '1', ...query },
+      pageOf([highlandTransporter], { page: 1, totalItems: 1, totalPages: 1 })
+    )
+  })
+
+  const expectTransporterPastLastPageLogged = (types) =>
+    expect(infoLogs(PAST_LAST_PAGE_MESSAGE)).toEqual([
+      {
+        fields: {
+          organisationId: ORGANISATION_ID,
+          searchTermLength: 0,
+          countryCodes: [],
+          searchTypes: [],
+          types,
+          requestedPage: 99,
+          servedPage: 1
+        },
+        message: PAST_LAST_PAGE_MESSAGE
+      }
+    ])
+
+  test("renders a transporter's View link at its own transporter URL, carrying the Transporter tab as its return", async () => {
+    stubTransporterPage(
+      { page: '1' },
+      pageOf([highlandTransporter], { page: 1, totalItems: 1, totalPages: 1 })
+    )
+
+    const { $, statusCode } = await readPage(
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.TRANSPORTER}`,
+      'list-transporter-view-link'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const returnQuery = new URLSearchParams({
+      return: `${addressBookPath()}?addressType=${ADDRESS_TYPES.TRANSPORTER}`
+    }).toString()
+    expect(rowCellsOf($, 0).eq(4).html().trim()).toBe(
+      `<a class="govuk-link" href="/address-book/transporter/1?${returnQuery}">View<span class="govuk-visually-hidden"> ${highlandTransporter.name}</span></a>`
+    )
+  })
+
+  test('shows the last page of transporters, asked for a second time, when the page number is past the last page, and logs the fallback once', async () => {
+    const { pastLastPage, lastPage } = stubTransporterPastLastPage()
+
+    const { statusCode } = await readPage(
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.TRANSPORTER}&page=99`,
+      'list-transporter-past-last-page'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(pastLastPage.isDone()).toBe(true)
+    expect(lastPage.isDone()).toBe(true)
+    expectTransporterPastLastPageLogged([])
+  })
+
+  test('names the chosen transporter type among the past-last-page filters it already carries', async () => {
+    const { pastLastPage, lastPage } = stubTransporterPastLastPage({
+      type: 'COMMERCIAL'
+    })
+
+    const { statusCode } = await readPage(
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.TRANSPORTER}&type=COMMERCIAL&page=99`,
+      'list-transporter-past-last-page-type'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(pastLastPage.isDone()).toBe(true)
+    expect(lastPage.isDone()).toBe(true)
+    expectTransporterPastLastPageLogged(['COMMERCIAL'])
   })
 })
 

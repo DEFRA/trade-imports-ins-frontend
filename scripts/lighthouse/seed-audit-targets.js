@@ -8,6 +8,7 @@ import signInAndChooseAddressType from '../../tests/lighthouse/auth-setup.cjs'
 import { auditUrls, reportNames, TARGETS_FILE } from './audit-targets.js'
 import { appCookiesOf, createPageClient } from './page-client.js'
 import { chooseAddressType, seedAddress } from './seed-address.js'
+import { chooseTransporterType } from './seed-transporter-type.js'
 
 const HTTP_OK = 200
 
@@ -52,6 +53,7 @@ const addressId = await seedAddress(createPageClient(origin, auditCookies))
 const urls = auditUrls(origin, addressId)
 const auditClient = createPageClient(origin, auditCookies)
 await chooseAddressType(auditClient)
+await chooseTransporterType(auditClient)
 await assertUrlsRenderTheirOwnPage(urls, auditClient)
 write({ origin, addressId, urls, reports: reportNames(origin, addressId) })
 

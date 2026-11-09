@@ -1,21 +1,41 @@
 import { expect } from '@playwright/test'
 
-import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
+import { DEFAULT_ADDRESS_BOOK_TAB, resolveTab } from '../address-book-tabs.js'
 import { addressBookPath } from '../../../shared/paths.js'
 import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 
-import { NO_RESULTS_LINE, TABLE_HEADINGS } from './address-book-list-text.js'
+import {
+  NO_RESULTS_LINE,
+  TABLE_HEADINGS,
+  TRANSPORTER_TABLE_HEADINGS
+} from './address-book-list-text.js'
 
-export { NO_RESULTS_LINE, TABLE_HEADINGS }
+export { NO_RESULTS_LINE, TABLE_HEADINGS, TRANSPORTER_TABLE_HEADINGS }
 
-export const UNKNOWN_ADDRESS_TYPE = 'TRANSPORTER'
+export const UNSUPPORTED_ADDRESS_TYPE = 'UNSUPPORTED_ADDRESS_TYPE'
 export const ONE_MATCH_LINE = 'Showing 1-1 of 1'
 
-export const typeCellOf = (page, name) =>
+const TYPE_CELL_INDEX = 1
+const TRANSPORTER_APPROVAL_NUMBER_CELL_INDEX = 2
+const TRANSPORTER_TYPE_CELL_INDEX = 3
+const TRANSPORTER_ADDRESS_CELL_INDEX = 1
+
+const rowCellOf = (page, name, index) =>
   page
     .getByRole('row', { name: new RegExp(name) })
     .getByRole('cell')
-    .nth(1)
+    .nth(index)
+
+export const typeCellOf = (page, name) => rowCellOf(page, name, TYPE_CELL_INDEX)
+
+export const transporterApprovalNumberCellOf = (page, name) =>
+  rowCellOf(page, name, TRANSPORTER_APPROVAL_NUMBER_CELL_INDEX)
+
+export const transporterTypeCellOf = (page, name) =>
+  rowCellOf(page, name, TRANSPORTER_TYPE_CELL_INDEX)
+
+export const transporterAddressCellOf = (page, name) =>
+  rowCellOf(page, name, TRANSPORTER_ADDRESS_CELL_INDEX)
 
 export const openAddressBookList = async (
   page,
@@ -61,13 +81,7 @@ export const resultsLineOf = (page) =>
 
 export const expectEmptyAddressBookList = async (page) => {
   await expect(resultsLineOf(page)).toHaveText(NO_RESULTS_LINE)
-  await expect(page.getByRole('columnheader')).toHaveText([
-    'Name',
-    'Type',
-    'Address',
-    'Country',
-    'Action'
-  ])
+  await expect(page.getByRole('columnheader')).toHaveText(TABLE_HEADINGS)
   await expect(page.getByRole('row')).toHaveCount(1)
   await expect(
     page.getByRole('button', { name: 'Add a new address' })
@@ -98,12 +112,12 @@ export const typeSelectOf = (page) =>
 export const followTab = (page, label) =>
   tabsNavOf(page).getByRole('link', { name: label, exact: true }).click()
 
-const submitSearch = async (page, term, { submitWith, role }) => {
+const submitSearch = async (page, term, { submitWith, chosenOption }) => {
   await openFilterDisclosure(page)
   const searchField = searchFieldOf(page)
   await searchField.fill(term)
-  if (role) {
-    await typeSelectOf(page).selectOption({ label: role.label })
+  if (chosenOption) {
+    await typeSelectOf(page).selectOption({ label: chosenOption.label })
   }
   if (submitWith === 'enter') {
     await searchField.press('Enter')
@@ -115,13 +129,18 @@ const submitSearch = async (page, term, { submitWith, role }) => {
 export const searchAndExpectQuery = async (
   page,
   term,
-  { submitWith, addressType = DEFAULT_ADDRESS_BOOK_TAB.addressType, role }
+  {
+    submitWith,
+    addressType = DEFAULT_ADDRESS_BOOK_TAB.addressType,
+    chosenOption
+  }
 ) => {
-  await submitSearch(page, term, { submitWith, role })
+  await submitSearch(page, term, { submitWith, chosenOption })
+  const { param } = resolveTab(addressType).typeFilter
   const submittedQuery = new URLSearchParams({
     addressType,
     q: term,
-    role: role?.value ?? ''
+    [param]: chosenOption?.value ?? ''
   })
   await expect(page).toHaveURL(`${addressBookPath()}?${submittedQuery}`)
 }
@@ -129,22 +148,26 @@ export const searchAndExpectQuery = async (
 export const searchAndExpectMatches = async (
   page,
   term,
-  { submitWith, resultsLine, addressType, role }
+  { submitWith, resultsLine, addressType, chosenOption }
 ) => {
-  await searchAndExpectQuery(page, term, { submitWith, addressType, role })
+  await searchAndExpectQuery(page, term, {
+    submitWith,
+    addressType,
+    chosenOption
+  })
   await expect(resultsLineOf(page)).toHaveText(resultsLine)
 }
 
 export const searchAndExpectSingleMatch = async (
   page,
   term,
-  { submitWith = 'button', matchedCellText, addressType, role }
+  { submitWith = 'button', matchedCellText, addressType, chosenOption }
 ) => {
   await searchAndExpectMatches(page, term, {
     submitWith,
     resultsLine: ONE_MATCH_LINE,
     addressType,
-    role
+    chosenOption
   })
   await expect(
     page.getByRole('cell', { name: matchedCellText, exact: true })

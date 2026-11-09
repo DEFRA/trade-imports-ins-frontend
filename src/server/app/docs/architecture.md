@@ -82,7 +82,7 @@ Four directories:
 - `features/` — one folder per feature: `dashboard/`, `notification-type/`,
   `address-book/`, `address-lookup-spike/` (temporary, dev/local only).
 - `services/` — one folder per upstream: `address-book/`, `countries/`,
-  `ins-backend/`, `address-lookup/`, each `index.js` + `client.js` +
+  `ins-backend/`, `address-lookup/`, `transporters/`, each `index.js` + `client.js` +
   `stub.js`.
 - `shared/` — `kit.js`, `paths.js`, `list-page.js`, `escape-html.js`, `copy.js`, `copy-leaves.js`,
   `copy.en.js`, `copy.cy.js`, `layout.njk`, `error.njk`,
@@ -166,12 +166,13 @@ production code cannot use test exemptions.
   the fixed route list above.
 - there is no `prime()` step: the countries service loads itself on the
   first read and caches the list for the life of the process.
-- the address-book, ins-backend and address-lookup barrels choose stub or
-  real per call (`isStubMode() ? stub : client`), not through an injected
-  adapter;
+- the address-book, ins-backend, address-lookup and transporters barrels
+  choose stub or real per call (`isStubMode() ? stub : client`), not
+  through an injected adapter;
   countries checks the mode once inside `ensureLoaded` and serves its
   module-scope cache thereafter.
 - browser tests share one address-form fixture
   ([`address-form.js`](../features/address-book/fit/address-form.js))
-  across the add, address type, edit, list, view and page-title specs and the
-  repo-root smoke spec.
+  across the add, address type, edit, list, view and page-title specs, the
+  transporter-forms and transporter-type specs, and the repo-root smoke
+  spec.

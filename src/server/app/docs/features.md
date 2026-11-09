@@ -28,7 +28,7 @@ each hands over to, which types take a notification back, and the URL that
 returns one to its origin page.
 
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
-`address-type/`, `add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
+`address-type/`, `add/`, `view/`, `edit/`, `delete/`, `transporter/`), each holding `<page>.controller.js`,
 `<page>.njk` and `<page>.controller.test.js`. Group-wide modules sit at the
 root:
 
@@ -89,15 +89,24 @@ root:
   ticked roles its side offers; `ownAndOtherRolesOfParty`,
   `rolesToSaveForParty` and `requiresUnitedKingdomAddress` read it.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
-  `ADDRESS_BOOK_TABS` (the list's three tabs in order, each with its address
-  type and the roles its Type select offers in order; its label and panel
-  heading are `copy.list.tabs[addressType]`), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and Consignor tab),
-  `resolveTab` (the tab a requested address type names, else nothing) and
-  `resolveRole` (the requested role when the tab offers it, else nothing). The
-  list controller serves the default tab when `resolveTab` finds none, and
-  logs a requested address type it replaced. The address type values (`ADDRESS_TYPES`) and the roles each
-  lists (`ROLES_BY_ADDRESS_TYPE`) belong to `services/address-book`, imported
-  through its barrel.
+  `ADDRESS_BOOK_TABS` (the list's four tabs in order, each saying what it
+  lists and carrying the Type filter it offers — its query-parameter name and
+  its ordered values: `role` and the tab's roles for a role-backed tab,
+  `type` and the two transporter types, Commercial before Private, for the
+  Transporter tab; a tab's label and panel heading are
+  `copy.list.tabs[addressType]`), `ROLE_BACKED_ADDRESS_BOOK_TABS` (the three
+  for a loop that only makes sense against a role), `listsByRole` (whether a
+  tab lists by role), `DEFAULT_ADDRESS_BOOK_TAB` (the Origin and Consignor
+  tab), `resolveTab` (the tab a requested address type names, else nothing)
+  and `resolveTypeFilterValue` (the requested value when the selected tab's
+  Type filter offers it, else nothing). The list controller serves the
+  default tab when `resolveTab` finds none, and logs a requested address type
+  it replaced, and serves the Transporter tab's own source and columns rather
+  than an address list. The address type values (`ADDRESS_TYPES`) and the
+  role map each of the three role-backed types groups
+  (`ROLES_BY_ADDRESS_TYPE`) belong to `services/address-book`, imported
+  through its barrel; the transporter type values belong to
+  `services/transporters`, imported the same way.
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
@@ -129,17 +138,40 @@ root:
   else nothing), `storeEnteredAddress` and `storedEnteredAddress` store and read
   the field values and `tickedRoles` posted with the add form, and `clearAddInProgress`
   removes everything, on a new add and on a save.
+- [`field-rule.js`](../features/address-book/field-rule.js) — `fieldRuleFor`,
+  the shared text/email field-rule builder `fields.js` and
+  `transporter-fields.js` each call with their own field-rules map.
+- [`stored-transporter.js`](../features/address-book/stored-transporter.js) —
+  `findLiveTransporterWithCountryLabel` resolves an unknown or deleted
+  transporter id to `undefined`, else the live transporter with its
+  country's label.
+- [`transporter-fields.js`](../features/address-book/transporter-fields.js) —
+  the transporter forms' shared fields (name, the address lines, town or
+  city, county, postcode, email and phone) and `transporterFormValuesOf`.
+- [`transporter-in-progress.js`](../features/address-book/transporter-in-progress.js) —
+  yar-backed state of the transporter add in progress: the chosen
+  transporter type, the entered form values, and `clearTransporterAddInProgress`.
+- [`transporter-navigation.js`](../features/address-book/transporter-navigation.js) —
+  the transporter pages' shared Back links and Cancel link, and
+  `redirectUnlessOwnTransporterType`, the guard both transporter forms call
+  to send the trader back to the type question when it does not match the
+  type chosen.
+- [`transporter-save.js`](../features/address-book/transporter-save.js) —
+  `saveTransporter`, the transporter forms' shared create-and-redirect (or
+  show the refusal) handler.
 
-Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with six
+Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with eight
 specs plus the fixtures `address-book-list.js`, `address-book-list-text.js`,
-`address-form.js`, `return-query.js` (`withReturn`) and `seed-address.js`.
+`address-form.js`, `return-query.js` (`withReturn`), `seed-address.js` and
+`transporter-form.js`.
 Every spec signs in and opens its page with `signInAndOpen`, which lives in
 `fit/sign-in.js` beside `signIn`. `view-model/list.js` owns the list's
 name lines, Type label, postal lines and results line, which the list
 controller builds into table cells, the roles whose Type label contains the
 search term (`rolesWhoseLabelContains`, which the search also matches), and the
-list's hrefs, which carry the tab, the search, the Type and the page. A tab
-link carries the tab and the current search only.
+list's hrefs, which carry the tab, the search, the page and the chosen Type
+under the selected tab's own query parameter. A tab link carries the tab and
+the current search only.
 
 ## Paths
 

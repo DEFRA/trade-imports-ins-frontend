@@ -7,22 +7,22 @@ const logger = createLogger()
 
 const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/
 
-export const addressIdParams = Joi.object({
+export const recordIdParams = Joi.object({
   id: Joi.string().pattern(OBJECT_ID_PATTERN).required().messages({
-    'string.pattern.base': 'Enter a valid address id',
-    'any.required': 'Enter a valid address id'
+    'string.pattern.base': 'Enter a valid record id',
+    'any.required': 'Enter a valid record id'
   })
 })
 
-export const redirectingAddressIdRouteOptions = (fallbackPathOf) => ({
+export const redirectingRecordIdRouteOptions = (fallbackPathOf) => ({
   ...routeOptions,
   validate: {
-    params: addressIdParams,
+    params: recordIdParams,
     failAction: (request, toolkit, err) => {
       const fallbackPath = fallbackPathOf(request)
       logger.info(
-        { err, addressId: request.params.id, fallbackPath },
-        'Address id failed validation, redirecting'
+        { err, recordId: request.params.id, fallbackPath },
+        'Record id failed validation, redirecting'
       )
       return toolkit.redirect(fallbackPath).takeover()
     }

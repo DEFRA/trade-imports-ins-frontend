@@ -337,8 +337,9 @@ describe('#mapApiErrorsToFormErrors', () => {
 })
 
 describe('the public surface', () => {
-  test('Should expose the five address operations, the error mapper, the validation-failure predicate, the address types, the role codes, the roles each type lists, the place roles, the type that lists a role, the roles a type offers, the rule of which types must be in the United Kingdom and the typed seed, nothing else', () => {
+  test('Should expose the five address operations, the error mapper, the validation-failure predicate, the address types, the types the add form serves, the role codes, the roles each type lists, the place roles, the type that lists a role, the roles a type offers, the rule of which types must be in the United Kingdom and the typed seed, nothing else', () => {
     expect(Object.keys(addressBook).sort()).toEqual([
+      'ADDRESS_FORM_TYPES',
       'ADDRESS_TYPES',
       'PLACE_ROLES',
       'ROLES',

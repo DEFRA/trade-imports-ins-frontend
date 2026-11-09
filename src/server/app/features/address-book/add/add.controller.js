@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import {
+  ADDRESS_FORM_TYPES,
   PLACE_ROLES,
   ROLES_BY_ADDRESS_TYPE,
   createAddress,
@@ -227,15 +228,20 @@ const redirectAfterCancel = (
 }
 
 const redirectIfNoAddressTypeChosen = (request, toolkit, addMode) => {
-  if (addMode !== ADD_MODES.ADDRESS_BOOK || storedChosenAddressType(request)) {
+  if (addMode !== ADD_MODES.ADDRESS_BOOK) {
+    return undefined
+  }
+  const storedAddressType = storedChosenAddressType(request)
+  if (ADDRESS_FORM_TYPES.includes(storedAddressType)) {
     return undefined
   }
   logger.info(
     {
       organisationId: kit.requireOrganisationId(request),
-      path: request.path
+      path: request.path,
+      storedAddressType
     },
-    'No address type chosen, sending the user to choose one'
+    'No address type chosen that this form serves, sending the user to choose one'
   )
   return toolkit.redirect(addressTypePath())
 }

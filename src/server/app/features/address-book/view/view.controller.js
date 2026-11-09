@@ -6,7 +6,7 @@ import {
   addressRoutePath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
+import { redirectingRecordIdRouteOptions } from '../record-id-params.js'
 import { ADDRESS_FIELDS, addressFieldText, isRequiredField } from '../fields.js'
 import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
 import {
@@ -22,50 +22,66 @@ const logger = createLogger()
 const view = 'address-book/view/view'
 const copy = copyFor({ en, cy })
 
-export const buildRows = (address, countryLabel) => {
-  const rowFields = [...ADDRESS_FIELDS, 'email', 'phone']
-  return rowFields
-    .map((field) => ({
-      field,
-      text: addressFieldText(address, countryLabel, field)
-    }))
+const summaryRowsOf = (fields, { textFor, labelFor }) =>
+  fields
+    .map((field) => ({ field, text: textFor(field) }))
     .filter(({ field, text }) => isRequiredField(field) || text)
     .map(({ field, text }) => ({
-      key: { text: copy.form.fields[field] },
+      key: { text: labelFor(field) },
       value: { text }
     }))
-}
+
+export const buildRows = (address, countryLabel) =>
+  summaryRowsOf([...ADDRESS_FIELDS, 'email', 'phone'], {
+    textFor: (field) => addressFieldText(address, countryLabel, field),
+    labelFor: (field) => copy.form.fields[field]
+  })
+
+const addressViewOf = (
+  { address, countryLabel },
+  { id, honouredReturn, returnDestination }
+) => ({
+  ...kit.base(address.name, { backLink: returnDestination }),
+  copy,
+  heading: address.name,
+  editHref: pathWithReturn(addressEditPath(id), honouredReturn),
+  deleteHref: pathWithReturn(addressDeletePath(id), honouredReturn),
+  summaryRows: buildRows(address, countryLabel)
+})
 
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
-  const { id: addressId } = request.params
+  const { id } = request.params
   const honouredReturn = honouredReturnOf(request)
-  const returnDestination = returnDestinationOf(addressId, honouredReturn)
+  const returnDestination = returnDestinationOf(id, honouredReturn)
 
   try {
     const liveAddressWithCountryLabel = await findLiveAddressWithCountryLabel(
       organisationId,
-      addressId
+      id
     )
-    if (!liveAddressWithCountryLabel) {
-      logger.info(
-        { organisationId, addressId },
-        'Address not live, redirecting away from its view page'
+    if (liveAddressWithCountryLabel) {
+      return toolkit.view(
+        view,
+        addressViewOf(liveAddressWithCountryLabel, {
+          id,
+          honouredReturn,
+          returnDestination
+        })
       )
-      return toolkit.redirect(returnDestination)
     }
-    const { address, countryLabel } = liveAddressWithCountryLabel
-    return toolkit.view(view, {
-      ...kit.base(address.name, { backLink: returnDestination }),
-      copy,
-      heading: address.name,
-      editHref: pathWithReturn(addressEditPath(addressId), honouredReturn),
-      deleteHref: pathWithReturn(addressDeletePath(addressId), honouredReturn),
-      summaryRows: buildRows(address, countryLabel)
-    })
+
+    logger.info(
+      { organisationId, id },
+      'No address is live at this id, redirecting away from its view page'
+    )
+    return toolkit.redirect(returnDestination)
   } catch (err) {
     throw boomFor(err, () =>
-      logger.error({ err, organisationId, addressId }, 'Failed to load address')
+      logger.error(
+        { err, organisationId, id },
+        'Failed to load the address book entry'
+      )
     )
   }
 }
@@ -73,5 +89,5 @@ const get = async (request, toolkit) => {
 export const routes = kit.pageRoutes(
   addressRoutePath(),
   { get },
-  redirectingAddressIdRouteOptions(deadLinkDestination)
+  redirectingRecordIdRouteOptions(deadLinkDestination)
 )

@@ -4,12 +4,16 @@ import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { copy } from '../copy/copy.en.js'
 import {
   addressBookPageHref,
+  approvalNumberTextOf,
   buildAddressBookQueryString,
   mapAddressRows,
+  mapTransporterRows,
   nameLinesOf,
   resultsLabelOf,
   roleLabelsTextOf,
-  rolesWhoseLabelContains
+  rolesWhoseLabelContains,
+  transporterCountryCodesMatching,
+  transporterTypesWhoseLabelContains
 } from './list.js'
 
 describe('#nameLinesOf', () => {
@@ -68,15 +72,37 @@ describe('#buildAddressBookQueryString', () => {
     ).toBe('?addressType=BRANCH&q=green&page=2')
   })
 
-  test('Should carry the role after q and before the page param', () => {
+  test('Should carry the chosen filter value after q and before the page param', () => {
     expect(
       buildAddressBookQueryString({
         addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
         searchTerm: 'green',
-        role: 'CONSIGNOR',
+        filterParam: 'role',
+        filterValue: 'CONSIGNOR',
         page: 2
       })
     ).toBe('?addressType=ORIGIN_OR_CONSIGNOR&q=green&role=CONSIGNOR&page=2')
+  })
+
+  test('Should carry the Transporter tab filter value under its own parameter name', () => {
+    expect(
+      buildAddressBookQueryString({
+        addressType: ADDRESS_TYPES.TRANSPORTER,
+        searchTerm: 'green',
+        filterParam: 'type',
+        filterValue: 'COMMERCIAL',
+        page: 2
+      })
+    ).toBe('?addressType=TRANSPORTER&q=green&type=COMMERCIAL&page=2')
+  })
+
+  test('Should write no filter pair when no filter value is chosen', () => {
+    expect(
+      buildAddressBookQueryString({
+        addressType: ADDRESS_TYPES.BRANCH,
+        filterParam: 'role'
+      })
+    ).toBe('?addressType=BRANCH')
   })
 
   test('Should carry the address type alone on the first page with no search', () => {
@@ -116,7 +142,8 @@ describe('#addressBookPageHref', () => {
     const filters = {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       searchTerm: 'green',
-      role: 'IMPORTER'
+      filterParam: 'role',
+      filterValue: 'IMPORTER'
     }
 
     expect(addressBookPageHref(1, filters)).toBe(
@@ -179,6 +206,11 @@ describe('#rolesWhoseLabelContains', () => {
   })
 })
 
+const GB_COUNTRY_CODE = 'GB'
+const UNITED_KINGDOM_COUNTRY_LABEL = 'United Kingdom'
+const COMMERCIAL_TRANSPORTER_COUNTRY_LABEL = 'Northern Ireland'
+const SAMPLE_APPROVAL_NUMBER = 'NI/TA/2026/0099'
+
 describe('#mapAddressRows', () => {
   test('Should map each address to a row with its name lines, role labels, postal lines and country label', () => {
     expect(
@@ -190,11 +222,11 @@ describe('#mapAddressRows', () => {
             addressLine1: '1 Road',
             townOrCity: 'Town',
             postcode: 'AB1 2CD',
-            countryCode: 'GB',
+            countryCode: GB_COUNTRY_CODE,
             roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR']
           }
         ],
-        [{ code: 'GB', name: 'United Kingdom' }],
+        [{ code: GB_COUNTRY_CODE, name: UNITED_KINGDOM_COUNTRY_LABEL }],
         copy.list.roles
       )
     ).toEqual([
@@ -204,7 +236,166 @@ describe('#mapAddressRows', () => {
         nameLines: ['Green', 'Farm'],
         roleLabelsText: 'Place of origin, Consignor',
         postalLines: ['1 Road', 'Town', 'AB1 2CD'],
-        countryLabel: 'United Kingdom'
+        countryLabel: UNITED_KINGDOM_COUNTRY_LABEL
+      }
+    ])
+  })
+})
+
+describe('#approvalNumberTextOf', () => {
+  test('Should give the stored approval number for a transporter that has one', () => {
+    expect(
+      approvalNumberTextOf(
+        { approvalNumber: SAMPLE_APPROVAL_NUMBER },
+        copy.notApplicable
+      )
+    ).toBe(SAMPLE_APPROVAL_NUMBER)
+  })
+
+  test('Should give the not-applicable word for a transporter with no approval number', () => {
+    expect(approvalNumberTextOf({}, copy.notApplicable)).toBe(
+      copy.notApplicable
+    )
+  })
+
+  test('Should give the not-applicable word for a transporter with an empty approval number', () => {
+    expect(
+      approvalNumberTextOf({ approvalNumber: '' }, copy.notApplicable)
+    ).toBe(copy.notApplicable)
+  })
+
+  test('Should give the not-applicable word for a transporter with a whitespace-only approval number', () => {
+    expect(
+      approvalNumberTextOf({ approvalNumber: '   ' }, copy.notApplicable)
+    ).toBe(copy.notApplicable)
+  })
+})
+
+describe('#transporterTypesWhoseLabelContains', () => {
+  test('Should give the type whose label contains the term', () => {
+    expect(
+      transporterTypesWhoseLabelContains('commerc', copy.list.transporterTypes)
+    ).toEqual(['COMMERCIAL'])
+  })
+
+  test('Should give no types for an empty term', () => {
+    expect(
+      transporterTypesWhoseLabelContains('', copy.list.transporterTypes)
+    ).toEqual([])
+  })
+})
+
+describe('#transporterCountryCodesMatching', () => {
+  const COUNTRIES = [
+    { code: GB_COUNTRY_CODE, name: UNITED_KINGDOM_COUNTRY_LABEL },
+    { code: 'IE', name: 'Ireland' }
+  ]
+  const codesMatching = (searchTerm) =>
+    transporterCountryCodesMatching(
+      searchTerm,
+      COUNTRIES,
+      COMMERCIAL_TRANSPORTER_COUNTRY_LABEL
+    )
+
+  test('Should give the country a commercial transporter is stored under for the country label its row shows', () => {
+    expect(codesMatching(COMMERCIAL_TRANSPORTER_COUNTRY_LABEL)).toEqual([
+      'GB-NIR'
+    ])
+  })
+
+  test('Should give an address country whose name contains the term', () => {
+    expect(codesMatching('united king')).toEqual([GB_COUNTRY_CODE])
+  })
+
+  test('Should give both where the term matches an address country and the fixed label', () => {
+    expect(codesMatching('Ireland')).toEqual(['IE', 'GB-NIR'])
+  })
+
+  test('Should give no countries for a term neither carries', () => {
+    expect(codesMatching('aberdeen')).toEqual([])
+  })
+
+  test('Should give no countries for an empty term', () => {
+    expect(codesMatching('')).toEqual([])
+  })
+})
+
+describe('#mapTransporterRows', () => {
+  test('Should map a commercial transporter to a row with its stored approval number and its fixed country label', () => {
+    expect(
+      mapTransporterRows(
+        [
+          {
+            id: '1',
+            name: 'Shore Road Haulage',
+            addressLine1: '4 Shore Road',
+            townOrCity: 'Antrim',
+            postcode: 'BT41 4LB',
+            countryCode: 'GB-NIR',
+            type: 'COMMERCIAL',
+            approvalNumber: SAMPLE_APPROVAL_NUMBER
+          }
+        ],
+        {
+          countries: [],
+          copyByTransporterType: copy.list.transporterTypes,
+          fixedCommercialCountryLabel: COMMERCIAL_TRANSPORTER_COUNTRY_LABEL,
+          notApplicableWord: copy.notApplicable
+        }
+      )
+    ).toEqual([
+      {
+        id: '1',
+        name: 'Shore Road Haulage',
+        nameLines: ['Shore', 'Road Haulage'],
+        postalLines: [
+          '4 Shore Road',
+          'Antrim',
+          'BT41 4LB',
+          COMMERCIAL_TRANSPORTER_COUNTRY_LABEL
+        ],
+        approvalNumberText: SAMPLE_APPROVAL_NUMBER,
+        typeLabel: 'Commercial'
+      }
+    ])
+  })
+
+  test('Should map a private transporter to a row with the not-applicable approval number and its resolved country label', () => {
+    expect(
+      mapTransporterRows(
+        [
+          {
+            id: '2',
+            name: 'Carrier Close Transporters',
+            addressLine1: '4 Carrier Close',
+            townOrCity: 'Carlisle',
+            postcode: 'CA1 3CC',
+            countryCode: GB_COUNTRY_CODE,
+            type: 'PRIVATE'
+          }
+        ],
+        {
+          countries: [
+            { code: GB_COUNTRY_CODE, name: UNITED_KINGDOM_COUNTRY_LABEL }
+          ],
+          copyByTransporterType: copy.list.transporterTypes,
+          fixedCommercialCountryLabel: COMMERCIAL_TRANSPORTER_COUNTRY_LABEL,
+          notApplicableWord: copy.notApplicable
+        }
+      )
+    ).toEqual([
+      {
+        id: '2',
+        name: 'Carrier Close Transporters',
+        nameLines: ['Carrier', 'Close Transporters'],
+        postalLines: [
+          '4 Carrier Close',
+          'Carlisle',
+          'CA1 3CC',
+          UNITED_KINGDOM_COUNTRY_LABEL
+        ],
+        approvalNumberText: copy.notApplicable,
+        typeLabel: 'Private'
       }
     ])
   })

@@ -8,6 +8,11 @@ All other paths are relative to `src/server/app/`.
 `features/address-book/address-type` is the smallest complete page: one
 form, one template, both copy bundles, one controller test and one feature
 spec. `features/address-book/add` adds a service call and the address fields.
+`features/address-book/transporter` is the exemplar for a page in the group
+that reaches a second upstream route: its three pages read and write the
+`transporters` service rather than `address-book`, through a shared module at
+`services/address-book-request.js` for the parts the two upstream clients'
+requests have in common.
 
 - [`features/address-book/address-type/address-type.controller.js`](../features/address-book/address-type/address-type.controller.js)
 - [`features/address-book/address-type/address-type.njk`](../features/address-book/address-type/address-type.njk)

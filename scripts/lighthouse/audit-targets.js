@@ -1,4 +1,10 @@
 import { allRoutes } from '../../src/server/app/features/index.js'
+import {
+  privateTransporterPath,
+  transporterDeleteRoutePath,
+  transporterEditRoutePath,
+  transporterRoutePath
+} from '../../src/server/app/shared/paths.js'
 
 const ID_PARAM = '{id}'
 const OTHER_PARAM = /\{(?!id})[^}]+}/
@@ -11,7 +17,24 @@ export const TARGETS_FILE = new URL(
   import.meta.url
 )
 
-export const SKIPPED = new Map()
+export const SKIPPED = new Map([
+  [
+    privateTransporterPath(),
+    'a session holds one chosen transporter type at a time, and the audit chooses commercial, so this form sends the audit back to the type question'
+  ],
+  [
+    transporterRoutePath(),
+    'the audit seeds an address and substitutes its id, and a transporter page needs a transporter id, so this page is covered by the axe assertions in transporter-view.fit.spec.js instead'
+  ],
+  [
+    transporterEditRoutePath(),
+    'a transporter page needs a transporter id, which the audit does not seed; covered by the axe assertions in transporter-edit.fit.spec.js instead'
+  ],
+  [
+    transporterDeleteRoutePath(),
+    'a transporter page needs a transporter id, which the audit does not seed; covered by the axe assertions in transporter-delete.fit.spec.js instead'
+  ]
+])
 
 export const QUERY = new Map()
 

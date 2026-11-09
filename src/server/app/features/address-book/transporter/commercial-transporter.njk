@@ -1,0 +1,44 @@
+{% extends "shared/layout.njk" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "address-book/transporter/transporter-fields.njk" import transporterNameAndApprovalNumber, transporterPostalLines, transporterFixedCountry, transporterContactDetails %}
+
+{% block journeyContent %}
+  {% include "shared/error-summary.njk" %}
+
+  <span class="govuk-caption-l">{{ copy.caption }}</span>
+  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+
+  <form method="post" novalidate>
+    <input type="hidden" name="crumb" value="{{ crumb }}" />
+
+    <h2 class="govuk-heading-m">{{ copy.addressHeading }}</h2>
+
+    {{ transporterNameAndApprovalNumber({
+      copy: copy,
+      formValues: formValues,
+      errors: errors,
+      withApprovalNumber: true
+    }) }}
+    {{ transporterPostalLines({ copy: copy, formValues: formValues, errors: errors }) }}
+    {{ transporterFixedCountry({
+      copy: copy,
+      errors: errors,
+      countryCode: countryCode,
+      countryLabel: countryLabel
+    }) }}
+
+    <h2 class="govuk-heading-m">{{ copy.contactHeading }}</h2>
+
+    {{ transporterContactDetails({ copy: copy, formValues: formValues, errors: errors }) }}
+
+    <div class="govuk-button-group">
+      {{ govukButton({ text: copy.save }) }}
+      {{ govukButton({
+        text: cancelLabel,
+        name: "cancel",
+        value: "true",
+        classes: "govuk-button--secondary"
+      }) }}
+    </div>
+  </form>
+{% endblock %}

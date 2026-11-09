@@ -54,12 +54,12 @@
       html: searchButtonHtml
     }) }}
     {{ govukSelect({
-      id: "role",
-      name: "role",
+      id: typeFilterParam,
+      name: typeFilterParam,
       label: {
-        text: copy.list.search.role.label
+        text: copy.list.search.typeFilter.label
       },
-      items: roleItems
+      items: typeFilterItems
     }) }}
   {% endset %}
 
@@ -90,13 +90,7 @@
     {% endif %}
 
     {{ govukTable({
-      head: [
-        { text: copy.list.table.name },
-        { text: copy.list.table.role },
-        { text: copy.list.table.address },
-        { text: copy.list.table.country },
-        { html: '<span class="govuk-visually-hidden">' + copy.list.table.action + '</span>' }
-      ],
+      head: tableHead,
       rows: tableRows
     }) }}
 

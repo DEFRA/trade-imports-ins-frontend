@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { listAddresses } from '../../../services/address-book/index.js'
+import { listTransporters } from '../../../services/transporters/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
@@ -13,7 +14,8 @@ import {
 import {
   addressTypeStartPath,
   addressBookPath,
-  addressPath
+  addressPath,
+  transporterPath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
@@ -23,16 +25,22 @@ import {
 import {
   ADDRESS_BOOK_TABS,
   DEFAULT_ADDRESS_BOOK_TAB,
+  listsByRole,
   resolveTab,
-  resolveRole
+  resolveTypeFilterValue
 } from '../address-book-tabs.js'
 import { linesHtml } from '../lines-html.js'
+import { pathWithReturn } from '../return-to.js'
+import { transporterTabPath } from '../transporter/transporter-return.js'
 import { takeSuccessMessage } from '../success-message.js'
 import {
   addressBookPageHref,
   mapAddressRows,
+  mapTransporterRows,
   resultsLabelOf,
-  rolesWhoseLabelContains
+  rolesWhoseLabelContains,
+  transporterCountryCodesMatching,
+  transporterTypesWhoseLabelContains
 } from '../view-model/list.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
@@ -43,23 +51,59 @@ const logger = createLogger()
 const view = 'address-book/list/list'
 const copy = copyFor({ en, cy })
 
-const viewLink = (address) =>
-  `<a class="govuk-link" href="${addressPath(address.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(address.name)}</span></a>`
+const viewLink = (record, recordPathOf, { returnTo } = {}) =>
+  `<a class="govuk-link" href="${pathWithReturn(recordPathOf(record.id), returnTo)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(record.name)}</span></a>`
 
-const tableRowsOf = (addresses) =>
+const actionHeadCell = () => ({
+  html: `<span class="govuk-visually-hidden">${copy.list.table.action}</span>`
+})
+
+const ADDRESS_TABLE_HEAD = [
+  { text: copy.list.table.name },
+  { text: copy.list.table.type },
+  { text: copy.list.table.address },
+  { text: copy.list.table.country },
+  actionHeadCell()
+]
+
+const TRANSPORTER_TABLE_HEAD = [
+  { text: copy.list.table.name },
+  { text: copy.list.table.address },
+  { text: copy.list.table.approvalNumber },
+  { text: copy.list.table.type },
+  actionHeadCell()
+]
+
+const tableHeadFor = (tab) =>
+  listsByRole(tab) ? ADDRESS_TABLE_HEAD : TRANSPORTER_TABLE_HEAD
+
+const addressTableRowsOf = (addresses) =>
   addresses.map((address) => [
     { html: linesHtml(address.nameLines) },
     { text: address.roleLabelsText },
     { html: linesHtml(address.postalLines, { lineEnding: ',' }) },
     { text: address.countryLabel },
-    { html: viewLink(address) }
+    { html: viewLink(address, addressPath) }
   ])
 
-const paginationOf = (addressPage) => ({
-  page: addressPage.page,
-  pageSize: addressPage.pageSize,
-  totalItems: addressPage.totalItems,
-  totalPages: addressPage.totalPages
+const transporterTableRowsOf = (transporters) =>
+  transporters.map((transporter) => [
+    { html: linesHtml(transporter.nameLines) },
+    { html: linesHtml(transporter.postalLines, { lineEnding: ',' }) },
+    { text: transporter.approvalNumberText },
+    { text: transporter.typeLabel },
+    {
+      html: viewLink(transporter, transporterPath, {
+        returnTo: transporterTabPath()
+      })
+    }
+  ])
+
+const paginationOf = (loadedPage) => ({
+  page: loadedPage.page,
+  pageSize: loadedPage.pageSize,
+  totalItems: loadedPage.totalItems,
+  totalPages: loadedPage.totalPages
 })
 
 const subNavigationItemsOf = (selectedTab, searchTerm) =>
@@ -69,14 +113,19 @@ const subNavigationItemsOf = (selectedTab, searchTerm) =>
     active: tab === selectedTab
   }))
 
-const roleItemsOf = (selectedTab, selectedRole) => [
-  { value: '', text: copy.list.search.role.placeholder },
-  ...selectedTab.roles.map((role) => ({
-    value: role,
-    text: copy.list.roles[role].optionLabel,
-    selected: role === selectedRole
-  }))
-]
+const typeFilterItemsOf = (selectedTab, selectedValue) => {
+  const optionLabelOf = listsByRole(selectedTab)
+    ? (value) => copy.list.roles[value].optionLabel
+    : (value) => copy.list.transporterTypes[value]
+  return [
+    { value: '', text: copy.list.search.typeFilter.placeholder },
+    ...selectedTab.typeFilter.values.map((value) => ({
+      value,
+      text: optionLabelOf(value),
+      selected: value === selectedValue
+    }))
+  ]
+}
 
 const buildView = (toolkit, { recoverableError = false, ...model }) =>
   toolkit.view(view, {
@@ -88,29 +137,36 @@ const buildView = (toolkit, { recoverableError = false, ...model }) =>
     ...model
   })
 
-const loadAddressPage = async (organisationId, { page, ...listFilters }) => {
-  const requestedAddressPage = await listAddresses(organisationId, {
+const loadPage = async (
+  organisationId,
+  listFn,
+  { page, searchTerm, ...listFilters }
+) => {
+  const requestedPage = await listFn(organisationId, {
     page,
     pageSize: LIST_PAGE_SIZE,
+    searchTerm,
     ...listFilters
   })
-  const servedPage = clampPage(page, requestedAddressPage.totalPages)
+  const servedPage = clampPage(page, requestedPage.totalPages)
   if (servedPage === page) {
-    return requestedAddressPage
+    return requestedPage
   }
 
   logger.info(
     {
       organisationId,
-      roles: listFilters.roles,
+      ...listFilters,
+      searchTermLength: searchTerm?.length ?? 0,
       requestedPage: page,
       servedPage
     },
     'Address book page is past the last page, serving the last page'
   )
-  return listAddresses(organisationId, {
+  return listFn(organisationId, {
     page: servedPage,
     pageSize: LIST_PAGE_SIZE,
+    searchTerm,
     ...listFilters
   })
 }
@@ -133,75 +189,203 @@ const selectTab = (organisationId, requestedAddressType) => {
   return DEFAULT_ADDRESS_BOOK_TAB
 }
 
+const addressModel = async (
+  organisationId,
+  { page, searchTerm, role, selectedTab }
+) => {
+  const countries = await getAddressFormCountries()
+  const countryCodes = countryCodesMatching(searchTerm, countries)
+  const searchRoles = rolesWhoseLabelContains(searchTerm, copy.list.roles)
+  const addressPage = await loadPage(organisationId, listAddresses, {
+    page,
+    searchTerm,
+    countryCodes,
+    searchRoles,
+    roles: role ? [role] : selectedTab.roles
+  })
+  const records = mapAddressRows(
+    addressPage.items ?? [],
+    countries,
+    copy.list.roles
+  )
+  return { page: addressPage, tableRows: addressTableRowsOf(records) }
+}
+
+const transporterModel = async (
+  organisationId,
+  { page, searchTerm, typeFilterValue }
+) => {
+  const countries = await getAddressFormCountries()
+  const countryCodes = transporterCountryCodesMatching(
+    searchTerm,
+    countries,
+    copy.commercialTransporterForm.country
+  )
+  const searchTypes = transporterTypesWhoseLabelContains(
+    searchTerm,
+    copy.list.transporterTypes
+  )
+  const transporterPage = await loadPage(organisationId, listTransporters, {
+    page,
+    searchTerm,
+    countryCodes,
+    searchTypes,
+    types: typeFilterValue ? [typeFilterValue] : []
+  })
+  const records = mapTransporterRows(transporterPage.items ?? [], {
+    countries,
+    copyByTransporterType: copy.list.transporterTypes,
+    fixedCommercialCountryLabel: copy.commercialTransporterForm.country,
+    notApplicableWord: copy.notApplicable
+  })
+  return { page: transporterPage, tableRows: transporterTableRowsOf(records) }
+}
+
+const selectTypeFilterValue = (organisationId, selectedTab, request) => {
+  const { addressType, typeFilter } = selectedTab
+  const requestedTypeFilterValue = request.query[typeFilter.param]
+  const typeFilterValue = resolveTypeFilterValue(
+    selectedTab,
+    requestedTypeFilterValue
+  )
+  if (requestedTypeFilterValue && !typeFilterValue) {
+    logger.info(
+      {
+        organisationId,
+        addressType,
+        typeFilterParam: typeFilter.param,
+        requestedTypeFilterValue
+      },
+      'Address book list ignored a filter value the tab does not offer'
+    )
+  }
+  return typeFilterValue
+}
+
+const loadListModel = (
+  organisationId,
+  selectedTab,
+  { page, searchTerm, typeFilterValue }
+) =>
+  listsByRole(selectedTab)
+    ? addressModel(organisationId, {
+        page,
+        searchTerm,
+        role: typeFilterValue,
+        selectedTab
+      })
+    : transporterModel(organisationId, { page, searchTerm, typeFilterValue })
+
+const sharedListViewFields = (
+  selectedTab,
+  { searchTerm, typeFilterValue, successMessage }
+) => {
+  const { addressType, typeFilter } = selectedTab
+  return {
+    addressType,
+    typeFilterParam: typeFilter.param,
+    typeFilterItems: typeFilterItemsOf(selectedTab, typeFilterValue),
+    searchTerm,
+    successMessage
+  }
+}
+
+const loadedListView = (
+  selectedTab,
+  { loadedPage, tableRows, searchTerm, typeFilterValue, successMessage }
+) => {
+  const { addressType, typeFilter } = selectedTab
+  const pagination = paginationOf(loadedPage)
+  return {
+    listLoaded: true,
+    subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
+    panelHeading: copy.list.tabs[addressType].heading,
+    tableHead: tableHeadFor(selectedTab),
+    clearSearchHref: addressBookPageHref(1, {
+      addressType,
+      filterParam: typeFilter.param,
+      filterValue: typeFilterValue
+    }),
+    tableRows,
+    resultsLabel: resultsLabelOf(pagination, copy.list),
+    pagination: buildPaginationLinks(pagination, (targetPage) =>
+      addressBookPageHref(targetPage, {
+        addressType,
+        searchTerm,
+        filterParam: typeFilter.param,
+        filterValue: typeFilterValue
+      })
+    ),
+    ...sharedListViewFields(selectedTab, {
+      searchTerm,
+      typeFilterValue,
+      successMessage
+    })
+  }
+}
+
+const failedListView = (
+  selectedTab,
+  { searchTerm, typeFilterValue, successMessage }
+) => ({
+  listLoaded: false,
+  ...sharedListViewFields(selectedTab, {
+    searchTerm,
+    typeFilterValue,
+    successMessage
+  }),
+  recoverableError: true
+})
+
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const page = parsePage(request.query.page)
   const searchTerm = request.query.q?.trim() ?? ''
   const selectedTab = selectTab(organisationId, request.query.addressType)
-  const { addressType } = selectedTab
-  const requestedRole = request.query.role
-  const role = resolveRole(selectedTab, requestedRole)
-  if (requestedRole && !role) {
-    logger.info(
-      { organisationId, addressType, requestedRole },
-      'Address book list ignored a role the tab does not offer'
-    )
-  }
+  const typeFilterValue = selectTypeFilterValue(
+    organisationId,
+    selectedTab,
+    request
+  )
   const successMessage = takeSuccessMessage(request)
 
   try {
-    const countries = await getAddressFormCountries()
-    const countryCodes = countryCodesMatching(searchTerm, countries)
-    const searchRoles = rolesWhoseLabelContains(searchTerm, copy.list.roles)
-    const addressPage = await loadAddressPage(organisationId, {
-      page,
-      searchTerm,
-      countryCodes,
-      searchRoles,
-      roles: role ? [role] : selectedTab.roles
-    })
-    const pagination = paginationOf(addressPage)
-    const addresses = mapAddressRows(
-      addressPage.items ?? [],
-      countries,
-      copy.list.roles
+    const { page: loadedPage, tableRows } = await loadListModel(
+      organisationId,
+      selectedTab,
+      { page, searchTerm, typeFilterValue }
     )
-
-    return buildView(toolkit, {
-      listLoaded: true,
-      subNavigationItems: subNavigationItemsOf(selectedTab, searchTerm),
-      panelHeading: copy.list.tabs[selectedTab.addressType].heading,
-      clearSearchHref: addressBookPageHref(1, { addressType, role }),
-      tableRows: tableRowsOf(addresses),
-      resultsLabel: resultsLabelOf(pagination, copy.list),
-      pagination: buildPaginationLinks(pagination, (targetPage) =>
-        addressBookPageHref(targetPage, {
-          addressType,
-          searchTerm,
-          role
-        })
-      ),
-      addressType,
-      roleItems: roleItemsOf(selectedTab, role),
-      searchTerm,
-      successMessage
-    })
+    return buildView(
+      toolkit,
+      loadedListView(selectedTab, {
+        loadedPage,
+        tableRows,
+        searchTerm,
+        typeFilterValue,
+        successMessage
+      })
+    )
   } catch (err) {
     if (Boom.isBoom(err)) {
       throw err
     }
     logger.error(
-      { err, organisationId, addressType, role },
+      {
+        err,
+        organisationId,
+        addressType: selectedTab.addressType,
+        typeFilterValue
+      },
       'Failed to load address book'
     )
-    return buildView(toolkit, {
-      listLoaded: false,
-      addressType,
-      roleItems: roleItemsOf(selectedTab, role),
-      searchTerm,
-      successMessage,
-      recoverableError: true
-    }).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
+    return buildView(
+      toolkit,
+      failedListView(selectedTab, {
+        searchTerm,
+        typeFilterValue,
+        successMessage
+      })
+    ).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)
   }
 }
 

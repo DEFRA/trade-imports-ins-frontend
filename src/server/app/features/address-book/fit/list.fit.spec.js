@@ -5,7 +5,7 @@ import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.j
 import {
   NO_RESULTS_LINE,
   ONE_MATCH_LINE,
-  UNKNOWN_ADDRESS_TYPE,
+  UNSUPPORTED_ADDRESS_TYPE,
   expectEmptyAddressBookList,
   expectNamesListed,
   openFilterDisclosure,
@@ -22,6 +22,8 @@ import {
   selectedTabOf,
   tabLinksOf,
   TABLE_HEADINGS,
+  TRANSPORTER_TABLE_HEADINGS,
+  transporterAddressCellOf,
   typeCellOf
 } from './address-book-list.js'
 import { expectDashboard } from '../../dashboard/fit/dashboard.js'
@@ -33,11 +35,31 @@ import {
 } from '../../../services/address-book/index.js'
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { addressBookPath, addressTypeStartPath } from '../../../shared/paths.js'
+import { copy } from '../copy/copy.en.js'
+import {
+  fillCommercialTransporterForm,
+  fillPrivateTransporterForm,
+  openCommercialTransporterForm,
+  openPrivateTransporterForm,
+  saveTransporterButton,
+  validCommercialTransporter,
+  validPrivateTransporter
+} from './transporter-form.js'
 
 const ADD_A_NEW_ADDRESS = 'Add a new address'
 const FARM_12 = 'Stub Farm 12'
 const FIRST_PAGE_LINE = 'Showing 1-8 of 30'
 const TWO_ADDRESSES_LINE = 'Showing 1-2 of 2'
+
+const addPrivateAndCommercialTransporters = async (page, organisationId) => {
+  await openPrivateTransporterForm(page, organisationId)
+  await fillPrivateTransporterForm(page)
+  await saveTransporterButton(page, copy.privateTransporterForm).click()
+
+  await openCommercialTransporterForm(page, organisationId)
+  await fillCommercialTransporterForm(page)
+  await saveTransporterButton(page, copy.commercialTransporterForm).click()
+}
 
 const paginationOf = (page) =>
   page.getByRole('navigation', { name: 'Pagination' })
@@ -212,15 +234,22 @@ const TABS = [
   }
 ]
 
-const [ORIGIN_TAB, , BRANCH_TAB] = TABS
+const [ORIGIN_TAB, DESTINATION_TAB, BRANCH_TAB] = TABS
+
+const ADDRESS_BOOK_TAB_LABELS = [
+  ORIGIN_TAB.label,
+  DESTINATION_TAB.label,
+  'Transporter',
+  BRANCH_TAB.label
+]
 
 const expectTabsInOrderWithSelected = async (page, selectedLabel) => {
-  await expect(tabLinksOf(page)).toHaveText(TABS.map(({ label }) => label))
+  await expect(tabLinksOf(page)).toHaveText(ADDRESS_BOOK_TAB_LABELS)
   await expect(selectedTabOf(page)).toHaveText(selectedLabel)
 }
 
 test.describe('address type tabs', () => {
-  test('shows the three tabs in order with Origin and Consignor selected when no tab is chosen', async ({
+  test('shows the four tabs in order with Origin and Consignor selected when no tab is chosen', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
@@ -234,7 +263,7 @@ test.describe('address type tabs', () => {
   }) => {
     await openAddressBookList(page, {
       organisationId: ORG_TYPED,
-      addressType: UNKNOWN_ADDRESS_TYPE
+      addressType: UNSUPPORTED_ADDRESS_TYPE
     })
 
     await expectTabsInOrderWithSelected(page, ORIGIN_TAB.label)
@@ -531,7 +560,7 @@ test.describe('type filter', () => {
 
       await searchAndExpectMatches(page, '', {
         submitWith,
-        role: CONSIGNOR_ROLE,
+        chosenOption: CONSIGNOR_ROLE,
         resultsLine: ONE_MATCH_LINE
       })
 
@@ -553,7 +582,7 @@ test.describe('type filter', () => {
 
     await searchAndExpectMatches(page, '', {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      role: CONSIGNEE_ROLE,
+      chosenOption: CONSIGNEE_ROLE,
       resultsLine: ONE_MATCH_LINE
     })
 
@@ -582,7 +611,7 @@ test.describe('type filter', () => {
     })
     await searchAndExpectSingleMatch(page, 'Stub', {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      role: IMPORTER_ROLE,
+      chosenOption: IMPORTER_ROLE,
       matchedCellText: TYPED_SEED.importer.name
     })
 
@@ -623,7 +652,7 @@ test.describe('type filter', () => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
     await searchAndExpectQuery(page, '', {
       submitWith: 'button',
-      role: CONSIGNOR_ROLE
+      chosenOption: CONSIGNOR_ROLE
     })
     await openFilterDisclosure(page)
 
@@ -644,11 +673,98 @@ test.describe('type filter without JavaScript', () => {
 
     await searchAndExpectMatches(page, '', {
       submitWith: 'button',
-      role: CONSIGNOR_ROLE,
+      chosenOption: CONSIGNOR_ROLE,
       resultsLine: ONE_MATCH_LINE
     })
 
     await expectNamesListed(page, [TYPED_SEED.originAndConsignor.name])
+  })
+})
+
+const COMMERCIAL_TYPE = {
+  label: copy.list.transporterTypes.COMMERCIAL,
+  value: 'COMMERCIAL'
+}
+
+test.describe('Transporter tab', () => {
+  test('lists the organisation transporters under Name, Address, Approval number and Type, each Address cell ending in the country', async ({
+    page
+  }) => {
+    const organisationId = `stub-org-list-transporters-${crypto.randomUUID()}`
+    await addPrivateAndCommercialTransporters(page, organisationId)
+
+    const table = page.getByRole('table')
+    await expect(table.getByRole('columnheader')).toHaveText(
+      TRANSPORTER_TABLE_HEADINGS
+    )
+    await expect(
+      transporterAddressCellOf(page, validPrivateTransporter.name)
+    ).toHaveText(/United Kingdom$/, { useInnerText: true })
+    await expect(
+      transporterAddressCellOf(page, validCommercialTransporter.name)
+    ).toHaveText(/Northern Ireland$/, { useInnerText: true })
+  })
+})
+
+test.describe('Transporter tab type filter', () => {
+  for (const { submitWith, how } of SUBMIT_METHODS) {
+    test(`lists only the commercial transporter, keeps the tab and shows the type chosen, when submitted with ${how}`, async ({
+      page
+    }) => {
+      const organisationId = `stub-org-list-transporter-type-${submitWith}-${crypto.randomUUID()}`
+      await addPrivateAndCommercialTransporters(page, organisationId)
+
+      await searchAndExpectMatches(page, '', {
+        submitWith,
+        addressType: ADDRESS_TYPES.TRANSPORTER,
+        chosenOption: COMMERCIAL_TYPE,
+        resultsLine: ONE_MATCH_LINE
+      })
+
+      await expectNamesListed(page, [validCommercialTransporter.name])
+      await expectTabsInOrderWithSelected(page, 'Transporter')
+      await openFilterDisclosure(page)
+      await expectTypeChosen(page, COMMERCIAL_TYPE.value)
+    })
+  }
+
+  test('has no serious or critical axe violations with a Type chosen and the disclosure open', async ({
+    page
+  }) => {
+    const organisationId = `stub-org-list-transporter-type-axe-${crypto.randomUUID()}`
+    await addPrivateAndCommercialTransporters(page, organisationId)
+
+    await searchAndExpectQuery(page, '', {
+      submitWith: 'button',
+      addressType: ADDRESS_TYPES.TRANSPORTER,
+      chosenOption: COMMERCIAL_TYPE
+    })
+    await openFilterDisclosure(page)
+
+    await expectNoSeriousOrCriticalViolations(
+      page,
+      'Address book Transporter tab with a Type chosen and filter open'
+    )
+  })
+})
+
+test.describe('Transporter tab type filter without JavaScript', () => {
+  test.use({ javaScriptEnabled: false })
+
+  test('lists only the commercial transporter when submitted with the Search button', async ({
+    page
+  }) => {
+    const organisationId = `stub-org-list-transporter-type-no-js-${crypto.randomUUID()}`
+    await addPrivateAndCommercialTransporters(page, organisationId)
+
+    await searchAndExpectMatches(page, '', {
+      submitWith: 'button',
+      addressType: ADDRESS_TYPES.TRANSPORTER,
+      chosenOption: COMMERCIAL_TYPE,
+      resultsLine: ONE_MATCH_LINE
+    })
+
+    await expectNamesListed(page, [validCommercialTransporter.name])
   })
 })
 

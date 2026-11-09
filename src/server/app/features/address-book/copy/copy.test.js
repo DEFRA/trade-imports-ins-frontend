@@ -95,7 +95,7 @@ describe('#copy', () => {
       hint: 'Search by name, address or country',
       button: 'Search',
       clear: 'Clear search',
-      role: {
+      typeFilter: {
         label: 'Type',
         placeholder: 'Select one'
       }
@@ -166,7 +166,7 @@ describe('#copy', () => {
     expect(copy.delete.warning).toBe(
       'Deletions are permanent and you cannot undo this.'
     )
-    expect(copy.delete.notApplicable).toBe('Not applicable')
+    expect(copy.notApplicable).toBe('Not applicable')
     expect(copy.delete.confirm).toBe('Yes, delete')
     expect(copy.delete.cancel).toBe('No, cancel')
   })
@@ -222,8 +222,8 @@ describe('#copy of the list page', () => {
       ['search.hint', 'Chwilio yn ôl enw, cyfeiriad neu wlad'],
       ['search.button', 'Chwilio'],
       ['search.clear', 'Clirio’r chwiliad'],
-      ['search.role.label', 'Math'],
-      ['search.role.placeholder', 'Dewiswch un'],
+      ['search.typeFilter.label', 'Math'],
+      ['search.typeFilter.placeholder', 'Dewiswch un'],
       ['add', 'Ychwanegu cyfeiriad newydd'],
       ['results', 'Yn dangos 1-2 o 3'],
       ['noResults', 'Yn dangos 0 o 0'],
@@ -238,8 +238,12 @@ describe('#copy of the list page', () => {
         'tabs.DESTINATION_CONSIGNEE_OR_IMPORTER.heading',
         'Cyfeiriadau cyrchfan, derbynnydd a mewnforiwr'
       ],
+      ['tabs.TRANSPORTER.label', 'Cludydd'],
+      ['tabs.TRANSPORTER.heading', 'Cyfeiriadau cludwyr'],
       ['tabs.BRANCH.label', 'Cangen'],
       ['tabs.BRANCH.heading', 'Cyfeiriadau cangen'],
+      ['transporterTypes.PRIVATE', 'Preifat'],
+      ['transporterTypes.COMMERCIAL', 'Masnachol'],
       ['roles.PLACE_OF_ORIGIN.columnLabel', 'Man tarddiad'],
       ['roles.PLACE_OF_ORIGIN.optionLabel', 'Man Tarddiad'],
       ['roles.CONSIGNOR.columnLabel', 'Anfonwr'],
@@ -253,9 +257,10 @@ describe('#copy of the list page', () => {
       ['roles.BRANCH_ADDRESS.columnLabel', 'Cangen'],
       ['roles.BRANCH_ADDRESS.optionLabel', 'Cyfeiriad Cangen'],
       ['table.name', 'Enw'],
-      ['table.role', 'Math'],
+      ['table.type', 'Math'],
       ['table.address', 'Cyfeiriad'],
       ['table.country', 'Gwlad'],
+      ['table.approvalNumber', 'Rhif cymeradwyo'],
       ['table.action', 'Cam gweithredu'],
       ['table.view', 'Gweld']
     ])
@@ -271,9 +276,15 @@ describe('#copy of the list page', () => {
         label: 'Destination, Consignee and Importer',
         heading: 'Destination, Consignee and Importer addresses'
       },
+      TRANSPORTER: { label: 'Transporter', heading: 'Transporter addresses' },
       BRANCH: { label: 'Branch', heading: 'Branch addresses' }
     })
-    expect(copy.list.table.role).toBe('Type')
+    expect(copy.list.table.type).toBe('Type')
+    expect(copy.list.table.approvalNumber).toBe('Approval number')
+    expect(copy.list.transporterTypes).toEqual({
+      PRIVATE: 'Private',
+      COMMERCIAL: 'Commercial'
+    })
     expect(copy.list.roles).toEqual({
       PLACE_OF_ORIGIN: {
         columnLabel: 'Place of origin',
@@ -308,6 +319,7 @@ describe('#copy of the address type page', () => {
           label: 'Destination, Consignee or Importer',
           hint: 'Place of destination, Consignee, Importer'
         },
+        TRANSPORTER: { label: 'Transporter', hint: 'Private, Commercial' },
         BRANCH: { label: 'Branch', hint: 'Branch address' }
       },
       continue: 'Continue'

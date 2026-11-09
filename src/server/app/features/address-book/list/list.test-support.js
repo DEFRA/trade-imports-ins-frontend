@@ -5,7 +5,8 @@ import {
   addressesApiPath,
   COUNTRIES,
   getPage,
-  STORED_ADDRESS
+  STORED_ADDRESS,
+  transportersApiPath
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
@@ -13,13 +14,17 @@ import {
   textsOf
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
-import { ROLES_BY_ADDRESS_TYPE } from '../../../services/address-book/index.js'
+import {
+  ADDRESS_TYPES,
+  ROLES_BY_ADDRESS_TYPE
+} from '../../../services/address-book/index.js'
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
 import { LIST_PAGE_SIZE } from './list.controller.js'
 
 export {
   NO_RESULTS_LINE,
-  TABLE_HEADINGS
+  TABLE_HEADINGS,
+  TRANSPORTER_TABLE_HEADINGS
 } from '../fit/address-book-list-text.js'
 
 export const highlandAddress = {
@@ -50,6 +55,16 @@ export const greenFarmAddress = {
   postcode: 'IV2 3JH',
   countryCode: 'GB',
   roles: []
+}
+
+export const highlandTransporter = {
+  id: '1',
+  name: STORED_ADDRESS.name,
+  addressLine1: STORED_ADDRESS.addressLine1,
+  townOrCity: STORED_ADDRESS.townOrCity,
+  postcode: STORED_ADDRESS.postcode,
+  countryCode: STORED_ADDRESS.countryCode,
+  type: 'PRIVATE'
 }
 
 export const fullAddress = {
@@ -86,7 +101,7 @@ export const subNavigationLinksOf = ($) =>
     .get()
 
 export const typeSelectStateOf = ($) => {
-  const select = $('select[name="role"]')
+  const select = $('select[name="role"], select[name="type"]')
   const options = select.find('option')
   return {
     label: textOf($, $(`label[for="${select.attr('id')}"]`)),
@@ -128,13 +143,17 @@ const interceptListRequest = ({
   role,
   ...query
 }) =>
-  addressBookApi()
-    .get(addressesApiPath())
-    .query({
-      pageSize: String(LIST_PAGE_SIZE),
-      role: role ?? roleQueryValueOf(ROLES_BY_ADDRESS_TYPE[tabAddressType]),
-      ...query
-    })
+  tabAddressType === ADDRESS_TYPES.TRANSPORTER
+    ? addressBookApi()
+        .get(transportersApiPath())
+        .query({ pageSize: String(LIST_PAGE_SIZE), ...query })
+    : addressBookApi()
+        .get(addressesApiPath())
+        .query({
+          pageSize: String(LIST_PAGE_SIZE),
+          role: role ?? roleQueryValueOf(ROLES_BY_ADDRESS_TYPE[tabAddressType]),
+          ...query
+        })
 
 export const stubAddressPage = (query, addressPage) =>
   interceptListRequest(query).reply(statusCodes.ok, {
@@ -149,3 +168,9 @@ export const stubAddressBookUnavailable = (query = {}) =>
       title: 'Service Unavailable'
     }
   )
+
+export const stubTransporterPage = (query, transporterPage) =>
+  interceptListRequest({
+    tabAddressType: ADDRESS_TYPES.TRANSPORTER,
+    ...query
+  }).reply(statusCodes.ok, { ...transporterPage, pageSize: LIST_PAGE_SIZE })

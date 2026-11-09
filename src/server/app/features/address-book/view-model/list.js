@@ -1,13 +1,18 @@
 import { buildResultsLabel } from '../../../shared/list-page.js'
 import { addressBookPath } from '../../../shared/paths.js'
-import { countryLabelOf } from '../address-countries.js'
-import { postalLinesOf } from '../fields.js'
+import { countryCodesMatching, countryLabelOf } from '../address-countries.js'
+import {
+  NORTHERN_IRELAND_COUNTRY_CODE,
+  TRANSPORTER_TYPES
+} from '../../../services/transporters/index.js'
+import { displayTextOf, postalLinesOf } from '../fields.js'
 
 export const buildAddressBookQueryString = ({
   addressType,
   page,
   searchTerm,
-  role
+  filterParam,
+  filterValue
 } = {}) => {
   const params = new URLSearchParams()
   if (addressType) {
@@ -16,8 +21,8 @@ export const buildAddressBookQueryString = ({
   if (searchTerm) {
     params.set('q', searchTerm)
   }
-  if (role) {
-    params.set('role', role)
+  if (filterParam && filterValue) {
+    params.set(filterParam, filterValue)
   }
   if (page && page > 1) {
     params.set('page', String(page))
@@ -28,9 +33,9 @@ export const buildAddressBookQueryString = ({
 
 export const addressBookPageHref = (
   page,
-  { addressType, searchTerm, role } = {}
+  { addressType, searchTerm, filterParam, filterValue } = {}
 ) =>
-  `${addressBookPath()}${buildAddressBookQueryString({ addressType, searchTerm, role, page })}`
+  `${addressBookPath()}${buildAddressBookQueryString({ addressType, searchTerm, filterParam, filterValue, page })}`
 
 export const nameLinesOf = (name) => {
   const [firstWord, ...otherWords] = (name ?? '').split(/\s+/).filter(Boolean)
@@ -67,4 +72,67 @@ export const mapAddressRows = (addresses, countries, copyByRole) =>
     roleLabelsText: roleLabelsTextOf(address.roles, copyByRole),
     postalLines: postalLinesOf(address),
     countryLabel: countryLabelOf(countries, address.countryCode)
+  }))
+
+export const approvalNumberTextOf = (transporter, notApplicableWord) =>
+  displayTextOf(transporter.approvalNumber) ?? notApplicableWord
+
+export const transporterTypesWhoseLabelContains = (
+  searchTerm,
+  copyByTransporterType
+) => {
+  const term = searchTerm.toLowerCase()
+  if (!term) {
+    return []
+  }
+  return Object.entries(copyByTransporterType)
+    .filter(([, label]) => label.toLowerCase().includes(term))
+    .map(([transporterType]) => transporterType)
+}
+
+export const transporterCountryCodesMatching = (
+  searchTerm,
+  countries,
+  fixedCommercialCountryLabel
+) => {
+  const term = searchTerm?.trim().toLowerCase()
+  const matched = countryCodesMatching(searchTerm, countries)
+  if (!term || !fixedCommercialCountryLabel?.toLowerCase().includes(term)) {
+    return matched
+  }
+  return [...new Set([...matched, NORTHERN_IRELAND_COUNTRY_CODE])]
+}
+
+export const transporterCountryLabelOf = (
+  transporter,
+  countries,
+  fixedCommercialCountryLabel
+) =>
+  transporter.type === TRANSPORTER_TYPES.COMMERCIAL
+    ? fixedCommercialCountryLabel
+    : countryLabelOf(countries, transporter.countryCode)
+
+export const mapTransporterRows = (
+  transporters,
+  {
+    countries,
+    copyByTransporterType,
+    fixedCommercialCountryLabel,
+    notApplicableWord
+  }
+) =>
+  transporters.map((transporter) => ({
+    id: transporter.id,
+    name: transporter.name,
+    nameLines: nameLinesOf(transporter.name),
+    postalLines: [
+      ...postalLinesOf(transporter),
+      transporterCountryLabelOf(
+        transporter,
+        countries,
+        fixedCommercialCountryLabel
+      )
+    ],
+    approvalNumberText: approvalNumberTextOf(transporter, notApplicableWord),
+    typeLabel: copyByTransporterType[transporter.type] ?? transporter.type
   }))
