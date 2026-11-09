@@ -14,3 +14,6 @@ export const listTransporters = (organisationId, listQuery) =>
 
 export const createTransporter = (organisationId, transporter) =>
   transporters().createTransporter(organisationId, transporter)
+
+export const getTransporter = (organisationId, transporterId) =>
+  transporters().getTransporter(organisationId, transporterId)

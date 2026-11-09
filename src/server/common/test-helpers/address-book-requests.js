@@ -39,6 +39,11 @@ export const addressApiPath = (addressId, organisationId = ORGANISATION_ID) =>
 export const transportersApiPath = (organisationId = ORGANISATION_ID) =>
   `/organisation/${organisationId}/transporters`
 
+export const transporterApiPath = (
+  transporterId,
+  organisationId = ORGANISATION_ID
+) => `${transportersApiPath(organisationId)}/${transporterId}`
+
 export const BACK_LINK = 'a.govuk-back-link'
 
 export const COUNTRY_OPTIONS = '#countryCode option'
@@ -76,6 +81,22 @@ export const STORED_ADDRESS = {
   phone: '+44 1463 234567',
   email: 'exports@example.com',
   roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
+  deleted: false
+}
+
+export const STORED_TRANSPORTER = {
+  id: TRANSPORTER_ID,
+  name: 'Highland Haulage Ltd',
+  addressLine1: '14 Haulage Way',
+  addressLine2: '',
+  townOrCity: 'Inverness',
+  county: '',
+  postcode: 'IV2 3JH',
+  countryCode: 'GB',
+  phone: '+44 1463 234567',
+  email: 'ops@example.com',
+  type: TRANSPORTER_TYPES.PRIVATE,
+  approvalNumber: null,
   deleted: false
 }
 
@@ -240,6 +261,20 @@ export const serveStoredAddress = (address = STORED_ADDRESS) =>
   addressBookApi()
     .get(addressApiPath(address.id))
     .reply(statusCodes.ok, address)
+
+export const serveStoredTransporter = (transporter = STORED_TRANSPORTER) =>
+  addressBookApi()
+    .get(transporterApiPath(transporter.id))
+    .reply(statusCodes.ok, transporter)
+
+export const serveTransporterNotFound = (
+  transporterId,
+  organisationId = ORGANISATION_ID
+) =>
+  addressBookApi()
+    .get(transporterApiPath(transporterId, organisationId))
+    .matchHeader(ORGANISATION_ID_HEADER, organisationId)
+    .reply(statusCodes.notFound, { message: 'Not found' })
 
 export const serveAddressNotFound = (addressId) =>
   addressBookApi()

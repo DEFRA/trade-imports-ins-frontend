@@ -1,3 +1,4 @@
+import { HTTP_STATUS_NOT_FOUND } from '../../lib/http-status.js'
 import {
   isLive,
   newObjectId,
@@ -10,6 +11,9 @@ import {
 } from './transporter-types.js'
 
 const transportersByOrganisation = new Map()
+
+const notFound = () =>
+  Object.assign(new Error('Not found'), { status: HTTP_STATUS_NOT_FOUND })
 
 const seedTransportersFor = () => []
 
@@ -88,4 +92,14 @@ export const createTransporter = async (organisationId, transporter) => {
   const created = { id: newObjectId(), ...transporter, deleted: false }
   transportersOf(organisationId).unshift(created)
   return created
+}
+
+export const getTransporter = async (organisationId, transporterId) => {
+  const transporter = transportersOf(organisationId).find(
+    (storedTransporter) => storedTransporter.id === transporterId
+  )
+  if (!transporter) {
+    throw notFound()
+  }
+  return transporter
 }

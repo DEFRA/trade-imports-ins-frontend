@@ -9,6 +9,7 @@ import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
 import { ADDRESS_FIELDS, addressFieldText, isRequiredField } from '../fields.js'
 import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
+import { findLiveTransporterWithCountryLabel } from '../stored-transporter.js'
 import {
   deadLinkDestination,
   honouredReturnOf,
@@ -36,36 +37,72 @@ export const buildRows = (address, countryLabel) => {
     }))
 }
 
+const addressViewOf = (
+  { address, countryLabel },
+  { id, honouredReturn, returnDestination }
+) => ({
+  ...kit.base(address.name, { backLink: returnDestination }),
+  copy,
+  heading: address.name,
+  editHref: pathWithReturn(addressEditPath(id), honouredReturn),
+  deleteHref: pathWithReturn(addressDeletePath(id), honouredReturn),
+  summaryRows: buildRows(address, countryLabel)
+})
+
+/** A transporter has no edit or delete route of its own yet, so its view
+ * carries no editHref or deleteHref. */
+const transporterViewOf = (
+  { transporter, countryLabel },
+  returnDestination
+) => ({
+  ...kit.base(transporter.name, { backLink: returnDestination }),
+  copy,
+  heading: transporter.name,
+  summaryRows: buildRows(transporter, countryLabel)
+})
+
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
-  const { id: addressId } = request.params
+  const { id } = request.params
   const honouredReturn = honouredReturnOf(request)
-  const returnDestination = returnDestinationOf(addressId, honouredReturn)
+  const returnDestination = returnDestinationOf(id, honouredReturn)
 
   try {
     const liveAddressWithCountryLabel = await findLiveAddressWithCountryLabel(
       organisationId,
-      addressId
+      id
     )
-    if (!liveAddressWithCountryLabel) {
-      logger.info(
-        { organisationId, addressId },
-        'Address not live, redirecting away from its view page'
+    if (liveAddressWithCountryLabel) {
+      return toolkit.view(
+        view,
+        addressViewOf(liveAddressWithCountryLabel, {
+          id,
+          honouredReturn,
+          returnDestination
+        })
       )
-      return toolkit.redirect(returnDestination)
     }
-    const { address, countryLabel } = liveAddressWithCountryLabel
-    return toolkit.view(view, {
-      ...kit.base(address.name, { backLink: returnDestination }),
-      copy,
-      heading: address.name,
-      editHref: pathWithReturn(addressEditPath(addressId), honouredReturn),
-      deleteHref: pathWithReturn(addressDeletePath(addressId), honouredReturn),
-      summaryRows: buildRows(address, countryLabel)
-    })
+
+    const liveTransporterWithCountryLabel =
+      await findLiveTransporterWithCountryLabel(organisationId, id)
+    if (liveTransporterWithCountryLabel) {
+      return toolkit.view(
+        view,
+        transporterViewOf(liveTransporterWithCountryLabel, returnDestination)
+      )
+    }
+
+    logger.info(
+      { organisationId, id },
+      'Neither an address nor a transporter is live at this id, redirecting away from its view page'
+    )
+    return toolkit.redirect(returnDestination)
   } catch (err) {
     throw boomFor(err, () =>
-      logger.error({ err, organisationId, addressId }, 'Failed to load address')
+      logger.error(
+        { err, organisationId, id },
+        'Failed to load the address book entry'
+      )
     )
   }
 }

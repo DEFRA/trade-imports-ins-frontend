@@ -7,8 +7,8 @@ import { throwOnError } from '../../lib/http-client.js'
 
 const RESOURCE = 'transporters'
 
-const transportersUrl = (organisationId) =>
-  addressBookResourceUrl(RESOURCE, organisationId)
+const transportersUrl = (organisationId, transporterId) =>
+  addressBookResourceUrl(RESOURCE, organisationId, transporterId)
 
 export const listTransporters = async (
   organisationId,
@@ -54,5 +54,15 @@ export const createTransporter = async (organisationId, transporter) => {
   })
 
   await throwOnAddressBookError(response)
+  return response.json()
+}
+
+export const getTransporter = async (organisationId, transporterId) => {
+  const response = await fetch(transportersUrl(organisationId, transporterId), {
+    method: 'GET',
+    headers: addressBookHeaders(organisationId)
+  })
+
+  await throwOnError(response)
   return response.json()
 }

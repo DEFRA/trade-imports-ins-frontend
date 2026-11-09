@@ -20,11 +20,15 @@ import {
   interceptAddressBookRequest,
   MALFORMED_ADDRESS_ID,
   ORGANISATION_ID_HEADER,
+  OTHER_ORGANISATION_ID,
   serveAddressBookServerError,
   serveAddressNotFound,
   serveAddressNotFoundForOtherOrganisation,
   serveStoredAddress,
-  STORED_ADDRESS
+  serveStoredTransporter,
+  serveTransporterNotFound,
+  STORED_ADDRESS,
+  STORED_TRANSPORTER
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
@@ -38,6 +42,7 @@ import { buildRows } from './view.controller.js'
 
 const UK_NAME = 'United Kingdom'
 const INS_HOME = '/'
+const BUTTON_GROUP = '.govuk-button-group'
 
 const ADDRESS_LINE_2_LABEL = 'Address line 2 (optional)'
 const COUNTY_LABEL = 'County (optional)'
@@ -117,7 +122,7 @@ describe('GET /address-book/{addressId}', () => {
       'view-get-buttons'
     )
 
-    const group = load(result)('.govuk-button-group')
+    const group = load(result)(BUTTON_GROUP)
     const editLink = group.find(`a[href="${addressEditPath(ADDRESS_ID)}"]`)
     const deleteLink = group.find(`a[href="${addressDeletePath(ADDRESS_ID)}"]`)
     expect(editLink).toHaveLength(1)
@@ -140,8 +145,9 @@ describe('GET /address-book/{addressId}', () => {
     )
   })
 
-  test('Should redirect to the address book when the address is not found', async () => {
+  test('Should redirect to the address book when neither an address nor a transporter is live at that id', async () => {
     serveAddressNotFound(ADDRESS_ID)
+    serveTransporterNotFound(ADDRESS_ID)
 
     expectRedirectTo(
       await getPage(getServer(), addressPath(ADDRESS_ID), 'view-not-found'),
@@ -151,6 +157,7 @@ describe('GET /address-book/{addressId}', () => {
 
   test("Should redirect to the address book for another organisation's address", async () => {
     const scope = serveAddressNotFoundForOtherOrganisation(ADDRESS_ID)
+    serveTransporterNotFound(ADDRESS_ID, OTHER_ORGANISATION_ID)
 
     const response = await getPageAsOtherOrganisation(
       getServer(),
@@ -180,6 +187,7 @@ describe('GET /address-book/{addressId}', () => {
 
   test('Should redirect to the address book for soft-deleted tombstones', async () => {
     serveStoredAddress({ ...STORED_ADDRESS, deleted: true })
+    serveTransporterNotFound(ADDRESS_ID)
 
     expectRedirectTo(
       await getPage(getServer(), addressPath(ADDRESS_ID), 'view-get-tombstone'),
@@ -192,6 +200,95 @@ describe('GET /address-book/{addressId}', () => {
 
     expectServerErrorPage(
       await getPage(getServer(), addressPath(ADDRESS_ID), 'view-get-500')
+    )
+  })
+})
+
+describe('GET /address-book/{id} for a transporter', () => {
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
+
+  test("Should show the signed-in organisation's transporter field by field with the country by name, once no address holds that id", async () => {
+    serveAddressNotFound(STORED_TRANSPORTER.id)
+    const scope = serveStoredTransporter()
+
+    const { result, statusCode } = await getPage(
+      getServer(),
+      addressPath(STORED_TRANSPORTER.id),
+      'view-get-transporter'
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(scope.isDone()).toBe(true)
+    const $ = load(result)
+    expect(textsOf($, '.govuk-summary-list__key')).toEqual(
+      ADDRESS_FORM_LABELS.filter(
+        (label) => label !== ADDRESS_LINE_2_LABEL && label !== COUNTY_LABEL
+      )
+    )
+    expect(textsOf($, '.govuk-summary-list__value')).toEqual([
+      STORED_TRANSPORTER.name,
+      STORED_TRANSPORTER.addressLine1,
+      STORED_TRANSPORTER.townOrCity,
+      STORED_TRANSPORTER.postcode,
+      UK_NAME,
+      STORED_TRANSPORTER.email,
+      STORED_TRANSPORTER.phone
+    ])
+  })
+
+  test('Should title the page with the transporter name', async () => {
+    serveAddressNotFound(STORED_TRANSPORTER.id)
+    serveStoredTransporter()
+
+    const { result } = await getPage(
+      getServer(),
+      addressPath(STORED_TRANSPORTER.id),
+      'view-get-transporter-title'
+    )
+
+    expect(textOf(load(result), 'head > title')).toBe(
+      `${STORED_TRANSPORTER.name} - Import notification service - GOV.UK`
+    )
+  })
+
+  test('Should show neither Edit nor Delete: a transporter has no edit or delete route yet', async () => {
+    serveAddressNotFound(STORED_TRANSPORTER.id)
+    serveStoredTransporter()
+
+    const { result } = await getPage(
+      getServer(),
+      addressPath(STORED_TRANSPORTER.id),
+      'view-get-transporter-buttons'
+    )
+
+    expect(load(result)(BUTTON_GROUP)).toHaveLength(0)
+  })
+
+  test('Should redirect to the address book when neither an address nor a transporter is live at that id', async () => {
+    serveAddressNotFound(STORED_TRANSPORTER.id)
+    serveTransporterNotFound(STORED_TRANSPORTER.id)
+
+    expectRedirectTo(
+      await getPage(
+        getServer(),
+        addressPath(STORED_TRANSPORTER.id),
+        'view-neither-found'
+      ),
+      addressBookPath()
+    )
+  })
+
+  test('Should redirect to the address book for a soft-deleted transporter tombstone', async () => {
+    serveAddressNotFound(STORED_TRANSPORTER.id)
+    serveStoredTransporter({ ...STORED_TRANSPORTER, deleted: true })
+
+    expectRedirectTo(
+      await getPage(
+        getServer(),
+        addressPath(STORED_TRANSPORTER.id),
+        'view-transporter-tombstone'
+      ),
+      addressBookPath()
     )
   })
 })
@@ -211,7 +308,7 @@ describe('GET /address-book/{addressId} with a return', () => {
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
     expect($(BACK_LINK).attr('href')).toBe(INS_HOME)
-    const group = $('.govuk-button-group')
+    const group = $(BUTTON_GROUP)
     expect(
       group.find(
         `a[href="${pathWithReturn(addressEditPath(ADDRESS_ID), INS_HOME)}"]`
@@ -268,6 +365,7 @@ describe('GET /address-book/{addressId} with a return', () => {
 
   test('Should redirect to an honoured return when the address is not found', async () => {
     serveAddressNotFound(ADDRESS_ID)
+    serveTransporterNotFound(ADDRESS_ID)
 
     expectRedirectTo(
       await getPage(
