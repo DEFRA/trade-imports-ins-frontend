@@ -18,7 +18,7 @@ import {
   buildEditCountrySelectItems,
   getAddressFormCountries
 } from '../address-countries.js'
-import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
+import { redirectingRecordIdRouteOptions } from '../record-id-params.js'
 import { addressRules, formValuesOf } from '../fields.js'
 import { boomFor, findLiveAddress, isNotFound } from '../stored-address.js'
 import {
@@ -199,5 +199,5 @@ const post = async (request, toolkit) => {
 export const routes = kit.pageRoutes(
   addressEditRoutePath(),
   { get, post },
-  redirectingAddressIdRouteOptions(deadLinkDestination)
+  redirectingRecordIdRouteOptions(deadLinkDestination)
 )

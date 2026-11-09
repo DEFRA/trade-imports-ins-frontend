@@ -6,12 +6,9 @@ import {
   addressRoutePath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
+import { redirectingRecordIdRouteOptions } from '../record-id-params.js'
 import { ADDRESS_FIELDS, addressFieldText, isRequiredField } from '../fields.js'
-import { getAddressFormCountries } from '../address-countries.js'
 import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
-import { findLiveTransporterWithCountryLabel } from '../stored-transporter.js'
-import { transporterCountryLabelOf } from '../view-model/list.js'
 import {
   deadLinkDestination,
   honouredReturnOf,
@@ -24,20 +21,6 @@ import { copy as cy } from '../copy/copy.cy.js'
 const logger = createLogger()
 const view = 'address-book/view/view'
 const copy = copyFor({ en, cy })
-
-const TRANSPORTER_SUMMARY_FIELDS = [
-  'name',
-  'addressLine1',
-  'addressLine2',
-  'townOrCity',
-  'county',
-  'postcode',
-  'countryCode',
-  'approvalNumber',
-  'type',
-  'email',
-  'phone'
-]
 
 const summaryRowsOf = (fields, { textFor, labelFor }) =>
   fields
@@ -54,23 +37,6 @@ export const buildRows = (address, countryLabel) =>
     labelFor: (field) => copy.form.fields[field]
   })
 
-const transporterTypeLabelOf = (type) =>
-  copy.list.transporterTypes[type] ?? type
-
-const transporterSummaryLabelFor = (field) =>
-  field === 'approvalNumber' || field === 'type'
-    ? copy.list.table[field]
-    : copy.form.fields[field]
-
-const buildTransporterRows = (transporter, countryLabel) =>
-  summaryRowsOf(TRANSPORTER_SUMMARY_FIELDS, {
-    textFor: (field) =>
-      field === 'type'
-        ? transporterTypeLabelOf(transporter.type)
-        : addressFieldText(transporter, countryLabel, field),
-    labelFor: transporterSummaryLabelFor
-  })
-
 const addressViewOf = (
   { address, countryLabel },
   { id, honouredReturn, returnDestination }
@@ -81,13 +47,6 @@ const addressViewOf = (
   editHref: pathWithReturn(addressEditPath(id), honouredReturn),
   deleteHref: pathWithReturn(addressDeletePath(id), honouredReturn),
   summaryRows: buildRows(address, countryLabel)
-})
-
-const transporterViewOf = (transporter, countryLabel, returnDestination) => ({
-  ...kit.base(transporter.name, { backLink: returnDestination }),
-  copy,
-  heading: transporter.name,
-  summaryRows: buildTransporterRows(transporter, countryLabel)
 })
 
 const get = async (request, toolkit) => {
@@ -112,25 +71,9 @@ const get = async (request, toolkit) => {
       )
     }
 
-    const liveTransporterWithCountryLabel =
-      await findLiveTransporterWithCountryLabel(organisationId, id)
-    if (liveTransporterWithCountryLabel) {
-      const { transporter } = liveTransporterWithCountryLabel
-      const countries = await getAddressFormCountries()
-      const countryLabel = transporterCountryLabelOf(
-        transporter,
-        countries,
-        copy.commercialTransporterForm.country
-      )
-      return toolkit.view(
-        view,
-        transporterViewOf(transporter, countryLabel, returnDestination)
-      )
-    }
-
     logger.info(
       { organisationId, id },
-      'Neither an address nor a transporter is live at this id, redirecting away from its view page'
+      'No address is live at this id, redirecting away from its view page'
     )
     return toolkit.redirect(returnDestination)
   } catch (err) {
@@ -146,5 +89,5 @@ const get = async (request, toolkit) => {
 export const routes = kit.pageRoutes(
   addressRoutePath(),
   { get },
-  redirectingAddressIdRouteOptions(deadLinkDestination)
+  redirectingRecordIdRouteOptions(deadLinkDestination)
 )

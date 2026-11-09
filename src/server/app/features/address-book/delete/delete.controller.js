@@ -3,7 +3,7 @@ import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import { addressDeleteRoutePath, addressPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
+import { redirectingRecordIdRouteOptions } from '../record-id-params.js'
 import { ADDRESS_FIELDS, addressFieldText } from '../fields.js'
 import { linesHtml } from '../lines-html.js'
 import {
@@ -115,5 +115,5 @@ const post = async (request, toolkit) => {
 export const routes = kit.pageRoutes(
   addressDeleteRoutePath(),
   { get, post },
-  redirectingAddressIdRouteOptions(deadLinkDestination)
+  redirectingRecordIdRouteOptions(deadLinkDestination)
 )

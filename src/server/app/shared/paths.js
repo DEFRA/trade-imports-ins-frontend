@@ -17,6 +17,10 @@ export const isTransporterTypeStart = (query) =>
 export const privateTransporterPath = () => `${transporterTypePath()}/private`
 export const commercialTransporterPath = () =>
   `${transporterTypePath()}/commercial`
+export const transporterPath = (id) =>
+  `${addressBookPath()}/transporter/${encodeURIComponent(id)}`
+export const transporterRoutePath = () =>
+  `${addressBookPath()}/transporter/{id}`
 export const addressPath = (id) => `/address-book/${encodeURIComponent(id)}`
 export const addressRoutePath = () => '/address-book/{id}'
 export const addressEditPath = (id) => `${addressPath(id)}/edit`

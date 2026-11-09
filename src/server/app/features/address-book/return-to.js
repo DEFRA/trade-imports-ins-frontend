@@ -79,19 +79,22 @@ export const pathWithReturn = (path, honouredReturn) =>
     ? path
     : `${path}?${new URLSearchParams({ [RETURN_QUERY_KEY]: honouredReturn })}`
 
-const isOwnPageOf = (addressId, pathOrUrl) => {
+const isOwnPageOf = (ownPagePath, pathOrUrl) => {
   const pathname = pathnameOf(pathOrUrl)
-  const addressPagePath = addressPath(addressId)
   return (
-    pathname === addressPagePath ||
-    pathname?.startsWith(`${addressPagePath}/`) === true
+    pathname === ownPagePath || pathname?.startsWith(`${ownPagePath}/`) === true
   )
 }
 
-export const returnDestinationOf = (addressId, honouredReturn) =>
-  honouredReturn && !isOwnPageOf(addressId, honouredReturn)
+/** Where a record's own pages send the user when they leave: the return they
+ * carry, unless it points back at the record being left, else `fallback`. */
+export const destinationAwayFrom = (ownPagePath, honouredReturn, fallback) =>
+  honouredReturn && !isOwnPageOf(ownPagePath, honouredReturn)
     ? honouredReturn
-    : addressBookPath()
+    : fallback
+
+export const returnDestinationOf = (addressId, honouredReturn) =>
+  destinationAwayFrom(addressPath(addressId), honouredReturn, addressBookPath())
 
 export const editLeaveDestinationOf = (addressId, honouredReturn) =>
   honouredReturn ?? addressPath(addressId)

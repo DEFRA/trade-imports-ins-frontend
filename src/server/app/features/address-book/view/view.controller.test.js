@@ -25,10 +25,8 @@ import {
   serveAddressNotFound,
   serveAddressNotFoundForOtherOrganisation,
   serveStoredAddress,
-  serveStoredTransporter,
   serveTransporterNotFound,
-  STORED_ADDRESS,
-  STORED_TRANSPORTER
+  STORED_ADDRESS
 } from '../../../../common/test-helpers/address-book-requests.js'
 import { addressBookApi } from '../../../../common/test-helpers/real-mode.js'
 import {
@@ -37,7 +35,6 @@ import {
 } from '../../../../common/test-helpers/rendered-text.js'
 import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
-import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { pathWithReturn } from '../return-to.js'
 import { buildRows } from './view.controller.js'
 
@@ -49,7 +46,6 @@ const SUMMARY_LIST_VALUE = '.govuk-summary-list__value'
 
 const ADDRESS_LINE_2_LABEL = 'Address line 2 (optional)'
 const COUNTY_LABEL = 'County (optional)'
-const COUNTRY_LABEL = 'Country'
 
 const STORED_ADDRESS_ROW_VALUES = [
   STORED_ADDRESS.name,
@@ -202,148 +198,6 @@ describe('GET /address-book/{addressId}', () => {
 
     expectServerErrorPage(
       await getPage(getServer(), addressPath(ADDRESS_ID), 'view-get-500')
-    )
-  })
-})
-
-describe('GET /address-book/{id} for a transporter', () => {
-  const getServer = startRealModeServerServingCountries(COUNTRIES)
-
-  test("Should show the signed-in organisation's transporter field by field with the country by name, once no address holds that id", async () => {
-    serveAddressNotFound(STORED_TRANSPORTER.id)
-    const scope = serveStoredTransporter()
-
-    const { result, statusCode } = await getPage(
-      getServer(),
-      addressPath(STORED_TRANSPORTER.id),
-      'view-get-transporter'
-    )
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(scope.isDone()).toBe(true)
-    const $ = load(result)
-    const addressLabelsWithoutOptionalFields = ADDRESS_FORM_LABELS.filter(
-      (label) => label !== ADDRESS_LINE_2_LABEL && label !== COUNTY_LABEL
-    )
-    const countryLabelIndex =
-      addressLabelsWithoutOptionalFields.indexOf(COUNTRY_LABEL)
-    expect(textsOf($, SUMMARY_LIST_KEY)).toEqual([
-      ...addressLabelsWithoutOptionalFields.slice(0, countryLabelIndex + 1),
-      'Type',
-      ...addressLabelsWithoutOptionalFields.slice(countryLabelIndex + 1)
-    ])
-    expect(textsOf($, SUMMARY_LIST_VALUE)).toEqual([
-      STORED_TRANSPORTER.name,
-      STORED_TRANSPORTER.addressLine1,
-      STORED_TRANSPORTER.townOrCity,
-      STORED_TRANSPORTER.postcode,
-      UK_NAME,
-      'Private',
-      STORED_TRANSPORTER.email,
-      STORED_TRANSPORTER.phone
-    ])
-  })
-
-  test('Should title the page with the transporter name', async () => {
-    serveAddressNotFound(STORED_TRANSPORTER.id)
-    serveStoredTransporter()
-
-    const { result } = await getPage(
-      getServer(),
-      addressPath(STORED_TRANSPORTER.id),
-      'view-get-transporter-title'
-    )
-
-    expect(textOf(load(result), 'head > title')).toBe(
-      `${STORED_TRANSPORTER.name} - Import notification service - GOV.UK`
-    )
-  })
-
-  test('Should show neither Edit nor Delete: a transporter has no edit or delete route yet', async () => {
-    serveAddressNotFound(STORED_TRANSPORTER.id)
-    serveStoredTransporter()
-
-    const { result } = await getPage(
-      getServer(),
-      addressPath(STORED_TRANSPORTER.id),
-      'view-get-transporter-buttons'
-    )
-
-    expect(load(result)(BUTTON_GROUP)).toHaveLength(0)
-  })
-
-  test('Should show the fixed Northern Ireland country and the approval number and type for a commercial transporter', async () => {
-    serveAddressNotFound(STORED_TRANSPORTER.id)
-    serveStoredTransporter({
-      ...STORED_TRANSPORTER,
-      type: 'COMMERCIAL',
-      countryCode: 'GB-NIR',
-      approvalNumber: 'UK/BELF/T2/00104115'
-    })
-
-    const { result, statusCode } = await getPage(
-      getServer(),
-      addressPath(STORED_TRANSPORTER.id),
-      'view-get-commercial-transporter'
-    )
-
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    const rows = $('.govuk-summary-list__row')
-      .map((_, row) => ({
-        key: textOf($, $(row).find(SUMMARY_LIST_KEY)),
-        value: textOf($, $(row).find(SUMMARY_LIST_VALUE))
-      }))
-      .get()
-
-    expect(rows).toContainEqual({ key: 'Country', value: 'Northern Ireland' })
-    expect(rows).toContainEqual({
-      key: 'Approval number',
-      value: 'UK/BELF/T2/00104115'
-    })
-    expect(rows).toContainEqual({ key: 'Type', value: 'Commercial' })
-  })
-
-  test('Should follow the list’s own View link back to the Transporter tab', async () => {
-    serveAddressNotFound(STORED_TRANSPORTER.id)
-    serveStoredTransporter()
-    const transporterTabUrl = `${addressBookPath()}?addressType=${ADDRESS_TYPES.TRANSPORTER}`
-
-    const { result, statusCode } = await getPage(
-      getServer(),
-      pathWithReturn(addressPath(STORED_TRANSPORTER.id), transporterTabUrl),
-      'view-transporter-return-to-tab'
-    )
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(load(result)(BACK_LINK).attr('href')).toBe(transporterTabUrl)
-  })
-
-  test('Should redirect to the address book when neither an address nor a transporter is live at that id', async () => {
-    serveAddressNotFound(STORED_TRANSPORTER.id)
-    serveTransporterNotFound(STORED_TRANSPORTER.id)
-
-    expectRedirectTo(
-      await getPage(
-        getServer(),
-        addressPath(STORED_TRANSPORTER.id),
-        'view-neither-found'
-      ),
-      addressBookPath()
-    )
-  })
-
-  test('Should redirect to the address book for a soft-deleted transporter tombstone', async () => {
-    serveAddressNotFound(STORED_TRANSPORTER.id)
-    serveStoredTransporter({ ...STORED_TRANSPORTER, deleted: true })
-
-    expectRedirectTo(
-      await getPage(
-        getServer(),
-        addressPath(STORED_TRANSPORTER.id),
-        'view-transporter-tombstone'
-      ),
-      addressBookPath()
     )
   })
 })

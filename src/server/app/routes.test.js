@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { allRoutes } from './features/index.js'
-import { addressIdParams } from './features/address-book/address-id-params.js'
+import { recordIdParams } from './features/address-book/record-id-params.js'
 
 describe('promoted route authentication', () => {
   it('Should name the session strategy on every promoted route', () => {
@@ -32,18 +32,19 @@ describe('promoted route authentication', () => {
       'GET /address-book/add/transporter/private',
       'POST /address-book/add/transporter/private',
       'GET /address-book/add/transporter/commercial',
-      'POST /address-book/add/transporter/commercial'
+      'POST /address-book/add/transporter/commercial',
+      'GET /address-book/transporter/{id}'
     ])
   })
 
-  it('Should validate the address id on every route that carries one', () => {
+  it('Should validate the record id on every route that carries one', () => {
     const routesWithId = allRoutes.filter((route) =>
       route.path.includes('{id}')
     )
 
-    expect(routesWithId).toHaveLength(5)
+    expect(routesWithId).toHaveLength(6)
     for (const route of routesWithId) {
-      expect(route.options.validate.params).toBe(addressIdParams)
+      expect(route.options.validate.params).toBe(recordIdParams)
     }
   })
 })

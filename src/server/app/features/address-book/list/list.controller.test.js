@@ -302,7 +302,7 @@ describe('#addressBookListController — the Transporter tab', () => {
       }
     ])
 
-  test("renders a transporter's View link carrying the Transporter tab as its return", async () => {
+  test("renders a transporter's View link at its own transporter URL, carrying the Transporter tab as its return", async () => {
     stubTransporterPage(
       { page: '1' },
       pageOf([highlandTransporter], { page: 1, totalItems: 1, totalPages: 1 })
@@ -318,7 +318,7 @@ describe('#addressBookListController — the Transporter tab', () => {
       return: `${addressBookPath()}?addressType=${ADDRESS_TYPES.TRANSPORTER}`
     }).toString()
     expect(rowCellsOf($, 0).eq(4).html().trim()).toBe(
-      `<a class="govuk-link" href="/address-book/1?${returnQuery}">View<span class="govuk-visually-hidden"> ${highlandTransporter.name}</span></a>`
+      `<a class="govuk-link" href="/address-book/transporter/1?${returnQuery}">View<span class="govuk-visually-hidden"> ${highlandTransporter.name}</span></a>`
     )
   })
 

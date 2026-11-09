@@ -14,10 +14,10 @@ import {
 import {
   addressTypeStartPath,
   addressBookPath,
-  addressPath
+  addressPath,
+  transporterPath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
-import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
   getAddressFormCountries,
   countryCodesMatching
@@ -31,6 +31,7 @@ import {
 } from '../address-book-tabs.js'
 import { linesHtml } from '../lines-html.js'
 import { pathWithReturn } from '../return-to.js'
+import { transporterTabPath } from '../transporter/transporter-return.js'
 import { takeSuccessMessage } from '../success-message.js'
 import {
   addressBookPageHref,
@@ -50,11 +51,8 @@ const logger = createLogger()
 const view = 'address-book/list/list'
 const copy = copyFor({ en, cy })
 
-const viewLink = (record, { returnTo } = {}) =>
-  `<a class="govuk-link" href="${pathWithReturn(addressPath(record.id), returnTo)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(record.name)}</span></a>`
-
-const transporterListReturnTo = () =>
-  addressBookPageHref(1, { addressType: ADDRESS_TYPES.TRANSPORTER })
+const viewLink = (record, recordPathOf, { returnTo } = {}) =>
+  `<a class="govuk-link" href="${pathWithReturn(recordPathOf(record.id), returnTo)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(record.name)}</span></a>`
 
 const actionHeadCell = () => ({
   html: `<span class="govuk-visually-hidden">${copy.list.table.action}</span>`
@@ -85,7 +83,7 @@ const addressTableRowsOf = (addresses) =>
     { text: address.roleLabelsText },
     { html: linesHtml(address.postalLines, { lineEnding: ',' }) },
     { text: address.countryLabel },
-    { html: viewLink(address) }
+    { html: viewLink(address, addressPath) }
   ])
 
 const transporterTableRowsOf = (transporters) =>
@@ -95,7 +93,9 @@ const transporterTableRowsOf = (transporters) =>
     { text: transporter.approvalNumberText },
     { text: transporter.typeLabel },
     {
-      html: viewLink(transporter, { returnTo: transporterListReturnTo() })
+      html: viewLink(transporter, transporterPath, {
+        returnTo: transporterTabPath()
+      })
     }
   ])
 

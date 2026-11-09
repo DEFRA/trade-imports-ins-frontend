@@ -24,6 +24,7 @@ const VIEW_PATH = '/address-book/{id}'
 const EDIT_PATH = '/address-book/{id}/edit'
 const DELETE_PATH = '/address-book/{id}/delete'
 const TRANSPORTER_TYPE_PATH = '/address-book/add/transporter'
+const TRANSPORTER_VIEW_PATH = '/address-book/transporter/{id}'
 const PRIVATE_TRANSPORTER_PATH = '/address-book/add/transporter/private'
 const COMMERCIAL_TRANSPORTER_PATH = '/address-book/add/transporter/commercial'
 
@@ -93,6 +94,13 @@ describe('#auditPaths', () => {
     expect(auditPaths(ADDRESS_ID)).not.toContain(PRIVATE_TRANSPORTER_PATH)
     expect(SKIPPED.get(PRIVATE_TRANSPORTER_PATH)).toContain(
       'one chosen transporter type at a time'
+    )
+  })
+
+  test("Should leave a transporter's own page out, with the skip list naming its cover", () => {
+    expect(auditPaths(ADDRESS_ID)).not.toContain(TRANSPORTER_VIEW_PATH)
+    expect(SKIPPED.get(TRANSPORTER_VIEW_PATH)).toContain(
+      'transporter-view.fit.spec.js'
     )
   })
 
