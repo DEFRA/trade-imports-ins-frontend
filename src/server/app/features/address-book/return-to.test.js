@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import {
@@ -18,6 +18,14 @@ import {
   pathWithReturn
 } from './return-to.js'
 
+const mockLoggerInfo = vi.fn()
+
+vi.mock('../../../common/helpers/logging/logger.js', () => ({
+  createLogger: () => ({
+    info: (...args) => mockLoggerInfo(...args)
+  })
+}))
+
 const OTHER_ADDRESS_ID = '111111111111111111111111'
 const ANIMALS_FRONTEND_ORIGIN = new URL(
   config.get('tradeImportsAnimalsFrontend.baseUrl')
@@ -27,6 +35,10 @@ const PLANTS_FRONTEND_ORIGIN = new URL(
 ).origin
 const LIVE_ANIMALS_URL = `${ANIMALS_FRONTEND_ORIGIN}/live-animals/notifications/abc`
 const GERMINAL_URL = `${ANIMALS_FRONTEND_ORIGIN}/germinal-products/notifications`
+const LIVE_ANIMALS_PICKER_PATH =
+  '/live-animals/notifications/abc/consignors/select?q=farm&page=2&change=1'
+const OTHER_ORIGIN_URL = 'https://evil.example/live-animals'
+const BACKSLASH_PATH = '/\\evil.example'
 
 const requestWithReturn = (returnQuery) => ({ query: { return: returnQuery } })
 
@@ -34,6 +46,7 @@ const originalStubMode = config.get('stubMode')
 
 beforeEach(() => {
   config.set('stubMode', false)
+  mockLoggerInfo.mockClear()
 })
 
 afterEach(() => {
@@ -66,7 +79,7 @@ describe('#honouredReturnOf', () => {
     ['an array', ['/', '/x']],
     ['a protocol-relative URL', '//evil.example/x'],
     ['a value not starting with /', 'address-book'],
-    ['another origin', 'https://evil.example/live-animals'],
+    ['another origin', OTHER_ORIGIN_URL],
     [
       'the plants frontend origin',
       `${PLANTS_FRONTEND_ORIGIN}/high-risk-plants`
@@ -76,7 +89,7 @@ describe('#honouredReturnOf', () => {
       `${ANIMALS_FRONTEND_ORIGIN}@evil.example/`
     ],
     ['a longer host', `${ANIMALS_FRONTEND_ORIGIN}.evil.example/`],
-    ['a backslash', '/\\evil.example'],
+    ['a backslash', BACKSLASH_PATH],
     ['a line break', '/address-book\r\n/x'],
     ['a tab making it protocol-relative', '/\t/evil.example']
   ])('Should ignore %s', (_name, rejectedReturn) => {
@@ -96,11 +109,91 @@ describe('#honouredReturnOf', () => {
     }
   )
 
-  test('Should ignore an animals frontend URL in stub mode but still honour a path', () => {
+  test('Should ignore an animals frontend URL in stub mode but still honour a page of this service', () => {
     config.set('stubMode', true)
 
     expect(honouredReturnOf(requestWithReturn(LIVE_ANIMALS_URL))).toBeNull()
     expect(honouredReturnOf(requestWithReturn('/'))).toBe('/')
+  })
+
+  test.each([LIVE_ANIMALS_PICKER_PATH, '/live-animals'])(
+    'Should honour the live-animals path %s as that page on the animals frontend outside stub mode',
+    (liveAnimalsPath) => {
+      expect(honouredReturnOf(requestWithReturn(liveAnimalsPath))).toBe(
+        `${ANIMALS_FRONTEND_ORIGIN}${liveAnimalsPath}`
+      )
+    }
+  )
+
+  test('Should ignore a live-animals path in stub mode rather than treat it as a page of this service', () => {
+    config.set('stubMode', true)
+
+    expect(
+      honouredReturnOf(requestWithReturn(LIVE_ANIMALS_PICKER_PATH))
+    ).toBeNull()
+  })
+
+  test('Should honour a path that only starts with the live-animals letters as a page of this service', () => {
+    expect(honouredReturnOf(requestWithReturn('/live-animalsx/y'))).toBe(
+      '/live-animalsx/y'
+    )
+  })
+})
+
+describe('#honouredReturnOf refusal log', () => {
+  const REQUEST_PATH = '/address-book/x'
+
+  const refuse = (requestedReturn) =>
+    honouredReturnOf({
+      path: REQUEST_PATH,
+      query: { return: requestedReturn }
+    })
+
+  test.each([
+    ['not a single value', ['/', '/x']],
+    ['unsafe characters', BACKSLASH_PATH],
+    [
+      'not an INS path, a live-animals path or an animals frontend URL',
+      OTHER_ORIGIN_URL
+    ]
+  ])(
+    'Should log the reason %s with the refused return',
+    (reason, requestedReturn) => {
+      refuse(requestedReturn)
+
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
+        { path: REQUEST_PATH, requestedReturn, reason },
+        'Return query refused, ignoring it'
+      )
+    }
+  )
+
+  test.each([
+    ['a live-animals path', LIVE_ANIMALS_PICKER_PATH],
+    ['an animals frontend URL', LIVE_ANIMALS_URL]
+  ])(
+    'Should log %s refused in stub mode as an animals frontend return',
+    (_name, requestedReturn) => {
+      config.set('stubMode', true)
+
+      refuse(requestedReturn)
+
+      expect(mockLoggerInfo).toHaveBeenCalledExactlyOnceWith(
+        {
+          path: REQUEST_PATH,
+          requestedReturn: new URL(requestedReturn, ANIMALS_FRONTEND_ORIGIN)
+            .href,
+          reason: 'animals frontend return refused in stub mode'
+        },
+        'Return query refused, ignoring it'
+      )
+    }
+  )
+
+  test('Should not log an honoured return', () => {
+    refuse('/')
+
+    expect(mockLoggerInfo).not.toHaveBeenCalled()
   })
 })
 

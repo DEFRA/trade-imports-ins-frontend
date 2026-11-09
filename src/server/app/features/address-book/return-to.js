@@ -1,9 +1,9 @@
-import { config } from '../../../../config/config.js'
 import {
   SET_BASES,
   SET_FRONTEND_BASE_URL_KEYS
 } from '../../../common/constants/journey-set-bases.js'
 import { isStubMode } from '../../../common/services/mode.js'
+import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
 import { addressBookPath, addressPath } from '../../shared/paths.js'
 
@@ -11,7 +11,7 @@ const logger = createLogger()
 
 const RETURN_QUERY_KEY = 'return'
 
-const normalisedInsPath = (pathOrUrl) => {
+const normalisedRelativePath = (pathOrUrl) => {
   if (!pathOrUrl.startsWith('/') || pathOrUrl.startsWith('//')) {
     return null
   }
@@ -30,26 +30,65 @@ const normalisedInsPath = (pathOrUrl) => {
 const pathnameOf = (pathOrUrl) =>
   pathOrUrl.startsWith('/') ? pathOrUrl.split(/[?#]/)[0] : null
 
-const animalsOrigin = () =>
-  new URL(config.get(SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS])).origin
+const liveAnimalsBaseUrl = () =>
+  buildSetBaseUrl(
+    SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS],
+    SET_BASES.LIVE_ANIMALS
+  )
 
-const animalsUrl = (pathOrUrl) => {
-  if (isStubMode()) {
-    return null
-  }
+const isLiveAnimalsPath = (path) => {
+  const pathname = pathnameOf(path)
+  return (
+    pathname === SET_BASES.LIVE_ANIMALS ||
+    pathname.startsWith(`${SET_BASES.LIVE_ANIMALS}/`)
+  )
+}
+
+const liveAnimalsUrlOf = (liveAnimalsPath) =>
+  `${liveAnimalsBaseUrl()}${liveAnimalsPath.slice(SET_BASES.LIVE_ANIMALS.length)}`
+
+const animalsFrontendHrefOf = (pathOrUrl) => {
   try {
     const url = new URL(pathOrUrl)
-    return url.origin === animalsOrigin() ? url.href : null
+    return url.origin === new URL(liveAnimalsBaseUrl()).origin ? url.href : null
   } catch {
     return null
   }
 }
 
-const logRefusedReturn = (request, reason) => {
+const refuseReturn = (request, requestedReturn, reason) => {
   logger.info(
-    { path: request.path, reason },
+    { path: request.path, requestedReturn, reason },
     'Return query refused, ignoring it'
   )
+  return null
+}
+
+const animalsFrontendReturn = (request, animalsFrontendHref) =>
+  isStubMode()
+    ? refuseReturn(
+        request,
+        animalsFrontendHref,
+        'animals frontend return refused in stub mode'
+      )
+    : animalsFrontendHref
+
+const honouredPathOrUrl = (request, requestedReturn) => {
+  const path = normalisedRelativePath(requestedReturn)
+  if (path && !isLiveAnimalsPath(path)) {
+    return path
+  }
+  const animalsFrontendHref = path
+    ? liveAnimalsUrlOf(path)
+    : animalsFrontendHrefOf(requestedReturn)
+  if (!animalsFrontendHref) {
+    return refuseReturn(
+      request,
+      requestedReturn,
+      'not an INS path, a live-animals path or an animals frontend URL'
+    )
+  }
+  return animalsFrontendReturn(request, animalsFrontendHref)
 }
 
 export const honouredReturnOf = (request) => {
@@ -58,20 +97,13 @@ export const honouredReturnOf = (request) => {
     return null
   }
   if (typeof requestedReturn !== 'string') {
-    logRefusedReturn(request, 'not a single value')
-    return null
+    return refuseReturn(request, requestedReturn, 'not a single value')
   }
   const unsafeRedirectCharacters = /[\\\r\n]/
   if (unsafeRedirectCharacters.test(requestedReturn)) {
-    logRefusedReturn(request, 'unsafe characters')
-    return null
+    return refuseReturn(request, requestedReturn, 'unsafe characters')
   }
-  const honouredReturn =
-    normalisedInsPath(requestedReturn) ?? animalsUrl(requestedReturn)
-  if (!honouredReturn) {
-    logRefusedReturn(request, 'not an INS path or an animals frontend URL')
-  }
-  return honouredReturn
+  return honouredPathOrUrl(request, requestedReturn)
 }
 
 export const pathWithReturn = (path, honouredReturn) =>

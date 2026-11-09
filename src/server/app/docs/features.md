@@ -110,8 +110,12 @@ root:
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
-  gives the `return` query when it is an INS path or, outside stub mode, a URL on
-  exactly the animals frontend origin, else null; `pathWithReturn` carries it on;
+  gives the honoured return, else null: an INS path as given; outside stub
+  mode, a path under `/live-animals` resolved against the configured animals
+  frontend URL (so a journey can send its own relative path without knowing
+  where it is hosted), or a URL on exactly the animals frontend origin.
+  Anything else, a path under `/live-animals` in stub mode included, gives null.
+  `pathWithReturn` carries the honoured return on to the next page.
   `returnDestinationOf` and `deadLinkDestination` send a dead link or a finished
   delete there, or to the list when it is one of that address's own pages.
   `editLeaveDestinationOf` gives where the edit page's Back link and Cancel go:
@@ -121,8 +125,9 @@ root:
   a line break splits the `Location` header. An INS path is resolved against a
   stand-in origin and kept only when that origin survives, then given back
   percent-encoded so it is safe in a `Location` header. A refused, non-empty
-  `return` is logged at info with the request path and the reason, never the
-  value itself.
+  `return` is logged at info with the request path, the refused value and the
+  reason; an animals frontend return refused in stub mode has a reason of its
+  own, logged with the animals frontend URL it would have gone to.
 - [`stored-address.js`](../features/address-book/stored-address.js) —
   `findLiveAddress` resolves an unknown or deleted address to `undefined`;
   `findLiveAddressWithCountryLabel` adds the country's label to a live one;
