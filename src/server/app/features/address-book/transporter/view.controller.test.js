@@ -23,7 +23,11 @@ import {
   textsOf
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
-import { transporterPath } from '../../../shared/paths.js'
+import {
+  transporterDeletePath,
+  transporterEditPath,
+  transporterPath
+} from '../../../shared/paths.js'
 import { pathWithReturn } from '../return-to.js'
 
 const UK_NAME = 'United Kingdom'
@@ -166,17 +170,43 @@ describe('GET /address-book/transporter/{id}', () => {
     expect(rows).toContainEqual({ key: COUNTY_LABEL, value: 'Aberdeenshire' })
   })
 
-  test('Should offer neither Edit nor Delete: a transporter has no edit or delete page yet', async () => {
+  test('Should offer to edit and to delete this same transporter', async () => {
     serveStoredTransporter()
 
     const { result } = await getPage(
       getServer(),
       transporterPath(STORED_TRANSPORTER.id),
-      'transporter-view-no-actions'
+      'transporter-view-actions'
     )
 
-    expect(load(result)(BUTTON_GROUP)).toHaveLength(0)
+    const $ = load(result)
+    const actions = $(BUTTON_GROUP).find('a')
+    expect(actions.map((_, link) => $(link).attr('href')).get()).toEqual([
+      transporterEditPath(STORED_TRANSPORTER.id),
+      transporterDeletePath(STORED_TRANSPORTER.id)
+    ])
   })
+
+  test('Should carry the return it was opened with on to Edit and Delete', async () => {
+    serveStoredTransporter()
+
+    const { result } = await getPage(
+      getServer(),
+      pathWithReturn(transporterPath(STORED_TRANSPORTER.id), INS_HOME),
+      'transporter-view-actions-return'
+    )
+
+    const $ = load(result)
+    const actions = $(BUTTON_GROUP).find('a')
+    expect(actions.map((_, link) => $(link).attr('href')).get()).toEqual([
+      pathWithReturn(transporterEditPath(STORED_TRANSPORTER.id), INS_HOME),
+      pathWithReturn(transporterDeletePath(STORED_TRANSPORTER.id), INS_HOME)
+    ])
+  })
+})
+
+describe('GET /address-book/transporter/{id} — leaving it, and ids it cannot serve', () => {
+  const getServer = startRealModeServerServingCountries(COUNTRIES)
 
   test('Should go back to the address book on the Transporter tab when opened without a return', async () => {
     serveStoredTransporter()

@@ -1,13 +1,17 @@
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
-import { transporterRoutePath } from '../../../shared/paths.js'
+import {
+  transporterDeletePath,
+  transporterEditPath,
+  transporterRoutePath
+} from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { redirectingRecordIdRouteOptions } from '../record-id-params.js'
 import { getAddressFormCountries } from '../address-countries.js'
 import { boomFor } from '../stored-address.js'
 import { findLiveTransporterWithCountryLabel } from '../stored-transporter.js'
 import { transporterCountryLabelOf } from '../view-model/list.js'
-import { honouredReturnOf } from '../return-to.js'
+import { honouredReturnOf, pathWithReturn } from '../return-to.js'
 import {
   transporterDeadLinkDestination,
   transporterReturnDestinationOf
@@ -25,10 +29,16 @@ const summaryLabelFor = (field) =>
     ? copy.list.table[field]
     : copy.form.fields[field]
 
-const transporterViewOf = (transporter, countryLabel, returnDestination) => ({
+const transporterViewOf = (
+  transporter,
+  countryLabel,
+  { id, honouredReturn, returnDestination }
+) => ({
   ...kit.base(transporter.name, { backLink: returnDestination }),
   copy,
   heading: transporter.name,
+  editHref: pathWithReturn(transporterEditPath(id), honouredReturn),
+  deleteHref: pathWithReturn(transporterDeletePath(id), honouredReturn),
   summaryRows: transporterSummaryRows(transporter, {
     countryLabel,
     typeLabel: copy.list.transporterTypes[transporter.type] ?? transporter.type,
@@ -39,10 +49,8 @@ const transporterViewOf = (transporter, countryLabel, returnDestination) => ({
 const get = async (request, toolkit) => {
   const organisationId = kit.requireOrganisationId(request)
   const { id } = request.params
-  const returnDestination = transporterReturnDestinationOf(
-    id,
-    honouredReturnOf(request)
-  )
+  const honouredReturn = honouredReturnOf(request)
+  const returnDestination = transporterReturnDestinationOf(id, honouredReturn)
 
   try {
     const live = await findLiveTransporterWithCountryLabel(organisationId, id)
@@ -62,7 +70,11 @@ const get = async (request, toolkit) => {
     )
     return toolkit.view(
       view,
-      transporterViewOf(live.transporter, countryLabel, returnDestination)
+      transporterViewOf(live.transporter, countryLabel, {
+        id,
+        honouredReturn,
+        returnDestination
+      })
     )
   } catch (err) {
     throw boomFor(err, () =>

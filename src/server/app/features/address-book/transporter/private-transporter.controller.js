@@ -1,10 +1,6 @@
 import { TRANSPORTER_TYPES } from '../../../services/transporters/index.js'
 import { HTTP_STATUS_BAD_REQUEST } from '../../../lib/http-status.js'
-import {
-  compose,
-  requiredOneOf,
-  validate
-} from '../../../lib/validate/index.js'
+import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import { privateTransporterPath } from '../../../shared/paths.js'
@@ -13,8 +9,8 @@ import {
   getAddressFormCountries
 } from '../address-countries.js'
 import {
-  transporterFieldRuleFor,
-  transporterFormValuesOf
+  privateTransporterFormValuesOf,
+  privateTransporterRules
 } from '../transporter-fields.js'
 import {
   clearTransporterAddInProgress,
@@ -34,27 +30,6 @@ import { copy as cy } from '../copy/copy.cy.js'
 const view = 'address-book/transporter/private-transporter'
 const bundle = copyFor({ en, cy })
 const copy = bundle.privateTransporterForm
-const errors = bundle.errors
-
-const privateTransporterRules = (countryCodes) =>
-  compose(
-    ...[
-      'name',
-      'addressLine1',
-      'addressLine2',
-      'townOrCity',
-      'county',
-      'postcode',
-      'email',
-      'phone'
-    ].map(transporterFieldRuleFor),
-    requiredOneOf('countryCode', countryCodes, errors.countryCode.required)
-  )
-
-const formValuesWithCountryCode = (payload) => ({
-  ...transporterFormValuesOf(payload),
-  countryCode: (payload.countryCode ?? '').trim()
-})
 
 const buildView = async (
   toolkit,
@@ -105,7 +80,7 @@ const post = async (request, toolkit) => {
     return toolkit.redirect(transporterCancelHref())
   }
   const countries = await getAddressFormCountries()
-  const formValues = formValuesWithCountryCode(payload)
+  const formValues = privateTransporterFormValuesOf(payload)
   storeEnteredTransporter(request, formValues)
 
   const { errors: fieldErrors } = validate(

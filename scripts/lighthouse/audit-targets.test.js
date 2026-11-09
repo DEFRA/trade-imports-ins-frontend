@@ -25,6 +25,8 @@ const EDIT_PATH = '/address-book/{id}/edit'
 const DELETE_PATH = '/address-book/{id}/delete'
 const TRANSPORTER_TYPE_PATH = '/address-book/add/transporter'
 const TRANSPORTER_VIEW_PATH = '/address-book/transporter/{id}'
+const TRANSPORTER_EDIT_PATH = '/address-book/transporter/{id}/edit'
+const TRANSPORTER_DELETE_PATH = '/address-book/transporter/{id}/delete'
 const PRIVATE_TRANSPORTER_PATH = '/address-book/add/transporter/private'
 const COMMERCIAL_TRANSPORTER_PATH = '/address-book/add/transporter/commercial'
 
@@ -97,10 +99,20 @@ describe('#auditPaths', () => {
     )
   })
 
-  test("Should leave a transporter's own page out, with the skip list naming its cover", () => {
-    expect(auditPaths(ADDRESS_ID)).not.toContain(TRANSPORTER_VIEW_PATH)
+  test("Should leave every transporter page out, with the skip list naming each one's cover", () => {
+    const paths = auditPaths(ADDRESS_ID)
+
+    expect(paths).not.toContain(TRANSPORTER_VIEW_PATH)
+    expect(paths).not.toContain(TRANSPORTER_EDIT_PATH)
+    expect(paths).not.toContain(TRANSPORTER_DELETE_PATH)
     expect(SKIPPED.get(TRANSPORTER_VIEW_PATH)).toContain(
       'transporter-view.fit.spec.js'
+    )
+    expect(SKIPPED.get(TRANSPORTER_EDIT_PATH)).toContain(
+      'transporter-edit.fit.spec.js'
+    )
+    expect(SKIPPED.get(TRANSPORTER_DELETE_PATH)).toContain(
+      'transporter-delete.fit.spec.js'
     )
   })
 

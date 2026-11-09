@@ -96,7 +96,12 @@ export const copy = {
       `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,
     updated: (name) => `Cyfeiriad ${name} wedi’i ddiweddaru`,
     deleted: (name) => `Cyfeiriad ${name} wedi’i ddileu`,
-    deletedUnnamed: 'Cyfeiriad wedi’i ddileu'
+    deletedUnnamed: 'Cyfeiriad wedi’i ddileu',
+    transporterUpdated: (name) =>
+      `${name} wedi’i ddiweddaru yn eich llyfr cyfeiriadau`,
+    transporterDeleted: (name) =>
+      `${name} wedi’i ddileu o’ch llyfr cyfeiriadau`,
+    transporterDeletedUnnamed: 'Cludwr wedi’i ddileu o’ch llyfr cyfeiriadau'
   },
   form: {
     addressHeading: CYFEIRIAD_HEADING,
@@ -231,6 +236,19 @@ export const copy = {
     title: 'Dileu’r cyfeiriad hwn?',
     summaryAddress: 'Cyfeiriad',
     confirmation: 'Cadarnhewch eich bod am ddileu’r cyfeiriad hwn.',
+    warning: 'Mae dileadau’n barhaol ac ni allwch ddadwneud hyn.',
+    confirm: 'Ie, dileu',
+    cancel: 'Na, canslo'
+  },
+  editTransporter: {
+    title: 'Golygu manylion y cludwr',
+    save: 'Cadw’r newidiadau',
+    cancel: 'Canslo'
+  },
+  deleteTransporter: {
+    title: 'Dileu’r cludwr hwn?',
+    summaryTransporter: 'Cludwr',
+    confirmation: 'Cadarnhewch eich bod am ddileu’r cludwr hwn.',
     warning: 'Mae dileadau’n barhaol ac ni allwch ddadwneud hyn.',
     confirm: 'Ie, dileu',
     cancel: 'Na, canslo'

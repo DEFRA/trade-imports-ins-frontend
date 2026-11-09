@@ -1,0 +1,28 @@
+{% extends "shared/layout.njk" %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block journeyContent %}
+  <h1 class="govuk-heading-l">{{ copy.title }}</h1>
+
+  {{ govukSummaryList({
+    rows: [{
+      key: { text: copy.summaryTransporter },
+      value: { html: transporterHtml }
+    }]
+  }) }}
+
+  <p class="govuk-body">{{ copy.confirmation }}</p>
+  <p class="govuk-body">{{ copy.warning }}</p>
+
+  <form method="post" novalidate>
+    <input type="hidden" name="crumb" value="{{ crumb }}" />
+    <div class="govuk-button-group">
+      {{ govukButton({
+        text: copy.confirm,
+        classes: "govuk-button--warning"
+      }) }}
+      <a class="govuk-link" href="{{ cancelHref }}">{{ copy.cancel }}</a>
+    </div>
+  </form>
+{% endblock %}

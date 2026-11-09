@@ -91,7 +91,10 @@ export const copy = {
     transporterAdded: (name) => `${name} added to your address book`,
     updated: (name) => `${name} address updated`,
     deleted: (name) => `${name} address deleted`,
-    deletedUnnamed: 'Address deleted'
+    deletedUnnamed: 'Address deleted',
+    transporterUpdated: (name) => `${name} updated in your address book`,
+    transporterDeleted: (name) => `${name} deleted from your address book`,
+    transporterDeletedUnnamed: 'Transporter deleted from your address book'
   },
   form: {
     addressHeading: ADDRESS_HEADING,
@@ -226,6 +229,19 @@ export const copy = {
     title: 'Delete this address?',
     summaryAddress: 'Address',
     confirmation: 'Confirm that you want to delete this address.',
+    warning: 'Deletions are permanent and you cannot undo this.',
+    confirm: 'Yes, delete',
+    cancel: 'No, cancel'
+  },
+  editTransporter: {
+    title: 'Edit transporter details',
+    save: 'Save changes',
+    cancel: 'Cancel'
+  },
+  deleteTransporter: {
+    title: 'Delete this transporter?',
+    summaryTransporter: 'Transporter',
+    confirmation: 'Confirm that you want to delete this transporter.',
     warning: 'Deletions are permanent and you cannot undo this.',
     confirm: 'Yes, delete',
     cancel: 'No, cancel'

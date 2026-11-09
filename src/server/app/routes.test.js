@@ -33,7 +33,11 @@ describe('promoted route authentication', () => {
       'POST /address-book/add/transporter/private',
       'GET /address-book/add/transporter/commercial',
       'POST /address-book/add/transporter/commercial',
-      'GET /address-book/transporter/{id}'
+      'GET /address-book/transporter/{id}',
+      'GET /address-book/transporter/{id}/edit',
+      'POST /address-book/transporter/{id}/edit',
+      'GET /address-book/transporter/{id}/delete',
+      'POST /address-book/transporter/{id}/delete'
     ])
   })
 
@@ -42,7 +46,7 @@ describe('promoted route authentication', () => {
       route.path.includes('{id}')
     )
 
-    expect(routesWithId).toHaveLength(6)
+    expect(routesWithId).toHaveLength(10)
     for (const route of routesWithId) {
       expect(route.options.validate.params).toBe(recordIdParams)
     }

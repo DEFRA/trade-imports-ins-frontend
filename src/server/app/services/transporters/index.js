@@ -17,3 +17,9 @@ export const createTransporter = (organisationId, transporter) =>
 
 export const getTransporter = (organisationId, transporterId) =>
   transporters().getTransporter(organisationId, transporterId)
+
+export const updateTransporter = (organisationId, transporterId, transporter) =>
+  transporters().updateTransporter(organisationId, transporterId, transporter)
+
+export const deleteTransporter = (organisationId, transporterId) =>
+  transporters().deleteTransporter(organisationId, transporterId)

@@ -3,19 +3,14 @@ import {
   TRANSPORTER_TYPES
 } from '../../../services/transporters/index.js'
 import { HTTP_STATUS_BAD_REQUEST } from '../../../lib/http-status.js'
-import {
-  compose,
-  requiredMaxText,
-  requiredOneOf,
-  validate
-} from '../../../lib/validate/index.js'
+import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import { commercialTransporterPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
-  transporterFieldRuleFor,
-  transporterFormValuesOf
+  commercialTransporterFormValuesOf,
+  commercialTransporterRules
 } from '../transporter-fields.js'
 import {
   clearTransporterAddInProgress,
@@ -38,31 +33,6 @@ const bundle = copyFor({ en, cy })
 const copy = bundle.commercialTransporterForm
 const errors = bundle.errors
 
-const commercialTransporterRules = () => {
-  const APPROVAL_NUMBER_MAX_LENGTH = 50
-  return compose(
-    ...[
-      'name',
-      'addressLine1',
-      'addressLine2',
-      'townOrCity',
-      'county',
-      'postcode',
-      'email',
-      'phone'
-    ].map(transporterFieldRuleFor),
-    requiredMaxText('approvalNumber', APPROVAL_NUMBER_MAX_LENGTH, {
-      required: errors.approvalNumber.required,
-      maxLength: errors.approvalNumber.maxLength(APPROVAL_NUMBER_MAX_LENGTH)
-    }),
-    requiredOneOf(
-      'countryCode',
-      [NORTHERN_IRELAND_COUNTRY_CODE],
-      errors.countryFixed
-    )
-  )
-}
-
 const buildView = (
   toolkit,
   { formValues, errors: fieldErrors = {}, recoverableError = false }
@@ -82,11 +52,6 @@ const buildView = (
       cancelLabel: transporterCancelLabel(TRANSPORTER_TYPES.COMMERCIAL)
     })
     .header('Cache-Control', 'no-store')
-
-const formValuesWithApprovalNumber = (payload) => ({
-  ...transporterFormValuesOf(payload),
-  approvalNumber: (payload.approvalNumber ?? '').trim()
-})
 
 const get = (request, toolkit) => {
   const redirect = redirectUnlessOwnTransporterType(
@@ -116,7 +81,7 @@ const post = async (request, toolkit) => {
     clearTransporterAddInProgress(request)
     return toolkit.redirect(transporterCancelHref())
   }
-  const formValues = formValuesWithApprovalNumber(payload)
+  const formValues = commercialTransporterFormValuesOf(payload)
   storeEnteredTransporter(request, formValues)
 
   const { errors: fieldErrors } = validate(commercialTransporterRules(), {

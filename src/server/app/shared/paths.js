@@ -21,6 +21,11 @@ export const transporterPath = (id) =>
   `${addressBookPath()}/transporter/${encodeURIComponent(id)}`
 export const transporterRoutePath = () =>
   `${addressBookPath()}/transporter/{id}`
+export const transporterEditPath = (id) => `${transporterPath(id)}/edit`
+export const transporterEditRoutePath = () => `${transporterRoutePath()}/edit`
+export const transporterDeletePath = (id) => `${transporterPath(id)}/delete`
+export const transporterDeleteRoutePath = () =>
+  `${transporterRoutePath()}/delete`
 export const addressPath = (id) => `/address-book/${encodeURIComponent(id)}`
 export const addressRoutePath = () => '/address-book/{id}'
 export const addressEditPath = (id) => `${addressPath(id)}/edit`

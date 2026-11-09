@@ -1,6 +1,8 @@
 import { allRoutes } from '../../src/server/app/features/index.js'
 import {
   privateTransporterPath,
+  transporterDeleteRoutePath,
+  transporterEditRoutePath,
   transporterRoutePath
 } from '../../src/server/app/shared/paths.js'
 
@@ -23,6 +25,14 @@ export const SKIPPED = new Map([
   [
     transporterRoutePath(),
     'the audit seeds an address and substitutes its id, and a transporter page needs a transporter id, so this page is covered by the axe assertions in transporter-view.fit.spec.js instead'
+  ],
+  [
+    transporterEditRoutePath(),
+    'a transporter page needs a transporter id, which the audit does not seed; covered by the axe assertions in transporter-edit.fit.spec.js instead'
+  ],
+  [
+    transporterDeleteRoutePath(),
+    'a transporter page needs a transporter id, which the audit does not seed; covered by the axe assertions in transporter-delete.fit.spec.js instead'
   ]
 ])
 

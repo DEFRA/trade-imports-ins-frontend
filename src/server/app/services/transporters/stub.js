@@ -98,3 +98,24 @@ export const getTransporter = async (organisationId, transporterId) => {
   }
   return transporter
 }
+
+export const updateTransporter = async (
+  organisationId,
+  transporterId,
+  transporter
+) => {
+  throwIfInvalid(refusalsOf(transporter))
+  const stored = await getTransporter(organisationId, transporterId)
+  const updated = { ...stored, ...transporter, id: stored.id }
+  transportersOf(organisationId).splice(
+    transportersOf(organisationId).indexOf(stored),
+    1,
+    updated
+  )
+  return updated
+}
+
+export const deleteTransporter = async (organisationId, transporterId) => {
+  const stored = await getTransporter(organisationId, transporterId)
+  stored.deleted = true
+}

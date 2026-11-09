@@ -66,3 +66,27 @@ export const getTransporter = async (organisationId, transporterId) => {
   await throwOnError(response)
   return response.json()
 }
+
+export const updateTransporter = async (
+  organisationId,
+  transporterId,
+  transporter
+) => {
+  const response = await fetch(transportersUrl(organisationId, transporterId), {
+    method: 'PUT',
+    headers: addressBookHeaders(organisationId),
+    body: JSON.stringify(transporter)
+  })
+
+  await throwOnAddressBookError(response)
+  return response.json()
+}
+
+export const deleteTransporter = async (organisationId, transporterId) => {
+  const response = await fetch(transportersUrl(organisationId, transporterId), {
+    method: 'DELETE',
+    headers: addressBookHeaders(organisationId)
+  })
+
+  await throwOnError(response)
+}
