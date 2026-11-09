@@ -6,6 +6,7 @@ import {
   addressTypePath,
   BACK_LINK,
   commercialTransporterPath,
+  cookieHeaderOf,
   expectRedirectTo,
   getPage,
   postPage,
@@ -17,6 +18,7 @@ import {
   textsOf
 } from '../../../../common/test-helpers/rendered-text.js'
 import { startRealModeServer } from '../../../../common/test-helpers/test-server.js'
+import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 
 const CAPTION = '.govuk-caption-l'
 const WARNING = '.govuk-warning-text__text'
@@ -94,5 +96,73 @@ describe('#transporterTypeController', { concurrent: false }, () => {
     )
 
     expectRedirectTo(response, commercialTransporterPath())
+  })
+
+  test('cancelling a part-filled commercial form and re-entering through Add a new address shows no transporter type chosen and an empty commercial form', async () => {
+    const sessionId = 'transporter-type-restart'
+
+    const chosenCommercial = await postPage(
+      getServer(),
+      transporterTypePath(),
+      sessionId,
+      { transporterType: 'COMMERCIAL' }
+    )
+    const commercialCookie = cookieHeaderOf(chosenCommercial.headers)
+
+    const partFilled = await postPage(
+      getServer(),
+      commercialTransporterPath(),
+      sessionId,
+      { name: 'Not Finished Haulage Ltd' },
+      commercialCookie
+    )
+    expect(partFilled.statusCode).toBe(statusCodes.badRequest)
+    const partFilledCookie =
+      cookieHeaderOf(partFilled.headers) || commercialCookie
+
+    const cancelled = await postPage(
+      getServer(),
+      commercialTransporterPath(),
+      sessionId,
+      { cancel: 'true' },
+      partFilledCookie
+    )
+    const cancelledCookie =
+      cookieHeaderOf(cancelled.headers) || partFilledCookie
+
+    const restarted = await postPage(
+      getServer(),
+      addressTypePath(),
+      sessionId,
+      { addressType: ADDRESS_TYPES.TRANSPORTER },
+      cancelledCookie
+    )
+    const restartedCookie = cookieHeaderOf(restarted.headers) || cancelledCookie
+
+    const { result: typeResult } = await getPage(
+      getServer(),
+      restarted.headers.location,
+      sessionId,
+      restartedCookie
+    )
+    expect(checkedValuesOf(load(typeResult))).toEqual([])
+
+    const chosenAgain = await postPage(
+      getServer(),
+      transporterTypePath(),
+      sessionId,
+      { transporterType: 'COMMERCIAL' },
+      restartedCookie
+    )
+    const reopenedCookie =
+      cookieHeaderOf(chosenAgain.headers) || restartedCookie
+
+    const { result: commercialResult } = await getPage(
+      getServer(),
+      commercialTransporterPath(),
+      sessionId,
+      reopenedCookie
+    )
+    expect(load(commercialResult)('#name').attr('value')).toBeUndefined()
   })
 })

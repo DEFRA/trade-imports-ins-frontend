@@ -4,12 +4,15 @@ import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
   commercialTransporterPath,
+  isTransporterTypeStart,
   privateTransporterPath,
   transporterTypePath
 } from '../../../shared/paths.js'
+import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { TRANSPORTER_TYPES } from '../../../services/transporters/index.js'
-import { transporterBackHref } from '../transporter-navigation.js'
+import { transporterTypeBackHref } from '../transporter-navigation.js'
 import {
+  clearTransporterAddInProgress,
   storeChosenTransporterType,
   storedChosenTransporterType
 } from '../transporter-in-progress.js'
@@ -18,6 +21,7 @@ import { copy as cy } from '../copy/copy.cy.js'
 
 const view = 'address-book/transporter/transporter-type'
 const copy = copyFor({ en, cy })
+const logger = createLogger()
 
 const transporterTypeRules = () =>
   requiredOneOf(
@@ -43,7 +47,7 @@ const buildView = (toolkit, { selectedType, errors = {} }) =>
   toolkit
     .view(view, {
       ...kit.base(copy.transporterType.title, {
-        backLink: transporterBackHref()
+        backLink: transporterTypeBackHref()
       }),
       copy,
       radioItems: radioItemsOf(selectedType),
@@ -52,8 +56,21 @@ const buildView = (toolkit, { selectedType, errors = {} }) =>
     })
     .header('Cache-Control', 'no-store')
 
-const get = (request, toolkit) =>
-  buildView(toolkit, { selectedType: storedChosenTransporterType(request) })
+const get = (request, toolkit) => {
+  if (isTransporterTypeStart(request.query)) {
+    clearTransporterAddInProgress(request)
+    logger.info(
+      {
+        organisationId: kit.requireOrganisationId(request),
+        path: request.path
+      },
+      'Starting a new transporter, clearing the transporter being added'
+    )
+  }
+  return buildView(toolkit, {
+    selectedType: storedChosenTransporterType(request)
+  })
+}
 
 const destinationFor = (transporterType) =>
   transporterType === TRANSPORTER_TYPES.COMMERCIAL

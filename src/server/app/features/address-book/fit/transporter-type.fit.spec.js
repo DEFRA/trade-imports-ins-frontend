@@ -3,7 +3,10 @@ import { expect, test } from '@playwright/test'
 import { signInAndOpen } from '../../../../../../fit/sign-in.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import { TRANSPORTER_TYPES } from '../../../services/transporters/index.js'
-import { addressTypePath } from '../../../shared/paths.js'
+import {
+  addressTypePath,
+  transporterTypeStartPath
+} from '../../../shared/paths.js'
 import { copy } from '../copy/copy.en.js'
 import {
   openFilterDisclosure,
@@ -65,7 +68,7 @@ test.describe('choose a transporter type', () => {
 
     await chooseAddressType(page, ADDRESS_TYPES.TRANSPORTER)
 
-    await expect(page).toHaveURL(transporterTypePath())
+    await expect(page).toHaveURL(transporterTypeStartPath())
     await expect(typePageHeading(page)).toBeVisible()
   })
 

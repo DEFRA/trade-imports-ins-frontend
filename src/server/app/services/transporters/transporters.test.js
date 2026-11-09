@@ -101,27 +101,28 @@ describe('the stub transporters service', () => {
     })
 
     test.each([
-      ['a name', 'aberdeen'],
-      ['an address line', 'drovers'],
-      ['a town or city', 'ABERDEEN'],
-      ['a postcode', 'ab10'],
-      ['an approval number', '00104115']
-    ])('Should match a search term against %s', async (_, searchTerm) => {
-      const organisationId = anOrganisation()
-      await transporters.createTransporter(
-        organisationId,
-        searchTerm === '00104115'
-          ? commercialTransporter()
-          : privateTransporter()
-      )
+      ['a name', 'aberdeen', privateTransporter],
+      ['an address line', 'drovers', privateTransporter],
+      ['a town or city', 'ABERDEEN', privateTransporter],
+      ['a postcode', 'ab10', privateTransporter],
+      ['an approval number', '00104115', commercialTransporter]
+    ])(
+      'Should match a search term against %s',
+      async (_, searchTerm, transporterFixture) => {
+        const organisationId = anOrganisation()
+        await transporters.createTransporter(
+          organisationId,
+          transporterFixture()
+        )
 
-      const page = await transporters.listTransporters(organisationId, {
-        pageSize: 25,
-        searchTerm
-      })
+        const page = await transporters.listTransporters(organisationId, {
+          pageSize: 25,
+          searchTerm
+        })
 
-      expect(page.totalItems).toBe(1)
-    })
+        expect(page.totalItems).toBe(1)
+      }
+    )
 
     test('Should leave out a transporter no search field matches', async () => {
       const organisationId = anOrganisation()
@@ -268,8 +269,6 @@ describe('the real transporters service', () => {
     })
 
     test('Should carry the search term, country codes, types and search types as repeated query parameters', async () => {
-      // A predicate rather than an object, so the test states that each of
-      // these is repeated once per value rather than collapsed into one.
       let sent
       const scope = addressBookApi()
         .get(transportersApiPath())
@@ -335,8 +334,6 @@ describe('choosing between the stub and the real address book', () => {
   test('Should answer from the stub in stub mode, making no outbound call', async () => {
     config.set('stubMode', true)
 
-    // nock refuses every outbound connection here, so a page coming back at all
-    // proves the stub answered rather than the real address book.
     const page = await transporters.listTransporters(anOrganisation(), {
       pageSize: 25
     })

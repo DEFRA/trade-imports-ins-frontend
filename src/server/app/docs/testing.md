@@ -296,7 +296,7 @@ Playwright locator for the Type select; the Cheerio reader in
 `list.test-support.js` is `typeSelectStateOf`), `followTab` (follows
 an address type tab's link), `openFilterDisclosure`,
 `expectFilterDisclosureOpensAndCloses`, `searchAndExpectQuery` (submits the
-search and, with a `typeFilter`, the Type select, for either filter
+search and, with a `chosenOption`, the Type select, for either filter
 parameter),
 `resultsLineOf`, `searchAndExpectMatches`, `searchAndExpectSingleMatch`.
 [`dashboard.js`](../features/dashboard/fit/dashboard.js) —
@@ -312,6 +312,17 @@ its `seedAddressLines`, and the unknown and malformed ids.
 [`return-query.js`](../features/address-book/fit/return-query.js) —
 `withReturn(path, returnTo)`. Page paths come from the app's own
 [`shared/paths.js`](../shared/paths.js), never a literal in a spec.
+[`transporter-form.js`](../features/address-book/fit/transporter-form.js) —
+`transporterTypeRadio` and `transporterContinueButton` (the type question's
+own controls), `chooseTransporterType`, the three open helpers
+(`openTransporterTypePage`, `openPrivateTransporterForm`,
+`openCommercialTransporterForm`), the two valid fixtures
+(`validPrivateTransporter`, `validCommercialTransporter`) and their fill
+helpers (`fillPrivateTransporterForm`, `fillCommercialTransporterForm`),
+`saveTransporterButton` and `cancelTransporterButton` (each taking the
+form's own copy, since Save and Cancel read a label per form), and the
+re-exported `privateTransporterPath`, `commercialTransporterPath` and
+`transporterTypePath`.
 
 Every test signs in with its own organisation id, because the
 address-book stub keys its data by organisation; the `-empty`,

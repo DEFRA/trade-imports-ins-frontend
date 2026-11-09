@@ -99,8 +99,8 @@ export const fillCommercialTransporterForm = async (page, overrides = {}) => {
 export const saveTransporterButton = (page, formCopy) =>
   page.getByRole('button', { name: formCopy.save })
 
-export const cancelTransporterLink = (page) =>
-  page.getByRole('link', { name: copy.add.cancelAndReturnToAddressBook })
+export const cancelTransporterButton = (page, formCopy) =>
+  page.getByRole('button', { name: formCopy.cancel })
 
 export {
   privateTransporterPath,

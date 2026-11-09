@@ -17,16 +17,21 @@ import {
   serveTransporterRefused,
   transporterTypePath
 } from '../../../../common/test-helpers/address-book-requests.js'
+import { recordModuleLoggerInfo } from '../../../../common/test-helpers/module-logger-lines.js'
 import {
   textOf,
   textsOf
 } from '../../../../common/test-helpers/rendered-text.js'
+import { ORGANISATION_ID } from '../../../../common/test-helpers/session-auth.js'
 import { startRealModeServerServingCountries } from '../../../../common/test-helpers/test-server.js'
+
+const NO_TYPE_CHOSEN_MESSAGE =
+  'No transporter type chosen that this form serves, sending the user to choose one'
 
 const CAPTION = '.govuk-caption-l'
 const FORM_LABEL_SELECTOR = 'form label'
 const ERROR_SUMMARY_LINKS = '.govuk-error-summary a'
-const CANCEL_LINK = 'form a.govuk-link'
+const CANCEL_BUTTON = 'form button[name="cancel"]'
 
 const TRANSPORTER_LIST_PATH = `${addressBookPath()}?addressType=TRANSPORTER`
 
@@ -58,8 +63,9 @@ const postWithPrivateTypeChosen = async (server, sessionId, payload) => {
 
 describe('#privateTransporterController', { concurrent: false }, () => {
   const getServer = startRealModeServerServingCountries(COUNTRIES)
+  const { entriesWith: infoLogs } = recordModuleLoggerInfo()
 
-  test('GET without a transporter type chosen returns to the transporter type question', async () => {
+  test('GET without a transporter type chosen returns to the transporter type question, logging once', async () => {
     const response = await getPage(
       getServer(),
       privateTransporterPath(),
@@ -67,6 +73,35 @@ describe('#privateTransporterController', { concurrent: false }, () => {
     )
 
     expectRedirectTo(response, transporterTypePath())
+    expect(infoLogs(NO_TYPE_CHOSEN_MESSAGE)).toEqual([
+      {
+        fields: {
+          organisationId: ORGANISATION_ID,
+          path: privateTransporterPath()
+        },
+        message: NO_TYPE_CHOSEN_MESSAGE
+      }
+    ])
+  })
+
+  test('POST without a transporter type chosen returns to the transporter type question, logging once', async () => {
+    const response = await postPage(
+      getServer(),
+      privateTransporterPath(),
+      'private-no-type-post',
+      VALID_PAYLOAD
+    )
+
+    expectRedirectTo(response, transporterTypePath())
+    expect(infoLogs(NO_TYPE_CHOSEN_MESSAGE)).toEqual([
+      {
+        fields: {
+          organisationId: ORGANISATION_ID,
+          path: privateTransporterPath()
+        },
+        message: NO_TYPE_CHOSEN_MESSAGE
+      }
+    ])
   })
 
   test('GET with the type chosen shows the form fields, title and Cancel reading the address-book cancel label', async () => {
@@ -90,18 +125,30 @@ describe('#privateTransporterController', { concurrent: false }, () => {
       'Email address',
       'Phone number'
     ])
-    expect(textOf($, CANCEL_LINK)).toBe('Cancel and return to address book')
+    expect(textOf($, CANCEL_BUTTON)).toBe('Cancel and return to address book')
   })
 
-  test('Cancel reads the address-book cancel label and goes to the address book filtered to transporters', async () => {
-    const { result } = await getWithPrivateTypeChosen(
-      getServer(),
-      'private-cancel'
-    )
+  test('Cancel reads the address-book cancel label and submits to the address book filtered to transporters', async () => {
+    const sessionId = 'private-cancel'
+    const { result } = await getWithPrivateTypeChosen(getServer(), sessionId)
 
     const $ = load(result)
-    expect(textOf($, CANCEL_LINK)).toBe('Cancel and return to address book')
-    expect($(CANCEL_LINK).attr('href')).toBe(TRANSPORTER_LIST_PATH)
+    expect(textOf($, CANCEL_BUTTON)).toBe('Cancel and return to address book')
+
+    const cookie = await cookieAfterChoosingTransporterType(
+      getServer(),
+      sessionId,
+      { transporterType: 'PRIVATE' }
+    )
+    const response = await postPage(
+      getServer(),
+      privateTransporterPath(),
+      sessionId,
+      { cancel: 'true' },
+      cookie
+    )
+
+    expectRedirectTo(response, TRANSPORTER_LIST_PATH)
   })
 
   test('POST with invalid fields shows the errors and makes no create call', async () => {
@@ -121,6 +168,30 @@ describe('#privateTransporterController', { concurrent: false }, () => {
       'Enter a name or organisation'
     )
     expectNotSent()
+  })
+
+  test('A refused form reopens with the previously entered values still in the inputs', async () => {
+    const posted = await postWithPrivateTypeChosen(
+      getServer(),
+      'private-reopen',
+      {
+        ...VALID_PAYLOAD,
+        name: ''
+      }
+    )
+    expect(posted.statusCode).toBe(statusCodes.badRequest)
+
+    const cookie = cookieHeaderOf(posted.headers)
+    const { result } = await getPage(
+      getServer(),
+      privateTransporterPath(),
+      'private-reopen',
+      cookie
+    )
+
+    const $ = load(result)
+    expect($('#addressLine1').attr('value')).toBe(VALID_PAYLOAD.addressLine1)
+    expect($('#townOrCity').attr('value')).toBe(VALID_PAYLOAD.townOrCity)
   })
 
   test('A valid save sends exactly the posted fields as the transporter body, with type PRIVATE, and lands on the address book filtered to transporters with the success banner set', async () => {

@@ -82,19 +82,15 @@
        to the server, so the hidden field beside it posts the one the page
        fixed. #}
     {{ govukSelect({
-      id: "countryCodeDisplay",
+      id: "countryCode",
       name: "countryCodeDisplay",
-      label: { text: "Country" },
+      label: { text: copy.fields.countryCode },
       items: [{ value: countryCode, text: countryLabel, selected: true }],
       disabled: true,
-      classes: "govuk-!-width-one-half"
+      classes: "govuk-!-width-one-half",
+      errorMessage: errors.countryCode and { text: errors.countryCode }
     }) }}
     <input type="hidden" name="countryCode" value="{{ countryCode }}" />
-    {% if errors.countryCode %}
-      <p class="govuk-error-message" id="countryCode-error">
-        <span class="govuk-visually-hidden">Error:</span> {{ errors.countryCode }}
-      </p>
-    {% endif %}
 
     <h2 class="govuk-heading-m">{{ copy.contactHeading }}</h2>
 
@@ -120,7 +116,12 @@
 
     <div class="govuk-button-group">
       {{ govukButton({ text: copy.save }) }}
+      {{ govukButton({
+        text: cancelLabel,
+        name: "cancel",
+        value: "true",
+        classes: "govuk-button--secondary"
+      }) }}
     </div>
-    <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ cancelLabel }}</a></p>
   </form>
 {% endblock %}

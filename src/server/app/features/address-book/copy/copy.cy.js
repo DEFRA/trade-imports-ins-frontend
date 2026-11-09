@@ -15,6 +15,8 @@ const RHYNGWLADOL_HINT = 'Ar gyfer rhifau rhyngwladol, cynhwyswch god y wlad'
 const CADW_A_PHARHAU = 'Cadw a pharhau'
 const CYFEIRIAD_HEADING = 'Cyfeiriad'
 const MANYLION_CYSWLLT = 'Manylion cyswllt'
+const CANSLO_A_DYCHWELYD_I_R_LLYFR_CYFEIRIADAU =
+  'Canslo a dychwelyd i’r llyfr cyfeiriadau'
 
 export const copy = {
   list: {
@@ -162,7 +164,8 @@ export const copy = {
     },
     phoneHint: RHYNGWLADOL_HINT,
     countryPlaceholder: SELECT_COUNTRY,
-    save: CADW_A_PHARHAU
+    save: CADW_A_PHARHAU,
+    cancel: CANSLO_A_DYCHWELYD_I_R_LLYFR_CYFEIRIADAU
   },
   commercialTransporterForm: {
     caption: ADD_A_NEW_TRANSPORTER,
@@ -178,11 +181,13 @@ export const copy = {
       townOrCity: TREF_NEU_DDINAS,
       county: SIR,
       postcode: COD_POST,
+      countryCode: 'Gwlad',
       email: CYFEIRIAD_E_BOST,
       phone: RHIF_FFON
     },
     phoneHint: RHYNGWLADOL_HINT,
-    save: CADW_A_PHARHAU
+    save: CADW_A_PHARHAU,
+    cancel: CANSLO_A_DYCHWELYD_I_R_LLYFR_CYFEIRIADAU
   },
   roles: {
     journeyLegend: 'Ar gyfer beth arall y dylid defnyddio’r cyfeiriad hwn?',
@@ -209,7 +214,7 @@ export const copy = {
     save: CADW_A_PHARHAU,
     saveAndSelect: 'Cadw a dewis',
     saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
-    cancelAndReturnToAddressBook: 'Canslo a dychwelyd i’r llyfr cyfeiriadau',
+    cancelAndReturnToAddressBook: CANSLO_A_DYCHWELYD_I_R_LLYFR_CYFEIRIADAU,
     cancelAndReturnToAddressPage: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
     cancelAndReturnToHub: 'Canslo a dychwelyd i’r hyb'
   },

@@ -12,11 +12,9 @@ import {
 
 const transportersByOrganisation = new Map()
 
-const seedTransportersFor = () => []
-
 const transportersOf = (organisationId) => {
   if (!transportersByOrganisation.has(organisationId)) {
-    transportersByOrganisation.set(organisationId, seedTransportersFor())
+    transportersByOrganisation.set(organisationId, [])
   }
   return transportersByOrganisation.get(organisationId)
 }

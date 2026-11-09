@@ -103,7 +103,12 @@
 
     <div class="govuk-button-group">
       {{ govukButton({ text: copy.save }) }}
+      {{ govukButton({
+        text: cancelLabel,
+        name: "cancel",
+        value: "true",
+        classes: "govuk-button--secondary"
+      }) }}
     </div>
-    <p class="govuk-body"><a class="govuk-link" href="{{ cancelHref }}">{{ cancelLabel }}</a></p>
   </form>
 {% endblock %}

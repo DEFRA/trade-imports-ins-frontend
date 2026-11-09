@@ -5,7 +5,7 @@ import {
   requiredMaxText
 } from '../../lib/validate/index.js'
 
-export const maxLengthMessageFor = (fieldRules, errors, field) =>
+const maxLengthMessageFor = (fieldRules, errors, field) =>
   errors[field].maxLength(fieldRules[field].maxLength)
 
 const requiredTextRule = (fieldRules, errors, field) =>

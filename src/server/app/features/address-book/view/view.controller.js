@@ -8,8 +8,10 @@ import {
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { redirectingAddressIdRouteOptions } from '../address-id-params.js'
 import { ADDRESS_FIELDS, addressFieldText, isRequiredField } from '../fields.js'
+import { getAddressFormCountries } from '../address-countries.js'
 import { boomFor, findLiveAddressWithCountryLabel } from '../stored-address.js'
 import { findLiveTransporterWithCountryLabel } from '../stored-transporter.js'
+import { transporterCountryLabelOf } from '../view-model/list.js'
 import {
   deadLinkDestination,
   honouredReturnOf,
@@ -23,19 +25,51 @@ const logger = createLogger()
 const view = 'address-book/view/view'
 const copy = copyFor({ en, cy })
 
-export const buildRows = (address, countryLabel) => {
-  const rowFields = [...ADDRESS_FIELDS, 'email', 'phone']
-  return rowFields
-    .map((field) => ({
-      field,
-      text: addressFieldText(address, countryLabel, field)
-    }))
+const TRANSPORTER_SUMMARY_FIELDS = [
+  'name',
+  'addressLine1',
+  'addressLine2',
+  'townOrCity',
+  'county',
+  'postcode',
+  'countryCode',
+  'approvalNumber',
+  'type',
+  'email',
+  'phone'
+]
+
+const summaryRowsOf = (fields, { textFor, labelFor }) =>
+  fields
+    .map((field) => ({ field, text: textFor(field) }))
     .filter(({ field, text }) => isRequiredField(field) || text)
     .map(({ field, text }) => ({
-      key: { text: copy.form.fields[field] },
+      key: { text: labelFor(field) },
       value: { text }
     }))
-}
+
+export const buildRows = (address, countryLabel) =>
+  summaryRowsOf([...ADDRESS_FIELDS, 'email', 'phone'], {
+    textFor: (field) => addressFieldText(address, countryLabel, field),
+    labelFor: (field) => copy.form.fields[field]
+  })
+
+const transporterTypeLabelOf = (type) =>
+  copy.list.transporterTypes[type] ?? type
+
+const transporterSummaryLabelFor = (field) =>
+  field === 'approvalNumber' || field === 'type'
+    ? copy.list.table[field]
+    : copy.form.fields[field]
+
+const buildTransporterRows = (transporter, countryLabel) =>
+  summaryRowsOf(TRANSPORTER_SUMMARY_FIELDS, {
+    textFor: (field) =>
+      field === 'type'
+        ? transporterTypeLabelOf(transporter.type)
+        : addressFieldText(transporter, countryLabel, field),
+    labelFor: transporterSummaryLabelFor
+  })
 
 const addressViewOf = (
   { address, countryLabel },
@@ -49,14 +83,11 @@ const addressViewOf = (
   summaryRows: buildRows(address, countryLabel)
 })
 
-const transporterViewOf = (
-  { transporter, countryLabel },
-  returnDestination
-) => ({
+const transporterViewOf = (transporter, countryLabel, returnDestination) => ({
   ...kit.base(transporter.name, { backLink: returnDestination }),
   copy,
   heading: transporter.name,
-  summaryRows: buildRows(transporter, countryLabel)
+  summaryRows: buildTransporterRows(transporter, countryLabel)
 })
 
 const get = async (request, toolkit) => {
@@ -84,9 +115,16 @@ const get = async (request, toolkit) => {
     const liveTransporterWithCountryLabel =
       await findLiveTransporterWithCountryLabel(organisationId, id)
     if (liveTransporterWithCountryLabel) {
+      const { transporter } = liveTransporterWithCountryLabel
+      const countries = await getAddressFormCountries()
+      const countryLabel = transporterCountryLabelOf(
+        transporter,
+        countries,
+        copy.commercialTransporterForm.country
+      )
       return toolkit.view(
         view,
-        transporterViewOf(liveTransporterWithCountryLabel, returnDestination)
+        transporterViewOf(transporter, countryLabel, returnDestination)
       )
     }
 

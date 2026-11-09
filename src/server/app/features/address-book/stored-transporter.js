@@ -1,11 +1,5 @@
 import { getTransporter } from '../../services/transporters/index.js'
-import {
-  findLiveRecord,
-  findLiveRecordWithCountryLabel
-} from './stored-address.js'
-
-export const findLiveTransporter = (organisationId, transporterId) =>
-  findLiveRecord(getTransporter, organisationId, transporterId)
+import { findLiveRecordWithCountryLabel } from './stored-address.js'
 
 export const findLiveTransporterWithCountryLabel = async (
   organisationId,

@@ -14,6 +14,7 @@ const PHONE_HINT = 'For international numbers include the country code'
 const SAVE_AND_CONTINUE = 'Save and continue'
 const ADDRESS_HEADING = 'Address'
 const CONTACT_HEADING = 'Contact details'
+const CANCEL_AND_RETURN_TO_ADDRESS_BOOK = 'Cancel and return to address book'
 
 export const copy = {
   list: {
@@ -158,7 +159,8 @@ export const copy = {
     },
     phoneHint: PHONE_HINT,
     countryPlaceholder: SELECT_COUNTRY,
-    save: SAVE_AND_CONTINUE
+    save: SAVE_AND_CONTINUE,
+    cancel: CANCEL_AND_RETURN_TO_ADDRESS_BOOK
   },
   commercialTransporterForm: {
     caption: ADD_A_NEW_TRANSPORTER,
@@ -174,11 +176,13 @@ export const copy = {
       townOrCity: TOWN_OR_CITY,
       county: COUNTY,
       postcode: POSTCODE,
+      countryCode: 'Country',
       email: EMAIL_ADDRESS,
       phone: PHONE_NUMBER
     },
     phoneHint: PHONE_HINT,
-    save: SAVE_AND_CONTINUE
+    save: SAVE_AND_CONTINUE,
+    cancel: CANCEL_AND_RETURN_TO_ADDRESS_BOOK
   },
   roles: {
     journeyLegend: 'What else should this address be used for?',
@@ -205,7 +209,7 @@ export const copy = {
     save: SAVE_AND_CONTINUE,
     saveAndSelect: 'Save and select',
     saveAndReturnToAddressPage: 'Save and return to address page',
-    cancelAndReturnToAddressBook: 'Cancel and return to address book',
+    cancelAndReturnToAddressBook: CANCEL_AND_RETURN_TO_ADDRESS_BOOK,
     cancelAndReturnToAddressPage: 'Cancel and return to address page',
     cancelAndReturnToHub: 'Cancel and return to hub'
   },

@@ -27,8 +27,6 @@ const TRANSPORTER_TYPE_PATH = '/address-book/add/transporter'
 const PRIVATE_TRANSPORTER_PATH = '/address-book/add/transporter/private'
 const COMMERCIAL_TRANSPORTER_PATH = '/address-book/add/transporter/commercial'
 
-// The private transporter form is the one route the skip list names: a session holds one
-// chosen transporter type at a time and the audit chooses commercial.
 const AUDITED_PATHS = [
   DASHBOARD_PATH,
   NOTIFICATION_TYPE_PATH,

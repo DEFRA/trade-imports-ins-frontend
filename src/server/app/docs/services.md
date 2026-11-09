@@ -92,7 +92,8 @@ returns it.
 ### transporters
 
 [`index.js`](../services/transporters/index.js) exports `listTransporters(organisationId,
-listQuery)` and `createTransporter(organisationId, transporter)`, and
+listQuery)`, `createTransporter(organisationId, transporter)` and
+`getTransporter(organisationId, transporterId)`, and
 re-exports `TRANSPORTER_TYPES` and `NORTHERN_IRELAND_COUNTRY_CODE` from
 `transporter-types.js`. The [client](../services/transporters/client.js)
 reads [`services/address-book-request.js`](../services/address-book-request.js)
@@ -105,7 +106,8 @@ transporter's name, address lines, town, county, postcode and approval
 number, narrows by country code and type, and refuses a create the way the
 address book refuses it: a missing approval number on a commercial
 transporter, one present on a private transporter, or a commercial country
-that is not Northern Ireland.
+that is not Northern Ireland. `getTransporter` throws the shared `notFound()`
+for an id the organisation's `Map` does not hold.
 
 ### countries
 

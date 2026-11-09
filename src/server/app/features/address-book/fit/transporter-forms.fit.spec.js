@@ -6,7 +6,7 @@ import { copy } from '../copy/copy.en.js'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import { backLink } from './address-form.js'
 import {
-  cancelTransporterLink,
+  cancelTransporterButton,
   commercialTransporterPath,
   fillCommercialTransporterForm,
   fillPrivateTransporterForm,
@@ -80,7 +80,7 @@ test.describe('the private transporter form', () => {
     )
     await fillPrivateTransporterForm(page)
 
-    await cancelTransporterLink(page).click()
+    await cancelTransporterButton(page, copy.privateTransporterForm).click()
 
     await expect(page).toHaveURL(addressBookPathPattern)
     await expect(
@@ -179,7 +179,7 @@ test.describe('the commercial transporter form', () => {
     )
     await fillCommercialTransporterForm(page)
 
-    await cancelTransporterLink(page).click()
+    await cancelTransporterButton(page, copy.commercialTransporterForm).click()
 
     await expect(page).toHaveURL(addressBookPathPattern)
     await expect(

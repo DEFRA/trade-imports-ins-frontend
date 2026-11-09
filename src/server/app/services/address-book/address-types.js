@@ -5,9 +5,6 @@ export const ADDRESS_TYPES = Object.freeze({
   BRANCH: 'BRANCH'
 })
 
-/** The address types whose radio leads to the address form: every type that
- * groups roles. The Transporter type leads to the add-a-transporter pages
- * instead, so it is not one of these. */
 export const ADDRESS_FORM_TYPES = Object.freeze([
   ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
   ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,

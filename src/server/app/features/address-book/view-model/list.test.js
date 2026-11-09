@@ -257,6 +257,18 @@ describe('#approvalNumberTextOf', () => {
       copy.notApplicable
     )
   })
+
+  test('Should give the not-applicable word for a transporter with an empty approval number', () => {
+    expect(
+      approvalNumberTextOf({ approvalNumber: '' }, copy.notApplicable)
+    ).toBe(copy.notApplicable)
+  })
+
+  test('Should give the not-applicable word for a transporter with a whitespace-only approval number', () => {
+    expect(
+      approvalNumberTextOf({ approvalNumber: '   ' }, copy.notApplicable)
+    ).toBe(copy.notApplicable)
+  })
 })
 
 describe('#transporterTypesWhoseLabelContains', () => {

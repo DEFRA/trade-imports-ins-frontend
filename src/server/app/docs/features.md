@@ -28,7 +28,7 @@ each hands over to, which types take a notification back, and the URL that
 returns one to its origin page.
 
 **`address-book/`** is the multi-page group: one folder per page (`list/`,
-`address-type/`, `add/`, `view/`, `edit/`, `delete/`), each holding `<page>.controller.js`,
+`address-type/`, `add/`, `view/`, `edit/`, `delete/`, `transporter/`), each holding `<page>.controller.js`,
 `<page>.njk` and `<page>.controller.test.js`. Group-wide modules sit at the
 root:
 
@@ -138,10 +138,32 @@ root:
   else nothing), `storeEnteredAddress` and `storedEnteredAddress` store and read
   the field values and `tickedRoles` posted with the add form, and `clearAddInProgress`
   removes everything, on a new add and on a save.
+- [`field-rule.js`](../features/address-book/field-rule.js) — `fieldRuleFor`,
+  the shared text/email field-rule builder `fields.js` and
+  `transporter-fields.js` each call with their own field-rules map.
+- [`stored-transporter.js`](../features/address-book/stored-transporter.js) —
+  `findLiveTransporterWithCountryLabel` resolves an unknown or deleted
+  transporter id to `undefined`, else the live transporter with its
+  country's label.
+- [`transporter-fields.js`](../features/address-book/transporter-fields.js) —
+  the transporter forms' shared fields (name, the address lines, town or
+  city, county, postcode, email and phone) and `transporterFormValuesOf`.
+- [`transporter-in-progress.js`](../features/address-book/transporter-in-progress.js) —
+  yar-backed state of the transporter add in progress: the chosen
+  transporter type, the entered form values, and `clearTransporterAddInProgress`.
+- [`transporter-navigation.js`](../features/address-book/transporter-navigation.js) —
+  the transporter pages' shared Back links and Cancel link, and
+  `redirectUnlessOwnTransporterType`, the guard both transporter forms call
+  to send the trader back to the type question when it does not match the
+  type chosen.
+- [`transporter-save.js`](../features/address-book/transporter-save.js) —
+  `saveTransporter`, the transporter forms' shared create-and-redirect (or
+  show the refusal) handler.
 
-Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with six
+Plus one shared `copy/` pair, `view-model/list.js`, and `fit/` with eight
 specs plus the fixtures `address-book-list.js`, `address-book-list-text.js`,
-`address-form.js`, `return-query.js` (`withReturn`) and `seed-address.js`.
+`address-form.js`, `return-query.js` (`withReturn`), `seed-address.js` and
+`transporter-form.js`.
 Every spec signs in and opens its page with `signInAndOpen`, which lives in
 `fit/sign-in.js` beside `signIn`. `view-model/list.js` owns the list's
 name lines, Type label, postal lines and results line, which the list

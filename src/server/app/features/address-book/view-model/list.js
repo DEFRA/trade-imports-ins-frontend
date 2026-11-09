@@ -5,7 +5,7 @@ import {
   NORTHERN_IRELAND_COUNTRY_CODE,
   TRANSPORTER_TYPES
 } from '../../../services/transporters/index.js'
-import { postalLinesOf } from '../fields.js'
+import { displayTextOf, postalLinesOf } from '../fields.js'
 
 export const buildAddressBookQueryString = ({
   addressType,
@@ -74,11 +74,8 @@ export const mapAddressRows = (addresses, countries, copyByRole) =>
     countryLabel: countryLabelOf(countries, address.countryCode)
   }))
 
-/** The Approval number cell's text: the stored number for a transporter that
- * has one, and the not-applicable word for one that has none (a private
- * transporter never carries one). */
 export const approvalNumberTextOf = (transporter, notApplicableWord) =>
-  transporter.approvalNumber ?? notApplicableWord
+  displayTextOf(transporter.approvalNumber) ?? notApplicableWord
 
 export const transporterTypesWhoseLabelContains = (
   searchTerm,
@@ -93,9 +90,6 @@ export const transporterTypesWhoseLabelContains = (
     .map(([transporterType]) => transporterType)
 }
 
-/** The country codes a transporter search term matches: every address country whose name
- * contains it, and the code a commercial transporter is stored under when the term matches
- * the fixed country label its row shows, which no address country carries. */
 export const transporterCountryCodesMatching = (
   searchTerm,
   countries,
@@ -109,7 +103,7 @@ export const transporterCountryCodesMatching = (
   return [...new Set([...matched, NORTHERN_IRELAND_COUNTRY_CODE])]
 }
 
-const transporterCountryLabelOf = (
+export const transporterCountryLabelOf = (
   transporter,
   countries,
   fixedCommercialCountryLabel

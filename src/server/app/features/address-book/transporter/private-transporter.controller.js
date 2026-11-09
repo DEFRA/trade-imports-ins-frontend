@@ -7,10 +7,7 @@ import {
 } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
-import {
-  privateTransporterPath,
-  transporterTypePath
-} from '../../../shared/paths.js'
+import { privateTransporterPath } from '../../../shared/paths.js'
 import {
   buildCountrySelectItems,
   getAddressFormCountries
@@ -20,13 +17,15 @@ import {
   transporterFormValuesOf
 } from '../transporter-fields.js'
 import {
-  storedChosenTransporterType,
+  clearTransporterAddInProgress,
   storedEnteredTransporter,
   storeEnteredTransporter
 } from '../transporter-in-progress.js'
 import {
+  redirectUnlessOwnTransporterType,
   transporterCancelHref,
-  transporterCancelLabel
+  transporterCancelLabel,
+  transporterFormBackHref
 } from '../transporter-navigation.js'
 import { saveTransporter } from '../transporter-save.js'
 import { copy as en } from '../copy/copy.en.js'
@@ -65,7 +64,7 @@ const buildView = async (
   return toolkit
     .view(view, {
       ...kit.base(copy.title, {
-        backLink: transporterTypePath(),
+        backLink: transporterFormBackHref(),
         recoverableError
       }),
       copy,
@@ -73,25 +72,38 @@ const buildView = async (
       countryItems: buildCountrySelectItems(countries, copy.countryPlaceholder),
       errors: fieldErrors,
       errorSummary: kit.errorSummary(fieldErrors),
-      cancelHref: transporterCancelHref(),
-      cancelLabel: transporterCancelLabel()
+      cancelLabel: transporterCancelLabel(TRANSPORTER_TYPES.PRIVATE)
     })
     .header('Cache-Control', 'no-store')
 }
 
 const get = async (request, toolkit) => {
-  if (storedChosenTransporterType(request) !== TRANSPORTER_TYPES.PRIVATE) {
-    return toolkit.redirect(transporterTypePath())
+  const redirect = redirectUnlessOwnTransporterType(
+    request,
+    toolkit,
+    TRANSPORTER_TYPES.PRIVATE
+  )
+  if (redirect) {
+    return redirect
   }
-  const { formValues } = storedEnteredTransporter(request) ?? {}
-  return buildView(toolkit, { formValues: formValues ?? {} })
+  const formValues = storedEnteredTransporter(request) ?? {}
+  return buildView(toolkit, { formValues })
 }
 
 const post = async (request, toolkit) => {
-  if (storedChosenTransporterType(request) !== TRANSPORTER_TYPES.PRIVATE) {
-    return toolkit.redirect(transporterTypePath())
+  const redirect = redirectUnlessOwnTransporterType(
+    request,
+    toolkit,
+    TRANSPORTER_TYPES.PRIVATE
+  )
+  if (redirect) {
+    return redirect
   }
   const payload = request.payload ?? {}
+  if (payload.cancel) {
+    clearTransporterAddInProgress(request)
+    return toolkit.redirect(transporterCancelHref())
+  }
   const countries = await getAddressFormCountries()
   const formValues = formValuesWithCountryCode(payload)
   storeEnteredTransporter(request, formValues)
@@ -107,7 +119,7 @@ const post = async (request, toolkit) => {
   }
 
   return saveTransporter(request, toolkit, {
-    payload: { ...formValues, type: TRANSPORTER_TYPES.PRIVATE },
+    transporter: { ...formValues, type: TRANSPORTER_TYPES.PRIVATE },
     formValues,
     buildView
   })

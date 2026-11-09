@@ -5,7 +5,7 @@ import { fieldRuleFor } from './field-rule.js'
 
 const { errors } = copyFor({ en, cy })
 
-export const TRANSPORTER_FIELD_RULES = {
+const TRANSPORTER_FIELD_RULES = {
   name: { maxLength: 255, required: true },
   addressLine1: { maxLength: 255, required: true },
   addressLine2: { maxLength: 255, required: false },
@@ -16,7 +16,7 @@ export const TRANSPORTER_FIELD_RULES = {
   phone: { maxLength: 20, required: true }
 }
 
-export const TRANSPORTER_FIELDS = Object.keys(TRANSPORTER_FIELD_RULES)
+const TRANSPORTER_FIELDS = Object.keys(TRANSPORTER_FIELD_RULES)
 
 export const transporterFieldRuleFor = (field) =>
   fieldRuleFor(TRANSPORTER_FIELD_RULES, errors, field)

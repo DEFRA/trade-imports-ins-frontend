@@ -30,8 +30,6 @@ const commercialTransporter = (overrides = {}) => ({
   ...overrides
 })
 
-// Each stub test gets its own organisation id, because the stub keeps its records
-// in a module-level Map that outlives a single test.
 let nextOrganisation = 0
 const anOrganisation = () => {
   nextOrganisation += 1

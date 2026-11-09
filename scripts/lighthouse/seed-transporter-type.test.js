@@ -37,7 +37,7 @@ const serveTypeStep = ({
     .reply(...postReply)
 
 describe('#AUDIT_TRANSPORTER_TYPE', () => {
-  test('Should audit the commercial form, the one carrying every private field and the approval number', () => {
+  test('Should choose COMMERCIAL as the audited transporter type', () => {
     expect(AUDIT_TRANSPORTER_TYPE).toBe('COMMERCIAL')
   })
 })

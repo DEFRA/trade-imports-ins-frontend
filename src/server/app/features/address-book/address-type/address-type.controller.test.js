@@ -26,7 +26,7 @@ import {
 } from '../../../services/address-book/index.js'
 import {
   addressTypeStartPath,
-  transporterTypePath
+  transporterTypeStartPath
 } from '../../../shared/paths.js'
 import { UNSUPPORTED_ADDRESS_TYPE } from '../fit/address-book-list.js'
 
@@ -149,7 +149,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
       }
     )
 
-    expectRedirectTo(response, transporterTypePath())
+    expectRedirectTo(response, transporterTypeStartPath())
     expect(
       loggedWith(
         'Address type question handed over to the add-a-transporter pages'

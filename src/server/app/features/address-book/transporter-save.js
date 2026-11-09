@@ -25,11 +25,11 @@ const { successBanner } = copyFor({ en, cy })
 export const saveTransporter = async (
   request,
   toolkit,
-  { payload, formValues, buildView }
+  { transporter, formValues, buildView }
 ) => {
   const organisationId = kit.requireOrganisationId(request)
   try {
-    const created = await createTransporter(organisationId, payload)
+    const created = await createTransporter(organisationId, transporter)
     logger.info(
       { organisationId, transporterId: created.id },
       'A transporter is created from the address book'

@@ -17,6 +17,7 @@ import {
   addressPath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
+import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
 import {
   getAddressFormCountries,
   countryCodesMatching
@@ -29,6 +30,7 @@ import {
   resolveTypeFilterValue
 } from '../address-book-tabs.js'
 import { linesHtml } from '../lines-html.js'
+import { pathWithReturn } from '../return-to.js'
 import { takeSuccessMessage } from '../success-message.js'
 import {
   addressBookPageHref,
@@ -48,8 +50,11 @@ const logger = createLogger()
 const view = 'address-book/list/list'
 const copy = copyFor({ en, cy })
 
-const viewLink = (record) =>
-  `<a class="govuk-link" href="${addressPath(record.id)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(record.name)}</span></a>`
+const viewLink = (record, { returnTo } = {}) =>
+  `<a class="govuk-link" href="${pathWithReturn(addressPath(record.id), returnTo)}">${copy.list.table.view}<span class="govuk-visually-hidden"> ${escapeHtml(record.name)}</span></a>`
+
+const transporterListReturnTo = () =>
+  addressBookPageHref(1, { addressType: ADDRESS_TYPES.TRANSPORTER })
 
 const actionHeadCell = () => ({
   html: `<span class="govuk-visually-hidden">${copy.list.table.action}</span>`
@@ -89,14 +94,16 @@ const transporterTableRowsOf = (transporters) =>
     { html: linesHtml(transporter.postalLines, { lineEnding: ',' }) },
     { text: transporter.approvalNumberText },
     { text: transporter.typeLabel },
-    {}
+    {
+      html: viewLink(transporter, { returnTo: transporterListReturnTo() })
+    }
   ])
 
-const paginationOf = (page) => ({
-  page: page.page,
-  pageSize: page.pageSize,
-  totalItems: page.totalItems,
-  totalPages: page.totalPages
+const paginationOf = (loadedPage) => ({
+  page: loadedPage.page,
+  pageSize: loadedPage.pageSize,
+  totalItems: loadedPage.totalItems,
+  totalPages: loadedPage.totalPages
 })
 
 const subNavigationItemsOf = (selectedTab, searchTerm) =>
@@ -130,10 +137,15 @@ const buildView = (toolkit, { recoverableError = false, ...model }) =>
     ...model
   })
 
-const loadPage = async (organisationId, listFn, { page, ...listFilters }) => {
+const loadPage = async (
+  organisationId,
+  listFn,
+  { page, searchTerm, ...listFilters }
+) => {
   const requestedPage = await listFn(organisationId, {
     page,
     pageSize: LIST_PAGE_SIZE,
+    searchTerm,
     ...listFilters
   })
   const servedPage = clampPage(page, requestedPage.totalPages)
@@ -142,12 +154,19 @@ const loadPage = async (organisationId, listFn, { page, ...listFilters }) => {
   }
 
   logger.info(
-    { organisationId, ...listFilters, requestedPage: page, servedPage },
+    {
+      organisationId,
+      ...listFilters,
+      searchTermLength: searchTerm?.length ?? 0,
+      requestedPage: page,
+      servedPage
+    },
     'Address book page is past the last page, serving the last page'
   )
   return listFn(organisationId, {
     page: servedPage,
     pageSize: LIST_PAGE_SIZE,
+    searchTerm,
     ...listFilters
   })
 }

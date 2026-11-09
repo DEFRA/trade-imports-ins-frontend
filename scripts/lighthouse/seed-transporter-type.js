@@ -7,17 +7,12 @@ import {
 const HTTP_OK = 200
 const HTTP_FOUND = 302
 
-/** The one transporter type the audit chooses. Its form carries every field the private
- * form has, plus the approval number and the fixed country, so it is the fuller page of
- * the two. A session holds one chosen type at a time, so the other form cannot render in
- * the same run. */
 export const AUDIT_TRANSPORTER_TYPE = TRANSPORTER_TYPES.COMMERCIAL
 
 const outcomeOf = ({ status, location }) =>
   location ? `${status} to ${location}` : `${status}`
 
-/** Chooses the audited transporter type on the transporter type question, so the form it
- * leads to renders its own page instead of sending the audit back to the question. */
+/** Chooses the audited transporter type on the transporter type question. */
 export const chooseTransporterType = async (client) => {
   const typePage = await client.document(transporterTypePath())
   if (typePage.status !== HTTP_OK) {

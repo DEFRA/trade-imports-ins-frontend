@@ -7,7 +7,7 @@ import {
   addressBookPath,
   addressTypePath,
   isAddressTypeStart,
-  transporterTypePath
+  transporterTypeStartPath
 } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import { ADDRESS_TYPES } from '../../../services/address-book/index.js'
@@ -65,20 +65,10 @@ const get = (request, toolkit) => {
   })
 }
 
-const redirectFor = (request, addressType) => {
-  if (addressType === ADDRESS_TYPES.TRANSPORTER) {
-    logger.info(
-      {
-        organisationId: kit.requireOrganisationId(request),
-        path: request.path,
-        addressType
-      },
-      'Address type question handed over to the add-a-transporter pages'
-    )
-    return transporterTypePath()
-  }
-  return addressAddPath()
-}
+const destinationFor = (addressType) =>
+  addressType === ADDRESS_TYPES.TRANSPORTER
+    ? transporterTypeStartPath()
+    : addressAddPath()
 
 const post = (request, toolkit) => {
   const { errors, value } = validate(addressTypeRules(), request.payload)
@@ -86,7 +76,17 @@ const post = (request, toolkit) => {
     return buildView(toolkit, { errors }).code(HTTP_STATUS_BAD_REQUEST)
   }
   storeChosenAddressType(request, value.addressType)
-  return toolkit.redirect(redirectFor(request, value.addressType))
+  if (value.addressType === ADDRESS_TYPES.TRANSPORTER) {
+    logger.info(
+      {
+        organisationId: kit.requireOrganisationId(request),
+        path: request.path,
+        addressType: value.addressType
+      },
+      'Address type question handed over to the add-a-transporter pages'
+    )
+  }
+  return toolkit.redirect(destinationFor(value.addressType))
 }
 
 export const routes = kit.pageRoutes(addressTypePath(), { get, post })

@@ -5,35 +5,32 @@ import {
 import { HTTP_STATUS_BAD_REQUEST } from '../../../lib/http-status.js'
 import {
   compose,
-  oneOf,
   requiredMaxText,
+  requiredOneOf,
   validate
 } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
 import { copyFor } from '../../../shared/copy.js'
-import {
-  commercialTransporterPath,
-  transporterTypePath
-} from '../../../shared/paths.js'
+import { commercialTransporterPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
 import {
   transporterFieldRuleFor,
   transporterFormValuesOf
 } from '../transporter-fields.js'
 import {
-  storedChosenTransporterType,
+  clearTransporterAddInProgress,
   storedEnteredTransporter,
   storeEnteredTransporter
 } from '../transporter-in-progress.js'
 import {
+  redirectUnlessOwnTransporterType,
   transporterCancelHref,
-  transporterCancelLabel
+  transporterCancelLabel,
+  transporterFormBackHref
 } from '../transporter-navigation.js'
 import { saveTransporter } from '../transporter-save.js'
 import { copy as en } from '../copy/copy.en.js'
 import { copy as cy } from '../copy/copy.cy.js'
-
-const APPROVAL_NUMBER_MAX_LENGTH = 50
 
 const logger = createLogger()
 const view = 'address-book/transporter/commercial-transporter'
@@ -41,8 +38,9 @@ const bundle = copyFor({ en, cy })
 const copy = bundle.commercialTransporterForm
 const errors = bundle.errors
 
-const commercialTransporterRules = () =>
-  compose(
+const commercialTransporterRules = () => {
+  const APPROVAL_NUMBER_MAX_LENGTH = 50
+  return compose(
     ...[
       'name',
       'addressLine1',
@@ -57,8 +55,13 @@ const commercialTransporterRules = () =>
       required: errors.approvalNumber.required,
       maxLength: errors.approvalNumber.maxLength(APPROVAL_NUMBER_MAX_LENGTH)
     }),
-    oneOf('countryCode', [NORTHERN_IRELAND_COUNTRY_CODE], errors.countryFixed)
+    requiredOneOf(
+      'countryCode',
+      [NORTHERN_IRELAND_COUNTRY_CODE],
+      errors.countryFixed
+    )
   )
+}
 
 const buildView = (
   toolkit,
@@ -67,7 +70,7 @@ const buildView = (
   toolkit
     .view(view, {
       ...kit.base(copy.title, {
-        backLink: transporterTypePath(),
+        backLink: transporterFormBackHref(),
         recoverableError
       }),
       copy,
@@ -76,8 +79,7 @@ const buildView = (
       countryCode: NORTHERN_IRELAND_COUNTRY_CODE,
       errors: fieldErrors,
       errorSummary: kit.errorSummary(fieldErrors),
-      cancelHref: transporterCancelHref(),
-      cancelLabel: transporterCancelLabel()
+      cancelLabel: transporterCancelLabel(TRANSPORTER_TYPES.COMMERCIAL)
     })
     .header('Cache-Control', 'no-store')
 
@@ -87,19 +89,33 @@ const formValuesWithApprovalNumber = (payload) => ({
 })
 
 const get = (request, toolkit) => {
-  if (storedChosenTransporterType(request) !== TRANSPORTER_TYPES.COMMERCIAL) {
-    return toolkit.redirect(transporterTypePath())
+  const redirect = redirectUnlessOwnTransporterType(
+    request,
+    toolkit,
+    TRANSPORTER_TYPES.COMMERCIAL
+  )
+  if (redirect) {
+    return redirect
   }
-  const { formValues } = storedEnteredTransporter(request) ?? {}
-  return buildView(toolkit, { formValues: formValues ?? {} })
+  const formValues = storedEnteredTransporter(request) ?? {}
+  return buildView(toolkit, { formValues })
 }
 
 const post = async (request, toolkit) => {
-  if (storedChosenTransporterType(request) !== TRANSPORTER_TYPES.COMMERCIAL) {
-    return toolkit.redirect(transporterTypePath())
+  const redirect = redirectUnlessOwnTransporterType(
+    request,
+    toolkit,
+    TRANSPORTER_TYPES.COMMERCIAL
+  )
+  if (redirect) {
+    return redirect
   }
   const organisationId = kit.requireOrganisationId(request)
   const payload = request.payload ?? {}
+  if (payload.cancel) {
+    clearTransporterAddInProgress(request)
+    return toolkit.redirect(transporterCancelHref())
+  }
   const formValues = formValuesWithApprovalNumber(payload)
   storeEnteredTransporter(request, formValues)
 
@@ -120,7 +136,7 @@ const post = async (request, toolkit) => {
   }
 
   return saveTransporter(request, toolkit, {
-    payload: {
+    transporter: {
       ...formValues,
       countryCode: NORTHERN_IRELAND_COUNTRY_CODE,
       type: TRANSPORTER_TYPES.COMMERCIAL
