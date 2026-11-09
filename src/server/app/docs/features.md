@@ -116,8 +116,9 @@ root:
   a line break splits the `Location` header. An INS path is resolved against a
   stand-in origin and kept only when that origin survives, then given back
   percent-encoded so it is safe in a `Location` header. A refused, non-empty
-  `return` is logged at info with the request path and the reason, never the
-  value itself.
+  `return` is logged at info with the request path, the refused value and the
+  reason; an animals frontend return refused in stub mode has a reason of its
+  own, logged with the animals frontend URL it would have gone to.
 - [`stored-address.js`](../features/address-book/stored-address.js) —
   `findLiveAddress` resolves an unknown or deleted address to `undefined`;
   `findLiveAddressWithCountryLabel` adds the country's label to a live one;
