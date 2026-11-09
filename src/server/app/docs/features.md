@@ -101,12 +101,12 @@ root:
 - [`address-id-params.js`](../features/address-book/address-id-params.js) —
   `addressIdParams`, `redirectingAddressIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
-  gives the `return` query when it is an INS path or, outside stub mode, a URL on
-  exactly the animals frontend origin, else null. A path under `/live-animals`
-  is never an INS page: outside stub mode it is resolved against the configured
-  animals frontend URL, so a journey can send its own relative path without
-  knowing where it is hosted, and in stub mode it is refused; `pathWithReturn`
-  carries it on;
+  gives the honoured return, else null: an INS path as given; outside stub
+  mode, a path under `/live-animals` resolved against the configured animals
+  frontend URL (so a journey can send its own relative path without knowing
+  where it is hosted), or a URL on exactly the animals frontend origin.
+  Anything else, a path under `/live-animals` in stub mode included, gives null.
+  `pathWithReturn` carries the honoured return on to the next page.
   `returnDestinationOf` and `deadLinkDestination` send a dead link or a finished
   delete there, or to the list when it is one of that address's own pages.
   `editLeaveDestinationOf` gives where the edit page's Back link and Cancel go:
