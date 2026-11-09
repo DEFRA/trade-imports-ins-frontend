@@ -11,7 +11,7 @@ const logger = createLogger()
 
 const RETURN_QUERY_KEY = 'return'
 
-const normalisedInsPath = (pathOrUrl) => {
+const normalisedRelativePath = (pathOrUrl) => {
   if (!pathOrUrl.startsWith('/') || pathOrUrl.startsWith('//')) {
     return null
   }
@@ -54,7 +54,7 @@ const isLiveAnimalsPath = (path) => {
 }
 
 const honouredPathOrUrl = (requestedReturn) => {
-  const path = normalisedInsPath(requestedReturn)
+  const path = normalisedRelativePath(requestedReturn)
   if (!path) {
     return animalsUrl(requestedReturn)
   }
