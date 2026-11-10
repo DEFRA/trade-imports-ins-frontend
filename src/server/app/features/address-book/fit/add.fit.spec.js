@@ -189,7 +189,7 @@ test.describe('add address of each type', () => {
       ? 'United Kingdom alone selected'
       : 'United Kingdom selected'
 
-    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}`, async ({
+    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and ${countryOffered}`, async ({
       page
     }) => {
       await signInAndOpenAddForm(
@@ -215,6 +215,9 @@ test.describe('add address of each type', () => {
       await expect(
         rolesGroup.getByRole('checkbox', { checked: true })
       ).toHaveCount(0)
+      for (const checkbox of await rolesGroup.getByRole('checkbox').all()) {
+        await expect(checkbox).toHaveAccessibleDescription('')
+      }
       const country = page.getByLabel(fieldLabels.countryCode)
       await expect(country).toHaveValue(GB_COUNTRY.code)
       if (unitedKingdomOnly) {
