@@ -570,6 +570,66 @@ test.describe('add address validation', () => {
     })
   }
 
+  const namePostcodeCountryAndPhone = ['name', 'postcode', 'countryCode', 'phone']
+  const namePostcodeCountryAndPhoneValidations = requiredValidations.filter(
+    ([field]) => namePostcodeCountryAndPhone.includes(field)
+  )
+
+  for (const { entry, openForm, roles, saveButton } of [
+    {
+      entry: "the address book after choosing 'Origin or Consignor'",
+      openForm: (page) => signInAndOpenAddForm(page, 'stub-org-add-four-blanks'),
+      roles: ['CONSIGNOR'],
+      saveButton: 'Save and continue'
+    },
+    {
+      entry: 'the consignor picker',
+      openForm: (page) =>
+        openAddFormFromJourney(
+          page,
+          'stub-org-add-four-blanks-consignor',
+          JOURNEY_HANDSHAKES_BY_PARTY.consignor
+        ),
+      roles: [],
+      saveButton: copy.add.saveAndSelect
+    },
+    {
+      entry: 'the consignment contact page',
+      openForm: (page) =>
+        openAddFormFromJourney(
+          page,
+          'stub-org-add-four-blanks-contact',
+          CONSIGNMENT_CONTACT_HANDSHAKE
+        ),
+      roles: [],
+      saveButton: 'Save and continue'
+    }
+  ]) {
+    test(`from ${entry}, saving with the name, postcode, country and phone blank shows each message in the summary and against its field`, async ({
+      page
+    }) => {
+      await openForm(page)
+
+      await fillValidAddress(
+        page,
+        Object.fromEntries(
+          namePostcodeCountryAndPhone.map((field) => [field, ''])
+        )
+      )
+      await tickRoles(page, roles)
+      await page.getByRole('button', { name: saveButton }).click()
+
+      await expect(page.getByRole('alert').getByRole('link')).toHaveText(
+        namePostcodeCountryAndPhoneValidations.map(([, , error]) => error)
+      )
+      for (const [, label, error] of namePostcodeCountryAndPhoneValidations) {
+        await expect(
+          page.getByLabel(label, { exact: true })
+        ).toHaveAccessibleDescription(new RegExp(`Error:\\s+${error}$`))
+      }
+    })
+  }
+
   for (const [field, label, maxLength, error] of maxLengthValidations) {
     test(`${label} over ${maxLength} characters links to and focuses the preserved value`, async ({
       page
