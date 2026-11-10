@@ -354,6 +354,8 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('POST with a country the reference data does not list shows the select-a-country error', async () => {
+    const creation = interceptAddressBookRequest('POST', addressesApiPath())
+
     const { result, statusCode } = await postAddWithTypeChosen(
       getServer(),
       'add-post-unlisted-country',
@@ -364,7 +366,10 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     )
 
     expect(statusCode).toBe(statusCodes.badRequest)
-    expect(result).toMatch(/href="#countryCode"[^>]*>\s*Select a country\s*</)
+    expectSummaryAndFieldErrors(load(result), [
+      ['countryCode', REQUIRED_MESSAGES.countryCode]
+    ])
+    creation.expectNotSent()
   })
 
   test('Cancel returns to list without creating an address', async () => {
@@ -1563,17 +1568,29 @@ describe(
     })
 
     test.each([
-      ['no country', ''],
-      ['a country the list does not offer', 'ZZ']
+      ['consignor', 'no country', CONSIGNOR_HANDSHAKE, ''],
+      [
+        'consignor',
+        'a country the list does not offer',
+        CONSIGNOR_HANDSHAKE,
+        'ZZ'
+      ],
+      ['consignment contact', 'no country', CONSIGNMENT_CONTACT_HANDSHAKE, ''],
+      [
+        'consignment contact',
+        'a country the list does not offer',
+        CONSIGNMENT_CONTACT_HANDSHAKE,
+        'ZZ'
+      ]
     ])(
-      'POST from the consignor handshake with %s shows Select a country and saves nothing',
-      async (_name, countryCode) => {
+      'POST from the %s handshake with %s shows Select a country and saves nothing',
+      async (entry, _countryChoice, handshake, countryCode) => {
         const creation = interceptAddressBookRequest('POST', addressesApiPath())
 
         const { result, statusCode } = await postAdd(
           getServer(),
-          `add-post-consignor-country-${countryCode || 'blank'}`,
-          { ...CONSIGNOR_HANDSHAKE, ...VALID_ADDRESS_PAYLOAD, countryCode }
+          `add-post-${entry.replaceAll(' ', '-')}-country-${countryCode || 'blank'}`,
+          { ...handshake, ...VALID_ADDRESS_PAYLOAD, countryCode }
         )
 
         expect(statusCode).toBe(statusCodes.badRequest)
