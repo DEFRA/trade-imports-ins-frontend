@@ -419,7 +419,6 @@ const submitAddress = async (
       addressType,
       landing,
       addMode,
-      logContext,
       addressToCreate: { ...validatedAddress, roles: savedRoles }
     })
   } catch (err) {
