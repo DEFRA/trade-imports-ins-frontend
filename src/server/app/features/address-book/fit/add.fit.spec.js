@@ -163,11 +163,18 @@ test.describe('add address roles question without JavaScript', () => {
 test.describe('add address of each type', () => {
   const organisationPrefix = 'stub-org-add-type'
 
-  for (const { addressType, offeredRoles, tab, unitedKingdomOnly } of [
+  for (const {
+    addressType,
+    offeredRoles,
+    tab,
+    typeText,
+    unitedKingdomOnly
+  } of [
     {
       addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
       offeredRoles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
       tab: copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label,
+      typeText: 'Place of origin, Consignor',
       unitedKingdomOnly: false
     },
     {
@@ -175,12 +182,14 @@ test.describe('add address of each type', () => {
       offeredRoles: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
       tab: copy.list.tabs[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
         .label,
+      typeText: 'Consignee, Importer, Place of destination',
       unitedKingdomOnly: true
     },
     {
       addressType: ADDRESS_TYPES.BRANCH,
       offeredRoles: ['BRANCH_ADDRESS'],
       tab: copy.list.tabs[ADDRESS_TYPES.BRANCH].label,
+      typeText: 'Branch',
       unitedKingdomOnly: true
     }
   ]) {
@@ -225,7 +234,7 @@ test.describe('add address of each type', () => {
       }
     })
 
-    test(`${typeLabel} saved with every offered role ticked lands on its tab with the new address first`, async ({
+    test(`${typeLabel} saved with every offered role ticked lands on its tab with the new address first, its roles as its Type`, async ({
       page
     }) => {
       await addValidAddressToFreshOrganisation(page, {
@@ -239,6 +248,9 @@ test.describe('add address of each type', () => {
       await expect(
         page.getByRole('link', { name: /^View / }).first()
       ).toHaveText(`View ${LATE_ALPHABETICAL_NAME}`)
+      await expect(typeCellOf(page, LATE_ALPHABETICAL_NAME)).toHaveText(
+        typeText
+      )
     })
 
     test(`${typeLabel} saved with no role shows the roles error, whose summary link focuses the first option, with no serious or critical axe violations`, async ({
