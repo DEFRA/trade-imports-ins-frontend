@@ -138,6 +138,27 @@ describe('in stub mode, listing by role', () => {
     ])
   })
 
+  test('Should seed a roles-paged organisation with more than one page of addresses per role', async () => {
+    const rolesPagedOrganisationId = 'stub-org-roles-paged'
+    const totalHolding = async (roles) =>
+      (
+        await addressBook.listAddresses(rolesPagedOrganisationId, {
+          pageSize: 8,
+          roles
+        })
+      ).totalItems
+
+    expect(await totalHolding(['PLACE_OF_ORIGIN'])).toBe(22)
+    expect(await totalHolding(['CONSIGNOR'])).toBe(11)
+    expect(await totalHolding(['BRANCH_ADDRESS'])).toBe(9)
+    expect(
+      await listedStubNames(rolesPagedOrganisationId, {
+        roles: ['BRANCH_ADDRESS'],
+        searchTerm: 'depot 9'
+      })
+    ).toEqual(['Stub Hill Depot 9'])
+  })
+
   test('Should match a search role as it matches a search term, within the roles', async () => {
     expect(
       await listedStubNames(TYPED_ORGANISATION_ID, {
