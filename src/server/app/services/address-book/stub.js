@@ -33,6 +33,25 @@ const buildSeedAddress = (index, details = {}) => ({
   ...details
 })
 
+const numberedSeedDetails = (namePrefix, count, details = {}) =>
+  Array.from({ length: count }, (_, index) => ({
+    name: `${namePrefix} ${index + 1}`,
+    ...details
+  }))
+
+const rolesPagedSeedAddresses = () => {
+  const originOnly = { roles: [ROLES.PLACE_OF_ORIGIN] }
+  return [
+    ...numberedSeedDetails('Stub Hill Pasture', 10, originOnly),
+    ...numberedSeedDetails('Stub Hill Yard', 2),
+    ...numberedSeedDetails('Stub Brook Yard', 9),
+    ...numberedSeedDetails('Stub Brook Pasture', 1, originOnly),
+    ...numberedSeedDetails('Stub Hill Depot', 9, {
+      roles: [ROLES.BRANCH_ADDRESS]
+    })
+  ].map((details, index) => buildSeedAddress(index + 1, details))
+}
+
 const typedSeedAddresses = () =>
   Object.values(TYPED_SEED).map((details, index) =>
     buildSeedAddress(index + 1, details)
@@ -44,6 +63,9 @@ const seedAddressesFor = (organisationId) => {
   }
   if (organisationId.endsWith('-typed')) {
     return typedSeedAddresses()
+  }
+  if (organisationId.endsWith('-roles-paged')) {
+    return rolesPagedSeedAddresses()
   }
   if (organisationId.endsWith('-paginated')) {
     const paginatedSeedCount = 30

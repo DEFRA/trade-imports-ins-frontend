@@ -221,6 +221,12 @@ test.describe('intro and cells', () => {
 
 const ORG_TYPED = 'stub-org-typed'
 
+const rolesPagedOrganisation = (purpose) =>
+  `stub-org-list-${purpose}-roles-paged`
+
+const numberedNames = (namePrefix, count) =>
+  Array.from({ length: count }, (_, index) => `${namePrefix} ${index + 1}`)
+
 const TABS = [
   {
     label: 'Origin and Consignor',
@@ -348,6 +354,31 @@ test.describe('address type tabs', () => {
 
     await expectTabsInOrderWithSelected(page, BRANCH_TAB.label)
     await expect(tabPanelHeadingOf(page)).toHaveText(BRANCH_TAB.heading)
+  })
+
+  test('keeps the Branch tab and lists only its matches for a search that also matches another tab, and its page links keep the tab and the search', async ({
+    page
+  }) => {
+    await openAddressBookList(page, {
+      organisationId: rolesPagedOrganisation('tab-search'),
+      addressType: ADDRESS_TYPES.BRANCH
+    })
+
+    await searchAndExpectMatches(page, 'hill', {
+      submitWith: 'button',
+      addressType: ADDRESS_TYPES.BRANCH,
+      resultsLine: 'Showing 1-8 of 9'
+    })
+    await expectTabsInOrderWithSelected(page, BRANCH_TAB.label)
+    await expectNamesListed(page, numberedNames('Stub Hill Depot', 8))
+
+    await page.getByRole('link', { name: 'Page 2' }).click()
+
+    await expect(page).toHaveURL(
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}&q=hill&page=2`
+    )
+    await expect(resultsLineOf(page)).toHaveText('Showing 9-9 of 9')
+    await expectTabsInOrderWithSelected(page, BRANCH_TAB.label)
   })
 
   test('has no serious or critical axe violations on the Branch tab', async ({
@@ -608,6 +639,59 @@ test.describe('type filter', () => {
     })
 
     await expectNamesListed(page, [TYPED_SEED.consigneeAndDestination.name])
+  })
+
+  test('counts and pages the matches holding the Type past one page, and the next page keeps the tab, the search and the Type', async ({
+    page
+  }) => {
+    await openAddressBookList(page, {
+      organisationId: rolesPagedOrganisation('type-pages')
+    })
+
+    await searchAndExpectMatches(page, 'brook', {
+      submitWith: 'button',
+      chosenOption: CONSIGNOR_ROLE,
+      resultsLine: 'Showing 1-8 of 9'
+    })
+    await expect(paginationOf(page)).toBeVisible()
+    const nextPageLink = paginationOf(page).getByRole('link', {
+      name: 'Next page'
+    })
+    const nextPageQuery = new URLSearchParams({
+      addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
+      q: 'brook',
+      role: CONSIGNOR_ROLE.value,
+      page: '2'
+    })
+    await expect(nextPageLink).toHaveAttribute(
+      'href',
+      `${addressBookPath()}?${nextPageQuery}`
+    )
+
+    await nextPageLink.click()
+
+    await expect(resultsLineOf(page)).toHaveText('Showing 9-9 of 9')
+    await openFilterDisclosure(page)
+    await expectTypeChosen(page, CONSIGNOR_ROLE.value)
+  })
+
+  test('lists the addresses holding the Type that lie beyond the first page of the tab, counted and without pagination', async ({
+    page
+  }) => {
+    await openAddressBookList(page, {
+      organisationId: rolesPagedOrganisation('type-beyond-first-page')
+    })
+    await expect(resultsLineOf(page)).toHaveText('Showing 1-8 of 22')
+    await expectNamesListed(page, numberedNames('Stub Hill Pasture', 8))
+
+    await searchAndExpectMatches(page, 'hill', {
+      submitWith: 'button',
+      chosenOption: CONSIGNOR_ROLE,
+      resultsLine: TWO_ADDRESSES_LINE
+    })
+
+    await expectNamesListed(page, numberedNames('Stub Hill Yard', 2))
+    await expect(paginationOf(page)).toHaveCount(0)
   })
 
   test('leaves the URL and the whole tab listed when a Type is chosen and not submitted', async ({
