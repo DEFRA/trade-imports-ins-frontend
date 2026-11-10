@@ -611,7 +611,12 @@ test.describe('add address validation', () => {
     })
   }
 
-  const namePostcodeCountryAndPhone = ['name', 'postcode', 'countryCode', 'phone']
+  const namePostcodeCountryAndPhone = [
+    'name',
+    'postcode',
+    'countryCode',
+    'phone'
+  ]
   const namePostcodeCountryAndPhoneValidations = requiredValidations.filter(
     ([field]) => namePostcodeCountryAndPhone.includes(field)
   )
@@ -619,9 +624,10 @@ test.describe('add address validation', () => {
   for (const { entry, openForm, roles, saveButton } of [
     {
       entry: "the address book after choosing 'Origin or Consignor'",
-      openForm: (page) => signInAndOpenAddForm(page, 'stub-org-add-four-blanks'),
+      openForm: (page) =>
+        signInAndOpenAddForm(page, 'stub-org-add-four-blanks'),
       roles: ['CONSIGNOR'],
-      saveButton: 'Save and continue'
+      saveButton: copy.add.save
     },
     {
       entry: 'the consignor picker',
@@ -643,7 +649,7 @@ test.describe('add address validation', () => {
           CONSIGNMENT_CONTACT_HANDSHAKE
         ),
       roles: [],
-      saveButton: 'Save and continue'
+      saveButton: copy.add.save
     }
   ]) {
     test(`from ${entry}, saving with the name, postcode, country and phone blank shows each message in the summary and against its field`, async ({

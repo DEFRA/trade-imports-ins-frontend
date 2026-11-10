@@ -52,6 +52,7 @@ const postDelete = (server, sessionId, returnTo) =>
   )
 
 const BANNER = '.govuk-notification-banner'
+const ADDRESS_DELETED = 'Address deleted'
 const SUMMARY_VALUE = '.govuk-summary-list__value'
 
 describe('#addressSummaryLines', () => {
@@ -109,8 +110,8 @@ describe('#deletedSuccessMessage', () => {
   })
 
   test('Should word a blank name without a name', () => {
-    expect(deletedSuccessMessage('')).toBe('Address deleted')
-    expect(deletedSuccessMessage(undefined)).toBe('Address deleted')
+    expect(deletedSuccessMessage('')).toBe(ADDRESS_DELETED)
+    expect(deletedSuccessMessage(undefined)).toBe(ADDRESS_DELETED)
   })
 })
 
@@ -353,11 +354,8 @@ describe('POST /address-book/{addressId}/delete', () => {
       response.headers
     )
     expect(
-      textOf(
-        load(listResponse.result),
-        '.govuk-notification-banner__heading'
-      )
-    ).toBe('Address deleted')
+      textOf(load(listResponse.result), '.govuk-notification-banner__heading')
+    ).toBe(ADDRESS_DELETED)
   })
 
   describe('with a return', () => {
