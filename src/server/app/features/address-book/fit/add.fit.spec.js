@@ -96,12 +96,10 @@ test.describe('add address', () => {
 
     const country = page.getByLabel('Country')
     await expect(country).toHaveValue(GB_COUNTRY.code)
-    await expect(country.getByRole('option').first()).toHaveText(
-      copy.form.countryPlaceholder
-    )
-    await expect(
-      country.getByRole('option', { name: GB_COUNTRY.name })
-    ).toHaveCount(1)
+    await expect(country.getByRole('option')).toHaveText([
+      copy.form.countryPlaceholder,
+      ...addressFormCountryNames
+    ])
   })
 
   test('has a Back link to Choose an address type', async ({ page }) => {
@@ -370,17 +368,18 @@ test.describe('add address reached from a notification journey', () => {
     }
   })
 
-  for (const [party, partyName] of [
-    ['placeOfOrigin', 'place of origin'],
-    ['consignor', 'consignor']
+  for (const [handshake, partyName] of [
+    [JOURNEY_HANDSHAKES_BY_PARTY.placeOfOrigin, 'place of origin'],
+    [JOURNEY_HANDSHAKES_BY_PARTY.consignor, 'consignor'],
+    [CONSIGNMENT_CONTACT_HANDSHAKE, 'consignment contact']
   ]) {
     test(`from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
       page
     }) => {
       await openAddFormFromJourney(
         page,
-        `stub-org-add-journey-countries-${party}`,
-        JOURNEY_HANDSHAKES_BY_PARTY[party]
+        `stub-org-add-journey-countries-${partyName.replaceAll(' ', '-')}`,
+        handshake
       )
 
       const country = page.getByLabel('Country')
