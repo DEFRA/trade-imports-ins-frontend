@@ -163,42 +163,30 @@ test.describe('add address roles question without JavaScript', () => {
 test.describe('add address of each type', () => {
   const organisationPrefix = 'stub-org-add-type'
 
-  for (const {
-    addressType,
-    offeredRoles,
-    tab,
-    typeText,
-    unitedKingdomOnly
-  } of [
+  for (const { addressType, offeredRoles, tab, typeText } of [
     {
       addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
       offeredRoles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
       tab: copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label,
-      typeText: 'Place of origin, Consignor',
-      unitedKingdomOnly: false
+      typeText: 'Place of origin, Consignor'
     },
     {
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       offeredRoles: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
       tab: copy.list.tabs[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
         .label,
-      typeText: 'Consignee, Importer, Place of destination',
-      unitedKingdomOnly: true
+      typeText: 'Consignee, Importer, Place of destination'
     },
     {
       addressType: ADDRESS_TYPES.BRANCH,
       offeredRoles: ['BRANCH_ADDRESS'],
       tab: copy.list.tabs[ADDRESS_TYPES.BRANCH].label,
-      typeText: 'Branch',
-      unitedKingdomOnly: true
+      typeText: 'Branch'
     }
   ]) {
     const typeLabel = copy.addressType.options[addressType].label
-    const countryOffered = unitedKingdomOnly
-      ? 'United Kingdom alone selected'
-      : 'United Kingdom selected'
 
-    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and ${countryOffered}`, async ({
+    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and every captured country with United Kingdom selected`, async ({
       page
     }) => {
       await signInAndOpenAddForm(
@@ -229,9 +217,10 @@ test.describe('add address of each type', () => {
       }
       const country = page.getByLabel(fieldLabels.countryCode)
       await expect(country).toHaveValue(GB_COUNTRY.code)
-      if (unitedKingdomOnly) {
-        await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
-      }
+      await expect(country.getByRole('option')).toHaveText([
+        copy.form.countryPlaceholder,
+        ...addressFormCountryNames
+      ])
     })
 
     test(`${typeLabel} saved with every offered role ticked lands on its tab with the new address first, its roles as its Type`, async ({
@@ -392,7 +381,7 @@ test.describe('add address reached from a notification journey', () => {
     await expectNoSeriousOrCriticalViolations(page, 'Add address from journey')
   })
 
-  test('from the consignee handshake offers United Kingdom alone, selected, with every field shown', async ({
+  test('from the consignee handshake opens the Country select on United Kingdom, offers every captured country alphabetically, and shows every field', async ({
     page
   }) => {
     await openAddFormFromJourney(
@@ -402,7 +391,10 @@ test.describe('add address reached from a notification journey', () => {
     )
 
     const country = page.getByLabel('Country')
-    await expect(country.getByRole('option')).toHaveText([GB_COUNTRY.name])
+    await expect(country.getByRole('option')).toHaveText([
+      copy.form.countryPlaceholder,
+      ...addressFormCountryNames
+    ])
     await expect(country).toHaveValue(GB_COUNTRY.code)
     for (const label of Object.values(fieldLabels)) {
       await expect(page.getByLabel(label, { exact: true })).toBeVisible()

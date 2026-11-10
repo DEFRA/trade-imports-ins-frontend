@@ -1,8 +1,6 @@
 import Boom from '@hapi/boom'
 
-import { addressTypeRequiresUnitedKingdom } from '../../services/address-book/index.js'
 import { getCountries } from '../../services/countries/index.js'
-import { requiresUnitedKingdomAddress } from './journey-registry.js'
 
 const GB_COUNTRY = { code: 'GB', name: 'United Kingdom' }
 
@@ -35,30 +33,11 @@ export const buildCountrySelectItems = (countries, placeholder) => [
   ...buildCountryItems(countries)
 ]
 
-const offersUnitedKingdomAlone = (handshakeContext, addressType) =>
-  handshakeContext
-    ? requiresUnitedKingdomAddress(handshakeContext)
-    : addressTypeRequiresUnitedKingdom(addressType)
-
-export const addFormCountryOffer = async ({
-  handshakeContext,
-  addressType,
-  placeholder,
-  formValues
-}) => {
-  if (offersUnitedKingdomAlone(handshakeContext, addressType)) {
-    return {
-      countryItems: buildCountryItems([GB_COUNTRY]),
-      countryCodes: [GB_COUNTRY.code],
-      formValues: { ...formValues, countryCode: GB_COUNTRY.code }
-    }
-  }
-
+export const addFormCountryOffer = async (placeholder) => {
   const countries = await getAddressFormCountries()
   return {
     countryItems: buildCountrySelectItems(countries, placeholder),
-    countryCodes: countries.map((country) => country.code),
-    formValues
+    countryCodes: countries.map((country) => country.code)
   }
 }
 

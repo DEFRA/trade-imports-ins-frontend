@@ -188,11 +188,6 @@ describe('in stub mode, saving roles', () => {
       'roles from more than one group',
       { roles: ['PLACE_OF_ORIGIN', 'CONSIGNEE'] },
       ['roles']
-    ],
-    [
-      'a receiving role outside the United Kingdom',
-      { roles: ['CONSIGNEE'], countryCode: 'FR' },
-      ['countryCode']
     ]
   ])(
     'Should refuse a create with %s, keyed by the field at fault',
@@ -209,18 +204,18 @@ describe('in stub mode, saving roles', () => {
     }
   )
 
-  test('Should save a branch address outside the United Kingdom', async () => {
-    const created = await addressBook.createAddress(ORGANISATION_ID, {
-      ...VALID_ADDRESS_RECORD,
-      roles: ['BRANCH_ADDRESS'],
-      countryCode: 'FR'
-    })
+  test.each([['BRANCH_ADDRESS'], ['CONSIGNEE'], ['PLACE_OF_ORIGIN']])(
+    'Should save a %s address outside the United Kingdom',
+    async (role) => {
+      const created = await addressBook.createAddress(ORGANISATION_ID, {
+        ...VALID_ADDRESS_RECORD,
+        roles: [role],
+        countryCode: 'FR'
+      })
 
-    expect(created).toMatchObject({
-      roles: ['BRANCH_ADDRESS'],
-      countryCode: 'FR'
-    })
-  })
+      expect(created).toMatchObject({ roles: [role], countryCode: 'FR' })
+    }
+  )
 
   test('Should refuse an update that leaves the address with no roles', async () => {
     const created = await addressBook.createAddress(

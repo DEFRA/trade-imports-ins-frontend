@@ -1,11 +1,9 @@
 import { describe, expect, test } from 'vitest'
 
 import {
-  ADDRESS_TYPES,
   PLACE_ROLES,
   ROLES_BY_ADDRESS_TYPE,
   addressTypeOfRole,
-  addressTypeRequiresUnitedKingdom,
   keepRolesOfferedBy
 } from './address-types.js'
 
@@ -58,23 +56,6 @@ describe('the address type that holds a role', () => {
 
   test('Should give no type for a role no type holds', () => {
     expect(addressTypeOfRole('TRANSPORTER')).toBeUndefined()
-  })
-})
-
-describe('the address types that must be in the United Kingdom', () => {
-  test.each([
-    [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, false],
-    [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, true],
-    [ADDRESS_TYPES.BRANCH, true]
-  ])('Should answer for %s: %s', (addressType, requiresUnitedKingdom) => {
-    expect(addressTypeRequiresUnitedKingdom(addressType)).toBe(
-      requiresUnitedKingdom
-    )
-  })
-
-  test('Should answer false for a missing or unknown type', () => {
-    expect(addressTypeRequiresUnitedKingdom(undefined)).toBe(false)
-    expect(addressTypeRequiresUnitedKingdom('TRANSPORTER')).toBe(false)
   })
 })
 

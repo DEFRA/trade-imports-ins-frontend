@@ -10,7 +10,6 @@ export {
   ROLES,
   ROLES_BY_ADDRESS_TYPE,
   addressTypeOfRole,
-  addressTypeRequiresUnitedKingdom,
   keepRolesOfferedBy
 } from './address-types.js'
 export { TYPED_SEED } from './typed-seed.js'

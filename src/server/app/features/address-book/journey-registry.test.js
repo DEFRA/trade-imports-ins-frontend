@@ -4,12 +4,12 @@ import { config } from '../../../../config/config.js'
 import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
 import {
   ANIMALS_BASE_URL,
-  ANY_COUNTRY_PARTIES,
+  SENDING_PARTIES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   handshakeContextOf,
   JOURNEY_HANDSHAKES_BY_PARTY,
   returnUrlFor,
-  UNITED_KINGDOM_PARTIES,
+  RECEIVING_PARTIES,
   UNREGISTERED_JOURNEY_TYPE,
   ROLES_BY_PARTY
 } from '../../../common/test-helpers/journey-handshake.js'
@@ -21,7 +21,7 @@ import {
   isConsignmentContact,
   isResolvableHandshake,
   JOURNEY_TYPES,
-  requiresUnitedKingdomAddress,
+  isReceivingParty,
   ownAndOtherRolesOfParty
 } from './journey-registry.js'
 
@@ -70,29 +70,22 @@ describe('journey-registry', () => {
     )
   })
 
-  describe('requiresUnitedKingdomAddress', () => {
-    test.each(UNITED_KINGDOM_PARTIES)(
-      'is true for the %s handshake',
-      (party) => {
-        expect(
-          requiresUnitedKingdomAddress(
-            handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party])
-          )
-        ).toBe(true)
-      }
-    )
-
-    test.each(ANY_COUNTRY_PARTIES)('is false for the %s handshake', (party) => {
+  describe('isReceivingParty', () => {
+    test.each(RECEIVING_PARTIES)('is true for the %s handshake', (party) => {
       expect(
-        requiresUnitedKingdomAddress(
-          handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party])
-        )
+        isReceivingParty(handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]))
+      ).toBe(true)
+    })
+
+    test.each(SENDING_PARTIES)('is false for the %s handshake', (party) => {
+      expect(
+        isReceivingParty(handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]))
       ).toBe(false)
     })
 
     test('is false for the consignment contact', () => {
       expect(
-        requiresUnitedKingdomAddress({
+        isReceivingParty({
           journeyType: JOURNEY_TYPES.GBN_AG,
           fulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID
         })
@@ -107,7 +100,7 @@ describe('journey-registry', () => {
           ...overrides
         }
 
-        expect(requiresUnitedKingdomAddress(context)).toBe(false)
+        expect(isReceivingParty(context)).toBe(false)
       }
     )
   })

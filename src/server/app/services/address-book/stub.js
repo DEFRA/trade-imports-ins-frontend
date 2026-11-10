@@ -7,12 +7,7 @@ import {
   pageOfMatches,
   throwIfInvalid
 } from '../stub-support.js'
-import {
-  ADDRESS_TYPES,
-  ROLES,
-  ROLES_BY_ADDRESS_TYPE,
-  addressTypeOfRole
-} from './address-types.js'
+import { ROLES, addressTypeOfRole } from './address-types.js'
 import { TYPED_SEED } from './typed-seed.js'
 
 const addressesByOrganisation = new Map()
@@ -135,22 +130,12 @@ export const listAddresses = async (
   return pageOfMatches(matches, { page, pageSize })
 }
 
-const RECEIVING_ROLES =
-  ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
-
-const refusalsOf = ({ roles = [], countryCode }) => {
+const refusalsOf = ({ roles = [] }) => {
   if (roles.length === 0) {
     return { roles: ['Select what this address can be used for'] }
   }
   if (new Set(roles.map(addressTypeOfRole)).size > 1) {
     return { roles: ['An address can only have roles from one group'] }
-  }
-  if (holdsAnyOf({ roles }, RECEIVING_ROLES) && countryCode !== 'GB') {
-    return {
-      countryCode: [
-        'A consignee, importer or place of destination must be in the United Kingdom'
-      ]
-    }
   }
   return null
 }
