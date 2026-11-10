@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test'
 
 import {
   addValidAddressToFreshOrganisation,
+  openAddForm,
+  saveValidAddress,
   validAddress
 } from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
@@ -34,6 +36,7 @@ import { signIn } from '../../../../../../fit/sign-in.js'
 import { seedAddress, seedAddressLines } from './seed-address.js'
 import {
   ADDRESS_TYPES,
+  ROLES,
   TYPED_SEED
 } from '../../../services/address-book/index.js'
 import { DEFAULT_ADDRESS_BOOK_TAB } from '../address-book-tabs.js'
@@ -262,6 +265,14 @@ const expectTabsInOrderWithSelected = async (page, selectedLabel) => {
   await expect(selectedTabOf(page)).toHaveText(selectedLabel)
 }
 
+const expectAddressColumnsWithHiddenAction = async (page) => {
+  const columnHeadings = page.getByRole('table').getByRole('columnheader')
+  await expect(columnHeadings).toHaveText(TABLE_HEADINGS)
+  await expect(
+    columnHeadings.last().locator('.govuk-visually-hidden')
+  ).toHaveText('Action')
+}
+
 test.describe('address type tabs', () => {
   test('shows the four tabs in order with Origin and Consignor selected when no tab is chosen', async ({
     page
@@ -298,7 +309,7 @@ test.describe('address type tabs', () => {
     })
   }
 
-  test('shows Place of origin, Consignor and Consignee, Place of destination in the Type column of the addresses holding them', async ({
+  test('shows Place of origin, Consignor and Consignee, Place of destination in the Type column under the columns Name, Type, Address, Country and a visually hidden Action', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
@@ -306,6 +317,7 @@ test.describe('address type tabs', () => {
     await expect(
       typeCellOf(page, TYPED_SEED.originAndConsignor.name)
     ).toHaveText('Place of origin, Consignor')
+    await expectAddressColumnsWithHiddenAction(page)
 
     await openAddressBookList(page, {
       organisationId: ORG_TYPED,
@@ -315,6 +327,75 @@ test.describe('address type tabs', () => {
     await expect(
       typeCellOf(page, TYPED_SEED.consigneeAndDestination.name)
     ).toHaveText('Consignee, Place of destination')
+    await expectAddressColumnsWithHiddenAction(page)
+  })
+
+  test('labels each of the six roles held alone in the Type column', async ({
+    page
+  }) => {
+    const organisationId = `stub-org-list-role-labels-${crypto.randomUUID()}-typed`
+    await openAddressBookList(page, { organisationId })
+    for (const { addressType, role, name } of [
+      {
+        addressType: ORIGIN_TAB.addressType,
+        role: ROLES.CONSIGNOR,
+        name: 'Stub Consignor Yard'
+      },
+      {
+        addressType: DESTINATION_TAB.addressType,
+        role: ROLES.CONSIGNEE,
+        name: 'Stub Consignee Yard'
+      },
+      {
+        addressType: DESTINATION_TAB.addressType,
+        role: ROLES.PLACE_OF_DESTINATION,
+        name: 'Stub Destination Yard'
+      }
+    ]) {
+      await openAddForm(page, addressType)
+      await saveValidAddress(page, {
+        addressType,
+        roles: [role],
+        overrides: { name }
+      })
+    }
+
+    for (const { addressType, name, typeLabel } of [
+      {
+        addressType: ORIGIN_TAB.addressType,
+        name: TYPED_SEED.placeOfOrigin.name,
+        typeLabel: 'Place of origin'
+      },
+      {
+        addressType: ORIGIN_TAB.addressType,
+        name: 'Stub Consignor Yard',
+        typeLabel: 'Consignor'
+      },
+      {
+        addressType: DESTINATION_TAB.addressType,
+        name: 'Stub Consignee Yard',
+        typeLabel: 'Consignee'
+      },
+      {
+        addressType: DESTINATION_TAB.addressType,
+        name: TYPED_SEED.importer.name,
+        typeLabel: 'Importer'
+      },
+      {
+        addressType: DESTINATION_TAB.addressType,
+        name: 'Stub Destination Yard',
+        typeLabel: 'Place of destination'
+      },
+      {
+        addressType: BRANCH_TAB.addressType,
+        name: TYPED_SEED.branch.name,
+        typeLabel: 'Branch'
+      }
+    ]) {
+      await openAddressBookList(page, { organisationId, addressType })
+
+      await expect(typeCellOf(page, name)).toHaveText(typeLabel)
+    }
   })
 
   test('lists the default seed address on the Origin and Consignor tab only', async ({
