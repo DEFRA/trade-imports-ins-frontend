@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test'
 
 import {
   addValidAddressToFreshOrganisation,
-  addressFormCountryNames,
   addressTypeListUrl,
   backLink,
+  expectEveryCountryOffered,
   expectInDocumentOrder,
   signInAndOpenAddForm,
   openAddFormFromJourney,
@@ -96,10 +96,7 @@ test.describe('add address', () => {
 
     const country = page.getByLabel('Country')
     await expect(country).toHaveValue(GB_COUNTRY.code)
-    await expect(country.getByRole('option')).toHaveText([
-      copy.form.countryPlaceholder,
-      ...addressFormCountryNames
-    ])
+    await expectEveryCountryOffered(country)
   })
 
   test('has a Back link to Choose an address type', async ({ page }) => {
@@ -217,10 +214,7 @@ test.describe('add address of each type', () => {
       }
       const country = page.getByLabel(fieldLabels.countryCode)
       await expect(country).toHaveValue(GB_COUNTRY.code)
-      await expect(country.getByRole('option')).toHaveText([
-        copy.form.countryPlaceholder,
-        ...addressFormCountryNames
-      ])
+      await expectEveryCountryOffered(country)
     })
 
     test(`${typeLabel} saved with every offered role ticked lands on its tab with the new address first, its roles as its Type`, async ({
@@ -391,10 +385,7 @@ test.describe('add address reached from a notification journey', () => {
     )
 
     const country = page.getByLabel('Country')
-    await expect(country.getByRole('option')).toHaveText([
-      copy.form.countryPlaceholder,
-      ...addressFormCountryNames
-    ])
+    await expectEveryCountryOffered(country)
     await expect(country).toHaveValue(GB_COUNTRY.code)
     for (const label of Object.values(fieldLabels)) {
       await expect(page.getByLabel(label, { exact: true })).toBeVisible()
@@ -418,10 +409,7 @@ test.describe('add address reached from a notification journey', () => {
       const country = page.getByLabel('Country')
       await expect(country).toHaveJSProperty('tagName', 'SELECT')
       await expect(country).toHaveValue('')
-      await expect(country.getByRole('option')).toHaveText([
-        copy.form.countryPlaceholder,
-        ...addressFormCountryNames
-      ])
+      await expectEveryCountryOffered(country)
     })
   }
 

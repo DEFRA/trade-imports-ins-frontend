@@ -254,8 +254,10 @@ in and opens a page, and is the helper every FIT uses for both.
 the error summary link is clicked and the field it names takes focus, and
 `errorLink`, the error summary link with a message.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
-`fieldLabels`, `fieldLabelsInFormOrder` (the nine labels in page order), `addressFormCountryNames` (the captured countries fixture's
-names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
+`fieldLabels`, `fieldLabelsInFormOrder` (the nine labels in page order), `expectEveryCountryOffered` (the Country select offers Select a
+country then the captured countries fixture's names plus United Kingdom,
+alphabetical), `expectEveryCountryOfferedWithNoPlaceholder` (the same
+countries with no Select a country option), `validAddress`, `fillValidAddress`,
 `addressTypeRadio` (the type page's radio for an address type), `backLink`,
 `saveAndContinueButton`,
 `chooseAddressType` (chooses a type on the 'Choose an address type' page and
