@@ -33,7 +33,7 @@ const buildSeedAddress = (index, details = {}) => ({
   ...details
 })
 
-const numberedSeedDetails = (namePrefix, count, details = {}) =>
+const numberedSeedDetails = ({ namePrefix, count, details = {} }) =>
   Array.from({ length: count }, (_, index) => ({
     name: `${namePrefix} ${index + 1}`,
     ...details
@@ -42,14 +42,18 @@ const numberedSeedDetails = (namePrefix, count, details = {}) =>
 const rolesPagedSeedAddresses = () => {
   const originOnly = { roles: [ROLES.PLACE_OF_ORIGIN] }
   return [
-    ...numberedSeedDetails('Stub Hill Pasture', 10, originOnly),
-    ...numberedSeedDetails('Stub Hill Yard', 2),
-    ...numberedSeedDetails('Stub Brook Yard', 9),
-    ...numberedSeedDetails('Stub Brook Pasture', 1, originOnly),
-    ...numberedSeedDetails('Stub Hill Depot', 9, {
-      roles: [ROLES.BRANCH_ADDRESS]
-    })
-  ].map((details, index) => buildSeedAddress(index + 1, details))
+    { namePrefix: 'Stub Hill Pasture', count: 10, details: originOnly },
+    { namePrefix: 'Stub Hill Yard', count: 2 },
+    { namePrefix: 'Stub Brook Yard', count: 9 },
+    { namePrefix: 'Stub Brook Pasture', count: 1, details: originOnly },
+    {
+      namePrefix: 'Stub Hill Depot',
+      count: 9,
+      details: { roles: [ROLES.BRANCH_ADDRESS] }
+    }
+  ]
+    .flatMap(numberedSeedDetails)
+    .map((details, index) => buildSeedAddress(index + 1, details))
 }
 
 const typedSeedAddresses = () =>

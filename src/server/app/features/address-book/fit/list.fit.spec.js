@@ -586,9 +586,13 @@ test.describe('filter addresses', () => {
       organisationPrefix: 'stub-org-list-address-line-2'
     })
 
-    await searchAndExpectSingleMatch(page, validAddress.addressLine2.toLowerCase(), {
-      matchedCellText: validAddress.name
-    })
+    await searchAndExpectSingleMatch(
+      page,
+      validAddress.addressLine2.toLowerCase(),
+      {
+        matchedCellText: validAddress.name
+      }
+    )
   })
 
   test('finds an address by part of its country name', async ({ page }) => {
