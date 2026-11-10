@@ -18,7 +18,8 @@ import {
   setFieldValue,
   tickRoles,
   roleCheckbox,
-  validAddress
+  validAddress,
+  validAddressViewLink
 } from './address-form.js'
 import {
   ONE_MATCH_LINE,
@@ -58,6 +59,13 @@ import { ADDRESS_LANDING } from '../journey-registry.js'
 
 const LATE_ALPHABETICAL_NAME = 'Zetland Livestock Ltd'
 
+const addedBannerOf = (page) =>
+  page
+    .getByRole('alert', { name: 'Success' })
+    .getByText(`${validAddress.name} address added to your address book`, {
+      exact: true
+    })
+
 const rolesGroupOf = (page, addressType) =>
   page.getByRole('group', {
     name: copy.roles.legendByAddressType[addressType]
@@ -88,12 +96,10 @@ test.describe('add address', () => {
 
     const country = page.getByLabel('Country')
     await expect(country).toHaveValue(GB_COUNTRY.code)
-    await expect(country.getByRole('option').first()).toHaveText(
-      copy.form.countryPlaceholder
-    )
-    await expect(
-      country.getByRole('option', { name: GB_COUNTRY.name })
-    ).toHaveCount(1)
+    await expect(country.getByRole('option')).toHaveText([
+      copy.form.countryPlaceholder,
+      ...addressFormCountryNames
+    ])
   })
 
   test('has a Back link to Choose an address type', async ({ page }) => {
@@ -150,20 +156,25 @@ test.describe('add address roles question without JavaScript', () => {
     await expect(selectedTabOf(page)).toHaveText(
       copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label
     )
-    await expect(
-      page.getByRole('link', { name: `View ${validAddress.name}` })
-    ).toBeVisible()
+    await expect(validAddressViewLink(page)).toBeVisible()
   })
 })
 
 test.describe('add address of each type', () => {
   const organisationPrefix = 'stub-org-add-type'
 
-  for (const { addressType, offeredRoles, tab, unitedKingdomOnly } of [
+  for (const {
+    addressType,
+    offeredRoles,
+    tab,
+    typeText,
+    unitedKingdomOnly
+  } of [
     {
       addressType: ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR,
       offeredRoles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
       tab: copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label,
+      typeText: 'Place of origin, Consignor',
       unitedKingdomOnly: false
     },
     {
@@ -171,12 +182,14 @@ test.describe('add address of each type', () => {
       offeredRoles: ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
       tab: copy.list.tabs[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
         .label,
+      typeText: 'Consignee, Importer, Place of destination',
       unitedKingdomOnly: true
     },
     {
       addressType: ADDRESS_TYPES.BRANCH,
       offeredRoles: ['BRANCH_ADDRESS'],
       tab: copy.list.tabs[ADDRESS_TYPES.BRANCH].label,
+      typeText: 'Branch',
       unitedKingdomOnly: true
     }
   ]) {
@@ -185,7 +198,7 @@ test.describe('add address of each type', () => {
       ? 'United Kingdom alone selected'
       : 'United Kingdom selected'
 
-    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}`, async ({
+    test(`${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and ${countryOffered}`, async ({
       page
     }) => {
       await signInAndOpenAddForm(
@@ -211,6 +224,9 @@ test.describe('add address of each type', () => {
       await expect(
         rolesGroup.getByRole('checkbox', { checked: true })
       ).toHaveCount(0)
+      for (const checkbox of await rolesGroup.getByRole('checkbox').all()) {
+        await expect(checkbox).toHaveAccessibleDescription('')
+      }
       const country = page.getByLabel(fieldLabels.countryCode)
       await expect(country).toHaveValue(GB_COUNTRY.code)
       if (unitedKingdomOnly) {
@@ -218,7 +234,7 @@ test.describe('add address of each type', () => {
       }
     })
 
-    test(`${typeLabel} saved with every offered role ticked lands on its tab with the new address first`, async ({
+    test(`${typeLabel} saved with every offered role ticked lands on its tab with the new address first, its roles as its Type`, async ({
       page
     }) => {
       await addValidAddressToFreshOrganisation(page, {
@@ -232,6 +248,9 @@ test.describe('add address of each type', () => {
       await expect(
         page.getByRole('link', { name: /^View / }).first()
       ).toHaveText(`View ${LATE_ALPHABETICAL_NAME}`)
+      await expect(typeCellOf(page, LATE_ALPHABETICAL_NAME)).toHaveText(
+        typeText
+      )
     })
 
     test(`${typeLabel} saved with no role shows the roles error, whose summary link focuses the first option, with no serious or critical axe violations`, async ({
@@ -255,6 +274,32 @@ test.describe('add address of each type', () => {
       await expectNoSeriousOrCriticalViolations(
         page,
         `Add ${typeLabel} address roles error`
+      )
+    })
+
+    test(`${typeLabel} saved with the name blank and no role shows the name error then the roles error, against their questions and in the summary`, async ({
+      page
+    }) => {
+      await signInAndOpenAddForm(
+        page,
+        `${organisationPrefix}-blank-no-role`,
+        addressType
+      )
+
+      await fillValidAddress(page, { name: '' })
+      await saveAndContinueButton(page).click()
+
+      await expect(page.getByRole('alert').getByRole('link')).toHaveText([
+        copy.errors.name.required,
+        copy.errors.roles.required
+      ])
+      await expect(
+        page.getByLabel(fieldLabels.name, { exact: true })
+      ).toHaveAccessibleDescription(
+        new RegExp(`Error:\\s+${copy.errors.name.required}$`)
+      )
+      await expect(rolesGroupOf(page, addressType)).toContainText(
+        copy.errors.roles.required
       )
     })
   }
@@ -364,17 +409,18 @@ test.describe('add address reached from a notification journey', () => {
     }
   })
 
-  for (const [party, partyName] of [
-    ['placeOfOrigin', 'place of origin'],
-    ['consignor', 'consignor']
+  for (const [handshake, partyName] of [
+    [JOURNEY_HANDSHAKES_BY_PARTY.placeOfOrigin, 'place of origin'],
+    [JOURNEY_HANDSHAKES_BY_PARTY.consignor, 'consignor'],
+    [CONSIGNMENT_CONTACT_HANDSHAKE, 'consignment contact']
   ]) {
     test(`from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
       page
     }) => {
       await openAddFormFromJourney(
         page,
-        `stub-org-add-journey-countries-${party}`,
-        JOURNEY_HANDSHAKES_BY_PARTY[party]
+        `stub-org-add-journey-countries-${partyName.replaceAll(' ', '-')}`,
+        handshake
       )
 
       const country = page.getByLabel('Country')
@@ -565,6 +611,72 @@ test.describe('add address validation', () => {
     })
   }
 
+  const namePostcodeCountryAndPhone = [
+    'name',
+    'postcode',
+    'countryCode',
+    'phone'
+  ]
+  const namePostcodeCountryAndPhoneValidations = requiredValidations.filter(
+    ([field]) => namePostcodeCountryAndPhone.includes(field)
+  )
+
+  for (const { entry, openForm, roles, saveButton } of [
+    {
+      entry: "the address book after choosing 'Origin or Consignor'",
+      openForm: (page) =>
+        signInAndOpenAddForm(page, 'stub-org-add-four-blanks'),
+      roles: ['CONSIGNOR'],
+      saveButton: copy.add.save
+    },
+    {
+      entry: 'the consignor picker',
+      openForm: (page) =>
+        openAddFormFromJourney(
+          page,
+          'stub-org-add-four-blanks-consignor',
+          JOURNEY_HANDSHAKES_BY_PARTY.consignor
+        ),
+      roles: [],
+      saveButton: copy.add.saveAndSelect
+    },
+    {
+      entry: 'the consignment contact page',
+      openForm: (page) =>
+        openAddFormFromJourney(
+          page,
+          'stub-org-add-four-blanks-contact',
+          CONSIGNMENT_CONTACT_HANDSHAKE
+        ),
+      roles: [],
+      saveButton: copy.add.save
+    }
+  ]) {
+    test(`from ${entry}, saving with the name, postcode, country and phone blank shows each message in the summary and against its field`, async ({
+      page
+    }) => {
+      await openForm(page)
+
+      await fillValidAddress(
+        page,
+        Object.fromEntries(
+          namePostcodeCountryAndPhone.map((field) => [field, ''])
+        )
+      )
+      await tickRoles(page, roles)
+      await page.getByRole('button', { name: saveButton }).click()
+
+      await expect(page.getByRole('alert').getByRole('link')).toHaveText(
+        namePostcodeCountryAndPhoneValidations.map(([, , error]) => error)
+      )
+      for (const [, label, error] of namePostcodeCountryAndPhoneValidations) {
+        await expect(
+          page.getByLabel(label, { exact: true })
+        ).toHaveAccessibleDescription(new RegExp(`Error:\\s+${error}$`))
+      }
+    })
+  }
+
   for (const [field, label, maxLength, error] of maxLengthValidations) {
     test(`${label} over ${maxLength} characters links to and focuses the preserved value`, async ({
       page
@@ -625,13 +737,31 @@ test.describe('save and confirm', () => {
   }) => {
     await addValidAddressToFreshOrganisation(page, { organisationPrefix })
 
-    await expect(
-      page
-        .getByRole('alert', { name: 'Success' })
-        .getByText(`${validAddress.name} address added to your address book`, {
-          exact: true
-        })
-    ).toBeVisible()
+    await expect(addedBannerOf(page)).toBeVisible()
+  })
+
+  test('keeps the Success banner shown ten seconds after the save', async ({
+    page
+  }) => {
+    await page.clock.install()
+    await addValidAddressToFreshOrganisation(page, { organisationPrefix })
+    await expect(addedBannerOf(page)).toBeVisible()
+
+    await page.clock.runFor('00:10')
+
+    await expect(addedBannerOf(page)).toBeVisible()
+  })
+
+  test('shows the saved address and no Success banner when the address book is reloaded', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, { organisationPrefix })
+    await expect(addedBannerOf(page)).toBeVisible()
+
+    await page.reload()
+
+    await expect(validAddressViewLink(page)).toBeVisible()
+    await expect(page.getByRole('alert', { name: 'Success' })).toHaveCount(0)
   })
 
   test('lists the saved address first, ahead of the seeded address, with a View link to its own details page', async ({

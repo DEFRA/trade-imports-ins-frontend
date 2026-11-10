@@ -52,6 +52,7 @@ const postDelete = (server, sessionId, returnTo) =>
   )
 
 const BANNER = '.govuk-notification-banner'
+const ADDRESS_DELETED = 'Address deleted'
 const SUMMARY_VALUE = '.govuk-summary-list__value'
 
 describe('#addressSummaryLines', () => {
@@ -109,8 +110,8 @@ describe('#deletedSuccessMessage', () => {
   })
 
   test('Should word a blank name without a name', () => {
-    expect(deletedSuccessMessage('')).toBe('Address deleted')
-    expect(deletedSuccessMessage(undefined)).toBe('Address deleted')
+    expect(deletedSuccessMessage('')).toBe(ADDRESS_DELETED)
+    expect(deletedSuccessMessage(undefined)).toBe(ADDRESS_DELETED)
   })
 })
 
@@ -338,6 +339,23 @@ describe('POST /address-book/{addressId}/delete', () => {
     expect(load(listResponse.result)(BANNER).text()).toContain(
       `${STORED_ADDRESS.name} address deleted`
     )
+  })
+
+  test('Should land on the address book saying Address deleted after deleting an address with a blank name', async () => {
+    serveStoredAddress({ ...STORED_ADDRESS, name: '' })
+    interceptDeleteOf(ADDRESS_ID).reply(statusCodes.noContent)
+
+    const response = await postDelete(getServer(), 'delete-post-banner-unnamed')
+
+    expectRedirectTo(response, addressBookPath())
+    const listResponse = await openEmptyAddressBookWithCookiesFrom(
+      getServer(),
+      'delete-post-banner-unnamed',
+      response.headers
+    )
+    expect(
+      textOf(load(listResponse.result), '.govuk-notification-banner__heading')
+    ).toBe(ADDRESS_DELETED)
   })
 
   describe('with a return', () => {

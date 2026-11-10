@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import { expectAddressBookList } from './address-book-list.js'
 import {
+  addressFormCountryNames,
   fieldLabels,
   fieldLabelsInFormOrder,
   setFieldValue,
@@ -111,11 +112,7 @@ test.describe('edit address', () => {
     await openEditForm(page, 'stub-org-edit-countries')
 
     const select = page.getByLabel(fieldLabels.countryCode)
-    const countryNames = await select.locator('option').allTextContents()
-    expect(countryNames).toEqual(
-      countryNames.toSorted((left, right) => left.localeCompare(right, 'en'))
-    )
-    await expect(select.locator('option[value=""]')).toHaveCount(0)
+    await expect(select.getByRole('option')).toHaveText(addressFormCountryNames)
     await expect(select).toHaveValue('GB')
   })
 

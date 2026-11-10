@@ -332,6 +332,35 @@ describe('POST /address-book/{addressId}/edit', () => {
     expect($('#email').val()).toBe(INVALID_ADDRESS_PAYLOAD.email)
   })
 
+  test('Should show the name, postcode, country and phone messages and send nothing when those are cleared on an address whose stored country is not offered', async () => {
+    serveStoredAddress({
+      ...STORED_ADDRESS,
+      countryCode: UNOFFERED_COUNTRY_CODE
+    })
+    const update = interceptUnwantedUpdate()
+
+    const { result, statusCode } = await postEdit(
+      getServer(),
+      'edit-post-four-blanks-unoffered',
+      {
+        ...VALID_ADDRESS_FIELDS,
+        name: '',
+        postcode: '',
+        countryCode: '',
+        phone: ''
+      }
+    )
+
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expectSummaryAndFieldErrors(load(result), [
+      ['name', REQUIRED_MESSAGES.name],
+      ['postcode', REQUIRED_MESSAGES.postcode],
+      ['countryCode', REQUIRED_MESSAGES.countryCode],
+      ['phone', REQUIRED_MESSAGES.phone]
+    ])
+    update.expectNotSent()
+  })
+
   test('Should refuse a country the reference data does not list with Select a country, sending nothing', async () => {
     const scope = serveStoredAddress()
     const update = interceptUnwantedUpdate()

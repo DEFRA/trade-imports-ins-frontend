@@ -134,6 +134,18 @@ test.describe('choose an address type', () => {
     await expectNoTypeChosen(page)
   })
 
+  test('choosing a type after Add a new address opens the add page titled Add address and contact details', async ({
+    page
+  }) => {
+    await openTypePageFromList(page, 'stub-org-type-add-title')
+
+    await chooseAddressType(page, ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR)
+
+    await expect(page).toHaveTitle(
+      'Add address and contact details - Import notification service - GOV.UK'
+    )
+  })
+
   for (const addressType of [
     ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
     ADDRESS_TYPES.BRANCH

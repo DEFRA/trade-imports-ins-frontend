@@ -88,3 +88,6 @@ export const handshakeContextOf = (handshake) => ({
 })
 
 export const UNREGISTERED_JOURNEY_TYPE = 'not-a-journey'
+
+export const INCOMPLETE_HANDSHAKE_WARNING =
+  'Journey handshake refused, it is missing an id or its token'

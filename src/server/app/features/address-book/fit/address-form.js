@@ -163,6 +163,16 @@ export const originOrConsignorListUrl = addressTypeListUrl(
   ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
 )
 
+export const saveValidAddress = async (
+  page,
+  { addressType, roles, overrides = {} }
+) => {
+  await fillValidAddress(page, overrides)
+  await tickRoles(page, roles)
+  await saveAndContinueButton(page).click()
+  await expect(page).toHaveURL(addressTypeListUrl(addressType))
+}
+
 export const addValidAddressToFreshOrganisation = async (
   page,
   {
@@ -178,10 +188,7 @@ export const addValidAddressToFreshOrganisation = async (
     `${organisationPrefix}-${crypto.randomUUID()}${emptyBook ? '-empty' : ''}`,
     addressType
   )
-  await fillValidAddress(page, overrides)
-  await tickRoles(page, roles)
-  await saveAndContinueButton(page).click()
-  await expect(page).toHaveURL(addressTypeListUrl(addressType))
+  await saveValidAddress(page, { addressType, roles, overrides })
 }
 
 export const validAddressViewLink = (page) =>

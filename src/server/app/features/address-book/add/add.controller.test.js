@@ -35,6 +35,7 @@ import {
   ANIMALS_BASE_URL,
   ANY_COUNTRY_PARTIES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
+  INCOMPLETE_HANDSHAKE_WARNING,
   JOURNEY_HANDSHAKES_BY_PARTY,
   journeyRolesHintFor,
   returnUrlFor,
@@ -42,7 +43,10 @@ import {
   UNREGISTERED_JOURNEY_TYPE,
   ROLES_BY_PARTY
 } from '../../../../common/test-helpers/journey-handshake.js'
-import { recordModuleLoggerInfo } from '../../../../common/test-helpers/module-logger-lines.js'
+import {
+  recordModuleLoggerInfo,
+  recordModuleLoggerWarn
+} from '../../../../common/test-helpers/module-logger-lines.js'
 import {
   addressTypeRequiresUnitedKingdom,
   ADDRESS_FORM_TYPES,
@@ -354,6 +358,8 @@ describe('#addressBookAddController', { concurrent: false }, () => {
   })
 
   test('POST with a country the reference data does not list shows the select-a-country error', async () => {
+    const creation = interceptAddressBookRequest('POST', addressesApiPath())
+
     const { result, statusCode } = await postAddWithTypeChosen(
       getServer(),
       'add-post-unlisted-country',
@@ -364,7 +370,10 @@ describe('#addressBookAddController', { concurrent: false }, () => {
     )
 
     expect(statusCode).toBe(statusCodes.badRequest)
-    expect(result).toMatch(/href="#countryCode"[^>]*>\s*Select a country\s*</)
+    expectSummaryAndFieldErrors(load(result), [
+      ['countryCode', REQUIRED_MESSAGES.countryCode]
+    ])
+    creation.expectNotSent()
   })
 
   test('Cancel returns to list without creating an address', async () => {
@@ -571,12 +580,10 @@ describe(
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
-      const $ = load(result)
-      expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([
-        REQUIRED_MESSAGES.name,
-        ROLES_ERROR
+      expectSummaryAndFieldErrors(load(result), [
+        ['name', REQUIRED_MESSAGES.name],
+        ['roles', ROLES_ERROR]
       ])
-      expect(textsOf($, '#roles-error')).toEqual([`Error: ${ROLES_ERROR}`])
     })
 
     test('POST with an invalid field keeps the ticks the user made', async () => {
@@ -595,6 +602,20 @@ describe(
         'PLACE_OF_ORIGIN',
         'CONSIGNOR'
       ])
+    })
+
+    test('POST with Place of origin and Consignor ticked sends both roles to the address book, Place of origin first', async () => {
+      const { scope, captured } = serveAddressCreationCapturingBody()
+
+      const response = await postAddWithTypeChosen(
+        getServer(),
+        'add-post-both-origin-roles',
+        { ...VALID_ADDRESS_PAYLOAD, roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'] }
+      )
+
+      expectRedirectTo(response, ORIGIN_OR_CONSIGNOR_LIST_PATH)
+      expect(scope.isDone()).toBe(true)
+      expect(captured.body.roles).toEqual(['PLACE_OF_ORIGIN', 'CONSIGNOR'])
     })
 
     test('POST with Consignor ticked and a role the type does not offer saves only Consignor, logs the discarded role and lands on the Origin and Consignor list', async () => {
@@ -1015,6 +1036,34 @@ describe(
       }
     )
 
+    test.each(Object.entries(ROLES_BY_PARTY))(
+      'POST from the %s handshake with nothing ticked hands the address back saved with only its own role',
+      async (party, { ownRole }) => {
+        const { scope, captured } = serveAddressCreationCapturingBody()
+        const handshake = JOURNEY_HANDSHAKES_BY_PARTY[party]
+
+        const response = await postAdd(
+          getServer(),
+          `add-post-handshake-none-ticked-${party}`,
+          {
+            ...handshake,
+            ...VALID_ADDRESS_FIELDS,
+            action: ADDRESS_LANDING.SELECT
+          }
+        )
+
+        expectRedirectTo(
+          response,
+          returnUrlFor(handshake, {
+            addressId: ADDRESS_ID,
+            landing: ADDRESS_LANDING.SELECT
+          })
+        )
+        expect(scope.isDone()).toBe(true)
+        expect(captured.body.roles).toEqual([ownRole])
+      }
+    )
+
     test('POST from the consignee handshake with Importer ticked saves the consignee and importer roles and hands back with the select landing', async () => {
       const { scope, captured } = serveAddressCreationCapturingBody()
 
@@ -1279,6 +1328,7 @@ describe(
   () => {
     const getServer = startRealModeServerServingCountries(COUNTRIES)
     const { entriesWith: loggedWith } = recordModuleLoggerInfo()
+    const { entriesWith: warnedWith } = recordModuleLoggerWarn()
 
     test('GET refuses an unrecognised journey type', async () => {
       const { statusCode } = await getAdd(
@@ -1361,6 +1411,32 @@ describe(
 
       expect(response.statusCode).toBe(statusCodes.notFound)
       expect(scope.isDone()).toBe(false)
+    })
+
+    test('POST with a journey type but no notification or party is refused as a bad request, saves nothing and logs the refusal once at warn', async () => {
+      const createRequested = serveAddressCreated()
+
+      const response = await postAddWithTypeChosen(
+        getServer(),
+        'add-post-incomplete-handshake',
+        {
+          'journey-type': CONSIGNOR_HANDSHAKE['journey-type'],
+          ...VALID_ADDRESS_PAYLOAD
+        }
+      )
+
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+      expect(createRequested.isDone()).toBe(false)
+      expect(warnedWith(INCOMPLETE_HANDSHAKE_WARNING)).toEqual([
+        {
+          fields: {
+            journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
+            notificationId: '',
+            fulfilmentId: ''
+          },
+          message: INCOMPLETE_HANDSHAKE_WARNING
+        }
+      ])
     })
 
     test('POST of Save and return to address page returns to the journey with the new address id and the return landing', async () => {
@@ -1563,17 +1639,29 @@ describe(
     })
 
     test.each([
-      ['no country', ''],
-      ['a country the list does not offer', 'ZZ']
+      ['consignor', 'no country', CONSIGNOR_HANDSHAKE, ''],
+      [
+        'consignor',
+        'a country the list does not offer',
+        CONSIGNOR_HANDSHAKE,
+        'ZZ'
+      ],
+      ['consignment contact', 'no country', CONSIGNMENT_CONTACT_HANDSHAKE, ''],
+      [
+        'consignment contact',
+        'a country the list does not offer',
+        CONSIGNMENT_CONTACT_HANDSHAKE,
+        'ZZ'
+      ]
     ])(
-      'POST from the consignor handshake with %s shows Select a country and saves nothing',
-      async (_name, countryCode) => {
+      'POST from the %s handshake with %s shows Select a country and saves nothing',
+      async (entry, _countryChoice, handshake, countryCode) => {
         const creation = interceptAddressBookRequest('POST', addressesApiPath())
 
         const { result, statusCode } = await postAdd(
           getServer(),
-          `add-post-consignor-country-${countryCode || 'blank'}`,
-          { ...CONSIGNOR_HANDSHAKE, ...VALID_ADDRESS_PAYLOAD, countryCode }
+          `add-post-${entry.replaceAll(' ', '-')}-country-${countryCode || 'blank'}`,
+          { ...handshake, ...VALID_ADDRESS_PAYLOAD, countryCode }
         )
 
         expect(statusCode).toBe(statusCodes.badRequest)
