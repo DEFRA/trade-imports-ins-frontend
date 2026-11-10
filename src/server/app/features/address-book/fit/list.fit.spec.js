@@ -482,6 +482,7 @@ test.describe('filter addresses', () => {
 
     await expect(page).toHaveURL(addressBookPath())
     await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
+    await expect(page.getByRole('row')).toHaveCount(9)
   })
 
   test('Clear search after a search returns to the whole selected tab with an empty Search field', async ({
