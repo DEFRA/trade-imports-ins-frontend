@@ -132,10 +132,6 @@ const ERROR_SUMMARY_LINKS = '.govuk-error-summary a'
 const ROLES_ERROR = 'Select what this address can be used for'
 const ROLES_LEGEND = 'What can this address be used for?'
 const ADDRESS_TYPE_LEGEND = 'Address type'
-const DESTINATION_AND_BRANCH_TYPES = [
-  ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-  ADDRESS_TYPES.BRANCH
-]
 const ROLES_HINT = 'Select where this address can be used'
 
 const SUCCESS_BANNER = '.govuk-notification-banner--success'
@@ -678,12 +674,12 @@ describe(
 )
 
 describe(
-  '#addressBookAddController — Destination, Consignee or Importer and Branch',
+  '#addressBookAddController — any country for every address type',
   { concurrent: false },
   () => {
     const getServer = startRealModeServerServingCountries(COUNTRIES)
 
-    test.each(DESTINATION_AND_BRANCH_TYPES)(
+    test.each(ADDRESS_FORM_TYPES)(
       'GET after %s is chosen lists Select a country then every served country, with United Kingdom selected',
       async (addressType) => {
         const { result } = await getAddWithTypeChosen(
@@ -699,7 +695,7 @@ describe(
       }
     )
 
-    test.each(DESTINATION_AND_BRANCH_TYPES)(
+    test.each(ADDRESS_FORM_TYPES)(
       'POST after %s is chosen with France posted saves France',
       async (addressType) => {
         const { scope, captured } = serveAddressCreationCapturingBody()
@@ -720,7 +716,7 @@ describe(
       }
     )
 
-    test.each(DESTINATION_AND_BRANCH_TYPES)(
+    test.each(ADDRESS_FORM_TYPES)(
       'POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only and keeps France selected',
       async (addressType) => {
         const { result, statusCode } = await postAddWithTypeChosen(
