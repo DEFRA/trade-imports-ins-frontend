@@ -775,17 +775,24 @@ test.describe('type filter', () => {
     await expect(paginationOf(page)).toHaveCount(0)
   })
 
-  test('leaves the URL and the whole tab listed when a Type is chosen and not submitted', async ({
+  test('requests no page and leaves the URL and the whole tab listed when a Type is chosen and not submitted', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
     await openFilterDisclosure(page)
+    const pagesRequested = []
+    page.on('request', (request) => {
+      if (request.isNavigationRequest()) {
+        pagesRequested.push(request.url())
+      }
+    })
 
     await typeSelectOf(page).selectOption({ label: CONSIGNOR_ROLE.label })
 
     await expect(page).toHaveURL(addressBookPath())
     await expect(resultsLineOf(page)).toHaveText(TWO_ADDRESSES_LINE)
     await expectNamesListed(page, ORIGIN_TAB.names)
+    expect(pagesRequested).toEqual([])
   })
 
   test('keeps the search and clears the Type when another tab is followed', async ({
