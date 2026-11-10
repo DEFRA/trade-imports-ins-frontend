@@ -20,6 +20,7 @@ import {
   interceptAddressBookRequest,
   INVALID_ADDRESS_PAYLOAD,
   postPage,
+  SELECTED_COUNTRY_OPTION,
   serveAddressCreated,
   serveAddressCreationCapturingBody,
   STORED_ADDRESS,
@@ -33,13 +34,13 @@ import { expectAddressFormAutocomplete } from '../../../../common/test-helpers/e
 import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-address-form-widths.js'
 import {
   ANIMALS_BASE_URL,
-  ANY_COUNTRY_PARTIES,
+  SENDING_PARTIES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   INCOMPLETE_HANDSHAKE_WARNING,
   JOURNEY_HANDSHAKES_BY_PARTY,
   journeyRolesHintFor,
   returnUrlFor,
-  UNITED_KINGDOM_PARTIES,
+  RECEIVING_PARTIES,
   UNREGISTERED_JOURNEY_TYPE,
   ROLES_BY_PARTY
 } from '../../../../common/test-helpers/journey-handshake.js'
@@ -48,7 +49,6 @@ import {
   recordModuleLoggerWarn
 } from '../../../../common/test-helpers/module-logger-lines.js'
 import {
-  addressTypeRequiresUnitedKingdom,
   ADDRESS_FORM_TYPES,
   ADDRESS_TYPES,
   ROLES_BY_ADDRESS_TYPE
@@ -58,8 +58,7 @@ import { copy } from '../copy/copy.en.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 import {
   expectPlaceholderThenCountriesUnitedKingdomSelected,
-  expectPlaceholderThenCountriesNoneSelected,
-  expectUnitedKingdomAloneSelected
+  expectPlaceholderThenCountriesNoneSelected
 } from '../../../../common/test-helpers/expect-add-form-country-select.js'
 import {
   expectSummaryAndFieldErrors,
@@ -133,9 +132,6 @@ const ERROR_SUMMARY_LINKS = '.govuk-error-summary a'
 const ROLES_ERROR = 'Select what this address can be used for'
 const ROLES_LEGEND = 'What can this address be used for?'
 const ADDRESS_TYPE_LEGEND = 'Address type'
-const UNITED_KINGDOM_ADDRESS_TYPES = Object.values(ADDRESS_TYPES).filter(
-  addressTypeRequiresUnitedKingdom
-)
 const ROLES_HINT = 'Select where this address can be used'
 
 const SUCCESS_BANNER = '.govuk-notification-banner--success'
@@ -146,7 +142,6 @@ const expectNamePostcodeAndPhoneErrorsOnly = ($) => {
     ['postcode', REQUIRED_MESSAGES.postcode],
     ['phone', REQUIRED_MESSAGES.phone]
   ])
-  expectUnitedKingdomAloneSelected($)
 }
 
 const ORIGIN_ROLE_LABELS = ['Place of origin', 'Consignor']
@@ -679,32 +674,35 @@ describe(
 )
 
 describe(
-  '#addressBookAddController — types that must be in the United Kingdom',
+  '#addressBookAddController — any country for every address type',
   { concurrent: false },
   () => {
     const getServer = startRealModeServerServingCountries(COUNTRIES)
 
-    test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
-      'GET after %s is chosen offers United Kingdom alone, selected',
+    test.each(ADDRESS_FORM_TYPES)(
+      'GET after %s is chosen lists Select a country then every served country, with United Kingdom selected',
       async (addressType) => {
         const { result } = await getAddWithTypeChosen(
           getServer(),
-          `add-get-uk-alone-${addressType}`,
+          `add-get-any-country-${addressType}`,
           { addressType }
         )
 
-        expectUnitedKingdomAloneSelected(load(result))
+        expectPlaceholderThenCountriesUnitedKingdomSelected(
+          load(result),
+          SERVED_COUNTRY_NAMES
+        )
       }
     )
 
-    test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
-      'POST after %s is chosen with France posted saves United Kingdom',
+    test.each(ADDRESS_FORM_TYPES)(
+      'POST after %s is chosen with France posted saves France',
       async (addressType) => {
         const { scope, captured } = serveAddressCreationCapturingBody()
 
         await postAddWithTypeChosen(
           getServer(),
-          `add-post-uk-only-${addressType}`,
+          `add-post-any-country-${addressType}`,
           {
             ...VALID_ADDRESS_PAYLOAD,
             countryCode: 'FR',
@@ -714,16 +712,16 @@ describe(
         )
 
         expect(scope.isDone()).toBe(true)
-        expect(captured.body.countryCode).toBe(GB_COUNTRY.code)
+        expect(captured.body.countryCode).toBe('FR')
       }
     )
 
-    test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
-      'POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only',
+    test.each(ADDRESS_FORM_TYPES)(
+      'POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only and keeps France selected',
       async (addressType) => {
         const { result, statusCode } = await postAddWithTypeChosen(
           getServer(),
-          `add-post-uk-only-blanks-${addressType}`,
+          `add-post-any-country-blanks-${addressType}`,
           {
             ...VALID_ADDRESS_PAYLOAD,
             name: '',
@@ -735,142 +733,12 @@ describe(
           { addressType }
         )
 
+        const $ = load(result)
         expect(statusCode).toBe(statusCodes.badRequest)
-        expectNamePostcodeAndPhoneErrorsOnly(load(result))
+        expectNamePostcodeAndPhoneErrorsOnly($)
+        expect($(SELECTED_COUNTRY_OPTION).attr('value')).toBe('FR')
       }
     )
-  }
-)
-
-describe(
-  '#addressBookAddController — replaced country log',
-  { concurrent: false },
-  () => {
-    const getServer = startRealModeServerServingCountries(COUNTRIES)
-    const { entriesWith: loggedWith } = recordModuleLoggerInfo()
-    const REPLACED_MESSAGE =
-      'Posted country was replaced with the country the address must be in'
-
-    test.each(UNITED_KINGDOM_ADDRESS_TYPES)(
-      'POST after %s is chosen with France posted logs the replaced country once, with the stored address id',
-      async (addressType) => {
-        serveAddressCreated()
-
-        await postAddWithTypeChosen(
-          getServer(),
-          `add-log-replaced-${addressType}`,
-          {
-            ...VALID_ADDRESS_PAYLOAD,
-            countryCode: 'FR',
-            roles: ROLES_BY_ADDRESS_TYPE[addressType][0]
-          },
-          { addressType }
-        )
-
-        expect(loggedWith(REPLACED_MESSAGE)).toEqual([
-          {
-            fields: {
-              organisationId: ORGANISATION_ID,
-              addressId: ADDRESS_ID,
-              addressType,
-              postedCountryCode: 'FR'
-            },
-            message: REPLACED_MESSAGE
-          }
-        ])
-      }
-    )
-
-    test('POST after Destination is chosen with the United Kingdom posted logs nothing, and Origin or Consignor saves France as posted', async () => {
-      const destination = serveAddressCreationCapturingBody()
-      await postAddWithTypeChosen(
-        getServer(),
-        'add-log-not-replaced-gb',
-        {
-          ...VALID_ADDRESS_PAYLOAD,
-          roles: 'CONSIGNEE'
-        },
-        { addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER }
-      )
-      const origin = serveAddressCreationCapturingBody()
-      await postAddWithTypeChosen(getServer(), 'add-log-not-replaced-origin', {
-        ...VALID_ADDRESS_PAYLOAD,
-        countryCode: 'FR'
-      })
-
-      expect(destination.scope.isDone()).toBe(true)
-      expect(origin.captured.body.countryCode).toBe('FR')
-      expect(loggedWith(REPLACED_MESSAGE)).toEqual([])
-    })
-
-    test('POST from the consignee handshake with France posted logs the replaced country with the notification and fulfilment ids', async () => {
-      serveAddressCreated()
-
-      await postAdd(getServer(), 'add-log-replaced-consignee', {
-        ...CONSIGNEE_HANDSHAKE,
-        ...VALID_ADDRESS_PAYLOAD,
-        countryCode: 'FR'
-      })
-
-      expect(loggedWith(REPLACED_MESSAGE)).toEqual([
-        {
-          fields: {
-            organisationId: ORGANISATION_ID,
-            addressId: ADDRESS_ID,
-            notificationId: CONSIGNEE_HANDSHAKE['notification-id'],
-            fulfilmentId: CONSIGNEE_HANDSHAKE['fulfilment-id'],
-            postedCountryCode: 'FR'
-          },
-          message: REPLACED_MESSAGE
-        }
-      ])
-    })
-
-    test('POST with France posted that is refused for a field error, a missing role or the address book logs nothing and shows each refusal', async () => {
-      const destination = ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
-      const france = {
-        ...VALID_ADDRESS_PAYLOAD,
-        countryCode: 'FR',
-        roles: 'CONSIGNEE'
-      }
-      const { roles: _noRole, ...franceWithoutRole } = france
-
-      const fieldError = await postAddWithTypeChosen(
-        getServer(),
-        'add-log-refused-field',
-        { ...france, name: '' },
-        { addressType: destination }
-      )
-      const rolesError = await postAddWithTypeChosen(
-        getServer(),
-        'add-log-refused-roles',
-        franceWithoutRole,
-        { addressType: destination }
-      )
-      addressBookApi()
-        .post(addressesApiPath())
-        .reply(statusCodes.badRequest, {
-          type: VALIDATION_PROBLEM_TYPE,
-          errors: { email: [EMAIL_FORMAT_ERROR] }
-        })
-      const refusedByAddressBook = await postAddWithTypeChosen(
-        getServer(),
-        'add-log-refused-address-book',
-        france,
-        { addressType: destination }
-      )
-
-      expect(textsOf(load(fieldError.result), ERROR_SUMMARY_LINKS)).toEqual([
-        REQUIRED_MESSAGES.name
-      ])
-      expect(textsOf(load(rolesError.result), ERROR_SUMMARY_LINKS)).toEqual([
-        ROLES_ERROR
-      ])
-      expect(
-        textsOf(load(refusedByAddressBook.result), ERROR_SUMMARY_LINKS)
-      ).toEqual([EMAIL_FORMAT_ERROR])
-      expect(loggedWith(REPLACED_MESSAGE)).toEqual([])
-    })
   }
 )
 
@@ -1479,7 +1347,7 @@ describe(
       )
     })
 
-    test('POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom alone on the form when the API rejects the address', async () => {
+    test('POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom selected on the form when the API rejects the address', async () => {
       addressBookApi()
         .post(addressesApiPath())
         .reply(statusCodes.badRequest, {
@@ -1505,7 +1373,10 @@ describe(
       ])
       expect(textsOf($, FORM_LINK)).toEqual(['Cancel and return to hub'])
       expectDraftJourneyStrip($, CONSIGNEE_HANDSHAKE['notification-id'])
-      expectUnitedKingdomAloneSelected($)
+      expectPlaceholderThenCountriesUnitedKingdomSelected(
+        $,
+        SERVED_COUNTRY_NAMES
+      )
     })
 
     test('Cancel from a role handshake returns to the journey with the cancel landing and no address', async () => {
@@ -1555,12 +1426,15 @@ describe(
       return load(result)
     }
 
-    test.each(UNITED_KINGDOM_PARTIES)(
-      'GET from the %s handshake offers United Kingdom alone, selected, with every field shown',
+    test.each(RECEIVING_PARTIES)(
+      'GET from the %s handshake lists Select a country then every served country, with United Kingdom selected, and shows every field',
       async (party) => {
         const $ = await openAddFrom(party)
 
-        expectUnitedKingdomAloneSelected($)
+        expectPlaceholderThenCountriesUnitedKingdomSelected(
+          $,
+          SERVED_COUNTRY_NAMES
+        )
         expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual([
           ...ADDRESS_FORM_LABELS,
           ...otherRolesQuestionOf(party).labels
@@ -1568,7 +1442,7 @@ describe(
       }
     )
 
-    test.each(ANY_COUNTRY_PARTIES)(
+    test.each(SENDING_PARTIES)(
       'GET from the %s handshake opens the Country select on Select a country, offers every served country and shows every field',
       async (party) => {
         const $ = await openAddFrom(party)
@@ -1581,7 +1455,7 @@ describe(
       }
     )
 
-    test('POST from the consignee handshake shows the recoverable-error banner and United Kingdom alone, selected, when the address book fails', async () => {
+    test('POST from the consignee handshake shows the recoverable-error banner and keeps United Kingdom selected when the address book fails', async () => {
       addressBookApi()
         .post(addressesApiPath())
         .reply(statusCodes.serviceUnavailable, { title: 'Service Unavailable' })
@@ -1597,10 +1471,13 @@ describe(
       expect(textsOf($, '.govuk-notification-banner__content')).toEqual([
         'Sorry, there is a problem with the service. Try again in a few minutes.'
       ])
-      expectUnitedKingdomAloneSelected($)
+      expectPlaceholderThenCountriesUnitedKingdomSelected(
+        $,
+        SERVED_COUNTRY_NAMES
+      )
     })
 
-    test('POST from the consignee handshake saves the address as United Kingdom whatever country is posted', async () => {
+    test('POST from the consignee handshake saves the country posted', async () => {
       const { scope, captured } = serveAddressCreationCapturingBody()
 
       const response = await postAdd(getServer(), 'add-post-consignee-france', {
@@ -1617,10 +1494,12 @@ describe(
         })
       )
       expect(scope.isDone()).toBe(true)
-      expect(captured.body.countryCode).toBe(GB_COUNTRY.code)
+      expect(captured.body.countryCode).toBe('FR')
     })
 
-    test('POST from the consignee handshake with the name, postcode, country and phone blank lists the name, postcode and phone errors only, and keeps United Kingdom selected', async () => {
+    test('POST from the consignee handshake with the name, postcode and phone blank lists those three errors only and saves nothing', async () => {
+      const creation = interceptAddressBookRequest('POST', addressesApiPath())
+
       const { result, statusCode } = await postAdd(
         getServer(),
         'add-post-consignee-blanks',
@@ -1629,31 +1508,25 @@ describe(
           ...VALID_ADDRESS_PAYLOAD,
           name: '',
           postcode: '',
-          countryCode: '',
           phone: ''
         }
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expectNamePostcodeAndPhoneErrorsOnly(load(result))
+      creation.expectNotSent()
     })
 
-    test.each([
-      ['consignor', 'no country', CONSIGNOR_HANDSHAKE, ''],
+    test.each(
       [
-        'consignor',
-        'a country the list does not offer',
-        CONSIGNOR_HANDSHAKE,
-        'ZZ'
-      ],
-      ['consignment contact', 'no country', CONSIGNMENT_CONTACT_HANDSHAKE, ''],
-      [
-        'consignment contact',
-        'a country the list does not offer',
-        CONSIGNMENT_CONTACT_HANDSHAKE,
-        'ZZ'
-      ]
-    ])(
+        ['consignee', CONSIGNEE_HANDSHAKE],
+        ['consignor', CONSIGNOR_HANDSHAKE],
+        ['consignment contact', CONSIGNMENT_CONTACT_HANDSHAKE]
+      ].flatMap(([entry, handshake]) => [
+        [entry, 'no country', handshake, ''],
+        [entry, 'a country the list does not offer', handshake, 'ZZ']
+      ])
+    )(
       'POST from the %s handshake with %s shows Select a country and saves nothing',
       async (entry, _countryChoice, handshake, countryCode) => {
         const creation = interceptAddressBookRequest('POST', addressesApiPath())

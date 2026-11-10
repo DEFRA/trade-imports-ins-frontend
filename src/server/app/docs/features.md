@@ -54,13 +54,9 @@ root:
 - [`address-countries.js`](../features/address-book/address-countries.js) —
   lists the countries alphabetically, United Kingdom included in its place, rejects with a 503 Boom when reference data is empty,
   `buildCountrySelectItems` (a select that opens on a blank option),
-  `addFormCountryOffer` (the add form's select items, accepted country codes and form values, for a handshake context
-  and the chosen address type:
-  United Kingdom alone, selected and accepted as the only country, with the
-  form values' country fixed to `GB`, when the handshake's party must be in the
-  United Kingdom according to `journey-registry.js` or, with no handshake, when
-  `addressTypeRequiresUnitedKingdom` holds the chosen type, else the blank
-  option, every served country and the form values as given),
+  `addFormCountryOffer(placeholder)` (the add form's select items, the
+  placeholder option then every served country, and the country codes it
+  accepts, for every address type and party),
   `buildEditCountrySelectItems` (the edit form's select, with a
   blank option only when the country it shows is not one the list offers) and
   `countryCodesMatching` (every country code whose name contains the search term).
@@ -69,10 +65,10 @@ root:
   return and cancel, the page the journey opens on return),
   `isResolvableHandshake` (whether a handshake's journey type and fulfilment id
   resolve to a party's role: the one check the query, payload and session
-  handshakes all pass), `requiresUnitedKingdomAddress`
-  (whether the role's address must be in the United Kingdom: the address type
-  of its role is one `addressTypeRequiresUnitedKingdom` holds, and the party is
-  not the consignment contact), `ownAndOtherRolesOfParty` (the party's own role and the
+  handshakes all pass), `isReceivingParty` (whether the add form opens on
+  United Kingdom: true when the party's role is consignee, importer or place
+  of destination, false for the consignment contact and a handshake that does
+  not resolve to a role), `ownAndOtherRolesOfParty` (the party's own role and the
   other roles on its side, in `ROLES_BY_ADDRESS_TYPE` order, which feeds the add
   page's checkboxes; no own role and no other roles for a fulfilment id the map
   does not list), `rolesToSaveForParty`
@@ -87,7 +83,7 @@ root:
   from each party's fulfilment id, the five roles and the consignment contact,
   to the party's own role, which its address is always saved with alongside any
   ticked roles its side offers; `ownAndOtherRolesOfParty`,
-  `rolesToSaveForParty` and `requiresUnitedKingdomAddress` read it.
+  `rolesToSaveForParty` and `isReceivingParty` read it.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
   `ADDRESS_BOOK_TABS` (the list's four tabs in order, each saying what it
   lists and carrying the Type filter it offers — its query-parameter name and
@@ -260,9 +256,7 @@ adds to that shape for a journey:
   roles) or, with none, United Kingdom selected; the POST keeps what was posted
   before any check, so a refused save and a Back to the type page leave the
   entry for the form to reopen with. A successful save clears the add in
-  progress. A type that must be in the United Kingdom (Destination, Consignee
-  or Importer, and Branch) shows United Kingdom alone, whatever was kept or
-  posted, and a save whose posted country was replaced with United Kingdom is logged once at info.
+  progress.
 - In `ADDRESS_BOOK` mode after the contact fields the form shows the roles question: a visible
   section break, then checkboxes named `roles` (the first option's id is `roles`,
   so the error summary link focuses it) under the legend `copy.roles` holds for

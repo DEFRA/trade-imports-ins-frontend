@@ -49,13 +49,13 @@ export const journeyRolesHintFor = (party) =>
     copy.roles.options[ROLES_BY_PARTY[party].ownRole].label
   )
 
-export const UNITED_KINGDOM_PARTIES = Object.freeze([
+export const RECEIVING_PARTIES = Object.freeze([
   'consignee',
   'importer',
   'placeOfDestination'
 ])
 
-export const ANY_COUNTRY_PARTIES = Object.freeze(['placeOfOrigin', 'consignor'])
+export const SENDING_PARTIES = Object.freeze(['placeOfOrigin', 'consignor'])
 
 export const CONSIGNMENT_CONTACT_HANDSHAKE = handshakeForFulfilmentId(
   CONSIGNMENT_CONTACT_FULFILMENT_ID

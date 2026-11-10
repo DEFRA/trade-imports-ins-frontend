@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import { expectAddressBookList } from './address-book-list.js'
 import {
-  addressFormCountryNames,
+  expectEveryCountryOfferedWithNoPlaceholder,
   fieldLabels,
   fieldLabelsInFormOrder,
   setFieldValue,
@@ -112,7 +112,7 @@ test.describe('edit address', () => {
     await openEditForm(page, 'stub-org-edit-countries')
 
     const select = page.getByLabel(fieldLabels.countryCode)
-    await expect(select.getByRole('option')).toHaveText(addressFormCountryNames)
+    await expectEveryCountryOfferedWithNoPlaceholder(select)
     await expect(select).toHaveValue('GB')
   })
 

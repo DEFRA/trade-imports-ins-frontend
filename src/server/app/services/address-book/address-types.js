@@ -47,9 +47,3 @@ export const PLACE_ROLES = Object.freeze([
   ROLES.PLACE_OF_ORIGIN,
   ROLES.PLACE_OF_DESTINATION
 ])
-
-export const addressTypeRequiresUnitedKingdom = (addressType) =>
-  [
-    ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-    ADDRESS_TYPES.BRANCH
-  ].includes(addressType)

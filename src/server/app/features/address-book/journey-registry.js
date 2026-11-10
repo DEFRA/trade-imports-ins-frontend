@@ -4,10 +4,10 @@ import {
 } from '../../../common/constants/journey-set-bases.js'
 import { buildSetBaseUrl } from '../../../common/helpers/set-base-url.js'
 import {
+  ADDRESS_TYPES,
   ROLES,
   ROLES_BY_ADDRESS_TYPE,
   addressTypeOfRole,
-  addressTypeRequiresUnitedKingdom,
   keepRolesOfferedBy
 } from '../../services/address-book/index.js'
 
@@ -65,9 +65,9 @@ export const isConsignmentContact = (context) => {
   )
 }
 
-export const requiresUnitedKingdomAddress = (context) =>
-  !isConsignmentContact(context) &&
-  addressTypeRequiresUnitedKingdom(addressTypeOfRole(roleOfParty(context)))
+export const isReceivingParty = (context) =>
+  addressTypeOfRole(roleOfParty(context)) ===
+  ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
 
 export const ownAndOtherRolesOfParty = (context) => {
   const ownRole = roleOfParty(context)

@@ -106,15 +106,14 @@ ids and token; the Vitest tests and the fit specs both use these;
 `ROLES_BY_PARTY`, each party's own role and the other roles on its
 side, `journeyRolesHintFor(party)`, the roles question's hint naming that
 party's own role, and `UNREGISTERED_JOURNEY_TYPE`, a journey type the
-registry does not list, `UNITED_KINGDOM_PARTIES`, the parties whose address
-must be in the United Kingdom, and `ANY_COUNTRY_PARTIES`, the parties whose
-address may be in any country),
+registry does not list, `RECEIVING_PARTIES`, the consignee, importer and
+place of destination, and `SENDING_PARTIES`, the place of origin and
+consignor),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
 notificationId)`, the Draft tag and notification id in the
 journey strip, found by `journey-strip.js`'s `JOURNEY_STRIP` selector,
 which the fit specs import too),
-`expect-add-form-country-select.js` (`expectUnitedKingdomAloneSelected($)`,
-`expectPlaceholderThenCountriesNoneSelected($, countryNames)` and
+`expect-add-form-country-select.js` (`expectPlaceholderThenCountriesNoneSelected($, countryNames)` and
 `expectPlaceholderThenCountriesUnitedKingdomSelected($, countryNames)`, the add form's
 Country select),
 `expect-address-form-errors.js` (`expectSummaryAndFieldErrors($, errors)`,
@@ -255,8 +254,10 @@ in and opens a page, and is the helper every FIT uses for both.
 the error summary link is clicked and the field it names takes focus, and
 `errorLink`, the error summary link with a message.
 [`address-form.js`](../features/address-book/fit/address-form.js) —
-`fieldLabels`, `fieldLabelsInFormOrder` (the nine labels in page order), `addressFormCountryNames` (the captured countries fixture's
-names plus United Kingdom, alphabetical), `validAddress`, `fillValidAddress`,
+`fieldLabels`, `fieldLabelsInFormOrder` (the nine labels in page order), `expectEveryCountryOffered` (the Country select offers Select a
+country then the captured countries fixture's names plus United Kingdom,
+alphabetical), `expectEveryCountryOfferedWithNoPlaceholder` (the same
+countries with no Select a country option), `validAddress`, `fillValidAddress`,
 `addressTypeRadio` (the type page's radio for an address type), `backLink`,
 `saveAndContinueButton`,
 `chooseAddressType` (chooses a type on the 'Choose an address type' page and

@@ -45,6 +45,7 @@ import {
   rolesToSaveForParty,
   buildReturnUrl,
   isConsignmentContact,
+  isReceivingParty,
   ownAndOtherRolesOfParty
 } from '../journey-registry.js'
 import { addressBookPageHref } from '../view-model/list.js'
@@ -75,9 +76,12 @@ const backHrefFor = (addMode, handshakeContext) =>
     ? addressTypePath()
     : buildReturnUrl(handshakeContext)
 
-const openingEntryFor = (request, addMode) => {
+const openingEntryFor = (request, addMode, handshakeContext) => {
   if (addMode !== ADD_MODES.ADDRESS_BOOK) {
-    return { formValues: formValuesOf(), tickedRoles: [] }
+    const openingCountry = isReceivingParty(handshakeContext)
+      ? { countryCode: GB_COUNTRY.code }
+      : {}
+    return { formValues: formValuesOf(openingCountry), tickedRoles: [] }
   }
   const { formValues, tickedRoles } = storedEnteredAddress(request)
   return {
@@ -260,16 +264,14 @@ const get = async (request, toolkit) => {
   }
 
   const addressType = addressBookAddressTypeOf(request, addMode)
-  const { formValues: openingFormValues, tickedRoles } = openingEntryFor(
+  const { formValues, tickedRoles } = openingEntryFor(
     request,
-    addMode
+    addMode,
+    handshakeContext
   )
-  const { countryItems, formValues } = await addFormCountryOffer({
-    handshakeContext,
-    addressType,
-    placeholder: copy.form.countryPlaceholder,
-    formValues: openingFormValues
-  })
+  const { countryItems } = await addFormCountryOffer(
+    copy.form.countryPlaceholder
+  )
 
   return buildView(toolkit, {
     addMode,
@@ -279,24 +281,6 @@ const get = async (request, toolkit) => {
     addressType,
     tickedRoles
   })
-}
-
-const logReplacedCountry = ({
-  logContext,
-  addressId,
-  postedCountryCode,
-  countryCodeToSave
-}) => {
-  if (
-    String(postedCountryCode).trim() === '' ||
-    postedCountryCode === countryCodeToSave
-  ) {
-    return
-  }
-  logger.info(
-    { ...logContext, addressId, postedCountryCode },
-    'Posted country was replaced with the country the address must be in'
-  )
 }
 
 const logDiscardedRoles = ({ logContext, postedRoles, savedRoles }) => {
@@ -363,18 +347,10 @@ const createAddressAndRespond = async (
     addressType,
     landing,
     addMode,
-    logContext,
-    addressToCreate,
-    postedCountryCode
+    addressToCreate
   }
 ) => {
   const createdAddress = await createAddress(organisationId, addressToCreate)
-  logReplacedCountry({
-    logContext,
-    addressId: createdAddress.id,
-    postedCountryCode,
-    countryCodeToSave: addressToCreate.countryCode
-  })
   return addMode === ADD_MODES.ADDRESS_BOOK
     ? finishAddressBookAdd(request, toolkit, {
         organisationId,
@@ -401,16 +377,13 @@ const submitAddress = async (
     landing
   }
 ) => {
-  const { countryItems, countryCodes, formValues } = await addFormCountryOffer({
-    handshakeContext,
-    addressType,
-    placeholder: copy.form.countryPlaceholder,
-    formValues: postedValues
-  })
+  const { countryItems, countryCodes } = await addFormCountryOffer(
+    copy.form.countryPlaceholder
+  )
   const rerender = (model) =>
     buildView(toolkit, {
       addMode,
-      formValues,
+      formValues: postedValues,
       countryItems,
       handshakeContext,
       addressType,
@@ -425,7 +398,7 @@ const submitAddress = async (
   try {
     const { errors: fieldErrors, value: validatedAddress } = validate(
       addressRules(countryCodes),
-      formValues
+      postedValues
     )
     const savedRoles = rolesToSave({
       addMode,
@@ -446,9 +419,7 @@ const submitAddress = async (
       addressType,
       landing,
       addMode,
-      logContext,
-      addressToCreate: { ...validatedAddress, roles: savedRoles },
-      postedCountryCode: postedValues.countryCode
+      addressToCreate: { ...validatedAddress, roles: savedRoles }
     })
   } catch (err) {
     return rerenderAfterCreateFailure(err, { logContext, rerender })

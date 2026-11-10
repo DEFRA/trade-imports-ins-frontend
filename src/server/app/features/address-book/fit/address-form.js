@@ -30,10 +30,19 @@ export const fieldLabelsInFormOrder = [
   fieldLabels.phone
 ]
 
-export const addressFormCountryNames = [
+const addressFormCountryNames = [
   ...countries.map(({ name }) => name),
   GB_COUNTRY.name
 ].toSorted((left, right) => left.localeCompare(right, 'en'))
+
+export const expectEveryCountryOffered = (countrySelect) =>
+  expect(countrySelect.getByRole('option')).toHaveText([
+    copy.form.countryPlaceholder,
+    ...addressFormCountryNames
+  ])
+
+export const expectEveryCountryOfferedWithNoPlaceholder = (countrySelect) =>
+  expect(countrySelect.getByRole('option')).toHaveText(addressFormCountryNames)
 
 export const validAddress = {
   name: 'Highland Livestock Ltd',

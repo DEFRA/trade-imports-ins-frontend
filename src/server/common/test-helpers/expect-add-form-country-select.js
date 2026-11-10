@@ -8,11 +8,6 @@ import {
 } from './address-book-requests.js'
 import { textsOf } from './rendered-text.js'
 
-export const expectUnitedKingdomAloneSelected = ($) => {
-  expect(textsOf($, COUNTRY_OPTIONS)).toEqual([GB_COUNTRY.name])
-  expect($(SELECTED_COUNTRY_OPTION).attr('value')).toBe(GB_COUNTRY.code)
-}
-
 const expectPlaceholderThenCountries = ($, countryNames) =>
   expect(textsOf($, COUNTRY_OPTIONS)).toEqual([
     copy.form.countryPlaceholder,

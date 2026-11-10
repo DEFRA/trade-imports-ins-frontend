@@ -4,14 +4,6 @@ import {
   refuseOutboundHttp,
   serveCountries
 } from '../../../common/test-helpers/real-mode.js'
-import { ADDRESS_TYPES } from '../../services/address-book/index.js'
-import {
-  ANY_COUNTRY_PARTIES,
-  CONSIGNMENT_CONTACT_HANDSHAKE,
-  handshakeContextOf,
-  JOURNEY_HANDSHAKES_BY_PARTY,
-  UNITED_KINGDOM_PARTIES
-} from '../../../common/test-helpers/journey-handshake.js'
 import {
   buildCountryItems,
   buildCountrySelectItems,
@@ -30,24 +22,6 @@ const GB_AND_FRANCE = [GB_COUNTRY, FRANCE]
 const GB_AND_FRANCE_ITEMS = [
   { value: GB_COUNTRY.code, text: GB_COUNTRY.name },
   { value: FRANCE.code, text: FRANCE.name }
-]
-
-const anyCountryContexts = [
-  ...ANY_COUNTRY_PARTIES.map((party) => [
-    `the ${party} handshake`,
-    handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]),
-    undefined
-  ]),
-  [
-    'the consignment contact handshake',
-    handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE),
-    undefined
-  ],
-  [
-    'no handshake and Origin or Consignor chosen',
-    null,
-    ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR
-  ]
 ]
 
 const importAddressCountriesInRealMode = async () => {
@@ -101,81 +75,21 @@ describe('#getAddressFormCountries', () => {
 describe('#addFormCountryOffer', () => {
   refuseOutboundHttp()
 
-  const postedValues = { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
-
-  test.each([
-    ...UNITED_KINGDOM_PARTIES.map((party) => [
-      `the ${party} handshake`,
-      handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]),
-      undefined
-    ]),
-    [
-      'no handshake and Destination, Consignee or Importer chosen',
-      null,
-      ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
-    ],
-    ['no handshake and Branch chosen', null, ADDRESS_TYPES.BRANCH]
-  ])(
-    'Should offer United Kingdom alone, accept only GB and fix the posted country to GB for %s',
-    async (_name, handshakeContext, addressType) => {
-      const { addFormCountryOffer } = await importAddressCountriesInRealMode()
-
-      const offer = await addFormCountryOffer({
-        handshakeContext,
-        addressType,
-        placeholder: copy.form.countryPlaceholder,
-        formValues: postedValues
-      })
-
-      expect(offer).toEqual({
-        countryItems: [{ value: GB_COUNTRY.code, text: GB_COUNTRY.name }],
-        countryCodes: [GB_COUNTRY.code],
-        formValues: { ...postedValues, countryCode: GB_COUNTRY.code }
-      })
-    }
-  )
-
-  test('Should let the consignor handshake decide over a chosen type that must be in the United Kingdom', async () => {
+  test('Should offer the placeholder then every served country, and accept every served country', async () => {
     serveCountries([FRANCE, GB_COUNTRY])
     const { addFormCountryOffer } = await importAddressCountriesInRealMode()
 
-    const offer = await addFormCountryOffer({
-      handshakeContext: handshakeContextOf(
-        JOURNEY_HANDSHAKES_BY_PARTY.consignor
-      ),
-      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      placeholder: copy.form.countryPlaceholder,
-      formValues: postedValues
+    const offer = await addFormCountryOffer(copy.form.countryPlaceholder)
+
+    expect(offer).toEqual({
+      countryItems: [
+        { value: '', text: copy.form.countryPlaceholder },
+        { value: FRANCE.code, text: FRANCE.name },
+        { value: GB_COUNTRY.code, text: GB_COUNTRY.name }
+      ],
+      countryCodes: ['FR', GB_COUNTRY.code]
     })
-
-    expect(offer.countryCodes).toEqual(['FR', GB_COUNTRY.code])
-    expect(offer.formValues).toEqual(postedValues)
   })
-
-  test.each(anyCountryContexts)(
-    'Should offer the placeholder then every served country and leave the posted country as posted for %s',
-    async (_name, handshakeContext, addressType) => {
-      serveCountries([FRANCE, GB_COUNTRY])
-      const { addFormCountryOffer } = await importAddressCountriesInRealMode()
-
-      const offer = await addFormCountryOffer({
-        handshakeContext,
-        addressType,
-        placeholder: copy.form.countryPlaceholder,
-        formValues: postedValues
-      })
-
-      expect(offer).toEqual({
-        countryItems: [
-          { value: '', text: copy.form.countryPlaceholder },
-          { value: FRANCE.code, text: FRANCE.name },
-          { value: GB_COUNTRY.code, text: GB_COUNTRY.name }
-        ],
-        countryCodes: ['FR', GB_COUNTRY.code],
-        formValues: { name: 'Farm', countryCode: 'FR', postcode: 'AB1 2CD' }
-      })
-    }
-  )
 })
 
 describe('#buildCountrySelectItems', () => {
