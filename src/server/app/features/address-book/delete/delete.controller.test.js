@@ -340,6 +340,26 @@ describe('POST /address-book/{addressId}/delete', () => {
     )
   })
 
+  test('Should land on the address book saying Address deleted after deleting an address with a blank name', async () => {
+    serveStoredAddress({ ...STORED_ADDRESS, name: '' })
+    interceptDeleteOf(ADDRESS_ID).reply(statusCodes.noContent)
+
+    const response = await postDelete(getServer(), 'delete-post-banner-unnamed')
+
+    expectRedirectTo(response, addressBookPath())
+    const listResponse = await openEmptyAddressBookWithCookiesFrom(
+      getServer(),
+      'delete-post-banner-unnamed',
+      response.headers
+    )
+    expect(
+      textOf(
+        load(listResponse.result),
+        '.govuk-notification-banner__heading'
+      )
+    ).toBe('Address deleted')
+  })
+
   describe('with a return', () => {
     test('Should delete the address and land on an INS return', async () => {
       serveStoredAddress()
