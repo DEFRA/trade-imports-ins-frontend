@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test'
 
-import { addValidAddressToFreshOrganisation } from './address-form.js'
+import {
+  addValidAddressToFreshOrganisation,
+  validAddress
+} from './address-form.js'
 import { expectNoSeriousOrCriticalViolations } from '../../../../../../fit/axe.js'
 import {
   NO_RESULTS_LINE,
@@ -464,6 +467,18 @@ test.describe('filter addresses', () => {
     })
   })
 
+  test('finds an address by a lower-case term inside its address line 2', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix: 'stub-org-list-address-line-2'
+    })
+
+    await searchAndExpectSingleMatch(page, validAddress.addressLine2.toLowerCase(), {
+      matchedCellText: validAddress.name
+    })
+  })
+
   test('finds an address by part of its country name', async ({ page }) => {
     await addValidAddressToFreshOrganisation(page, {
       organisationPrefix: 'stub-org-list-country',
@@ -650,6 +665,24 @@ test.describe('type filter', () => {
     })
 
     await expectNamesListed(page, ORIGIN_TAB.names)
+  })
+
+  test('finds an address holding the Branch address role by searching the Branch tab for branch address, with Branch as its Type', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, {
+      organisationPrefix: 'stub-org-list-branch-option-label',
+      addressType: ADDRESS_TYPES.BRANCH,
+      emptyBook: true
+    })
+
+    await searchAndExpectSingleMatch(page, 'branch address', {
+      addressType: ADDRESS_TYPES.BRANCH,
+      matchedCellText: validAddress.name
+    })
+    await expect(typeCellOf(page, validAddress.name)).toHaveText(
+      copy.list.roles.BRANCH_ADDRESS.columnLabel
+    )
   })
 
   test('has no serious or critical axe violations with a Type chosen and the disclosure open', async ({
