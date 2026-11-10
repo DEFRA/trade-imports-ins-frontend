@@ -18,7 +18,8 @@ import {
   setFieldValue,
   tickRoles,
   roleCheckbox,
-  validAddress
+  validAddress,
+  validAddressViewLink
 } from './address-form.js'
 import {
   ONE_MATCH_LINE,
@@ -57,6 +58,13 @@ import { JOURNEY_STRIP } from '../../../../common/test-helpers/journey-strip.js'
 import { ADDRESS_LANDING } from '../journey-registry.js'
 
 const LATE_ALPHABETICAL_NAME = 'Zetland Livestock Ltd'
+
+const addedBannerOf = (page) =>
+  page
+    .getByRole('alert', { name: 'Success' })
+    .getByText(`${validAddress.name} address added to your address book`, {
+      exact: true
+    })
 
 const rolesGroupOf = (page, addressType) =>
   page.getByRole('group', {
@@ -150,9 +158,7 @@ test.describe('add address roles question without JavaScript', () => {
     await expect(selectedTabOf(page)).toHaveText(
       copy.list.tabs[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].label
     )
-    await expect(
-      page.getByRole('link', { name: `View ${validAddress.name}` })
-    ).toBeVisible()
+    await expect(validAddressViewLink(page)).toBeVisible()
   })
 })
 
@@ -625,13 +631,31 @@ test.describe('save and confirm', () => {
   }) => {
     await addValidAddressToFreshOrganisation(page, { organisationPrefix })
 
-    await expect(
-      page
-        .getByRole('alert', { name: 'Success' })
-        .getByText(`${validAddress.name} address added to your address book`, {
-          exact: true
-        })
-    ).toBeVisible()
+    await expect(addedBannerOf(page)).toBeVisible()
+  })
+
+  test('keeps the Success banner shown ten seconds after the save', async ({
+    page
+  }) => {
+    await page.clock.install()
+    await addValidAddressToFreshOrganisation(page, { organisationPrefix })
+    await expect(addedBannerOf(page)).toBeVisible()
+
+    await page.clock.runFor('00:10')
+
+    await expect(addedBannerOf(page)).toBeVisible()
+  })
+
+  test('shows the saved address and no Success banner when the address book is reloaded', async ({
+    page
+  }) => {
+    await addValidAddressToFreshOrganisation(page, { organisationPrefix })
+    await expect(addedBannerOf(page)).toBeVisible()
+
+    await page.reload()
+
+    await expect(validAddressViewLink(page)).toBeVisible()
+    await expect(page.getByRole('alert', { name: 'Success' })).toHaveCount(0)
   })
 
   test('lists the saved address first, ahead of the seeded address, with a View link to its own details page', async ({
