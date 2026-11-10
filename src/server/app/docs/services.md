@@ -14,15 +14,13 @@ each with its roles) and **`address-types.js`**, which exports:
 - `keepRolesOfferedBy`, the given roles an address type offers, kept in
   `ROLES_BY_ADDRESS_TYPE`'s order, which is not the order the roles question
   shows them;
-- `addressTypeRequiresUnitedKingdom`, whether an address type must be in the
-  United Kingdom;
 - `PLACE_ROLES`, the roles that name a place.
 
 The barrel exports both. A feature imports only the barrel, and nothing
 imports any other file from outside its folder.
 
 Three of the four address types group roles for this service's screens (the
-add flow's first step, the list's tabs and the UK-only country): a role set
+add flow's first step and the list's tabs): a role set
 is never sent to the address book or read from it, and an address's type is
 worked out from its roles. The fourth, Transporter, names the service's
 transporters instead — their own records on their own address-book route,
@@ -83,9 +81,7 @@ lines, town, county or postcode, when its country code is one of the
 request's country codes, or when it holds one of the request's search roles;
 with none of these given, every address left is listed. A create or update
 is refused, as the address book refuses it, with a 400 keyed `roles` when
-the address holds no role or roles of more than one address type, and keyed
-`countryCode` when it holds a consignee, importer or place of destination
-role outside the United Kingdom. A delete
+the address holds no role or roles of more than one address type. A delete
 marks the address deleted rather than removing it, so `getAddress` still
 returns it.
 
