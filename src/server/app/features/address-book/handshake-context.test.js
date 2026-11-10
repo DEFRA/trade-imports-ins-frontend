@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import Boom from '@hapi/boom'
 
 import {
+  INCOMPLETE_HANDSHAKE_WARNING,
   JOURNEY_HANDSHAKES_BY_PARTY,
   UNREGISTERED_JOURNEY_TYPE,
   handshakeContextOf
@@ -26,8 +27,6 @@ const PADDED_CONSIGNOR_HANDSHAKE = Object.fromEntries(
 )
 const INCOMPLETE_HANDSHAKE_ERROR = 'Incomplete journey handshake'
 const UNLISTED_FULFILMENT_ID = 'not-a-fulfilment-id'
-const INCOMPLETE_MESSAGE =
-  'Journey handshake refused, it is missing an id or its token'
 const SESSION_DISCARDED_MESSAGE =
   'Session journey handshake discarded, the journey type or fulfilment id is not listed'
 
@@ -254,14 +253,14 @@ describe('resolveHandshakeContext', () => {
     expect(() => resolveHandshakeContext(request)).toThrow(
       Boom.badRequest(INCOMPLETE_HANDSHAKE_ERROR)
     )
-    expect(warnedWith(INCOMPLETE_MESSAGE)).toEqual([
+    expect(warnedWith(INCOMPLETE_HANDSHAKE_WARNING)).toEqual([
       {
         fields: {
           journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
           notificationId: '',
           fulfilmentId: ''
         },
-        message: INCOMPLETE_MESSAGE
+        message: INCOMPLETE_HANDSHAKE_WARNING
       }
     ])
   })

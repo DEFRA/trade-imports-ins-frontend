@@ -35,6 +35,7 @@ import {
   ANIMALS_BASE_URL,
   ANY_COUNTRY_PARTIES,
   CONSIGNMENT_CONTACT_HANDSHAKE,
+  INCOMPLETE_HANDSHAKE_WARNING,
   JOURNEY_HANDSHAKES_BY_PARTY,
   journeyRolesHintFor,
   returnUrlFor,
@@ -42,7 +43,10 @@ import {
   UNREGISTERED_JOURNEY_TYPE,
   ROLES_BY_PARTY
 } from '../../../../common/test-helpers/journey-handshake.js'
-import { recordModuleLoggerInfo } from '../../../../common/test-helpers/module-logger-lines.js'
+import {
+  recordModuleLoggerInfo,
+  recordModuleLoggerWarn
+} from '../../../../common/test-helpers/module-logger-lines.js'
 import {
   addressTypeRequiresUnitedKingdom,
   ADDRESS_FORM_TYPES,
@@ -1324,6 +1328,7 @@ describe(
   () => {
     const getServer = startRealModeServerServingCountries(COUNTRIES)
     const { entriesWith: loggedWith } = recordModuleLoggerInfo()
+    const { entriesWith: warnedWith } = recordModuleLoggerWarn()
 
     test('GET refuses an unrecognised journey type', async () => {
       const { statusCode } = await getAdd(
@@ -1406,6 +1411,32 @@ describe(
 
       expect(response.statusCode).toBe(statusCodes.notFound)
       expect(scope.isDone()).toBe(false)
+    })
+
+    test('POST with a journey type but no notification or party is refused as a bad request, saves nothing and logs the refusal once at warn', async () => {
+      const createRequested = serveAddressCreated()
+
+      const response = await postAddWithTypeChosen(
+        getServer(),
+        'add-post-incomplete-handshake',
+        {
+          'journey-type': CONSIGNOR_HANDSHAKE['journey-type'],
+          ...VALID_ADDRESS_PAYLOAD
+        }
+      )
+
+      expect(response.statusCode).toBe(statusCodes.badRequest)
+      expect(createRequested.isDone()).toBe(false)
+      expect(warnedWith(INCOMPLETE_HANDSHAKE_WARNING)).toEqual([
+        {
+          fields: {
+            journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
+            notificationId: '',
+            fulfilmentId: ''
+          },
+          message: INCOMPLETE_HANDSHAKE_WARNING
+        }
+      ])
     })
 
     test('POST of Save and return to address page returns to the journey with the new address id and the return landing', async () => {
