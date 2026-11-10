@@ -160,14 +160,19 @@ test.describe('list and pagination', () => {
     )
   })
 
-  test('shows the first page when the page number is 0', async ({ page }) => {
-    await openAddressBookList(page, {
-      organisationId: 'stub-org-list-page-zero-paginated',
-      pageNumber: 0
-    })
+  for (const pageNumber of [0, 'abc']) {
+    test(`shows the first page when the page number is ${pageNumber}`, async ({
+      page
+    }) => {
+      await openAddressBookList(page, {
+        organisationId: `stub-org-list-page-${pageNumber}-paginated`,
+        pageNumber
+      })
 
-    await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
-  })
+      await expect(resultsLineOf(page)).toHaveText(FIRST_PAGE_LINE)
+      await expect(page.getByRole('row')).toHaveCount(9)
+    })
+  }
 })
 
 test.describe('intro and cells', () => {
