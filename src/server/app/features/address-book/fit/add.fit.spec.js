@@ -601,14 +601,24 @@ test.describe('add address validation', () => {
     ([field]) => namePostcodeCountryAndPhone.includes(field)
   )
 
+  const fromTheAddressBook = (addressType, roles) => ({
+    entry: `the address book after choosing '${copy.addressType.options[addressType].label}'`,
+    openForm: (page) =>
+      signInAndOpenAddForm(
+        page,
+        `stub-org-add-four-blanks-${addressType}`,
+        addressType
+      ),
+    roles,
+    saveButton: copy.add.save
+  })
+
   for (const { entry, openForm, roles, saveButton } of [
-    {
-      entry: "the address book after choosing 'Origin or Consignor'",
-      openForm: (page) =>
-        signInAndOpenAddForm(page, 'stub-org-add-four-blanks'),
-      roles: ['CONSIGNOR'],
-      saveButton: copy.add.save
-    },
+    fromTheAddressBook(ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, ['CONSIGNOR']),
+    fromTheAddressBook(ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, [
+      'CONSIGNEE'
+    ]),
+    fromTheAddressBook(ADDRESS_TYPES.BRANCH, ['BRANCH_ADDRESS']),
     {
       entry: 'the consignor picker',
       openForm: (page) =>
