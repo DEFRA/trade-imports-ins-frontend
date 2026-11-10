@@ -576,12 +576,10 @@ describe(
       )
 
       expect(statusCode).toBe(statusCodes.badRequest)
-      const $ = load(result)
-      expect(textsOf($, ERROR_SUMMARY_LINKS)).toEqual([
-        REQUIRED_MESSAGES.name,
-        ROLES_ERROR
+      expectSummaryAndFieldErrors(load(result), [
+        ['name', REQUIRED_MESSAGES.name],
+        ['roles', ROLES_ERROR]
       ])
-      expect(textsOf($, '#roles-error')).toEqual([`Error: ${ROLES_ERROR}`])
     })
 
     test('POST with an invalid field keeps the ticks the user made', async () => {
@@ -600,6 +598,20 @@ describe(
         'PLACE_OF_ORIGIN',
         'CONSIGNOR'
       ])
+    })
+
+    test('POST with Place of origin and Consignor ticked sends both roles to the address book, Place of origin first', async () => {
+      const { scope, captured } = serveAddressCreationCapturingBody()
+
+      const response = await postAddWithTypeChosen(
+        getServer(),
+        'add-post-both-origin-roles',
+        { ...VALID_ADDRESS_PAYLOAD, roles: ['PLACE_OF_ORIGIN', 'CONSIGNOR'] }
+      )
+
+      expectRedirectTo(response, ORIGIN_OR_CONSIGNOR_LIST_PATH)
+      expect(scope.isDone()).toBe(true)
+      expect(captured.body.roles).toEqual(['PLACE_OF_ORIGIN', 'CONSIGNOR'])
     })
 
     test('POST with Consignor ticked and a role the type does not offer saves only Consignor, logs the discarded role and lands on the Origin and Consignor list', async () => {

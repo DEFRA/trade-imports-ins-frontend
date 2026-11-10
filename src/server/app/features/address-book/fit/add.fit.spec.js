@@ -264,6 +264,32 @@ test.describe('add address of each type', () => {
         `Add ${typeLabel} address roles error`
       )
     })
+
+    test(`${typeLabel} saved with the name blank and no role shows the name error then the roles error, against their questions and in the summary`, async ({
+      page
+    }) => {
+      await signInAndOpenAddForm(
+        page,
+        `${organisationPrefix}-blank-no-role`,
+        addressType
+      )
+
+      await fillValidAddress(page, { name: '' })
+      await saveAndContinueButton(page).click()
+
+      await expect(page.getByRole('alert').getByRole('link')).toHaveText([
+        copy.errors.name.required,
+        copy.errors.roles.required
+      ])
+      await expect(
+        page.getByLabel(fieldLabels.name, { exact: true })
+      ).toHaveAccessibleDescription(
+        new RegExp(`Error:\\s+${copy.errors.name.required}$`)
+      )
+      await expect(rolesGroupOf(page, addressType)).toContainText(
+        copy.errors.roles.required
+      )
+    })
   }
 
   test('Destination, Consignee or Importer form has no serious or critical axe violations', async ({
