@@ -1032,6 +1032,34 @@ describe(
       }
     )
 
+    test.each(Object.entries(ROLES_BY_PARTY))(
+      'POST from the %s handshake with nothing ticked hands the address back saved with only its own role',
+      async (party, { ownRole }) => {
+        const { scope, captured } = serveAddressCreationCapturingBody()
+        const handshake = JOURNEY_HANDSHAKES_BY_PARTY[party]
+
+        const response = await postAdd(
+          getServer(),
+          `add-post-handshake-none-ticked-${party}`,
+          {
+            ...handshake,
+            ...VALID_ADDRESS_FIELDS,
+            action: ADDRESS_LANDING.SELECT
+          }
+        )
+
+        expectRedirectTo(
+          response,
+          returnUrlFor(handshake, {
+            addressId: ADDRESS_ID,
+            landing: ADDRESS_LANDING.SELECT
+          })
+        )
+        expect(scope.isDone()).toBe(true)
+        expect(captured.body.roles).toEqual([ownRole])
+      }
+    )
+
     test('POST from the consignee handshake with Importer ticked saves the consignee and importer roles and hands back with the select landing', async () => {
       const { scope, captured } = serveAddressCreationCapturingBody()
 
