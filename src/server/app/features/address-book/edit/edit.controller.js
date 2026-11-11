@@ -11,6 +11,7 @@ import {
 } from '../../../lib/http-status.js'
 import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
+import { addressEditPage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import { addressBookPath, addressEditRoutePath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
@@ -197,6 +198,7 @@ const post = async (request, toolkit) => {
 }
 
 export const routes = kit.pageRoutes(
+  addressEditPage,
   addressEditRoutePath(),
   { get, post },
   redirectingRecordIdRouteOptions(deadLinkDestination)

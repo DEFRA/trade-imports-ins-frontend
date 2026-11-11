@@ -15,6 +15,7 @@ import {
 } from '../../../lib/http-status.js'
 import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
+import { addressAddPage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
   addressAddPath,
@@ -467,4 +468,7 @@ const post = async (request, toolkit) => {
   })
 }
 
-export const routes = kit.pageRoutes(addressAddPath(), { get, post })
+export const routes = kit.pageRoutes(addressAddPage, addressAddPath(), {
+  get,
+  post
+})

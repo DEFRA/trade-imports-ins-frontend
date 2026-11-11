@@ -1,6 +1,7 @@
 import { HTTP_STATUS_BAD_REQUEST } from '../../lib/http-status.js'
 import { requiredOneOf, validate } from '../../lib/validate/index.js'
 import * as kit from '../../shared/kit.js'
+import { notificationTypePage } from './page.js'
 import { copyFor } from '../../shared/copy.js'
 import { dashboardPath, notificationTypePath } from '../../shared/paths.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
@@ -153,4 +154,8 @@ const post = (request, h) => {
     : handOverToJourney(request, h, value[FIELD], returningNotification)
 }
 
-export const routes = kit.pageRoutes(notificationTypePath(), { get, post })
+export const routes = kit.pageRoutes(
+  notificationTypePage,
+  notificationTypePath(),
+  { get, post }
+)

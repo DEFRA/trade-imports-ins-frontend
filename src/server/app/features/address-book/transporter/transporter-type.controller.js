@@ -1,6 +1,7 @@
 import { HTTP_STATUS_BAD_REQUEST } from '../../../lib/http-status.js'
 import { requiredOneOf, validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
+import { transporterTypePage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
   commercialTransporterPath,
@@ -86,4 +87,8 @@ const post = (request, toolkit) => {
   return toolkit.redirect(destinationFor(value.transporterType))
 }
 
-export const routes = kit.pageRoutes(transporterTypePath(), { get, post })
+export const routes = kit.pageRoutes(
+  transporterTypePage,
+  transporterTypePath(),
+  { get, post }
+)

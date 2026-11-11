@@ -5,6 +5,7 @@ import {
   lookupByPostcode
 } from '../../services/address-lookup/index.js'
 import * as kit from '../../shared/kit.js'
+import { addressLookupSpikePage } from './page.js'
 import { copyFor } from '../../shared/copy.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
 import { detectSearch } from './detect-search-mode.js'
@@ -128,4 +129,7 @@ const post = async (request, h) => {
   }
 }
 
-export const routes = kit.pageRoutes(PAGE_PATH, { get, post })
+export const routes = kit.pageRoutes(addressLookupSpikePage, PAGE_PATH, {
+  get,
+  post
+})

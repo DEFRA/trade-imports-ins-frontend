@@ -1,5 +1,6 @@
 import { deleteAddress } from '../../../services/address-book/index.js'
 import * as kit from '../../../shared/kit.js'
+import { addressDeletePage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import { addressDeleteRoutePath, addressPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
@@ -113,6 +114,7 @@ const post = async (request, toolkit) => {
 }
 
 export const routes = kit.pageRoutes(
+  addressDeletePage,
   addressDeleteRoutePath(),
   { get, post },
   redirectingRecordIdRouteOptions(deadLinkDestination)

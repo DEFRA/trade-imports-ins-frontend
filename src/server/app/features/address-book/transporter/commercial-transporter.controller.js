@@ -5,6 +5,7 @@ import {
 import { HTTP_STATUS_BAD_REQUEST } from '../../../lib/http-status.js'
 import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
+import { commercialTransporterPage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import { commercialTransporterPath } from '../../../shared/paths.js'
 import { createLogger } from '../../../../common/helpers/logging/logger.js'
@@ -111,7 +112,11 @@ const post = async (request, toolkit) => {
   })
 }
 
-export const routes = kit.pageRoutes(commercialTransporterPath(), {
-  get,
-  post
-})
+export const routes = kit.pageRoutes(
+  commercialTransporterPage,
+  commercialTransporterPath(),
+  {
+    get,
+    post
+  }
+)

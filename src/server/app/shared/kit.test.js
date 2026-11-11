@@ -6,6 +6,7 @@ import {
   base,
   draftJourneyStrip,
   errorSummary,
+  pageRouteOptions,
   pageRoutes,
   requireOrganisationId,
   routeOptions,
@@ -98,28 +99,55 @@ describe('#draftJourneyStrip', () => {
   })
 })
 
+describe('#pageRouteOptions', () => {
+  const page = { id: 'example', maturity: 'detailing' }
+
+  it('Should carry the page under app beside the session strategy', () => {
+    expect(pageRouteOptions(page)).toEqual({
+      auth: 'session',
+      app: { page }
+    })
+  })
+
+  it('Should keep the route options and app settings it is given', () => {
+    const options = {
+      ...routeOptions,
+      validate: { params: {} },
+      app: { other: 'kept' }
+    }
+
+    expect(pageRouteOptions(page, options)).toEqual({
+      auth: 'session',
+      validate: { params: {} },
+      app: { other: 'kept', page }
+    })
+  })
+})
+
 describe('#pageRoutes', () => {
   const get = () => 'page'
   const post = () => 'saved'
+  const page = { id: 'example', maturity: 'exploring' }
+  const pageOptions = { ...routeOptions, app: { page } }
 
   it('Should register a GET alone for a page with no form', () => {
-    expect(pageRoutes('/', { get })).toEqual([
-      { method: 'GET', path: '/', options: routeOptions, handler: get }
+    expect(pageRoutes(page, '/', { get })).toEqual([
+      { method: 'GET', path: '/', options: pageOptions, handler: get }
     ])
   })
 
   it('Should register the GET and POST pair on the same path for a page with a form', () => {
-    expect(pageRoutes(ADD_PATH, { get, post })).toEqual([
+    expect(pageRoutes(page, ADD_PATH, { get, post })).toEqual([
       {
         method: 'GET',
         path: ADD_PATH,
-        options: routeOptions,
+        options: pageOptions,
         handler: get
       },
       {
         method: 'POST',
         path: ADD_PATH,
-        options: routeOptions,
+        options: pageOptions,
         handler: post
       }
     ])
@@ -127,25 +155,26 @@ describe('#pageRoutes', () => {
 
   it('Should apply the route options a page supplies to both routes', () => {
     const options = { ...routeOptions, validate: { params: {} } }
+    const expectedOptions = { ...options, app: { page } }
 
-    expect(pageRoutes(EDIT_PATH, { get, post }, options)).toEqual([
+    expect(pageRoutes(page, EDIT_PATH, { get, post }, options)).toEqual([
       {
         method: 'GET',
         path: EDIT_PATH,
-        options,
+        options: expectedOptions,
         handler: get
       },
       {
         method: 'POST',
         path: EDIT_PATH,
-        options,
+        options: expectedOptions,
         handler: post
       }
     ])
   })
 
   it('Should name the session strategy on every route', () => {
-    const routes = pageRoutes(ADD_PATH, { get, post })
+    const routes = pageRoutes(page, ADD_PATH, { get, post })
 
     expect(routes.map((route) => route.options.auth)).toEqual([
       'session',

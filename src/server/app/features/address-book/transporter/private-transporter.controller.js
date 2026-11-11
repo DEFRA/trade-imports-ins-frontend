@@ -2,6 +2,7 @@ import { TRANSPORTER_TYPES } from '../../../services/transporters/index.js'
 import { HTTP_STATUS_BAD_REQUEST } from '../../../lib/http-status.js'
 import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
+import { privateTransporterPage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import { privateTransporterPath } from '../../../shared/paths.js'
 import {
@@ -100,4 +101,8 @@ const post = async (request, toolkit) => {
   })
 }
 
-export const routes = kit.pageRoutes(privateTransporterPath(), { get, post })
+export const routes = kit.pageRoutes(
+  privateTransporterPage,
+  privateTransporterPath(),
+  { get, post }
+)

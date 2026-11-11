@@ -7,6 +7,19 @@ import { copy as sharedCy } from './copy.cy.js'
 
 export const routeOptions = { auth: 'session' }
 
+/**
+ * The options for a route that renders a page. The page rides on the route as
+ * `app.page`, where the phase banner reads its maturity level.
+ *
+ * @param {{ maturity?: string }} page - the page descriptor from its feature's `page.js`.
+ * @param {object} [options] - the route options to add the page to, defaulting to `routeOptions`.
+ * @returns {object} the route options with the page under `app`.
+ */
+export const pageRouteOptions = (page, options = routeOptions) => ({
+  ...options,
+  app: { ...options.app, page }
+})
+
 export const sharedCopy = copyFor({ en: sharedEn, cy: sharedCy })
 
 export const SURFACES = Object.freeze({
@@ -71,7 +84,15 @@ export const requireOrganisationId = (request) => {
   return organisationId
 }
 
-export const pageRoutes = (path, { get, post }, options = routeOptions) => [
-  { method: 'GET', path, options, handler: get },
-  ...(post ? [{ method: 'POST', path, options, handler: post }] : [])
-]
+export const pageRoutes = (
+  page,
+  path,
+  { get, post },
+  baseOptions = routeOptions
+) => {
+  const options = pageRouteOptions(page, baseOptions)
+  return [
+    { method: 'GET', path, options, handler: get },
+    ...(post ? [{ method: 'POST', path, options, handler: post }] : [])
+  ]
+}

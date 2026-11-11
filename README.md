@@ -249,6 +249,16 @@ step creates through the app's own pages. The
 [Lighthouse guide](src/server/app/docs/lighthouse.md) covers how to run it
 against a locally started app, the score floors and the CI workflow.
 
+## Signed-off pages
+
+Each page sets its `maturity` in the `page.js` beside its controller. A page
+at `agreed` or `readyForLive` is signed off. The **Signed-off pages** pull
+request check lists every test, Playwright spec or snapshot in its feature
+folder that a pull request changes or deletes, and fails when it lists any.
+It is not a required check: a listed change needs a person's decision,
+recorded on a Jira ticket, rather than blocking the merge. Run it locally with
+`npm run check:signed-off-tests -- origin/main`.
+
 ## SonarCloud
 
 Instructions for setting up SonarCloud are in
