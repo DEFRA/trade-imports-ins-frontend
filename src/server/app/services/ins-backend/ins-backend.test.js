@@ -1,4 +1,12 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import {
