@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import {
@@ -37,10 +37,11 @@ describe('against the real INS backend', () => {
     getTraceIdMock.mockReturnValue(TRACE_ID)
   })
 
-  test('Should GET /notifications with the page and the trace header', async () => {
+  test('Should GET /notifications with the page, organisation header and trace header', async () => {
     const scope = insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query({ page: '1' })
+      .matchHeader('trade-imports-organisation-id', STUB_SEED_ORGANISATION_ID)
       .matchHeader(TRACING_HEADER, TRACE_ID)
       .reply(200, {
         content: [{ referenceNumber: REFERENCE_NUMBER }],
@@ -79,14 +80,14 @@ describe('against the real INS backend', () => {
     expect(scope.isDone()).toBe(true)
   })
 
-  test('Should send the request without an organisation header', async () => {
+  test('Should send the Trade-Imports-Organisation-Id header from the session organisation', async () => {
     const scope = insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query({ page: '1' })
       .reply(function replyFn() {
-        expect(
-          this.req.headers['trade-imports-organisation-id']
-        ).toBeUndefined()
+        expect(this.req.headers['trade-imports-organisation-id']).toBe(
+          STUB_SEED_ORGANISATION_ID
+        )
         return [200, emptyPage(1)]
       })
 
@@ -112,6 +113,15 @@ describe('against the real INS backend', () => {
 
 describe('in stub mode', () => {
   refuseOutboundHttp()
+  const originalStubMode = config.get('stubMode')
+
+  beforeAll(() => {
+    config.set('stubMode', true)
+  })
+
+  afterAll(() => {
+    config.set('stubMode', originalStubMode)
+  })
 
   test('Should serve the canned notifications without a request', async () => {
     const { content, totalElements } = await listNotifications(
