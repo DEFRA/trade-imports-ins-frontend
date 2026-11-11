@@ -117,6 +117,34 @@ describe('against the real INS backend', () => {
       message: 'Internal Server Error'
     })
   })
+
+  describe('without an organisation', () => {
+    const refusal =
+      'Cannot reach the notification list without an organisation: the signed-in session carries none'
+
+    test('Should refuse rather than ask for an organisation named "undefined"', async () => {
+      await expect(listNotifications(undefined, { page: 1 })).rejects.toThrow(
+        refusal
+      )
+    })
+
+    test('Should refuse a blank organisation id', async () => {
+      await expect(listNotifications('', { page: 1 })).rejects.toThrow(refusal)
+    })
+  })
+
+  test('Should send an empty trace header when the request carries no trace id', async () => {
+    getTraceIdMock.mockReturnValue(null)
+    const scope = insBackendApi()
+      .get(NOTIFICATIONS_PATH)
+      .query({ page: '1' })
+      .matchHeader(TRACING_HEADER, '')
+      .reply(200, emptyPage(1))
+
+    await listNotifications(STUB_SEED_ORGANISATION_ID, { page: 1 })
+
+    expect(scope.isDone()).toBe(true)
+  })
 })
 
 describe('in stub mode', () => {
