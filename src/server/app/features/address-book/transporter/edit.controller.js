@@ -11,6 +11,7 @@ import {
 } from '../../../lib/http-status.js'
 import { validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
+import { transporterEditPage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
   transporterEditRoutePath,
@@ -247,6 +248,7 @@ const post = async (request, toolkit) => {
 }
 
 export const routes = kit.pageRoutes(
+  transporterEditPage,
   transporterEditRoutePath(),
   { get, post },
   redirectingRecordIdRouteOptions(transporterDeadLinkDestination)

@@ -4,6 +4,7 @@ import { listAddresses } from '../../../services/address-book/index.js'
 import { listTransporters } from '../../../services/transporters/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../../lib/http-status.js'
 import * as kit from '../../../shared/kit.js'
+import { addressBookPage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import { escapeHtml } from '../../../shared/escape-html.js'
 import {
@@ -389,4 +390,6 @@ const get = async (request, toolkit) => {
   }
 }
 
-export const routes = kit.pageRoutes(addressBookPath(), { get })
+export const routes = kit.pageRoutes(addressBookPage, addressBookPath(), {
+  get
+})

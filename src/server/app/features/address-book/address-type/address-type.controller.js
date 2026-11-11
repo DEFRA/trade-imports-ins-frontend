@@ -1,6 +1,7 @@
 import { HTTP_STATUS_BAD_REQUEST } from '../../../lib/http-status.js'
 import { requiredOneOf, validate } from '../../../lib/validate/index.js'
 import * as kit from '../../../shared/kit.js'
+import { addressTypePage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
   addressAddPath,
@@ -89,4 +90,7 @@ const post = (request, toolkit) => {
   return toolkit.redirect(destinationFor(value.addressType))
 }
 
-export const routes = kit.pageRoutes(addressTypePath(), { get, post })
+export const routes = kit.pageRoutes(addressTypePage, addressTypePath(), {
+  get,
+  post
+})

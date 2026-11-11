@@ -1,3 +1,4 @@
+import { unauthorisedPage } from '../app/auth/page.js'
 import { authController } from './controller.js'
 
 export const authRoutes = {
@@ -17,7 +18,8 @@ export const authRoutes = {
           method: 'GET',
           path: '/auth/sign-in-oidc',
           options: {
-            auth: { strategy: 'defra-id', mode: 'try' }
+            auth: { strategy: 'defra-id', mode: 'try' },
+            app: { page: unauthorisedPage }
           },
           ...authController.signinOidc
         },

@@ -1,5 +1,6 @@
 import { deleteTransporter } from '../../../services/transporters/index.js'
 import * as kit from '../../../shared/kit.js'
+import { transporterDeletePage } from './page.js'
 import { copyFor } from '../../../shared/copy.js'
 import {
   transporterDeleteRoutePath,
@@ -128,6 +129,7 @@ const post = async (request, toolkit) => {
 }
 
 export const routes = kit.pageRoutes(
+  transporterDeletePage,
   transporterDeleteRoutePath(),
   { get, post },
   redirectingRecordIdRouteOptions(transporterDeadLinkDestination)

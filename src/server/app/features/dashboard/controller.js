@@ -4,6 +4,7 @@ import { getCountries } from '../../services/countries/index.js'
 import { listNotifications } from '../../services/ins-backend/index.js'
 import { HTTP_STATUS_INTERNAL_SERVER_ERROR } from '../../lib/http-status.js'
 import * as kit from '../../shared/kit.js'
+import { dashboardPage } from './page.js'
 import { copyFor } from '../../shared/copy.js'
 import { escapeHtml } from '../../shared/escape-html.js'
 import {
@@ -124,4 +125,4 @@ const get = async (request, toolkit) => {
   }
 }
 
-export const routes = kit.pageRoutes(dashboardPath(), { get })
+export const routes = kit.pageRoutes(dashboardPage, dashboardPath(), { get })
