@@ -22,7 +22,7 @@
     "test:fit": "npm run build:frontend && playwright test",
     "test:fit:smoke": "npm run test:fit -- --project=smoke",
     "test:fit:features": "npm run test:fit -- --project=features",
-    "test:fit:ci": "PORT=3052 npm run test:fit -- --retries=2 --forbid-only --global-timeout=900000 --reporter=list,html,github",
+    "test:fit:ci": "PORT=${PORT:-3052} npm run test:fit -- --retries=2 --forbid-only --global-timeout=900000 --reporter=list,html,github",
     "playwright:install": "playwright install --with-deps chromium",
     "format": "prettier --write \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
