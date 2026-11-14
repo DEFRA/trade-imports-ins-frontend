@@ -64,11 +64,14 @@ describe('#dashboardPageHref', () => {
 })
 
 describe('#buildNotificationLink', () => {
-  test('SUBMITTED notifications link to the read-only notification-view page', () => {
-    expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
-      `${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
-    )
-  })
+  test.each(['SUBMITTED', 'SUBMITTED_ACTION_REQUIRED'])(
+    'Should link a %s notification to its notification view',
+    (status) => {
+      expect(buildNotificationLink(status, REFERENCE_NUMBER)).toBe(
+        `${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
+      )
+    }
+  )
 
   test.each(['DRAFT', 'AMEND'])(
     '%s notifications link back to the journey hub, not notification-view',
