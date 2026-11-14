@@ -30,7 +30,7 @@ if (unreachable.length > 0) {
       'The E2E workspace stack check failed — these services did not answer:',
       ...unreachable.map(({ name, url }) => `  ${name}  ${url}/health`),
       '',
-      '  Start it:  scripts/stack/run-stack.sh   (from the trade-imports-workspace)',
+      '  Start it:  tim docker up',
       '',
       'Start the backends, Mongo and Redis before running workspace-backed E2E checks.',
       ''
