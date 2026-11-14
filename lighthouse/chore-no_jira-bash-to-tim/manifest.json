@@ -65,7 +65,7 @@
     }
   },
   {
-    "url": "http://localhost:3002/address-book/6af724a9e7df78ec9b67b0b4",
+    "url": "http://localhost:3002/address-book/6af888aae4e96b549b90ac21",
     "isRepresentativeRun": true,
     "htmlPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id.report.html",
     "jsonPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id.report.json",
@@ -78,7 +78,7 @@
     }
   },
   {
-    "url": "http://localhost:3002/address-book/6af724a9e7df78ec9b67b0b4/edit",
+    "url": "http://localhost:3002/address-book/6af888aae4e96b549b90ac21/edit",
     "isRepresentativeRun": true,
     "htmlPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id_edit.report.html",
     "jsonPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id_edit.report.json",
@@ -91,7 +91,7 @@
     }
   },
   {
-    "url": "http://localhost:3002/address-book/6af724a9e7df78ec9b67b0b4/delete",
+    "url": "http://localhost:3002/address-book/6af888aae4e96b549b90ac21/delete",
     "isRepresentativeRun": true,
     "htmlPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id_delete.report.html",
     "jsonPath": "/home/runner/work/trade-imports-ins-frontend/trade-imports-ins-frontend/frontend/lighthouse-report/address_book_id_delete.report.json",
