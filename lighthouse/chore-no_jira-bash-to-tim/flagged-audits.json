@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-11-13T14:56:29.977Z",
+  "pages": [
+    {
+      "pageUrl": "/",
+      "requestedUrl": "http://localhost:3002/",
+      "audits": []
+    },
+    {
+      "pageUrl": "/notification-type",
+      "requestedUrl": "http://localhost:3002/notification-type",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book",
+      "requestedUrl": "http://localhost:3002/address-book",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/add",
+      "requestedUrl": "http://localhost:3002/address-book/add",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/add/address-type",
+      "requestedUrl": "http://localhost:3002/address-book/add/address-type",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/6af724a9e7df78ec9b67b0b4",
+      "requestedUrl": "http://localhost:3002/address-book/6af724a9e7df78ec9b67b0b4",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/6af724a9e7df78ec9b67b0b4/edit",
+      "requestedUrl": "http://localhost:3002/address-book/6af724a9e7df78ec9b67b0b4/edit",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/6af724a9e7df78ec9b67b0b4/delete",
+      "requestedUrl": "http://localhost:3002/address-book/6af724a9e7df78ec9b67b0b4/delete",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/add/transporter",
+      "requestedUrl": "http://localhost:3002/address-book/add/transporter",
+      "audits": []
+    },
+    {
+      "pageUrl": "/address-book/add/transporter/commercial",
+      "requestedUrl": "http://localhost:3002/address-book/add/transporter/commercial",
+      "audits": []
+    }
+  ]
+}
