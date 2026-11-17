@@ -35,9 +35,6 @@ import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-
 import {
   ANIMALS_BASE_URL,
   SENDING_PARTIES,
-  CONSIGNMENT_CONTACT_HANDSHAKE,
-  GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE,
-  GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
   INCOMPLETE_HANDSHAKE_WARNING,
   JOURNEY_HANDSHAKES_BY_PARTY,
   journeyRolesHintFor,
@@ -968,7 +965,6 @@ describe(
         {
           fields: {
             organisationId: ORGANISATION_ID,
-            journeyType: CONSIGNEE_HANDSHAKE['journey-type'],
             notificationId: CONSIGNEE_HANDSHAKE['notification-id'],
             fulfilmentId: CONSIGNEE_HANDSHAKE['fulfilment-id'],
             discardedRoles: ['CONSIGNOR']
@@ -1026,18 +1022,6 @@ describe(
       }
     )
 
-    test('POST from the consignment contact handshake saves the address as a Branch address', async () => {
-      const { scope, captured } = serveAddressCreationCapturingBody()
-
-      await postAdd(getServer(), 'add-post-handshake-type-contact', {
-        ...CONSIGNMENT_CONTACT_HANDSHAKE,
-        ...VALID_ADDRESS_FIELDS
-      })
-
-      expect(scope.isDone()).toBe(true)
-      expect(captured.body).toMatchObject({ roles: ['BRANCH_ADDRESS'] })
-    })
-
     test.each(Object.keys(ROLES_BY_PARTY))(
       'GET from the %s handshake asks what else the address should be used for after a section break, naming the role and offering only the other roles on its side, unticked',
       async (party) => {
@@ -1057,19 +1041,6 @@ describe(
         expect(tickedRolesOf($)).toEqual([])
       }
     )
-
-    test('GET from the consignment contact handshake shows the address fields and no roles question', async () => {
-      const { result } = await getAdd(
-        getServer(),
-        'add-get-handshake-no-roles',
-        CONSIGNMENT_CONTACT_HANDSHAKE
-      )
-
-      const $ = load(result)
-      expect(textsOf($, 'form legend')).toEqual([])
-      expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual(ADDRESS_FORM_LABELS)
-      expect($('input[name="roles"]')).toHaveLength(0)
-    })
   }
 )
 
@@ -1121,35 +1092,6 @@ describe(
           .map((_, input) => [[$(input).attr('name'), $(input).attr('value')]])
           .get()
       ).toEqual([['crumb', ''], ...Object.entries(CONSIGNOR_HANDSHAKE)])
-    })
-
-    test('GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the journey return with no address and no landing', async () => {
-      const { result, statusCode } = await getAdd(
-        getServer(),
-        'add-get-handshake-contact',
-        CONSIGNMENT_CONTACT_HANDSHAKE
-      )
-
-      expect(statusCode).toBe(statusCodes.ok)
-      const $ = load(result)
-      expect(buttonsOf($)).toEqual([
-        {
-          text: 'Save and continue',
-          name: null,
-          value: null,
-          secondary: false
-        },
-        {
-          text: 'Cancel and return to address page',
-          name: 'cancel',
-          value: 'true',
-          secondary: true
-        }
-      ])
-      expect($(FORM_LINK)).toHaveLength(0)
-      expect($(BACK_LINK).attr('href')).toBe(
-        returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
-      )
     })
 
     test('GET arriving through a journey handshake shows the page title, the blue Draft status and notification id above the caption and heading, then the section headings and every field label', async () => {
@@ -1248,7 +1190,6 @@ describe(
         {
           fields: {
             organisationId: ORGANISATION_ID,
-            journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
             addressId: ADDRESS_ID,
             notificationId: CONSIGNOR_HANDSHAKE['notification-id'],
             fulfilmentId: CONSIGNOR_HANDSHAKE['fulfilment-id'],
@@ -1330,27 +1271,6 @@ describe(
       expect(scope.isDone()).toBe(true)
     })
 
-    test('POST of the consignment contact Save and continue, which carries no action, returns to the journey with the select landing', async () => {
-      serveAddressCreated()
-
-      const response = await postAdd(
-        getServer(),
-        'add-post-handshake-contact',
-        {
-          ...CONSIGNMENT_CONTACT_HANDSHAKE,
-          ...VALID_ADDRESS_PAYLOAD
-        }
-      )
-
-      expectRedirectTo(
-        response,
-        returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE, {
-          addressId: ADDRESS_ID,
-          landing: ADDRESS_LANDING.SELECT
-        })
-      )
-    })
-
     test('POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom selected on the form when the API rejects the address', async () => {
       addressBookApi()
         .post(addressesApiPath())
@@ -1391,212 +1311,6 @@ describe(
         }),
         returnUrlFor(CONSIGNOR_HANDSHAKE, { landing: ADDRESS_LANDING.CANCEL })
       )
-    })
-
-    test('Cancel from the consignment contact handshake returns to the journey with no address and no landing, and logs the hand-back once', async () => {
-      expectRedirectTo(
-        await postAdd(getServer(), 'add-post-handshake-cancel', {
-          cancel: 'true',
-          ...CONSIGNMENT_CONTACT_HANDSHAKE
-        }),
-        returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
-      )
-      expect(loggedWith(CANCEL_HAND_BACK_MESSAGE)).toEqual([
-        {
-          fields: {
-            organisationId: ORGANISATION_ID,
-            journeyType: CONSIGNMENT_CONTACT_HANDSHAKE['journey-type'],
-            notificationId: CONSIGNMENT_CONTACT_HANDSHAKE['notification-id'],
-            fulfilmentId: CONSIGNMENT_CONTACT_HANDSHAKE['fulfilment-id']
-          },
-          message: CANCEL_HAND_BACK_MESSAGE
-        }
-      ])
-    })
-  }
-)
-
-describe(
-  '#addressBookAddController — germinal products journey handshake',
-  { concurrent: false },
-  () => {
-    const getServer = startRealModeServerServingCountries(COUNTRIES)
-    const { entriesWith: loggedWith } = recordModuleLoggerInfo()
-    const GERMINAL_CONSIGNOR_HANDSHAKE =
-      GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY.consignor
-    const HANDSHAKE_OWN_RETURN = '/live-animals/dashboard'
-
-    test('GET from the germinal products consignor handshake renders the same add page as the live animals handshake and links Back to the germinal products return', async () => {
-      const { result, statusCode } = await getAdd(
-        getServer(),
-        'add-get-germinal-handshake',
-        GERMINAL_CONSIGNOR_HANDSHAKE
-      )
-
-      expect(statusCode).toBe(statusCodes.ok)
-      const $ = load(result)
-      expect(textsOf($, 'h1')).toEqual([ADD_TITLE])
-      expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual([
-        ...ADDRESS_FORM_LABELS,
-        ...otherRolesQuestionOf('consignor').labels
-      ])
-      expect($(BACK_LINK).attr('href')).toBe(
-        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE)
-      )
-    })
-
-    test('GET from a germinal products handshake that also carries a return of its own still links Back and Cancel to the registered germinal products return', async () => {
-      const { result, statusCode } = await getAdd(
-        getServer(),
-        'add-get-germinal-handshake-with-return',
-        { ...GERMINAL_CONSIGNOR_HANDSHAKE, return: HANDSHAKE_OWN_RETURN }
-      )
-
-      expect(statusCode).toBe(statusCodes.ok)
-      const $ = load(result)
-      expect($(BACK_LINK).attr('href')).toBe(
-        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE)
-      )
-      expect($(FORM_LINK).attr('href')).toBe(
-        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
-          landing: ADDRESS_LANDING.CANCEL
-        })
-      )
-    })
-
-    test('POST of Save and select from a germinal products handshake that also carries a return of its own returns to the registered germinal products return', async () => {
-      const scope = serveAddressCreated()
-
-      const response = await postAdd(
-        getServer(),
-        'add-post-germinal-handshake-own-return',
-        {
-          ...GERMINAL_CONSIGNOR_HANDSHAKE,
-          ...VALID_ADDRESS_PAYLOAD,
-          action: ADDRESS_LANDING.SELECT,
-          return: HANDSHAKE_OWN_RETURN
-        }
-      )
-
-      expectRedirectTo(
-        response,
-        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
-          addressId: ADDRESS_ID,
-          landing: ADDRESS_LANDING.SELECT
-        })
-      )
-      expect(scope.isDone()).toBe(true)
-    })
-
-    test('Cancel from a germinal products handshake that also carries a return of its own returns to the registered germinal products return', async () => {
-      const creation = interceptAddressBookRequest('POST', addressesApiPath())
-
-      const response = await postAdd(
-        getServer(),
-        'add-post-germinal-handshake-own-return-cancel',
-        {
-          cancel: 'true',
-          ...GERMINAL_CONSIGNOR_HANDSHAKE,
-          return: HANDSHAKE_OWN_RETURN
-        }
-      )
-
-      expectRedirectTo(
-        response,
-        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
-          landing: ADDRESS_LANDING.CANCEL
-        })
-      )
-      creation.expectNotSent()
-    })
-
-    test('POST of Save and select from the germinal products consignor handshake returns to that notification germinal products return with the new address id and the select landing, and logs the hand-back with the germinal products journey type', async () => {
-      const scope = serveAddressCreated()
-
-      const response = await postAdd(
-        getServer(),
-        'add-post-germinal-handshake',
-        {
-          ...GERMINAL_CONSIGNOR_HANDSHAKE,
-          ...VALID_ADDRESS_PAYLOAD,
-          action: ADDRESS_LANDING.SELECT
-        }
-      )
-
-      expectRedirectTo(
-        response,
-        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
-          addressId: ADDRESS_ID,
-          landing: ADDRESS_LANDING.SELECT
-        })
-      )
-      expect(scope.isDone()).toBe(true)
-      expect(loggedWith(HAND_BACK_MESSAGE)).toEqual([
-        {
-          fields: {
-            organisationId: ORGANISATION_ID,
-            journeyType: GERMINAL_CONSIGNOR_HANDSHAKE['journey-type'],
-            addressId: ADDRESS_ID,
-            notificationId: GERMINAL_CONSIGNOR_HANDSHAKE['notification-id'],
-            fulfilmentId: GERMINAL_CONSIGNOR_HANDSHAKE['fulfilment-id'],
-            landing: ADDRESS_LANDING.SELECT
-          },
-          message: HAND_BACK_MESSAGE
-        }
-      ])
-    })
-
-    test('POST of Save and return to address page from the germinal products consignor handshake returns to that notification germinal products return with the return landing', async () => {
-      const scope = serveAddressCreated()
-
-      const response = await postAdd(
-        getServer(),
-        'add-post-germinal-handshake-return',
-        {
-          ...GERMINAL_CONSIGNOR_HANDSHAKE,
-          ...VALID_ADDRESS_PAYLOAD,
-          action: ADDRESS_LANDING.RETURN
-        }
-      )
-
-      expectRedirectTo(
-        response,
-        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
-          addressId: ADDRESS_ID,
-          landing: ADDRESS_LANDING.RETURN
-        })
-      )
-      expect(scope.isDone()).toBe(true)
-    })
-
-    test('Cancel from the germinal products consignor handshake returns to that notification germinal products return with the cancel landing and creates nothing', async () => {
-      const creation = interceptAddressBookRequest('POST', addressesApiPath())
-
-      const response = await postAdd(
-        getServer(),
-        'add-post-germinal-handshake-cancel',
-        { cancel: 'true', ...GERMINAL_CONSIGNOR_HANDSHAKE }
-      )
-
-      expectRedirectTo(
-        response,
-        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
-          landing: ADDRESS_LANDING.CANCEL
-        })
-      )
-      creation.expectNotSent()
-    })
-
-    test('POST from the germinal products consignment contact handshake saves the address as a Branch address', async () => {
-      const { scope, captured } = serveAddressCreationCapturingBody()
-
-      await postAdd(getServer(), 'add-post-germinal-handshake-contact', {
-        ...GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE,
-        ...VALID_ADDRESS_FIELDS
-      })
-
-      expect(scope.isDone()).toBe(true)
-      expect(captured.body).toMatchObject({ roles: ['BRANCH_ADDRESS'] })
     })
   }
 )
@@ -1710,8 +1424,7 @@ describe(
     test.each(
       [
         ['consignee', CONSIGNEE_HANDSHAKE],
-        ['consignor', CONSIGNOR_HANDSHAKE],
-        ['consignment contact', CONSIGNMENT_CONTACT_HANDSHAKE]
+        ['consignor', CONSIGNOR_HANDSHAKE]
       ].flatMap(([entry, handshake]) => [
         [entry, 'no country', handshake, ''],
         [entry, 'a country the list does not offer', handshake, 'ZZ']
