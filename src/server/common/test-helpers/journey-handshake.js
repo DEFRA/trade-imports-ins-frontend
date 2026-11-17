@@ -1,8 +1,5 @@
 import { copy } from '../../app/features/address-book/copy/copy.en.js'
-import {
-  CONSIGNMENT_CONTACT_FULFILMENT_ID,
-  JOURNEY_TYPES
-} from '../../app/features/address-book/journey-registry.js'
+import { JOURNEY_TYPES } from '../../app/features/address-book/journey-registry.js'
 
 const handshakeForFulfilmentId = (
   fulfilmentId,
@@ -89,13 +86,6 @@ export const RECEIVING_PARTIES = Object.freeze([
 ])
 
 export const SENDING_PARTIES = Object.freeze(['placeOfOrigin', 'consignor'])
-
-export const CONSIGNMENT_CONTACT_HANDSHAKE = handshakeForFulfilmentId(
-  CONSIGNMENT_CONTACT_FULFILMENT_ID
-)
-
-export const GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE =
-  germinalProductsHandshakeForFulfilmentId(CONSIGNMENT_CONTACT_FULFILMENT_ID)
 
 export const ANIMALS_BASE_URL = 'http://localhost:3000'
 

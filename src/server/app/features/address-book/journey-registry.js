@@ -22,9 +22,6 @@ export const ADDRESS_LANDING = Object.freeze({
   CANCEL: 'cancel'
 })
 
-export const CONSIGNMENT_CONTACT_FULFILMENT_ID =
-  'f037e8f9-a0b1-4c26-8d72-fe5f60718293'
-
 const RETURN_PATH_TEMPLATE =
   '/notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}'
 
@@ -33,8 +30,7 @@ const ROLE_BY_PARTY_FULFILMENT_ID = Object.freeze({
   '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d': ROLES.CONSIGNOR,
   'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e': ROLES.CONSIGNEE,
   'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f': ROLES.IMPORTER,
-  'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': ROLES.PLACE_OF_DESTINATION,
-  [CONSIGNMENT_CONTACT_FULFILMENT_ID]: ROLES.BRANCH_ADDRESS
+  'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': ROLES.PLACE_OF_DESTINATION
 })
 
 const registry = Object.freeze({
@@ -42,14 +38,12 @@ const registry = Object.freeze({
     baseUrlConfigKey: SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS],
     setBase: SET_BASES.LIVE_ANIMALS,
     returnPathTemplate: RETURN_PATH_TEMPLATE,
-    consignmentContactFulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID,
     roleByPartyFulfilmentId: ROLE_BY_PARTY_FULFILMENT_ID
   },
   [JOURNEY_TYPES.GBN_AG_GERMINAL_PRODUCTS]: {
     baseUrlConfigKey: SET_FRONTEND_BASE_URL_KEYS[SET_BASES.GERMINAL_PRODUCTS],
     setBase: SET_BASES.GERMINAL_PRODUCTS,
     returnPathTemplate: RETURN_PATH_TEMPLATE,
-    consignmentContactFulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID,
     roleByPartyFulfilmentId: ROLE_BY_PARTY_FULFILMENT_ID
   }
 })
@@ -68,16 +62,6 @@ export const roleOfParty = (context) => {
 
 export const isResolvableHandshake = (context) =>
   roleOfParty(context) !== undefined
-
-export const isConsignmentContact = (context) => {
-  const contactFulfilmentId = registryEntryFor(
-    context?.journeyType
-  )?.consignmentContactFulfilmentId
-  return (
-    contactFulfilmentId !== undefined &&
-    contactFulfilmentId === context?.fulfilmentId
-  )
-}
 
 export const isReceivingParty = (context) =>
   addressTypeOfRole(roleOfParty(context)) ===
