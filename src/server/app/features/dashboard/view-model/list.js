@@ -46,8 +46,7 @@ export function buildNotificationLink(status, referenceNumber) {
     SET_BASES.LIVE_ANIMALS,
     referenceNumber
   )
-  const submittedStatuses = ['SUBMITTED', 'SUBMITTED_ACTION_REQUIRED']
-  return submittedStatuses.includes(status)
+  return status === 'SUBMITTED'
     ? `${notificationUrl}/notification-view`
     : notificationUrl
 }
