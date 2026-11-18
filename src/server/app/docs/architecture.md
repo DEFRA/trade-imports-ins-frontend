@@ -15,7 +15,13 @@ beside it, one routes plugin: the Defra ID `/auth/*` routes in
 [`src/server/auth/index.js`](../../auth/index.js), or the stub routes in
 [`stub-sign-in.js`](../../auth/stub-sign-in.js) when `isStubMode()` — the
 same `/auth/sign-in` and `/auth/sign-out` paths, with no identity provider
-involved. Last comes [`router.js`](../../router.js), which registers
+involved. Whatever the mode, it then registers the hidden IDM sign-in
+([`idm-sign-in.js`](../../auth/idm-sign-in.js)), which serves its routes
+and its own Bell strategy ([`src/plugins/idm-auth.js`](../../../plugins/idm-auth.js))
+only when `IDM_OIDC_CONFIGURATION_URL` is set. It keeps what IDM returned
+in the yar session for its own signed-in page, and never writes the auth
+cache or the session cookie, so the rest of the service keeps the stub or
+Defra ID identity. Last comes [`router.js`](../../router.js), which registers
 `health`, then — only when `auth.enabled` — the application plugin, then
 static files.
 
@@ -24,6 +30,12 @@ static files.
   Bell entirely.
 - [`src/plugins/csrf.js`](../../../plugins/csrf.js) — CSRF protection via
   `@hapi/crumb`, disabled during test runs.
+- [`src/auth/identity-providers.js`](../../../auth/identity-providers.js) —
+  the two identity providers, Defra ID (the stub outside production) and
+  IDM: each one's config group, metric call names, and whether its tokens'
+  audience and issuer are checked. The stub issues a random audience, so
+  Defra ID's are not. Discovery, token verification and the token-exchange
+  timing take a provider and default to Defra ID.
 - [`src/auth/`](../../../auth/) — token verification, permissions lookup,
   safe-redirect checking and the one Defra ID hostname rewrite
   ([`defra-id-hostnames.js`](../../../auth/defra-id-hostnames.js)), shared by
@@ -57,9 +69,13 @@ the same one second.
 `catchAll` renders `shared/error` through `kit.base()` with the
 status-keyed message from `sharedCopy.errorPage`.
 
-**The unauthorised page**: [`app/auth/unauthorised.njk`](../auth/unauthorised.njk)
-is the one view outside `features/`. The chassis's auth controller renders
-it with `base(sharedCopy.unauthorised.title)`.
+**The auth pages**: [`app/auth/`](../auth/) holds the views outside
+`features/`. The chassis's auth controller renders `unauthorised.njk` with
+`base(sharedCopy.unauthorised.title)`. Its try-again link goes to
+`/auth/sign-in` unless the view model gives a `signInUrl`, as the IDM
+sign-in does. The IDM sign-in's own pages (`idm-sign-in.njk`,
+`idm-signed-in.njk`, `idm-signed-out.njk`) are internal test pages, in
+English only, with their text in the templates.
 
 ## The application
 

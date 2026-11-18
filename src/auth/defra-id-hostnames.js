@@ -42,10 +42,14 @@ function getBrowserFacingDiscoveryUrl() {
  * and covers that hostname. Ports, paths and every other key are kept.
  *
  * @param {object} oidcDocument
+ * @param {string} discoveryUrl - the URL the document was fetched from
  * @returns {object}
  */
-const withServerSideEndpointsAtDiscoveryHostname = (oidcDocument) => {
-  const { hostname } = new URL(config.get('defraId.oidcDiscoveryUrl'))
+const withServerSideEndpointsAtDiscoveryHostname = (
+  oidcDocument,
+  discoveryUrl
+) => {
+  const { hostname } = new URL(discoveryUrl)
   if (!isCoveredByRewrite(hostname, readHostnameRewrite())) {
     return { ...oidcDocument }
   }

@@ -15,3 +15,16 @@ export const DEFRA_ID_CALLS = Object.freeze({
     interfaceId: 'SYN-13'
   }
 })
+
+export const IDM_CALLS = Object.freeze({
+  openidConfiguration: {
+    dependency: 'idm',
+    operation: 'openid-configuration'
+  },
+  jwks: { dependency: 'idm', operation: 'jwks', interfaceId: 'SYN-12' },
+  tokenExchange: {
+    dependency: 'idm',
+    operation: 'token-exchange',
+    interfaceId: 'SYN-11'
+  }
+})

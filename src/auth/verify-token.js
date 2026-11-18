@@ -5,22 +5,25 @@ import { getTraceId } from '@defra/hapi-tracing'
 import { getOidcConfig, OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
 import { config } from '../config/config.js'
 import { measureExternalCall } from '../server/common/helpers/external-call-metrics.js'
-import { DEFRA_ID_CALLS } from './defra-id-calls.js'
+import { defraIdProvider, providerSetting } from './identity-providers.js'
 
-async function verifyToken(token) {
-  const oidcConfig = await getOidcConfig()
+async function verifyToken(token, provider = defraIdProvider) {
+  const oidcConfig = await getOidcConfig(provider)
   const { jwks_uri: uri, issuer } = oidcConfig
 
-  const { payload } = await measureExternalCall(DEFRA_ID_CALLS.jwks, () =>
+  const { payload } = await measureExternalCall(provider.calls.jwks, () =>
     Wreck.get(uri, {
       headers: { [config.get('tracing.header')]: getTraceId() ?? '' },
       json: true,
       timeout: OIDC_DOCUMENT_TIMEOUT_MS
     })
   )
-  const [signingJwk] = payload.keys
+
+  const decoded = Jwt.token.decode(token)
+  const { kid } = decoded.decoded.header
+  const signingJwk = payload.keys.find((key) => key.kid === kid)
   if (!signingJwk) {
-    throw new Error('No signing key served')
+    throw new Error(`No signing key ${kid} served`)
   }
 
   const pem = createPublicKey({ key: signingJwk, format: 'jwk' }).export({
@@ -28,13 +31,16 @@ async function verifyToken(token) {
     format: 'pem'
   })
 
-  const decoded = Jwt.token.decode(token)
-  Jwt.token.verify(decoded, {
-    key: pem,
-    algorithm: 'RS256',
-    aud: config.get('defraId.clientId'),
-    iss: issuer
-  })
+  Jwt.token.verify(
+    decoded,
+    { key: pem, algorithm: 'RS256' },
+    claimChecksFor(provider, issuer)
+  )
 }
+
+const claimChecksFor = (provider, issuer) =>
+  provider.verifiesAudienceAndIssuer
+    ? { aud: providerSetting(provider, 'clientId'), iss: issuer }
+    : {}
 
 export { verifyToken }

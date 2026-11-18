@@ -29,7 +29,10 @@ points back at one of that address's own pages.
 The chassis adds routes of its own outside this list: `/health`, `/auth/*`
 and `/public/*`. In stub mode `/auth/*` is `/auth/sign-in`,
 `/auth/stub-sign-in` and `/auth/sign-out`, served by the stub plugin without
-an identity provider. The dashboard's row links leave the service for the
+an identity provider. When `IDM_OIDC_CONFIGURATION_URL` is set, in either
+mode, the hidden IDM sign-in adds `/auth/idm/sign-in`,
+`/auth/idm/go-to-defra-id`, `/auth/callback`, `/auth/idm/signed-in` and
+`/auth/signed-out`, none of them linked from the service. The dashboard's row links leave the service for the
 animals frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`), which owns the
 notification a row represents. Choosing a type on `/notification-type` leaves
 the service too: the POST redirects to the start entry of the animals or

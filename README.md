@@ -181,6 +181,32 @@ enforced — only the external round-trip is bypassed — and the switch is
 refused in production. The Playwright suite sets it for its own web
 server, so `npm run test:fit` needs no other service running.
 
+## Sign-in through the real Defra ID (IDM)
+
+A second, hidden sign-in goes through the real Defra ID in CP-Dev, to show
+what IDM returns. Nothing in the service links to it. Open
+`/auth/idm/sign-in` and choose the button. IDM returns to `/auth/callback`,
+and `/auth/idm/signed-in` then shows the ID token claims, the access token
+claims and the token response. `/auth/signed-out` is IDM's registered
+post-logout page.
+
+It never signs anyone in to the service: the dashboard and address book
+keep the stub or Defra ID sign-in above, and its data.
+
+It is served only when `IDM_OIDC_CONFIGURATION_URL` is set, so the workspace
+stack and the E2E tests run without it. Its settings:
+
+- `IDM_OIDC_CONFIGURATION_URL`
+- `IDM_CLIENT_ID`
+- `IDM_CLIENT_SECRET`
+- `IDM_SERVICE_ID`
+- `IDM_POLICY` (defaults to `b2c_1a_cui_cpdev_signupsignin`; the stub's policy causes a redirect loop)
+- `IDM_REDIRECT_URL` (defaults to `http://localhost:3002/auth/callback`)
+
+Locally, put them in `.env`, which is gitignored and read by `npm run dev`.
+In CDP dev and test the client ID, client secret and service ID are CDP
+secrets, and the rest are in `cdp-app-config`.
+
 ## Docker
 
 The image's `ARG PORT` defaults to 3000; pass `PORT` to serve on the

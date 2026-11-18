@@ -260,6 +260,45 @@ export const config = convict({
       env: 'DEFRA_ID_REFRESH_TOKENS'
     }
   },
+  idm: {
+    oidcDiscoveryUrl: {
+      doc: 'OIDC well-known configuration URL of the real Defra ID (IDM). Empty leaves the IDM sign-in pages unserved.',
+      format: String,
+      default: '',
+      env: 'IDM_OIDC_CONFIGURATION_URL'
+    },
+    clientId: {
+      doc: 'IDM client ID',
+      format: String,
+      default: '',
+      env: 'IDM_CLIENT_ID'
+    },
+    clientSecret: {
+      doc: 'IDM client secret',
+      format: String,
+      default: '',
+      env: 'IDM_CLIENT_SECRET',
+      sensitive: true
+    },
+    serviceId: {
+      doc: 'IDM service ID',
+      format: String,
+      default: '',
+      env: 'IDM_SERVICE_ID'
+    },
+    policy: {
+      doc: 'IDM B2C policy name',
+      format: String,
+      default: 'b2c_1a_cui_cpdev_signupsignin',
+      env: 'IDM_POLICY'
+    },
+    redirectUrl: {
+      doc: 'Redirect URL IDM returns to after sign-in (OIDC callback)',
+      format: String,
+      default: 'http://localhost:3002/auth/callback',
+      env: 'IDM_REDIRECT_URL'
+    }
+  },
   cdpEnvironment: {
     doc: "The CDP-injected environment name, or 'local' when it is unset",
     format: [

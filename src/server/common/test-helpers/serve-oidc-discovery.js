@@ -9,17 +9,26 @@ import { restoreConfigAfterEach } from './restore-config-after-each.js'
 
 const oidcDiscoveryUrlKey = 'defraId.oidcDiscoveryUrl'
 
+export const idmOidcDiscoveryUrlKey = 'idm.oidcDiscoveryUrl'
+
 export const discoveryUrlRequest = ({
   persist = false,
+  discoveryUrlKey = oidcDiscoveryUrlKey,
   ...scopeOptions
 } = {}) => {
-  const discoveryUrl = new URL(config.get(oidcDiscoveryUrlKey))
+  const discoveryUrl = new URL(config.get(discoveryUrlKey))
   const scope = nock(discoveryUrl.origin, scopeOptions)
   return (persist ? scope.persist() : scope).get(discoveryUrl.pathname)
 }
 
-export const serveOidcDiscovery = (document = mockOidcConfig) =>
-  discoveryUrlRequest({ persist: true }).reply(statusCodes.ok, document)
+export const serveOidcDiscovery = (
+  document = mockOidcConfig,
+  { discoveryUrlKey } = {}
+) =>
+  discoveryUrlRequest({ persist: true, discoveryUrlKey }).reply(
+    statusCodes.ok,
+    document
+  )
 
 export const runAgainstMockOidcDiscoveryUrl = ({
   restoringConfigKeys = []

@@ -126,13 +126,16 @@ describe('#authController', () => {
     expectSessionCookieCleared(headers)
   })
 
-  test('GET /auth/sign-in-oidc renders unauthorised when organisationId is missing', async () => {
+  test('GET /auth/sign-in-oidc renders unauthorised, linking to /auth/sign-in, when organisationId is missing', async () => {
     const { statusCode, payload, headers } = await signInOidc({
       organisationId: null
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(payload).toContain(sharedEn.unauthorised.heading)
+    expect(payload).toContain(
+      `<a class="govuk-link" href="/auth/sign-in">${sharedEn.unauthorised.signInLinkText}</a>`
+    )
     expect(headers['set-cookie'] ?? []).not.toContainEqual(
       expect.stringContaining('sid=')
     )
