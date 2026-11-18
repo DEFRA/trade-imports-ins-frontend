@@ -1,10 +1,18 @@
 import { copy } from '../../app/features/address-book/copy/copy.en.js'
 import { CONSIGNMENT_CONTACT_FULFILMENT_ID } from '../../app/features/address-book/journey-registry.js'
 
-const handshakeForFulfilmentId = (fulfilmentId) =>
+const GBN_AG_JOURNEY_TYPE = 'gbn-ag'
+
+const handshakeForFulfilmentId = (
+  fulfilmentId,
+  {
+    journeyType = GBN_AG_JOURNEY_TYPE,
+    notificationId = 'GBN-AG-26-4F7K2P'
+  } = {}
+) =>
   Object.freeze({
-    'journey-type': 'gbn-ag',
-    'notification-id': 'GBN-AG-26-4F7K2P',
+    'journey-type': journeyType,
+    'notification-id': notificationId,
     'fulfilment-id': fulfilmentId,
     'handshake-token': 'handshake-token-value'
   })
@@ -17,6 +25,32 @@ export const JOURNEY_HANDSHAKES_BY_PARTY = Object.freeze({
   consignee: handshakeForFulfilmentId('abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e'),
   importer: handshakeForFulfilmentId('bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f'),
   placeOfDestination: handshakeForFulfilmentId(
+    'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60'
+  )
+})
+
+export const GERMINAL_PRODUCTS_JOURNEY_TYPE = 'gbn-ag-germinal-products'
+
+const germinalProductsHandshakeForFulfilmentId = (fulfilmentId) =>
+  handshakeForFulfilmentId(fulfilmentId, {
+    journeyType: GERMINAL_PRODUCTS_JOURNEY_TYPE,
+    notificationId: 'GBN-AG-26-9K3M7Q'
+  })
+
+export const GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY = Object.freeze({
+  placeOfOrigin: germinalProductsHandshakeForFulfilmentId(
+    '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c'
+  ),
+  consignor: germinalProductsHandshakeForFulfilmentId(
+    '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d'
+  ),
+  consignee: germinalProductsHandshakeForFulfilmentId(
+    'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e'
+  ),
+  importer: germinalProductsHandshakeForFulfilmentId(
+    'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f'
+  ),
+  placeOfDestination: germinalProductsHandshakeForFulfilmentId(
     'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60'
   )
 })
@@ -61,11 +95,20 @@ export const CONSIGNMENT_CONTACT_HANDSHAKE = handshakeForFulfilmentId(
   CONSIGNMENT_CONTACT_FULFILMENT_ID
 )
 
+export const GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE =
+  germinalProductsHandshakeForFulfilmentId(CONSIGNMENT_CONTACT_FULFILMENT_ID)
+
 export const ANIMALS_BASE_URL = 'http://localhost:3000'
 
+const SET_BASE_BY_JOURNEY_TYPE = Object.freeze({
+  [GBN_AG_JOURNEY_TYPE]: '/live-animals',
+  [GERMINAL_PRODUCTS_JOURNEY_TYPE]: '/germinal-products'
+})
+
 export const returnUrlFor = (handshake, { addressId, landing } = {}) => {
+  const setBase = SET_BASE_BY_JOURNEY_TYPE[handshake['journey-type']]
   const url = new URL(
-    `${ANIMALS_BASE_URL}/live-animals/notifications/${encodeURIComponent(handshake['notification-id'])}/address-return`
+    `${ANIMALS_BASE_URL}${setBase}/notifications/${encodeURIComponent(handshake['notification-id'])}/address-return`
   )
   url.searchParams.set('fulfilment-id', handshake['fulfilment-id'])
   if (handshake['handshake-token']) {

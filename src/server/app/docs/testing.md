@@ -96,17 +96,22 @@ autocomplete hints, read from `address-form-autocomplete.js`'s
 specs import too),
 `journey-handshake.js` (`handshakeContextOf(handshake)`, the handshake
 context the app builds from a handshake's query or form fields,
-`JOURNEY_HANDSHAKES_BY_PARTY`, one complete journey
+`JOURNEY_HANDSHAKES_BY_PARTY`, one complete live animals journey
 handshake for each of the place of origin, consignor, consignee, importer and
 place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's
-handshake, `ANIMALS_BASE_URL`, the animals frontend's base URL the return
-URLs start with, and `returnUrlFor(handshake, { addressId, landing })`, the
-return URL a test expects for a handshake, built from that handshake's own
-ids and token; the Vitest tests and the fit specs both use these;
+live animals handshake, `GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY` and
+`GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE`, the same shapes for the
+registered germinal products journey, `ANIMALS_BASE_URL`, the animals
+frontend's base URL every return URL starts with, and
+`returnUrlFor(handshake, { addressId, landing })`, the return URL a test
+expects for a handshake, built from that handshake's own journey type (through
+a table the helper keeps itself) as well as its ids and token; the Vitest
+tests and the fit specs both use these;
 `ROLES_BY_PARTY`, each party's own role and the other roles on its
-side, `journeyRolesHintFor(party)`, the roles question's hint naming that
-party's own role, and `UNREGISTERED_JOURNEY_TYPE`, a journey type the
-registry does not list, `RECEIVING_PARTIES`, the consignee, importer and
+side, shared by both journeys since both registered entries hold the one
+party-to-role map, `journeyRolesHintFor(party)`, the roles question's hint
+naming that party's own role, and `UNREGISTERED_JOURNEY_TYPE`, a journey type
+the registry does not list, `RECEIVING_PARTIES`, the consignee, importer and
 place of destination, and `SENDING_PARTIES`, the place of origin and
 consignor),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,

@@ -49,6 +49,7 @@ import {
 import {
   ANIMALS_BASE_URL,
   CONSIGNMENT_CONTACT_HANDSHAKE,
+  GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
   JOURNEY_HANDSHAKES_BY_PARTY,
   journeyRolesHintFor,
   returnUrlFor,
@@ -78,7 +79,7 @@ test.describe('add address', () => {
     await signInAndOpenAddForm(page, 'stub-org-add-render')
 
     await expect(
-      page.getByRole('heading', { name: 'Add address and contact details' })
+      page.getByRole('heading', { name: copy.add.title })
     ).toBeVisible()
     await expect(
       page.getByLabel(fieldLabels.name, { exact: true })
@@ -323,7 +324,7 @@ test.describe('add address reached from a notification journey', () => {
     await expect(
       page.getByRole('heading', {
         level: 1,
-        name: 'Add address and contact details'
+        name: copy.add.title
       })
     ).toBeVisible()
     const sectionHeadings = ['Address', 'Contact details'].map((name) =>
@@ -451,7 +452,7 @@ test.describe('add address reached from a notification journey', () => {
       copy.add.saveAndReturnToAddressPage
     ])
     await expect(
-      page.getByRole('link', { name: 'Cancel and return to hub' })
+      page.getByRole('link', { name: copy.add.cancelAndReturnToHub })
     ).toHaveAttribute(
       'href',
       returnUrlFor(JOURNEY_HANDSHAKES_BY_PARTY.consignor, {
@@ -566,6 +567,55 @@ test.describe('add address reached from a notification journey with JavaScript o
     await expect(typeCellOf(listPage, validAddress.name)).toHaveText(
       'Consignee, Importer'
     )
+  })
+})
+
+test.describe('add address reached from a germinal products notification journey', () => {
+  const handshake = GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY.consignor
+
+  test('shows the add page and offers Back and Cancel to that notification germinal products return', async ({
+    page
+  }) => {
+    await openAddFormFromJourney(
+      page,
+      'stub-org-add-germinal-journey',
+      handshake
+    )
+
+    await expect(
+      page.getByRole('heading', { name: copy.add.title })
+    ).toBeVisible()
+    await expect(backLink(page)).toHaveAttribute(
+      'href',
+      returnUrlFor(handshake)
+    )
+    await expect(
+      page.getByRole('link', { name: copy.add.cancelAndReturnToHub })
+    ).toHaveAttribute(
+      'href',
+      returnUrlFor(handshake, { landing: ADDRESS_LANDING.CANCEL })
+    )
+  })
+
+  test('Save and select sends the browser to that notification germinal products return carrying the saved address id and the select landing', async ({
+    page
+  }) => {
+    await page.route(`${ANIMALS_BASE_URL}/**`, (route) => route.abort())
+    await openAddFormFromJourney(
+      page,
+      `stub-org-add-germinal-journey-save-${crypto.randomUUID()}`,
+      handshake
+    )
+    await fillValidAddress(page)
+    const journeyReturn = page.waitForRequest((request) =>
+      request.url().includes('/address-return')
+    )
+    await page.getByRole('button', { name: copy.add.saveAndSelect }).click()
+
+    const returnUrl = new URL((await journeyReturn).url())
+    expect(returnUrl.pathname).toBe(new URL(returnUrlFor(handshake)).pathname)
+    expect(returnUrl.searchParams.get('addressId')).toBeTruthy()
+    expect(returnUrl.searchParams.get('landing')).toBe(ADDRESS_LANDING.SELECT)
   })
 })
 

@@ -100,6 +100,7 @@ const addLogContextOf = ({ organisationId, handshakeContext, addressType }) =>
   handshakeContext
     ? {
         organisationId,
+        journeyType: handshakeContext.journeyType,
         notificationId: handshakeContext.notificationId,
         fulfilmentId: handshakeContext.fulfilmentId
       }
