@@ -32,6 +32,20 @@ export const runInRealMode = () => {
   })
 }
 
+export const runInStubMode = () => {
+  const originalStubMode = config.get('stubMode')
+
+  refuseOutboundHttp()
+
+  beforeAll(() => {
+    config.set('stubMode', true)
+  })
+
+  afterAll(() => {
+    config.set('stubMode', originalStubMode)
+  })
+}
+
 export const addressBookApi = () =>
   nock(config.get('tradeImportsAddressBookApi.baseUrl'))
 

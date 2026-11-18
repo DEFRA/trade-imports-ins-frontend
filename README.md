@@ -16,7 +16,7 @@ Hapi + Nunjucks application: one `src/server/app/` with the pages under
 ## Current state
 
 The service serves `/`, the dashboard. It lists, searches by reference and
-sorts the aggregated notifications, and is not scoped to an organisation.
+sorts the signed-in organisation's aggregated notifications.
 Each row links to the animals frontend, which owns the notification. It
 also serves `/address-book` with `add`, `add/address-type`, `{id}`, `{id}/edit` and
 `{id}/delete`, plus `/auth/*` and `/health`. See

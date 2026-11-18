@@ -1,19 +1,16 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi
-} from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import {
+  NOTIFICATION_LIST_ORGANISATION_REQUIRED,
+  ORGANISATION_ID_HEADER
+} from '../../../common/helpers/organisation-scoped-headers.js'
+import {
   insBackendApi,
-  refuseOutboundHttp,
-  runInRealMode
+  runInRealMode,
+  runInStubMode
 } from '../../../common/test-helpers/real-mode.js'
+import { ORGANISATION_ID } from '../../../common/test-helpers/session-auth.js'
 import { listNotifications } from './index.js'
 
 const getTraceIdMock = vi.hoisted(() => vi.fn())
@@ -27,7 +24,6 @@ const TRACE_ID = 'trace-123'
 const NOTIFICATIONS_PATH = '/notifications'
 const REFERENCE_NUMBER = 'GBN-AG-26-000001'
 const OTHER_REFERENCE_NUMBER = 'GBN-AG-26-000002'
-const STUB_SEED_ORGANISATION_ID = 'stub-org-notifications'
 
 const emptyPage = (page) => ({
   content: [],
@@ -49,7 +45,7 @@ describe('against the real INS backend', () => {
     const scope = insBackendApi()
       .get(NOTIFICATIONS_PATH)
       .query({ page: '1' })
-      .matchHeader('trade-imports-organisation-id', STUB_SEED_ORGANISATION_ID)
+      .matchHeader(ORGANISATION_ID_HEADER, ORGANISATION_ID)
       .matchHeader(TRACING_HEADER, TRACE_ID)
       .reply(200, {
         content: [{ referenceNumber: REFERENCE_NUMBER }],
@@ -60,7 +56,7 @@ describe('against the real INS backend', () => {
         totalPages: 1
       })
 
-    const result = await listNotifications(STUB_SEED_ORGANISATION_ID, {
+    const result = await listNotifications(ORGANISATION_ID, {
       page: 1
     })
 
@@ -79,27 +75,11 @@ describe('against the real INS backend', () => {
       })
       .reply(200, emptyPage(2))
 
-    await listNotifications(STUB_SEED_ORGANISATION_ID, {
+    await listNotifications(ORGANISATION_ID, {
       page: 2,
       sort: 'arrivalDate,asc',
       referenceNumber: OTHER_REFERENCE_NUMBER
     })
-
-    expect(scope.isDone()).toBe(true)
-  })
-
-  test('Should send the Trade-Imports-Organisation-Id header from the session organisation', async () => {
-    const scope = insBackendApi()
-      .get(NOTIFICATIONS_PATH)
-      .query({ page: '1' })
-      .reply(function replyFn() {
-        expect(this.req.headers['trade-imports-organisation-id']).toBe(
-          STUB_SEED_ORGANISATION_ID
-        )
-        return [200, emptyPage(1)]
-      })
-
-    await listNotifications(STUB_SEED_ORGANISATION_ID, { page: 1 })
 
     expect(scope.isDone()).toBe(true)
   })
@@ -111,7 +91,7 @@ describe('against the real INS backend', () => {
       .reply(500, { title: 'Internal Server Error' })
 
     await expect(
-      listNotifications(STUB_SEED_ORGANISATION_ID, { page: 1 })
+      listNotifications(ORGANISATION_ID, { page: 1 })
     ).rejects.toMatchObject({
       status: 500,
       message: 'Internal Server Error'
@@ -119,17 +99,16 @@ describe('against the real INS backend', () => {
   })
 
   describe('without an organisation', () => {
-    const refusal =
-      'Cannot reach the notification list without an organisation: the signed-in session carries none'
-
-    test('Should refuse rather than ask for an organisation named "undefined"', async () => {
-      await expect(listNotifications(undefined, { page: 1 })).rejects.toThrow(
-        refusal
+    test('Should refuse rather than ask for an organisation named "undefined"', () => {
+      expect(() => listNotifications(undefined, { page: 1 })).toThrow(
+        NOTIFICATION_LIST_ORGANISATION_REQUIRED
       )
     })
 
-    test('Should refuse a blank organisation id', async () => {
-      await expect(listNotifications('', { page: 1 })).rejects.toThrow(refusal)
+    test('Should refuse a blank organisation id', () => {
+      expect(() => listNotifications('', { page: 1 })).toThrow(
+        NOTIFICATION_LIST_ORGANISATION_REQUIRED
+      )
     })
   })
 
@@ -141,28 +120,21 @@ describe('against the real INS backend', () => {
       .matchHeader(TRACING_HEADER, '')
       .reply(200, emptyPage(1))
 
-    await listNotifications(STUB_SEED_ORGANISATION_ID, { page: 1 })
+    await listNotifications(ORGANISATION_ID, { page: 1 })
 
     expect(scope.isDone()).toBe(true)
   })
 })
 
 describe('in stub mode', () => {
-  refuseOutboundHttp()
-  const originalStubMode = config.get('stubMode')
-
-  beforeAll(() => {
-    config.set('stubMode', true)
-  })
-
-  afterAll(() => {
-    config.set('stubMode', originalStubMode)
-  })
+  runInStubMode()
 
   test('Should serve the canned notifications without a request', async () => {
     const { content, totalElements } = await listNotifications(
-      STUB_SEED_ORGANISATION_ID,
-      { page: 1 }
+      ORGANISATION_ID,
+      {
+        page: 1
+      }
     )
 
     expect(totalElements).toBe(3)
@@ -171,5 +143,19 @@ describe('in stub mode', () => {
       REFERENCE_NUMBER,
       'GBN-AG-26-000003'
     ])
+  })
+
+  describe('without an organisation', () => {
+    test('Should refuse a missing organisation id', () => {
+      expect(() => listNotifications(undefined, { page: 1 })).toThrow(
+        NOTIFICATION_LIST_ORGANISATION_REQUIRED
+      )
+    })
+
+    test('Should refuse a blank organisation id', () => {
+      expect(() => listNotifications('', { page: 1 })).toThrow(
+        NOTIFICATION_LIST_ORGANISATION_REQUIRED
+      )
+    })
   })
 })
