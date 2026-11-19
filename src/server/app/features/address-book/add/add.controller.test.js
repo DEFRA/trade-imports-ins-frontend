@@ -84,7 +84,6 @@ const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 const { consignor: CONSIGNOR_HANDSHAKE, consignee: CONSIGNEE_HANDSHAKE } =
   JOURNEY_HANDSHAKES_BY_PARTY
 const HAND_BACK_MESSAGE = 'Address handed back to the journey'
-const CANCEL_HAND_BACK_MESSAGE = 'Cancel handed back to the journey'
 const CAPTION_SELECTOR = '.govuk-caption-l'
 const FORM_LABEL_SELECTOR = 'form label'
 const FORM_LINK = 'form a.govuk-link'
