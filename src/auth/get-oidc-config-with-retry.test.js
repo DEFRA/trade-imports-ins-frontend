@@ -108,17 +108,26 @@ describe('getOidcConfigWithRetry', () => {
       return error
     })
 
-    await vi.advanceTimersByTimeAsync(6999)
+    const startMs = Date.now()
+    const attemptsAt = async (elapsedMs) => {
+      await vi.advanceTimersByTimeAsync(startMs + elapsedMs - Date.now())
+      return wreckGetMock.mock.calls.length
+    }
+
+    expect(await attemptsAt(999)).toBe(1)
+    expect(await attemptsAt(1000)).toBe(2)
+    expect(await attemptsAt(2999)).toBe(2)
+    expect(await attemptsAt(3000)).toBe(3)
+    expect(await attemptsAt(6999)).toBe(3)
     expect(settled).toBe(false)
 
-    await vi.advanceTimersByTimeAsync(1)
+    expect(await attemptsAt(7000)).toBe(4)
     const error = await tracked
 
     expect(error.message).toBe(
       `OIDC discovery at ${discoveryUrl} failed after 4 attempts`
     )
     expect(error.cause.code).toBe('ETIMEDOUT')
-    expect(wreckGetMock).toHaveBeenCalledTimes(4)
     expect(logger.warn).toHaveBeenCalledTimes(3)
   })
 
