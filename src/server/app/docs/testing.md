@@ -56,7 +56,8 @@ for the pattern, and the helpers in
 `recordModuleLoggerWarn()` and `recordModuleLoggerError()`, which record the
 info, warn or error lines the module-level logger writes during each test of
 the enclosing `describe`, and return `entriesWith(message)`, the lines logged
-with that message),
+with that message, and `recordRequestLoggerError(getServer)`, which does the
+same for the error lines a request's `request.logger` writes),
 `address-book-requests.js`, the one owner of the address book tests'
 set-up: page paths (`addressBookPath()`, `addressAddPath()`,
 `addressTypePath()`, `addressTypeStartPath()`, `addressPath(id)`,

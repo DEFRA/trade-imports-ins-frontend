@@ -40,7 +40,7 @@ export const authController = {
         // to understand whether it was a state/nonce mismatch, token exchange failure, or cookie decode issue.
         request.logger?.error(
           {
-            bellError: request.auth.error,
+            err: request.auth.error,
             state: request.query?.state
           },
           'Bell auth failed for /auth/sign-in-oidc'

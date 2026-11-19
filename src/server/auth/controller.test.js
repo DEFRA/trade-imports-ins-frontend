@@ -11,6 +11,7 @@ import {
   readEmfDocuments
 } from '../common/test-helpers/emf-documents.js'
 import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
+import { recordRequestLoggerError } from '../common/test-helpers/module-logger-lines.js'
 import { textOf } from '../common/test-helpers/rendered-text.js'
 import { runAgainstServedOidcDiscovery } from '../common/test-helpers/serve-oidc-discovery.js'
 import { sessionAuth } from '../common/test-helpers/session-auth.js'
@@ -72,6 +73,7 @@ describe('#authController', () => {
   const getServer = startRealModeServer()
 
   runAgainstServedOidcDiscovery(mockOidcConfig)
+  const { entriesWith: errorLogs } = recordRequestLoggerError(getServer)
 
   const signInOidc = (profile) =>
     getServer().inject({
@@ -191,6 +193,24 @@ describe('#authController', () => {
       expect.stringContaining('sid=')
     )
     expect(await getServer().app.cache.get(sessionId)).toBeNull()
+  })
+
+  test('GET /auth/sign-in-oidc renders unauthorised and logs the Bell error in full, with the state, when Bell cannot authenticate the callback', async () => {
+    const bellFailed = 'Bell auth failed for /auth/sign-in-oidc'
+
+    const { statusCode, payload } = await getServer().inject({
+      method: 'GET',
+      url: `${SIGN_IN_OIDC_URL}?code=unused&state=unmatched&refresh=1`
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(payload).toContain(sharedEn.unauthorised.heading)
+    expect(errorLogs(bellFailed)).toEqual([
+      {
+        fields: { err: expect.any(Error), state: 'unmatched' },
+        message: bellFailed
+      }
+    ])
   })
 
   describe('Defra ID token exchange metrics', () => {
