@@ -1,7 +1,15 @@
 import { vi } from 'vitest'
 import { config } from '../config/config.js'
 import { getOidcConfig, OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
-import { serviceSignInProvider } from './identity-providers.js'
+import {
+  hiddenIdmSignInProvider,
+  serviceSignInProvider
+} from './identity-providers.js'
+import {
+  applyIdmSettings,
+  idmDiscoveryDocument,
+  idmSettingKeys
+} from '../server/common/test-helpers/idm-sign-in-settings.js'
 import { readEmfDocuments } from '../server/common/test-helpers/emf-documents.js'
 import {
   discoveryUrlRequest,
@@ -31,7 +39,7 @@ describe('#getOidcConfig', () => {
   let logSpy
 
   runAgainstMockOidcDiscoveryUrl({
-    restoringConfigKeys: STACK_DEFRA_ID_REWRITE_KEYS
+    restoringConfigKeys: [...STACK_DEFRA_ID_REWRITE_KEYS, ...idmSettingKeys]
   })
 
   beforeEach(() => {
@@ -83,6 +91,23 @@ describe('#getOidcConfig', () => {
     expect(document.ExternalCallFailure).toBe(0)
     expect(document.Outcome).toBe('success')
     expect(document).not.toHaveProperty('Interface')
+  })
+
+  test('Should return the hidden IDM sign-in discovery document from its own URL, measured as idm openid-configuration', async () => {
+    applyIdmSettings()
+    serveOidcDiscovery(servedDocument)
+    serveOidcDiscovery(idmDiscoveryDocument, {
+      provider: hiddenIdmSignInProvider
+    })
+
+    expect(await getOidcConfig(hiddenIdmSignInProvider)).toEqual(
+      idmDiscoveryDocument
+    )
+
+    await vi.waitFor(() => expect(readEmfDocuments(logSpy)).toHaveLength(1))
+    const [document] = readEmfDocuments(logSpy)
+    expect(document.Dependency).toBe('idm')
+    expect(document.Operation).toBe('openid-configuration')
   })
 
   test('Should send the trace id in the tracing header', async () => {
