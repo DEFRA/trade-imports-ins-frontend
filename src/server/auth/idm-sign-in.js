@@ -3,7 +3,8 @@ import Jwt from '@hapi/jwt'
 import { idmProvider, providerSetting } from '../../auth/identity-providers.js'
 import { recordTokenExchange } from '../../auth/token-exchange-timer.js'
 import { verifyToken } from '../../auth/verify-token.js'
-import { IDM_STRATEGY, idmAuthPlugin } from '../../plugins/idm-auth.js'
+import { getOidcConfigWithRetry } from '../../auth/get-oidc-config-with-retry.js'
+import { IDM_STRATEGY, registerIdmStrategy } from '../../plugins/idm-auth.js'
 import {
   idmSignInPage,
   idmSignedInPage,
@@ -179,16 +180,31 @@ const routes = [
   }
 ]
 
+const discoverIdm = (discoveryUrl) =>
+  getOidcConfigWithRetry(logger, idmProvider).catch((err) => {
+    logger.error(
+      { err, discoveryUrl },
+      'IDM discovery failed, IDM sign-in not served'
+    )
+    return null
+  })
+
 export const idmSignInRoutes = {
   plugin: {
     name: 'idm-sign-in-routes',
     async register(server) {
-      if (!providerSetting(idmProvider, 'oidcDiscoveryUrl')) {
-        server.logger.info('No IDM discovery URL set, IDM sign-in not served')
+      const discoveryUrl = providerSetting(idmProvider, 'oidcDiscoveryUrl')
+      if (!discoveryUrl) {
+        logger.info('No IDM discovery URL set, IDM sign-in not served')
         return
       }
 
-      await server.register(idmAuthPlugin)
+      const oidcConfig = await discoverIdm(discoveryUrl)
+      if (!oidcConfig) {
+        return
+      }
+
+      registerIdmStrategy(server, oidcConfig)
       server.route(routes)
     }
   }

@@ -1,4 +1,3 @@
-import { getOidcConfigWithRetry } from '../auth/get-oidc-config-with-retry.js'
 import { idmProvider, providerSetting } from '../auth/identity-providers.js'
 import { timeTokenExchange } from '../auth/token-exchange-timer.js'
 import { config } from '../config/config.js'
@@ -39,15 +38,5 @@ function getIdmBellOptions(oidcConfig) {
   }
 }
 
-export const idmAuthPlugin = {
-  plugin: {
-    name: 'idm-auth',
-    async register(server) {
-      const oidcConfig = await getOidcConfigWithRetry(
-        server.logger,
-        idmProvider
-      )
-      server.auth.strategy(IDM_STRATEGY, 'bell', getIdmBellOptions(oidcConfig))
-    }
-  }
-}
+export const registerIdmStrategy = (server, oidcConfig) =>
+  server.auth.strategy(IDM_STRATEGY, 'bell', getIdmBellOptions(oidcConfig))

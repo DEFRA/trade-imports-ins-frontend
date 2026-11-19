@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 import nock from 'nock'
-import { afterAll, beforeAll, beforeEach } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
 
 import { config } from '../../config/config.js'
 import { copy as sharedEn } from '../app/shared/copy.en.js'
@@ -9,7 +9,9 @@ import { cookieHeaderOf } from '../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
 import { recordModuleLoggerError } from '../common/test-helpers/module-logger-lines.js'
 import { textOf, textsOf } from '../common/test-helpers/rendered-text.js'
+import { runInRealMode } from '../common/test-helpers/real-mode.js'
 import {
+  discoveryUrlRequest,
   idmOidcDiscoveryUrlKey,
   serveOidcDiscovery
 } from '../common/test-helpers/serve-oidc-discovery.js'
@@ -17,7 +19,11 @@ import {
   generateSigningKey,
   signToken
 } from '../common/test-helpers/signing-key.js'
-import { startRealModeServer } from '../common/test-helpers/test-server.js'
+import {
+  startRealModeServer,
+  startTestServer,
+  stopTestServer
+} from '../common/test-helpers/test-server.js'
 import { idmPaths } from './idm-sign-in.js'
 
 const IDM_SETTINGS = {
@@ -38,7 +44,7 @@ const IDM_DOCUMENT = {
   jwks_uri: `${IDM_ORIGIN}/keys`
 }
 
-const configureIdmBeforeServerStarts = () => {
+const configureIdm = () => {
   const originalValues = Object.fromEntries(
     Object.keys(IDM_SETTINGS).map((key) => [key, config.get(key)])
   )
@@ -46,15 +52,32 @@ const configureIdmBeforeServerStarts = () => {
     for (const [key, value] of Object.entries(IDM_SETTINGS)) {
       config.set(key, value)
     }
-    serveOidcDiscovery(IDM_DOCUMENT, {
-      discoveryUrlKey: idmOidcDiscoveryUrlKey
-    })
   })
   afterAll(() => {
     for (const [key, value] of Object.entries(originalValues)) {
       config.set(key, value)
     }
   })
+}
+
+const startServerPastDiscoveryRetries = async () => {
+  const fakeStepMs = 10
+  vi.useFakeTimers({ toFake: ['setTimeout'] })
+  try {
+    let settled = false
+    const starting = startTestServer()
+    starting.then(
+      () => (settled = true),
+      () => (settled = true)
+    )
+    while (!settled) {
+      await new Promise((resolve) => setImmediate(resolve))
+      await vi.advanceTimersByTimeAsync(fakeStepMs)
+    }
+    return await starting
+  } finally {
+    vi.useRealTimers()
+  }
 }
 
 const authCookieName = () => config.get('auth.cookieName')
@@ -90,8 +113,56 @@ describe('IDM sign-in, without an IDM discovery URL', () => {
   })
 })
 
+describe('IDM sign-in, when IDM discovery fails', () => {
+  runInRealMode()
+  configureIdm()
+  const { entriesWith: errorLogs } = recordModuleLoggerError()
+
+  let server
+
+  afterEach(async () => {
+    await stopTestServer(server)
+  })
+
+  test('Should start the service, send /auth/sign-in to the Defra ID authorize endpoint, serve no IDM page and log the discovery failure once', async () => {
+    const discoveryFailed = 'IDM discovery failed, IDM sign-in not served'
+    serveOidcDiscovery()
+    discoveryUrlRequest({
+      persist: true,
+      discoveryUrlKey: idmOidcDiscoveryUrlKey
+    }).replyWithError('IDM unreachable')
+
+    server = await startServerPastDiscoveryRetries()
+
+    const signIn = await server.inject({ method: 'GET', url: '/auth/sign-in' })
+    expect(signIn.statusCode).toBe(statusCodes.redirectFound)
+    expect(signIn.headers.location).toMatch(
+      new RegExp(`^${mockOidcConfig.authorization_endpoint}\\?`)
+    )
+    const idmSignIn = await server.inject({
+      method: 'GET',
+      url: idmPaths.signIn
+    })
+    expect(idmSignIn.statusCode).toBe(statusCodes.notFound)
+    expect(errorLogs(discoveryFailed)).toEqual([
+      {
+        fields: {
+          err: expect.any(Error),
+          discoveryUrl: IDM_SETTINGS[idmOidcDiscoveryUrlKey]
+        },
+        message: discoveryFailed
+      }
+    ])
+  })
+})
+
 describe('IDM sign-in, with an IDM discovery URL', () => {
-  configureIdmBeforeServerStarts()
+  configureIdm()
+  beforeAll(() => {
+    serveOidcDiscovery(IDM_DOCUMENT, {
+      discoveryUrlKey: idmOidcDiscoveryUrlKey
+    })
+  })
   const getServer = startRealModeServer()
 
   const { entriesWith: errorLogs } = recordModuleLoggerError()
