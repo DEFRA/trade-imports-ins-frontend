@@ -2,7 +2,8 @@ import Jwt from '@hapi/jwt'
 
 import {
   hiddenIdmSignInProvider,
-  providerSetting
+  providerSetting,
+  providerSettingKey
 } from '../../auth/identity-providers.js'
 import { recordTokenExchange } from '../../auth/token-exchange-timer.js'
 import { verifyToken } from '../../auth/verify-token.js'
@@ -178,6 +179,11 @@ const routes = [
   }
 ]
 
+const missingIdmClientSettings = () =>
+  ['clientId', 'clientSecret', 'serviceId']
+    .filter((setting) => !providerSetting(hiddenIdmSignInProvider, setting))
+    .map((setting) => providerSettingKey(hiddenIdmSignInProvider, setting))
+
 const discoverIdm = (discoveryUrl) =>
   getOidcConfigWithRetry(logger, hiddenIdmSignInProvider).catch((err) => {
     logger.error(
@@ -197,6 +203,15 @@ export const idmSignInRoutes = {
       )
       if (!discoveryUrl) {
         logger.info('No IDM discovery URL set, IDM sign-in not served')
+        return
+      }
+
+      const missingSettings = missingIdmClientSettings()
+      if (missingSettings.length > 0) {
+        logger.warn(
+          { missingSettings },
+          'IDM client settings missing, IDM sign-in not served'
+        )
         return
       }
 

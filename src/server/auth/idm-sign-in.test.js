@@ -1,7 +1,10 @@
 import * as cheerio from 'cheerio'
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
 
-import { hiddenIdmSignInProvider } from '../../auth/identity-providers.js'
+import {
+  hiddenIdmSignInProvider,
+  providerSettingKey
+} from '../../auth/identity-providers.js'
 import { config } from '../../config/config.js'
 import { copy as sharedEn } from '../app/shared/copy.en.js'
 import { statusCodes } from '../common/constants/status-codes.js'
@@ -14,7 +17,11 @@ import {
   idmSettings
 } from '../common/test-helpers/idm-sign-in-settings.js'
 import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
-import { recordModuleLoggerError } from '../common/test-helpers/module-logger-lines.js'
+import {
+  recordModuleLoggerError,
+  recordModuleLoggerWarn
+} from '../common/test-helpers/module-logger-lines.js'
+import { restoreConfigAfterEach } from '../common/test-helpers/restore-config-after-each.js'
 import { textOf, textsOf } from '../common/test-helpers/rendered-text.js'
 import { runInRealMode } from '../common/test-helpers/real-mode.js'
 import {
@@ -139,6 +146,44 @@ describe('IDM sign-in, when IDM discovery fails', () => {
           discoveryUrl: idmSettings.oidcDiscoveryUrl
         },
         message: discoveryFailed
+      }
+    ])
+  })
+})
+
+describe('IDM sign-in, with an IDM discovery URL but no client secret', () => {
+  runInRealMode()
+  configureIdm()
+  const { entriesWith: warnLogs } = recordModuleLoggerWarn()
+  const clientSecretKey = providerSettingKey(
+    hiddenIdmSignInProvider,
+    'clientSecret'
+  )
+  restoreConfigAfterEach([clientSecretKey])
+
+  let server
+
+  afterEach(async () => {
+    await stopTestServer(server)
+  })
+
+  test('Should serve no IDM page and log the missing setting by name', async () => {
+    const settingsMissing =
+      'IDM client settings missing, IDM sign-in not served'
+    config.set(clientSecretKey, '')
+    serveOidcDiscovery()
+
+    server = await startTestServer()
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: idmPaths.signIn
+    })
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(warnLogs(settingsMissing)).toEqual([
+      {
+        fields: { missingSettings: [clientSecretKey] },
+        message: settingsMissing
       }
     ])
   })
