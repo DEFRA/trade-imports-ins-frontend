@@ -8,6 +8,8 @@ import { bellOptionsFor } from '../auth/bell-options.js'
 import { config } from '../config/config.js'
 import { isStubMode } from '../server/common/services/mode.js'
 
+export const SERVICE_SIGN_IN_STRATEGY = 'defra-id'
+
 export const authPlugin = {
   plugin: {
     name: 'auth-plugin',
@@ -24,14 +26,18 @@ export const authPlugin = {
         serviceSignInProvider
       )
 
-      server.auth.strategy('defra-id', 'bell', getBellOptions(oidcConfig))
+      server.auth.strategy(
+        SERVICE_SIGN_IN_STRATEGY,
+        'bell',
+        getBellOptions(oidcConfig)
+      )
     }
   }
 }
 
 function getBellOptions(oidcConfig) {
   return bellOptionsFor(serviceSignInProvider, oidcConfig, {
-    name: 'defra-id',
+    name: SERVICE_SIGN_IN_STRATEGY,
     profile(credentials) {
       const payload = Jwt.token.decode(credentials.token).decoded.payload
 

@@ -3,6 +3,7 @@ import nock from 'nock'
 import { vi } from 'vitest'
 
 import { config } from '../../config/config.js'
+import { SERVICE_SIGN_IN_STRATEGY } from '../../plugins/auth.js'
 import { copy as sharedEn } from '../app/shared/copy.en.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import {
@@ -32,7 +33,7 @@ const signingKey = generateSigningKey('defra-id-key')
 const otherKey = generateSigningKey('other-key')
 
 const defraIdAuth = ({ token, sessionId, ...profileOverrides }) => ({
-  strategy: 'defra-id',
+  strategy: SERVICE_SIGN_IN_STRATEGY,
   credentials: {
     profile: {
       sessionId,
@@ -84,7 +85,7 @@ describe('#authController', () => {
       method: 'GET',
       url: '/auth/sign-in',
       auth: {
-        strategy: 'defra-id',
+        strategy: SERVICE_SIGN_IN_STRATEGY,
         credentials: {}
       }
     })

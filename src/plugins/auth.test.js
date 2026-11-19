@@ -1,7 +1,12 @@
 import Jwt from '@hapi/jwt'
 import { describe, expect, test, vi, beforeEach } from 'vitest'
 import { serviceSignInProvider } from '../auth/identity-providers.js'
-import { authPlugin, getBellOptions, getCookieOptions } from './auth.js'
+import {
+  authPlugin,
+  getBellOptions,
+  getCookieOptions,
+  SERVICE_SIGN_IN_STRATEGY
+} from './auth.js'
 
 const getOidcConfigWithRetryMock = vi.hoisted(() => vi.fn())
 const configGetMock = vi.hoisted(() => vi.fn())
@@ -100,7 +105,7 @@ describe('auth plugin', () => {
     )
 
     expect(server.auth.strategy).toHaveBeenCalledWith(
-      'defra-id',
+      SERVICE_SIGN_IN_STRATEGY,
       'bell',
       expect.objectContaining({
         provider: expect.objectContaining({
@@ -155,7 +160,7 @@ describe('auth plugin', () => {
     )
 
     expect(server.auth.strategy).not.toHaveBeenCalledWith(
-      'defra-id',
+      SERVICE_SIGN_IN_STRATEGY,
       'bell',
       expect.anything()
     )

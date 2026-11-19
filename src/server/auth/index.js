@@ -1,4 +1,5 @@
 import { unauthorisedPage } from '../app/auth/page.js'
+import { SERVICE_SIGN_IN_STRATEGY } from '../../plugins/auth.js'
 import { authController, SIGN_IN_PATH } from './controller.js'
 
 export const authRoutes = {
@@ -10,7 +11,7 @@ export const authRoutes = {
           method: 'GET',
           path: SIGN_IN_PATH,
           options: {
-            auth: 'defra-id'
+            auth: SERVICE_SIGN_IN_STRATEGY
           },
           ...authController.signin
         },
@@ -18,7 +19,7 @@ export const authRoutes = {
           method: 'GET',
           path: '/auth/sign-in-oidc',
           options: {
-            auth: { strategy: 'defra-id', mode: 'try' },
+            auth: { strategy: SERVICE_SIGN_IN_STRATEGY, mode: 'try' },
             app: { page: unauthorisedPage }
           },
           ...authController.signinOidc
@@ -43,7 +44,7 @@ export const authRoutes = {
           method: 'GET',
           path: '/auth/organisation',
           options: {
-            auth: 'defra-id'
+            auth: SERVICE_SIGN_IN_STRATEGY
           },
           ...authController.organisation
         }
