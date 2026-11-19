@@ -2,12 +2,10 @@ import { generateKeyPairSync } from 'node:crypto'
 
 import Jwt from '@hapi/jwt'
 
-const RSA_MODULUS_BITS = 2048
-const TOKEN_TTL_SECONDS = 60
-
 export const generateSigningKey = (kid) => {
+  const rsaModulusBits = 2048
   const { publicKey, privateKey } = generateKeyPairSync('rsa', {
-    modulusLength: RSA_MODULUS_BITS
+    modulusLength: rsaModulusBits
   })
   return {
     kid,
@@ -20,9 +18,11 @@ export const signToken = (
   { privatePem, kid },
   claims,
   { headerKid = kid } = {}
-) =>
-  Jwt.token.generate(
+) => {
+  const tokenTtlSeconds = 60
+  return Jwt.token.generate(
     claims,
     { key: privatePem, algorithm: 'RS256' },
-    { ttlSec: TOKEN_TTL_SECONDS, header: { kid: headerKid } }
+    { ttlSec: tokenTtlSeconds, header: { kid: headerKid } }
   )
+}
