@@ -60,6 +60,20 @@ function describeSignIn({
 
 const claimsOf = (token) => Jwt.token.decode(token).decoded.payload
 
+const unverifiedClaimsOf = (token) => {
+  try {
+    return claimsOf(token)
+  } catch {
+    return {}
+  }
+}
+
+const idmIdsOf = ({ contactId, sessionId, correlationId }) => ({
+  contactId,
+  sessionId,
+  correlationId
+})
+
 const decodedAccessTokenClaims = (accessToken, idToken) =>
   accessToken === idToken ? undefined : claimsOf(accessToken)
 
@@ -96,7 +110,14 @@ const completeSignIn = async (request, h) => {
   try {
     await verifyToken(profile.idToken, hiddenIdmSignInProvider)
   } catch (err) {
-    logger.error({ err }, 'IDM ID token refused')
+    logger.error(
+      {
+        err,
+        state: request.query.state,
+        ...idmIdsOf(unverifiedClaimsOf(profile.idToken))
+      },
+      'IDM ID token refused'
+    )
     return renderUnableToSignIn(h, { signInUrl: idmPaths.signIn })
   }
 
@@ -108,14 +129,7 @@ const completeSignIn = async (request, h) => {
     scope: profile.scope,
     refreshTokenReturned: profile.refreshTokenReturned
   })
-  logger.info(
-    {
-      contactId: idTokenClaims.contactId,
-      sessionId: idTokenClaims.sessionId,
-      correlationId: idTokenClaims.correlationId
-    },
-    'IDM sign-in completed'
-  )
+  logger.info(idmIdsOf(idTokenClaims), 'IDM sign-in completed')
 
   return h.redirect(idmPaths.signedIn)
 }

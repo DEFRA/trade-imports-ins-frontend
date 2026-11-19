@@ -393,12 +393,28 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
     ])
   })
 
-  test('Should show the unable to sign in page when the ID token is signed by a key IDM does not serve', async () => {
-    const { payload } = await completeSignIn({
-      idToken: idTokenSignedWith(otherKey)
+  test('Should show the unable to sign in page, and log the refusal with the state and the IDM ids, when the ID token is signed by a key IDM does not serve', async () => {
+    const tokenRefused = 'IDM ID token refused'
+
+    const { payload } = await getServer().inject({
+      method: 'GET',
+      url: `${idmPaths.callback}?state=idm-state`,
+      auth: idmAuth({ idToken: idTokenSignedWith(otherKey) })
     })
 
     expectUnableToSignInPage(payload)
+    expect(errorLogs(tokenRefused)).toEqual([
+      {
+        fields: {
+          err: expect.any(Error),
+          state: 'idm-state',
+          contactId: 'contact-1',
+          sessionId: 'idm-session-1',
+          correlationId: 'correlation-1'
+        },
+        message: tokenRefused
+      }
+    ])
   })
 
   test('Should send a visitor with no IDM sign-in from the signed-in page to the start page', async () => {
