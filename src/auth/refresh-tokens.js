@@ -3,20 +3,22 @@ import { getTraceId } from '@defra/hapi-tracing'
 import { getOidcConfig } from './get-oidc-config.js'
 import { config } from '../config/config.js'
 import { measureExternalCall } from '../server/common/helpers/external-call-metrics.js'
-import { serviceSignInProvider } from './identity-providers.js'
+import { providerSetting, serviceSignInProvider } from './identity-providers.js'
 
 const TOKEN_ENDPOINT_TIMEOUT_MS = 3000
 
 async function refreshTokens(refreshToken) {
   const { token_endpoint: url } = await getOidcConfig(serviceSignInProvider)
 
+  const clientId = providerSetting(serviceSignInProvider, 'clientId')
+
   const payload = new URLSearchParams({
-    client_id: config.get('defraId.clientId'),
-    client_secret: config.get('defraId.clientSecret'),
+    client_id: clientId,
+    client_secret: providerSetting(serviceSignInProvider, 'clientSecret'),
     grant_type: 'refresh_token',
-    scope: `openid offline_access ${config.get('defraId.clientId')}`,
+    scope: `openid offline_access ${clientId}`,
     refresh_token: refreshToken,
-    redirect_uri: config.get('defraId.redirectUrl')
+    redirect_uri: providerSetting(serviceSignInProvider, 'redirectUrl')
   })
 
   const { payload: responsePayload } = await measureExternalCall(
