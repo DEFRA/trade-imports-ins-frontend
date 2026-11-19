@@ -23,36 +23,32 @@ describe('token exchange timer', () => {
   })
 
   afterEach(() => {
-    logSpy.mockRestore()
-  })
-
-  test('timeTokenExchange returns the token endpoint and stamps the start', () => {
-    const request = { app: {} }
-
-    const endpoint = timeTokenExchange('https://idp.example.com/token')(request)
-
-    expect(endpoint).toBe('https://idp.example.com/token')
-    expect(request.app.tokenExchangeStartedAt).toEqual(expect.any(Number))
+    vi.restoreAllMocks()
   })
 
   test.each([
     { isAuthenticated: true, expectedFailure: 0 },
     { isAuthenticated: false, expectedFailure: 1 }
   ])(
-    'recordTokenExchange emits the exchange with failure $expectedFailure when isAuthenticated is $isAuthenticated',
+    'timeTokenExchange returns the token endpoint and recordTokenExchange emits the time since it, with failure $expectedFailure when isAuthenticated is $isAuthenticated',
     async ({ isAuthenticated, expectedFailure }) => {
-      const request = {
-        app: { tokenExchangeStartedAt: performance.now() },
-        auth: { isAuthenticated }
-      }
+      const request = { app: {}, auth: { isAuthenticated } }
+      vi.spyOn(performance, 'now')
+        .mockReturnValueOnce(1000)
+        .mockReturnValueOnce(1250)
 
+      const endpoint = timeTokenExchange('https://idp.example.com/token')(
+        request
+      )
       recordTokenExchange(request, serviceSignInProvider)
 
+      expect(endpoint).toBe('https://idp.example.com/token')
       await vi.waitFor(() => expect(readEmfDocuments(logSpy)).toHaveLength(1))
       const [document] = readEmfDocuments(logSpy)
       expect(document.Dependency).toBe('defra-id')
       expect(document.Operation).toBe('token-exchange')
       expect(document.Interface).toBe('SYN-11')
+      expect(document.ExternalCallDuration).toBe(250)
       expect(document.ExternalCallFailure).toBe(expectedFailure)
     }
   )
