@@ -1,5 +1,4 @@
 import { vi } from 'vitest'
-import { Metrics } from '@defra/cdp-metrics'
 
 import {
   recordTokenExchange,
@@ -18,15 +17,12 @@ vi.mock('../server/common/helpers/logging/logger.js', () => ({
 
 describe('token exchange timer', () => {
   let logSpy
-  let getMetricsLoggerSpy
 
   beforeEach(() => {
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    getMetricsLoggerSpy = vi.spyOn(Metrics.prototype, 'getMetricsLogger')
   })
 
   afterEach(() => {
-    getMetricsLoggerSpy.mockRestore()
     logSpy.mockRestore()
   })
 
@@ -61,13 +57,21 @@ describe('token exchange timer', () => {
     }
   )
 
-  test('recordTokenExchange emits nothing when Bell never reached the token call', () => {
+  test('recordTokenExchange emits nothing when Bell never reached the token call', async () => {
     recordTokenExchange(
       { app: {}, auth: { isAuthenticated: false } },
       serviceSignInProvider
     )
+    const timedRequest = { app: {}, auth: { isAuthenticated: true } }
+    timeTokenExchange('https://idp.example.com/token')(timedRequest)
+    recordTokenExchange(timedRequest, serviceSignInProvider)
 
-    expect(getMetricsLoggerSpy).not.toHaveBeenCalled()
-    expect(readEmfDocuments(logSpy)).toHaveLength(0)
+    await vi.waitFor(() => expect(readEmfDocuments(logSpy)).toHaveLength(1))
+    expect(readEmfDocuments(logSpy)).toEqual([
+      expect.objectContaining({
+        Operation: 'token-exchange',
+        ExternalCallFailure: 0
+      })
+    ])
   })
 })
