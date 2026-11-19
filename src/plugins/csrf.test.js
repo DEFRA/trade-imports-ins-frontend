@@ -2,6 +2,7 @@ import { beforeAll, afterAll, describe, expect, test } from 'vitest'
 
 import { createServer } from '../server/server.js'
 import { statusCodes } from '../server/common/constants/status-codes.js'
+import { restoreConfigAfterEach } from '../server/common/test-helpers/restore-config-after-each.js'
 import { serveOidcDiscovery } from '../server/common/test-helpers/serve-oidc-discovery.js'
 import { sessionAuth } from '../server/common/test-helpers/session-auth.js'
 import { config } from '../config/config.js'
@@ -16,13 +17,10 @@ describe('#csrfPlugin', () => {
   })
 
   afterAll(async () => {
-    config.set('csrf.enabled', false)
     await server.stop({ timeout: 0 })
   })
 
-  afterEach(() => {
-    config.set('csrf.enabled', false)
-  })
+  restoreConfigAfterEach(['csrf.enabled'])
 
   test('Should refuse a POST to the add form with 403 when CSRF is enabled and no crumb is sent', async () => {
     config.set('csrf.enabled', true)

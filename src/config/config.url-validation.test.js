@@ -1,23 +1,13 @@
-import { afterEach, describe, expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 import { restoreConfigAfterEach } from '../server/common/test-helpers/restore-config-after-each.js'
 import { config } from './config.js'
 
 describe('config URL validation', () => {
-  const originalAddressBookUrl = config.get(
-    'tradeImportsAddressBookApi.baseUrl'
-  )
-  const originalAnimalsFrontendUrl = config.get(
+  restoreConfigAfterEach([
+    'tradeImportsAddressBookApi.baseUrl',
     'tradeImportsAnimalsFrontend.baseUrl'
-  )
-
-  afterEach(() => {
-    config.set('tradeImportsAddressBookApi.baseUrl', originalAddressBookUrl)
-    config.set(
-      'tradeImportsAnimalsFrontend.baseUrl',
-      originalAnimalsFrontendUrl
-    )
-  })
+  ])
 
   test('rejects a malformed tradeImportsAddressBookApi.baseUrl', () => {
     config.set('tradeImportsAddressBookApi.baseUrl', 'not a valid url')

@@ -148,7 +148,7 @@ names the stub lists at that page size),
 `startRealModeServerServingCountries(countries)`, which returns a getter
 for the started server), `restore-config-after-each.js`
 (`restoreConfigAfterEach(keys)`, which restores the named config keys after
-each test) and `serve-oidc-discovery.js`. That file exports
+each test, and is how every test restores config it changes) and `serve-oidc-discovery.js`. That file exports
 `serveOidcDiscovery(document, { provider })`, which serves an OIDC discovery
 document at the network boundary, and `startRealModeServer()` calls it.
 `provider` is one of the two in `src/auth/identity-providers.js`, as
@@ -160,7 +160,9 @@ discovery URL, for a test that matches a header, delays the reply or fails
 it, and `keysRequest(document, { persist, ...scopeOptions })`, the nock
 interceptor at a discovery document's `jwks_uri`. `idm-sign-in-settings.js` holds the IDM test settings once:
 `applyIdmSettings()` sets them, `idmSettingKeys` names them for restoring,
-and `idmDiscoveryDocument` is IDM's discovery document.
+`configureIdm()` sets them for every test of the enclosing `describe` and
+restores them after each, and `idmDiscoveryDocument` is IDM's discovery
+document.
 `serve-oidc-discovery.js` also exports
 `runAgainstMockOidcDiscoveryUrl({ restoringConfigKeys })`, which refuses
 outbound HTTP, restores the discovery URL and the named config keys after each

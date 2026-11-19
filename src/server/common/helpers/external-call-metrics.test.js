@@ -8,6 +8,7 @@ import {
 import { config } from '../../../config/config.js'
 import { readEmfDocuments } from '../test-helpers/emf-documents.js'
 import { recordModuleLoggerWarn } from '../test-helpers/module-logger-lines.js'
+import { restoreConfigAfterEach } from '../test-helpers/restore-config-after-each.js'
 
 const NAMESPACE_KEY = 'metrics.namespace'
 const TEST_NAMESPACE = 'test-namespace'
@@ -19,7 +20,7 @@ const JWKS_CALL = {
 }
 
 describe('external call metrics', () => {
-  const originalNamespace = config.get(NAMESPACE_KEY)
+  restoreConfigAfterEach([NAMESPACE_KEY])
   const { entriesWith: warnLogs } = recordModuleLoggerWarn()
   let logSpy
 
@@ -29,7 +30,6 @@ describe('external call metrics', () => {
   })
 
   afterEach(() => {
-    config.set(NAMESPACE_KEY, originalNamespace)
     vi.restoreAllMocks()
   })
 
