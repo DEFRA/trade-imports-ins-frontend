@@ -1,3 +1,7 @@
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import Jwt from '@hapi/jwt'
 import * as cheerio from 'cheerio'
 import nock from 'nock'
@@ -319,7 +323,7 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
     expect(route.settings.app.page).toEqual(page)
   })
 
-  test('Should show a start page whose button links to the route that goes to IDM', async () => {
+  test('Should show a start page whose Sign in with Defra ID button links to the route that goes to IDM', async () => {
     const { statusCode, payload } = await getServer().inject({
       method: 'GET',
       url: idmPaths.signIn
@@ -327,6 +331,7 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
     const $ = cheerio.load(payload)
 
     expect(statusCode).toBe(statusCodes.ok)
+    expect(textOf($, 'main a.govuk-button')).toBe('Sign in with Defra ID')
     expect($('main a.govuk-button').attr('href')).toBe(idmPaths.goToIdm)
   })
 
@@ -560,5 +565,25 @@ describe('IDM sign-in, when the sign-in fails or ends', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(textOf(cheerio.load(payload), 'h1')).toBe('Signed out')
+  })
+})
+
+describe('IDM sign-in, from the rest of the service', () => {
+  const appSourceFiles = () => {
+    const appDir = fileURLToPath(new URL('../app/', import.meta.url))
+    return readdirSync(appDir, { recursive: true })
+      .filter((file) => /\.(njk|js)$/.test(file))
+      .filter((file) => !file.endsWith('.test.js'))
+      .map((file) => ({ file, text: readFileSync(join(appDir, file), 'utf8') }))
+  }
+
+  test('Should name no IDM sign-in page in any template or module of the service', () => {
+    const naming = appSourceFiles()
+      .filter(({ text }) =>
+        Object.values(idmPaths).some((path) => text.includes(path))
+      )
+      .map(({ file }) => file)
+
+    expect(naming).toEqual([])
   })
 })
