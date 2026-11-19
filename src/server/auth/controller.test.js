@@ -147,8 +147,10 @@ describe('#authController', () => {
     expectSessionCookieCleared(headers)
   })
 
-  test('GET /auth/sign-in-oidc renders unauthorised, linking to /auth/sign-in, without checking the token, when organisationId is missing', async () => {
+  test("GET /auth/sign-in-oidc renders unauthorised, linking to /auth/sign-in, without checking the token, and logs the refusal with the user's ids, when organisationId is missing", async () => {
     const sessionId = 'signin-oidc-no-organisation'
+    const missingOrganisation =
+      'Sign-in rejected: missing organisationId in Defra ID token'
     const keys = serveSigningKey()
 
     const { statusCode, payload, headers } = await signInOidc({
@@ -172,6 +174,12 @@ describe('#authController', () => {
     )
     expect(keys.isDone()).toBe(false)
     expect(await getServer().app.cache.get(sessionId)).toBeNull()
+    expect(errorLogs(missingOrganisation)).toEqual([
+      {
+        fields: { crn: 'CRN123', organisationId: null },
+        message: missingOrganisation
+      }
+    ])
   })
 
   test("GET /auth/sign-in-oidc renders unauthorised, stores no session, and logs the refusal in full with the user's ids, when the token is signed by a key Defra ID does not serve", async () => {
@@ -198,8 +206,7 @@ describe('#authController', () => {
         fields: {
           err: expect.any(Error),
           crn: 'CRN123',
-          organisationId: 'org-1',
-          sessionId
+          organisationId: 'org-1'
         },
         message: tokenRefused
       }

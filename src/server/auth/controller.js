@@ -29,11 +29,7 @@ export const renderUnableToSignIn = (h, { signInUrl }) =>
     signInUrl
   })
 
-const signInIdsOf = ({ crn, organisationId, sessionId }) => ({
-  crn,
-  organisationId,
-  sessionId
-})
+const signInIdsOf = ({ crn, organisationId }) => ({ crn, organisationId })
 
 export const authController = {
   signin: {
@@ -60,7 +56,7 @@ export const authController = {
 
       if (!profile.organisationId) {
         request.logger?.error(
-          { crn: profile.crn },
+          signInIdsOf(profile),
           'Sign-in rejected: missing organisationId in Defra ID token'
         )
         return renderUnableToSignIn(h, { signInUrl: authPaths.signIn })
