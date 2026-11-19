@@ -964,6 +964,7 @@ describe(
         {
           fields: {
             organisationId: ORGANISATION_ID,
+            journeyType: CONSIGNEE_HANDSHAKE['journey-type'],
             notificationId: CONSIGNEE_HANDSHAKE['notification-id'],
             fulfilmentId: CONSIGNEE_HANDSHAKE['fulfilment-id'],
             discardedRoles: ['CONSIGNOR']
@@ -1190,6 +1191,7 @@ describe(
           fields: {
             organisationId: ORGANISATION_ID,
             addressId: ADDRESS_ID,
+            journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
             notificationId: CONSIGNOR_HANDSHAKE['notification-id'],
             fulfilmentId: CONSIGNOR_HANDSHAKE['fulfilment-id'],
             landing: ADDRESS_LANDING.SELECT
