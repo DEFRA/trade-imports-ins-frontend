@@ -30,6 +30,16 @@ export const hiddenIdmSignInProvider = Object.freeze({
 })
 
 /**
+ * The config key of one of an identity provider's settings.
+ *
+ * @param {{ configKey: string }} provider - `serviceSignInProvider` or `hiddenIdmSignInProvider`
+ * @param {string} setting - a key within the provider's config group, such as `clientId`
+ * @returns {string} the full config key, such as `idm.clientId`
+ */
+export const providerSettingKey = (provider, setting) =>
+  `${provider.configKey}.${setting}`
+
+/**
  * Reads one of an identity provider's settings from its config group.
  *
  * @param {{ configKey: string }} provider - `serviceSignInProvider` or `hiddenIdmSignInProvider`
@@ -37,4 +47,4 @@ export const hiddenIdmSignInProvider = Object.freeze({
  * @returns {*} the configured value
  */
 export const providerSetting = (provider, setting) =>
-  config.get(`${provider.configKey}.${setting}`)
+  config.get(providerSettingKey(provider, setting))

@@ -1,18 +1,24 @@
 import * as cheerio from 'cheerio'
-import nock from 'nock'
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
 
+import { hiddenIdmSignInProvider } from '../../auth/identity-providers.js'
 import { config } from '../../config/config.js'
 import { copy as sharedEn } from '../app/shared/copy.en.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { cookieHeaderOf } from '../common/test-helpers/address-book-requests.js'
+import {
+  applyIdmSettings,
+  idmDiscoveryDocument,
+  idmKeysRequest,
+  idmSettingKeys,
+  idmSettings
+} from '../common/test-helpers/idm-sign-in-settings.js'
 import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
 import { recordModuleLoggerError } from '../common/test-helpers/module-logger-lines.js'
 import { textOf, textsOf } from '../common/test-helpers/rendered-text.js'
 import { runInRealMode } from '../common/test-helpers/real-mode.js'
 import {
   discoveryUrlRequest,
-  idmOidcDiscoveryUrlKey,
   serveOidcDiscovery
 } from '../common/test-helpers/serve-oidc-discovery.js'
 import {
@@ -26,32 +32,14 @@ import {
 } from '../common/test-helpers/test-server.js'
 import { idmPaths } from './idm-sign-in.js'
 
-const IDM_SETTINGS = {
-  [idmOidcDiscoveryUrlKey]:
-    'https://idm.example.test/b2c/policy/.well-known/openid-configuration',
-  'idm.clientId': 'idm-client-id',
-  'idm.serviceId': 'idm-service-id',
-  'idm.clientSecret': 'idm-client-secret'
-}
-
 const SIGN_IN_FAILED = 'IDM sign-in failed'
-
-const IDM_ORIGIN = 'https://idm.example.test'
-const IDM_DOCUMENT = {
-  issuer: `${IDM_ORIGIN}/issuer`,
-  authorization_endpoint: `${IDM_ORIGIN}/authorize`,
-  token_endpoint: `${IDM_ORIGIN}/token`,
-  jwks_uri: `${IDM_ORIGIN}/keys`
-}
 
 const configureIdm = () => {
   const originalValues = Object.fromEntries(
-    Object.keys(IDM_SETTINGS).map((key) => [key, config.get(key)])
+    idmSettingKeys.map((key) => [key, config.get(key)])
   )
   beforeAll(() => {
-    for (const [key, value] of Object.entries(IDM_SETTINGS)) {
-      config.set(key, value)
-    }
+    applyIdmSettings()
   })
   afterAll(() => {
     for (const [key, value] of Object.entries(originalValues)) {
@@ -129,7 +117,7 @@ describe('IDM sign-in, when IDM discovery fails', () => {
     serveOidcDiscovery()
     discoveryUrlRequest({
       persist: true,
-      discoveryUrlKey: idmOidcDiscoveryUrlKey
+      provider: hiddenIdmSignInProvider
     }).replyWithError('IDM unreachable')
 
     server = await startServerPastDiscoveryRetries()
@@ -148,7 +136,7 @@ describe('IDM sign-in, when IDM discovery fails', () => {
       {
         fields: {
           err: expect.any(Error),
-          discoveryUrl: IDM_SETTINGS[idmOidcDiscoveryUrlKey]
+          discoveryUrl: idmSettings.oidcDiscoveryUrl
         },
         message: discoveryFailed
       }
@@ -159,8 +147,8 @@ describe('IDM sign-in, when IDM discovery fails', () => {
 describe('IDM sign-in, with an IDM discovery URL', () => {
   configureIdm()
   beforeAll(() => {
-    serveOidcDiscovery(IDM_DOCUMENT, {
-      discoveryUrlKey: idmOidcDiscoveryUrlKey
+    serveOidcDiscovery(idmDiscoveryDocument, {
+      provider: hiddenIdmSignInProvider
     })
   })
   const getServer = startRealModeServer()
@@ -172,8 +160,8 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
 
   const idTokenSignedWith = (key) =>
     signToken(key, {
-      aud: IDM_SETTINGS['idm.clientId'],
-      iss: IDM_DOCUMENT.issuer,
+      aud: idmSettings.clientId,
+      iss: idmDiscoveryDocument.issuer,
       sub: 'idm-user',
       contactId: 'contact-1',
       sessionId: 'idm-session-1',
@@ -220,13 +208,12 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
   }
 
   beforeEach(() => {
-    serveOidcDiscovery(IDM_DOCUMENT, {
-      discoveryUrlKey: idmOidcDiscoveryUrlKey
+    serveOidcDiscovery(idmDiscoveryDocument, {
+      provider: hiddenIdmSignInProvider
     })
-    nock(IDM_ORIGIN)
-      .persist()
-      .get('/keys')
-      .reply(statusCodes.ok, { keys: [signingKey.publicJwk] })
+    idmKeysRequest({ persist: true }).reply(statusCodes.ok, {
+      keys: [signingKey.publicJwk]
+    })
   })
 
   test('Should show a start page whose button links to the route that goes to IDM', async () => {
@@ -249,7 +236,7 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
 
     expect(statusCode).toBe(statusCodes.redirectFound)
     expect(`${location.origin}${location.pathname}`).toBe(
-      IDM_DOCUMENT.authorization_endpoint
+      idmDiscoveryDocument.authorization_endpoint
     )
     expect(Object.fromEntries(location.searchParams)).toMatchObject({
       client_id: 'idm-client-id',

@@ -13,15 +13,23 @@ import {
 import { OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
 import { statusCodes } from '../server/common/constants/status-codes.js'
 import { awaitEmfDocumentForOperation } from '../server/common/test-helpers/emf-documents.js'
-import { runAgainstServedOidcDiscovery } from '../server/common/test-helpers/serve-oidc-discovery.js'
+import {
+  applyIdmSettings,
+  idmDiscoveryDocument,
+  idmKeysRequest,
+  idmSettingKeys,
+  idmSettings
+} from '../server/common/test-helpers/idm-sign-in-settings.js'
+import {
+  runAgainstServedOidcDiscovery,
+  serveOidcDiscovery
+} from '../server/common/test-helpers/serve-oidc-discovery.js'
 
 const getTraceIdMock = vi.hoisted(() => vi.fn())
 
 vi.mock('@defra/hapi-tracing', () => ({
   getTraceId: getTraceIdMock
 }))
-
-const IDM_CLIENT_ID = 'idm-client-id'
 
 describe('#verifyToken', () => {
   const traceId = 'test-trace-id'
@@ -35,13 +43,7 @@ describe('#verifyToken', () => {
 
   runAgainstServedOidcDiscovery(
     { jwks_uri: `${keysOrigin}${keysPath}`, issuer },
-    {
-      restoringConfigKeys: [
-        'defraId.clientId',
-        'idm.clientId',
-        'idm.oidcDiscoveryUrl'
-      ]
-    }
+    { restoringConfigKeys: ['defraId.clientId', ...idmSettingKeys] }
   )
 
   const tokenSignedWith = (
@@ -54,12 +56,22 @@ describe('#verifyToken', () => {
 
   const serveKeys = (keys) => keysRequest().reply(statusCodes.ok, { keys })
 
+  const idmTokenSignedWith = (
+    signingKeyToUse,
+    { aud = idmSettings.clientId, iss = idmDiscoveryDocument.issuer } = {}
+  ) => signToken(signingKeyToUse, { aud, iss, sub: 'user-1' })
+
+  const serveIdmKeys = (keys) =>
+    idmKeysRequest().reply(statusCodes.ok, { keys })
+
   beforeEach(() => {
     getTraceIdMock.mockReset()
     getTraceIdMock.mockReturnValue(traceId)
     config.set('defraId.clientId', 'test-client-id')
-    config.set('idm.clientId', IDM_CLIENT_ID)
-    config.set('idm.oidcDiscoveryUrl', config.get('defraId.oidcDiscoveryUrl'))
+    applyIdmSettings()
+    serveOidcDiscovery(idmDiscoveryDocument, {
+      provider: hiddenIdmSignInProvider
+    })
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
   })
 
@@ -85,13 +97,10 @@ describe('#verifyToken', () => {
     })
 
     test('Should resolve for a token issued to the IDM client when checked against IDM, and measure the key fetch as idm jwks', async () => {
-      serveKeys([signingKey.publicJwk])
+      serveIdmKeys([signingKey.publicJwk])
 
       await expect(
-        verifyToken(
-          tokenSignedWith(signingKey, { aud: IDM_CLIENT_ID }),
-          hiddenIdmSignInProvider
-        )
+        verifyToken(idmTokenSignedWith(signingKey), hiddenIdmSignInProvider)
       ).resolves.toBeUndefined()
 
       const document = await awaitEmfDocumentForOperation(logSpy, 'jwks')
@@ -174,25 +183,22 @@ describe('#verifyToken', () => {
     })
 
     test('Should reject a token issued to another client when checked against IDM', async () => {
-      serveKeys([signingKey.publicJwk])
+      serveIdmKeys([signingKey.publicJwk])
 
       await expect(
         verifyToken(
-          tokenSignedWith(signingKey, { aud: 'another-client' }),
+          idmTokenSignedWith(signingKey, { aud: 'another-client' }),
           hiddenIdmSignInProvider
         )
       ).rejects.toThrow('Token audience is not allowed')
     })
 
     test('Should reject a token from another issuer when checked against IDM', async () => {
-      serveKeys([signingKey.publicJwk])
+      serveIdmKeys([signingKey.publicJwk])
 
       await expect(
         verifyToken(
-          tokenSignedWith(signingKey, {
-            aud: IDM_CLIENT_ID,
-            iss: 'https://another-issuer'
-          }),
+          idmTokenSignedWith(signingKey, { iss: 'https://another-issuer' }),
           hiddenIdmSignInProvider
         )
       ).rejects.toThrow('Token payload iss value not allowed')
