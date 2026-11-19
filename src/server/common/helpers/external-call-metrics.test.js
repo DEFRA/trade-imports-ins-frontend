@@ -7,16 +7,7 @@ import {
 } from './external-call-metrics.js'
 import { config } from '../../../config/config.js'
 import { readEmfDocuments } from '../test-helpers/emf-documents.js'
-
-const loggerWarnMock = vi.hoisted(() => vi.fn())
-
-vi.mock('./logging/logger.js', () => ({
-  createLogger: () => ({
-    warn: loggerWarnMock,
-    info: vi.fn(),
-    error: vi.fn()
-  })
-}))
+import { recordModuleLoggerWarn } from '../test-helpers/module-logger-lines.js'
 
 const NAMESPACE_KEY = 'metrics.namespace'
 const TEST_NAMESPACE = 'test-namespace'
@@ -29,11 +20,11 @@ const JWKS_CALL = {
 
 describe('external call metrics', () => {
   const originalNamespace = config.get(NAMESPACE_KEY)
+  const { entriesWith: warnLogs } = recordModuleLoggerWarn()
   let logSpy
 
   beforeEach(() => {
     config.set(NAMESPACE_KEY, TEST_NAMESPACE)
-    loggerWarnMock.mockReset()
     logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
   })
 
@@ -125,11 +116,18 @@ describe('external call metrics', () => {
 
     recordExternalCallInBackground(JWKS_CALL, { durationMs: 5, failed: false })
 
+    const couldNotRecord = 'Could not record external call'
     await vi.waitFor(() =>
-      expect(loggerWarnMock).toHaveBeenCalledWith(
-        { err: flushError, dependency: 'defra-id', operation: 'jwks' },
-        'Could not record external call'
-      )
+      expect(warnLogs(couldNotRecord)).toEqual([
+        {
+          fields: {
+            err: flushError,
+            dependency: 'defra-id',
+            operation: 'jwks'
+          },
+          message: couldNotRecord
+        }
+      ])
     )
   })
 })
