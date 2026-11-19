@@ -1,6 +1,9 @@
 import { vi } from 'vitest'
 import { getOidcConfigWithRetry } from './get-oidc-config-with-retry.js'
-import { serviceSignInProvider } from './identity-providers.js'
+import {
+  hiddenIdmSignInProvider,
+  serviceSignInProvider
+} from './identity-providers.js'
 
 const wreckGetMock = vi.hoisted(() => vi.fn())
 const configGetMock = vi.hoisted(() => vi.fn())
@@ -117,5 +120,31 @@ describe('getOidcConfigWithRetry', () => {
     expect(error.cause.code).toBe('ETIMEDOUT')
     expect(wreckGetMock).toHaveBeenCalledTimes(4)
     expect(logger.warn).toHaveBeenCalledTimes(3)
+  })
+
+  test("names the given provider's discovery URL in its retry warnings and final error", async () => {
+    const idmDiscoveryUrl =
+      'https://idm.example/idphub/b2c/.well-known/openid-configuration'
+    configGetMock.mockImplementation((key) => {
+      if (key === 'defraId.oidcDiscoveryUrl') return discoveryUrl
+      if (key === 'idm.oidcDiscoveryUrl') return idmDiscoveryUrl
+      if (key === 'tracing.header') return 'x-cdp-request-id'
+      if (key === 'metrics.namespace') return 'trade-imports-ins-frontend'
+    })
+    wreckGetMock.mockRejectedValue(timedOut())
+
+    const tracked = getOidcConfigWithRetry(
+      logger,
+      hiddenIdmSignInProvider
+    ).catch((error) => error)
+    await vi.advanceTimersByTimeAsync(7000)
+    const error = await tracked
+
+    expect(error.message).toBe(
+      `OIDC discovery at ${idmDiscoveryUrl} failed after 4 attempts`
+    )
+    expect(
+      logger.warn.mock.calls.map(([fields]) => fields.discoveryUrl)
+    ).toEqual([idmDiscoveryUrl, idmDiscoveryUrl, idmDiscoveryUrl])
   })
 })
