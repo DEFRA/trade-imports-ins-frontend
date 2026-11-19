@@ -175,8 +175,9 @@ describe('#authController', () => {
     expect(await getServer().app.cache.get(sessionId)).toBeNull()
   })
 
-  test('GET /auth/sign-in-oidc renders unauthorised, and stores no session, when the token is signed by a key Defra ID does not serve', async () => {
+  test("GET /auth/sign-in-oidc renders unauthorised, stores no session, and logs the refusal in full with the user's ids, when the token is signed by a key Defra ID does not serve", async () => {
     const sessionId = 'signin-oidc-unverified'
+    const tokenRefused = 'Token verification failed for /auth/sign-in-oidc'
     serveSigningKey()
 
     const { statusCode, payload, headers } = await signInOidc({
@@ -193,6 +194,17 @@ describe('#authController', () => {
       expect.stringContaining('sid=')
     )
     expect(await getServer().app.cache.get(sessionId)).toBeNull()
+    expect(errorLogs(tokenRefused)).toEqual([
+      {
+        fields: {
+          err: expect.any(Error),
+          crn: 'CRN123',
+          organisationId: 'org-1',
+          sessionId
+        },
+        message: tokenRefused
+      }
+    ])
   })
 
   test('GET /auth/sign-in-oidc renders unauthorised and logs the Bell error in full, with the state, when Bell cannot authenticate the callback', async () => {

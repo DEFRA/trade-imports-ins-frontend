@@ -22,6 +22,12 @@ export const renderUnableToSignIn = (h, { signInUrl }) =>
     signInUrl
   })
 
+const signInIdsOf = ({ crn, organisationId, sessionId }) => ({
+  crn,
+  organisationId,
+  sessionId
+})
+
 export const authController = {
   signin: {
     handler: async function (_request, h) {
@@ -63,7 +69,7 @@ export const authController = {
         await verifyToken(token, serviceSignInProvider)
       } catch (err) {
         request.logger?.error(
-          { err },
+          { err, ...signInIdsOf(profile) },
           'Token verification failed for /auth/sign-in-oidc'
         )
         return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
@@ -83,7 +89,7 @@ export const authController = {
         ))
       } catch (err) {
         request.logger?.error(
-          { err },
+          { err, ...signInIdsOf(profile) },
           'Failed to load user permissions at sign-in'
         )
         return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
