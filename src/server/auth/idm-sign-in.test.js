@@ -540,12 +540,12 @@ describe('IDM sign-in, from the rest of the service', () => {
   }
 
   test('Should name no IDM sign-in page in any template or module of the service', () => {
-    const naming = appSourceFiles()
+    const filesNamingAnIdmPage = appSourceFiles()
       .filter(({ text }) =>
         Object.values(idmPaths).some((path) => text.includes(path))
       )
       .map(({ file }) => file)
 
-    expect(naming).toEqual([])
+    expect(filesNamingAnIdmPage).toEqual([])
   })
 })
