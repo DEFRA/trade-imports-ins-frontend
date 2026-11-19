@@ -6,6 +6,7 @@ import { refreshTokens } from '../auth/refresh-tokens.js'
 import { getSafeRedirect } from '../auth/get-safe-redirect.js'
 import { bellOptionsFor } from '../auth/bell-options.js'
 import { config } from '../config/config.js'
+import { authPaths } from '../server/auth/controller.js'
 import { isStubMode } from '../server/common/services/mode.js'
 
 export const SERVICE_SIGN_IN_STRATEGY = 'defra-id'
@@ -54,7 +55,7 @@ function getBellOptions(oidcConfig) {
       }
     },
     extraProviderParams(request) {
-      if (request.path !== '/auth/organisation') {
+      if (request.path !== authPaths.organisation) {
         return {}
       }
       return {
@@ -77,7 +78,7 @@ function getCookieOptions() {
     },
     redirectTo: function (request) {
       const target = `${request.url.pathname}${request.url.search}`
-      return `/auth/sign-in?redirect=${encodeURIComponent(target)}`
+      return `${authPaths.signIn}?redirect=${encodeURIComponent(target)}`
     },
     validate: async function (request, session) {
       const userSession = await request.server.app.cache.get(session.sessionId)

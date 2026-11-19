@@ -1,6 +1,6 @@
 import { unauthorisedPage } from '../app/auth/page.js'
 import { SERVICE_SIGN_IN_STRATEGY } from '../../plugins/auth.js'
-import { authController, SIGN_IN_PATH } from './controller.js'
+import { authController, authPaths } from './controller.js'
 
 export const authRoutes = {
   plugin: {
@@ -9,7 +9,7 @@ export const authRoutes = {
       server.route([
         {
           method: 'GET',
-          path: SIGN_IN_PATH,
+          path: authPaths.signIn,
           options: {
             auth: SERVICE_SIGN_IN_STRATEGY
           },
@@ -17,7 +17,7 @@ export const authRoutes = {
         },
         {
           method: 'GET',
-          path: '/auth/sign-in-oidc',
+          path: authPaths.signInOidc,
           options: {
             auth: { strategy: SERVICE_SIGN_IN_STRATEGY, mode: 'try' },
             app: { page: unauthorisedPage }
@@ -26,7 +26,7 @@ export const authRoutes = {
         },
         {
           method: 'GET',
-          path: '/auth/sign-out',
+          path: authPaths.signOut,
           options: {
             auth: { mode: 'try' }
           },
@@ -34,7 +34,7 @@ export const authRoutes = {
         },
         {
           method: 'GET',
-          path: '/auth/sign-out-oidc',
+          path: authPaths.signOutOidc,
           options: {
             auth: { mode: 'try' }
           },
@@ -42,7 +42,7 @@ export const authRoutes = {
         },
         {
           method: 'GET',
-          path: '/auth/organisation',
+          path: authPaths.organisation,
           options: {
             auth: SERVICE_SIGN_IN_STRATEGY
           },

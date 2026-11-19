@@ -7,7 +7,14 @@ import { getSafeRedirect } from '../../auth/get-safe-redirect.js'
 import { recordTokenExchange } from '../../auth/token-exchange-timer.js'
 import { base, sharedCopy } from '../app/shared/kit.js'
 
-export const SIGN_IN_PATH = '/auth/sign-in'
+export const authPaths = Object.freeze({
+  signIn: '/auth/sign-in',
+  stubSignIn: '/auth/stub-sign-in',
+  signInOidc: '/auth/sign-in-oidc',
+  signOut: '/auth/sign-out',
+  signOutOidc: '/auth/sign-out-oidc',
+  organisation: '/auth/organisation'
+})
 
 /**
  * Renders the page saying the service is unable to sign the user in.
@@ -44,9 +51,9 @@ export const authController = {
             err: request.auth.error,
             state: request.query?.state
           },
-          'Bell auth failed for /auth/sign-in-oidc'
+          `Bell auth failed for ${authPaths.signInOidc}`
         )
-        return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
+        return renderUnableToSignIn(h, { signInUrl: authPaths.signIn })
       }
 
       const { profile, token, refreshToken } = request.auth.credentials
@@ -56,7 +63,7 @@ export const authController = {
           { crn: profile.crn },
           'Sign-in rejected: missing organisationId in Defra ID token'
         )
-        return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
+        return renderUnableToSignIn(h, { signInUrl: authPaths.signIn })
       }
 
       try {
@@ -64,9 +71,9 @@ export const authController = {
       } catch (err) {
         request.logger?.error(
           { err, ...signInIdsOf(profile) },
-          'Token verification failed for /auth/sign-in-oidc'
+          `Token verification failed for ${authPaths.signInOidc}`
         )
-        return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
+        return renderUnableToSignIn(h, { signInUrl: authPaths.signIn })
       }
 
       let role
@@ -82,7 +89,7 @@ export const authController = {
           { err, ...signInIdsOf(profile) },
           'Failed to load user permissions at sign-in'
         )
-        return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
+        return renderUnableToSignIn(h, { signInUrl: authPaths.signIn })
       }
 
       await request.server.app.cache.set(profile.sessionId, {
