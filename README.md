@@ -32,6 +32,7 @@ repository `trade-imports-ins-tests`, as its `ins` domain (`tests/ins/`)
 - [Redis](#redis)
 - [Local development](#local-development)
 - [Auth](#authentication-trade-imports-defra-id-stub)
+- [Sign-in through the real Defra ID (IDM)](#sign-in-through-the-real-defra-id-idm)
 - [Docker](#docker)
 - [Lighthouse](#lighthouse)
 - [SonarCloud](#sonarcloud)
@@ -190,8 +191,9 @@ and `/auth/idm/signed-in` then shows the ID token claims, the access token
 claims and the token response. `/auth/signed-out` is IDM's registered
 post-logout page.
 
-It never signs anyone in to the service: the dashboard and address book
-keep the stub or Defra ID sign-in above, and its data.
+It never signs anyone in to the service. The dashboard and address book
+still use the sign-in above, and what IDM returns is kept separately, only
+to show on the signed-in page.
 
 It is served only when `IDM_OIDC_CONFIGURATION_URL` is set, so the workspace
 stack and the E2E tests run without it. Its settings:
@@ -203,9 +205,20 @@ stack and the E2E tests run without it. Its settings:
 - `IDM_POLICY` (defaults to `b2c_1a_cui_cpdev_signupsignin`; the stub's policy causes a redirect loop)
 - `IDM_REDIRECT_URL` (defaults to `http://localhost:3002/auth/callback`)
 
+It is also left unserved, with a log line saying why, when the IDM client
+ID, client secret or service ID is missing, or when IDM's discovery
+document cannot be fetched at start-up. The rest of the service starts as
+normal.
+
 Locally, put them in `.env`, which is gitignored and read by `npm run dev`.
 In CDP dev and test the client ID, client secret and service ID are CDP
-secrets, and the rest are in `cdp-app-config`.
+secrets. These must be set in `cdp-app-config` for each environment:
+
+- `IDM_OIDC_CONFIGURATION_URL`: the CP-Dev discovery URL; until it is set,
+  the IDM sign-in is not served
+- `IDM_REDIRECT_URL`: the environment's own `/auth/callback` URL, such as
+  `https://trade-imports-ins-frontend.dev.cdp-int.defra.cloud/auth/callback`;
+  without it IDM is told to return to `localhost`
 
 ## Docker
 
