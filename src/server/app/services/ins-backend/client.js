@@ -1,21 +1,13 @@
-import { getTraceId } from '@defra/hapi-tracing'
-
 import { config } from '../../../../config/config.js'
+import { organisationScopedHeaders } from '../../../common/helpers/organisation-scoped-headers.js'
 import { throwOnError } from '../../lib/http-client.js'
 
 const insBackendUrl = config.get('tradeImportsInsBackendApi.baseUrl')
-const tracingHeader = config.get('tracing.header')
 
-const headers = () => ({
-  'Content-Type': 'application/json',
-  [tracingHeader]: getTraceId() ?? ''
-})
-
-export const listNotifications = async ({
-  page = 1,
-  sort,
-  referenceNumber
-} = {}) => {
+export const listNotifications = async (
+  organisationId,
+  { page = 1, sort, referenceNumber } = {}
+) => {
   const url = new URL(`${insBackendUrl}/notifications`)
   url.searchParams.set('page', String(page))
   if (sort) {
@@ -27,7 +19,7 @@ export const listNotifications = async ({
 
   const response = await fetch(url.toString(), {
     method: 'GET',
-    headers: headers()
+    headers: organisationScopedHeaders(organisationId)
   })
 
   await throwOnError(response)
