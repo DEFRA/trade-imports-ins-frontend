@@ -28,6 +28,13 @@ static files.
 - [`src/plugins/auth.js`](../../../plugins/auth.js) — the session strategy,
   the Bell/Defra ID strategy, and the stub-mode short circuit that skips
   Bell entirely.
+- [`src/auth/bell-options.js`](../../../auth/bell-options.js) — the Bell
+  OAuth options both sign-ins share; the service sign-in adds its profile
+  decoding, redirect capture and organisation reselection, the hidden IDM
+  sign-in its profile from the token response. Bell's cookie takes
+  `session.cookie.sameSite`: the return from the identity provider is a
+  top-level navigation, and `SameSite=Strict` can keep the cookie off the
+  callback, so Bell silently answers `isAuthenticated: false`.
 - [`src/plugins/csrf.js`](../../../plugins/csrf.js) — CSRF protection via
   `@hapi/crumb`, disabled during test runs.
 - [`src/auth/identity-providers.js`](../../../auth/identity-providers.js) —

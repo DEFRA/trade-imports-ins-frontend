@@ -4,7 +4,7 @@ import { getOidcConfigWithRetry } from '../auth/get-oidc-config-with-retry.js'
 import { serviceSignInProvider } from '../auth/identity-providers.js'
 import { refreshTokens } from '../auth/refresh-tokens.js'
 import { getSafeRedirect } from '../auth/get-safe-redirect.js'
-import { timeTokenExchange } from '../auth/token-exchange-timer.js'
+import { bellOptionsFor } from '../auth/bell-options.js'
 import { config } from '../config/config.js'
 import { isStubMode } from '../server/common/services/mode.js'
 
@@ -30,56 +30,35 @@ export const authPlugin = {
 }
 
 function getBellOptions(oidcConfig) {
-  return {
-    provider: {
-      name: 'defra-id',
-      protocol: 'oauth2',
-      useParamsAuth: true,
-      auth: oidcConfig.authorization_endpoint,
-      token: timeTokenExchange(oidcConfig.token_endpoint),
-      scope: ['openid', 'offline_access', config.get('defraId.clientId')],
-      profile: function (credentials, _params, _get) {
-        const payload = Jwt.token.decode(credentials.token).decoded.payload
+  return bellOptionsFor(serviceSignInProvider, oidcConfig, {
+    name: 'defra-id',
+    profile(credentials) {
+      const payload = Jwt.token.decode(credentials.token).decoded.payload
 
-        credentials.profile = {
-          ...payload,
-          crn: payload.contactId,
-          name: `${payload.firstName} ${payload.lastName}`,
-          organisationId: payload.currentRelationshipId
-        }
+      credentials.profile = {
+        ...payload,
+        crn: payload.contactId,
+        name: `${payload.firstName} ${payload.lastName}`,
+        organisationId: payload.currentRelationshipId
       }
     },
-    clientId: config.get('defraId.clientId'),
-    clientSecret: config.get('defraId.clientSecret'),
-    password: config.get('session.cookie.password'),
-    isSecure: config.get('isProduction'),
-    // OAuth/OIDC redirects back from the identity provider are top-level navigations, and `SameSite=Strict` can prevent the Bell nonce cookie from being sent on callback, causing Bell auth to silently return `isAuthenticated: false`.
-    isSameSite: config.get('session.cookie.sameSite'),
-    location: function (request) {
+    rememberRedirect(request) {
       if (request.query.redirect) {
-        const safeRedirect = getSafeRedirect(request.query.redirect)
-        request.yar.set('redirect', safeRedirect)
+        request.yar.set('redirect', getSafeRedirect(request.query.redirect))
       }
-
-      return config.get('defraId.redirectUrl')
     },
-    providerParams: function (request) {
-      const params = {
-        serviceId: config.get('defraId.serviceId'),
-        p: config.get('defraId.policy'),
-        response_mode: 'query'
+    extraProviderParams(request) {
+      if (request.path !== '/auth/organisation') {
+        return {}
       }
-
-      if (request.path === '/auth/organisation') {
-        params.forceReselection = true
-        if (request.query.organisationId) {
-          params.relationshipId = request.query.organisationId
-        }
+      return {
+        forceReselection: true,
+        ...(request.query.organisationId && {
+          relationshipId: request.query.organisationId
+        })
       }
-
-      return params
     }
-  }
+  })
 }
 
 function getCookieOptions() {
