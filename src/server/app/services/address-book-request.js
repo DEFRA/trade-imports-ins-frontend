@@ -1,12 +1,15 @@
-import { getTraceId } from '@defra/hapi-tracing'
-
 import { config } from '../../../config/config.js'
+import {
+  ADDRESS_BOOK_ORGANISATION_REQUIRED,
+  organisationScopedHeaders,
+  refuseWithoutOrganisation
+} from '../../common/helpers/organisation-scoped-headers.js'
 import { HTTP_STATUS_BAD_REQUEST } from '../lib/http-status.js'
 import { parseProblemBody, throwOnError } from '../lib/http-client.js'
 
 const addressBookUrl = config.get('tradeImportsAddressBookApi.baseUrl')
-const tracingHeader = config.get('tracing.header')
-const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
+
+export { ORGANISATION_ID_HEADER } from '../../common/helpers/organisation-scoped-headers.js'
 
 /**
  * The absolute URL of a resource under the caller's organisation in the
@@ -23,11 +26,7 @@ export const addressBookResourceUrl = (
   organisationId,
   resourceId
 ) => {
-  if (!organisationId) {
-    throw new Error(
-      'Cannot reach the address book without an organisation: the signed-in session carries none'
-    )
-  }
+  refuseWithoutOrganisation(organisationId, ADDRESS_BOOK_ORGANISATION_REQUIRED)
   const base = `${addressBookUrl}/organisation/${encodeURIComponent(organisationId)}/${resource}`
   return resourceId ? `${base}/${encodeURIComponent(resourceId)}` : base
 }
@@ -38,11 +37,8 @@ export const addressBookResourceUrl = (
  * @param {string} organisationId the caller's organisation id
  * @returns {Record<string, string>} the request headers
  */
-export const addressBookHeaders = (organisationId) => ({
-  'Content-Type': 'application/json',
-  [ORGANISATION_ID_HEADER]: organisationId,
-  [tracingHeader]: getTraceId() ?? ''
-})
+export const addressBookHeaders = (organisationId) =>
+  organisationScopedHeaders(organisationId)
 
 const validationFailure = async (response) => {
   const problem = await parseProblemBody(response)
