@@ -19,8 +19,8 @@ async function verifyToken(token, provider = defraIdProvider) {
     })
   )
 
-  const decoded = Jwt.token.decode(token)
-  const { kid } = decoded.decoded.header
+  const artifacts = Jwt.token.decode(token)
+  const { kid } = artifacts.decoded.header
   const signingJwk = payload.keys.find((key) => key.kid === kid)
   if (!signingJwk) {
     throw new Error(`No signing key ${kid} served`)
@@ -32,7 +32,7 @@ async function verifyToken(token, provider = defraIdProvider) {
   })
 
   Jwt.token.verify(
-    decoded,
+    artifacts,
     { key: pem, algorithm: 'RS256' },
     claimChecksFor(provider, issuer)
   )
