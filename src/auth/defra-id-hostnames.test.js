@@ -9,9 +9,8 @@ import {
   withServerSideEndpointsAtDiscoveryHostname
 } from './defra-id-hostnames.js'
 
-const DISCOVERY_PATH = '/idphub/b2c/.well-known/openid-configuration'
-
-const discoveryUrlAt = (origin) => `${origin}${DISCOVERY_PATH}`
+const discoveryUrlAt = (origin) =>
+  `${origin}/idphub/b2c/.well-known/openid-configuration`
 
 const configureDiscovery = (origin) =>
   config.set('defraId.oidcDiscoveryUrl', discoveryUrlAt(origin))
@@ -28,7 +27,7 @@ describe('#defraIdHostnames', () => {
       configureDiscovery('http://host.docker.internal:3007')
 
       expect(getBrowserFacingDiscoveryUrl().toString()).toBe(
-        `http://localhost:3007${DISCOVERY_PATH}`
+        discoveryUrlAt('http://localhost:3007')
       )
     })
 
@@ -38,7 +37,7 @@ describe('#defraIdHostnames', () => {
       configureDiscovery('http://host.docker.internal:3007')
 
       expect(getBrowserFacingDiscoveryUrl().toString()).toBe(
-        `http://host.docker.internal:3007${DISCOVERY_PATH}`
+        discoveryUrlAt('http://host.docker.internal:3007')
       )
     })
 
@@ -47,7 +46,7 @@ describe('#defraIdHostnames', () => {
       configureDiscovery('https://defra-id.example.test')
 
       expect(getBrowserFacingDiscoveryUrl().toString()).toBe(
-        `https://defra-id.example.test${DISCOVERY_PATH}`
+        discoveryUrlAt('https://defra-id.example.test')
       )
     })
   })
