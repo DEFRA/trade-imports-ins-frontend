@@ -1,4 +1,7 @@
+import * as cheerio from 'cheerio'
 import { vi } from 'vitest'
+
+import { textOf } from '../common/test-helpers/rendered-text.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { sessionAuth } from '../common/test-helpers/session-auth.js'
 import { startRealModeServer } from '../common/test-helpers/test-server.js'
@@ -132,10 +135,15 @@ describe('#authController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(payload).toContain(sharedEn.unauthorised.heading)
-    expect(payload).toContain(
-      `<a class="govuk-link" href="/auth/sign-in">${sharedEn.unauthorised.signInLinkText}</a>`
-    )
+    const $ = cheerio.load(payload)
+    expect(textOf($, 'h1')).toBe(sharedEn.unauthorised.heading)
+    expect(
+      $('main a.govuk-link')
+        .filter(
+          (_, link) => $(link).text() === sharedEn.unauthorised.signInLinkText
+        )
+        .attr('href')
+    ).toBe('/auth/sign-in')
     expect(headers['set-cookie'] ?? []).not.toContainEqual(
       expect.stringContaining('sid=')
     )
