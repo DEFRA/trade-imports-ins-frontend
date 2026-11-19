@@ -49,6 +49,10 @@ import {
 import { idmPaths } from './idm-sign-in.js'
 
 const SIGN_IN_FAILED = 'IDM sign-in failed'
+const IDM_STATE = 'idm-state'
+const IDM_REQUESTED_SCOPE = `openid offline_access ${idmSettings.clientId}`
+const IDM_ERROR_DESCRIPTION = 'AADB2C90091'
+const IDM_ERROR_QUERY = `error=access_denied&error_description=${IDM_ERROR_DESCRIPTION}&state=${IDM_STATE}`
 
 const configureIdm = () => {
   const originalValues = Object.fromEntries(
@@ -68,13 +72,13 @@ const startServerPastDiscoveryRetries = async () => {
   const fakeStepMs = 10
   vi.useFakeTimers({ toFake: ['setTimeout'] })
   try {
-    let settled = false
+    const start = { settled: false }
     const starting = startTestServer()
     starting.then(
-      () => (settled = true),
-      () => (settled = true)
+      () => (start.settled = true),
+      () => (start.settled = true)
     )
-    while (!settled) {
+    while (!start.settled) {
       await new Promise((resolve) => setImmediate(resolve))
       await vi.advanceTimersByTimeAsync(fakeStepMs)
     }
@@ -220,7 +224,39 @@ describe('IDM sign-in, with an IDM discovery URL but no client secret', () => {
   })
 })
 
-describe('IDM sign-in, with an IDM discovery URL', () => {
+const signingKey = generateSigningKey('idm-key')
+const otherKey = generateSigningKey('other-key')
+
+const idTokenSignedWith = (key) =>
+  signToken(key, {
+    aud: idmSettings.clientId,
+    iss: idmDiscoveryDocument.issuer,
+    sub: 'idm-user',
+    contactId: 'contact-1',
+    sessionId: 'idm-session-1',
+    correlationId: 'correlation-1'
+  })
+
+const idmAuth = ({ idToken, accessToken = idToken }) => ({
+  strategy: 'idm',
+  credentials: {
+    token: accessToken,
+    profile: {
+      idToken,
+      expiresIn: 3600,
+      scope: 'openid offline_access',
+      refreshTokenReturned: true
+    }
+  }
+})
+
+const expectUnableToSignInPage = (payload) => {
+  const $ = cheerio.load(payload)
+  expect(textOf($, 'h1')).toBe(sharedEn.unauthorised.heading)
+  expect($('main a.govuk-link').attr('href')).toBe(idmPaths.signIn)
+}
+
+const startIdmSignInServer = () => {
   configureIdm()
   beforeAll(() => {
     serveOidcDiscovery(idmDiscoveryDocument, {
@@ -229,32 +265,13 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
   })
   const getServer = startRealModeServer()
 
-  const { entriesWith: errorLogs } = recordModuleLoggerError()
-
-  const signingKey = generateSigningKey('idm-key')
-  const otherKey = generateSigningKey('other-key')
-
-  const idTokenSignedWith = (key) =>
-    signToken(key, {
-      aud: idmSettings.clientId,
-      iss: idmDiscoveryDocument.issuer,
-      sub: 'idm-user',
-      contactId: 'contact-1',
-      sessionId: 'idm-session-1',
-      correlationId: 'correlation-1'
+  beforeEach(() => {
+    serveOidcDiscovery(idmDiscoveryDocument, {
+      provider: hiddenIdmSignInProvider
     })
-
-  const idmAuth = ({ idToken, accessToken = idToken }) => ({
-    strategy: 'idm',
-    credentials: {
-      token: accessToken,
-      profile: {
-        idToken,
-        expiresIn: 3600,
-        scope: 'openid offline_access',
-        refreshTokenReturned: true
-      }
-    }
+    idmKeysRequest({ persist: true }).reply(statusCodes.ok, {
+      keys: [signingKey.publicJwk]
+    })
   })
 
   const completeSignIn = (tokens) =>
@@ -277,20 +294,16 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
     return cheerio.load(page.payload)
   }
 
-  const expectUnableToSignInPage = (payload) => {
-    const $ = cheerio.load(payload)
-    expect(textOf($, 'h1')).toBe(sharedEn.unauthorised.heading)
-    expect($('main a.govuk-link').attr('href')).toBe(idmPaths.signIn)
+  return {
+    getServer,
+    completeSignIn,
+    openSignedInPage,
+    signInAndOpenSignedInPage
   }
+}
 
-  beforeEach(() => {
-    serveOidcDiscovery(idmDiscoveryDocument, {
-      provider: hiddenIdmSignInProvider
-    })
-    idmKeysRequest({ persist: true }).reply(statusCodes.ok, {
-      keys: [signingKey.publicJwk]
-    })
-  })
+describe('IDM sign-in, with an IDM discovery URL', () => {
+  const { getServer, openSignedInPage } = startIdmSignInServer()
 
   sendsServiceSignInToDefraId(getServer)
 
@@ -334,7 +347,7 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
       p: 'b2c_1a_cui_cpdev_signupsignin',
       response_mode: 'query',
       redirect_uri: 'http://localhost:3002/auth/callback',
-      scope: 'openid offline_access idm-client-id'
+      scope: IDM_REQUESTED_SCOPE
     })
   })
 
@@ -359,7 +372,7 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
           access_token: idToken,
           token_type: 'Bearer',
           expires_in: 1800,
-          scope: 'openid offline_access idm-client-id',
+          scope: IDM_REQUESTED_SCOPE,
           refresh_token: 'idm-refresh-token'
         })
       const goToIdm = await getServer().inject({
@@ -380,7 +393,7 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
         summaryListOf(cheerio.load(page.payload), 'token-response')
       ).toEqual({
         expires_in: '1800',
-        scope: 'openid offline_access idm-client-id',
+        scope: IDM_REQUESTED_SCOPE,
         'refresh token returned': 'Yes'
       })
       const exchange = await awaitEmfDocumentForOperation(
@@ -391,6 +404,11 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
       expect(exchange.ExternalCallFailure).toBe(0)
     })
   })
+})
+
+describe('IDM sign-in, once IDM returns a sign-in', () => {
+  const { getServer, completeSignIn, signInAndOpenSignedInPage } =
+    startIdmSignInServer()
 
   test('Should redirect a verified sign-in to the signed-in page', async () => {
     const { statusCode, headers } = await completeSignIn({
@@ -454,23 +472,28 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
       serviceSession
     )
   })
+})
+
+describe('IDM sign-in, when the sign-in fails or ends', () => {
+  const { getServer, openSignedInPage } = startIdmSignInServer()
+  const { entriesWith: errorLogs } = recordModuleLoggerError()
 
   test('Should show the unable to sign in page, linking back to the start page, and log the error in full, when IDM returns an error', async () => {
     const { statusCode, payload } = await getServer().inject({
       method: 'GET',
-      url: `${idmPaths.callback}?error=access_denied&error_description=AADB2C90091&state=idm-state`
+      url: `${idmPaths.callback}?${IDM_ERROR_QUERY}`
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     expectUnableToSignInPage(payload)
-    expect(payload).not.toContain('AADB2C90091')
+    expect(payload).not.toContain(IDM_ERROR_DESCRIPTION)
     expect(errorLogs(SIGN_IN_FAILED)).toEqual([
       {
         fields: {
           err: expect.any(Error),
           idmError: 'access_denied',
-          idmErrorDescription: 'AADB2C90091',
-          state: 'idm-state'
+          idmErrorDescription: IDM_ERROR_DESCRIPTION,
+          state: IDM_STATE
         },
         message: SIGN_IN_FAILED
       }
@@ -480,18 +503,18 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
   test('Should show the unable to sign in page, not the signed-out page, and log the error in full, when IDM returns an error to the signed-out page', async () => {
     const { statusCode, payload } = await getServer().inject({
       method: 'GET',
-      url: `${idmPaths.signedOut}?error=access_denied&error_description=AADB2C90091&state=idm-state`
+      url: `${idmPaths.signedOut}?${IDM_ERROR_QUERY}`
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     expectUnableToSignInPage(payload)
-    expect(payload).not.toContain('AADB2C90091')
+    expect(payload).not.toContain(IDM_ERROR_DESCRIPTION)
     expect(errorLogs(SIGN_IN_FAILED)).toEqual([
       {
         fields: {
           idmError: 'access_denied',
-          idmErrorDescription: 'AADB2C90091',
-          state: 'idm-state'
+          idmErrorDescription: IDM_ERROR_DESCRIPTION,
+          state: IDM_STATE
         },
         message: SIGN_IN_FAILED
       }
@@ -503,7 +526,7 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
 
     const { payload } = await getServer().inject({
       method: 'GET',
-      url: `${idmPaths.callback}?state=idm-state`,
+      url: `${idmPaths.callback}?state=${IDM_STATE}`,
       auth: idmAuth({ idToken: idTokenSignedWith(otherKey) })
     })
 
@@ -512,7 +535,7 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
       {
         fields: {
           err: expect.any(Error),
-          state: 'idm-state',
+          state: IDM_STATE,
           contactId: 'contact-1',
           sessionId: 'idm-session-1',
           correlationId: 'correlation-1'
