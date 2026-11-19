@@ -77,18 +77,18 @@ const idmIdsOf = ({ contactId, sessionId, correlationId }) => ({
 const decodedAccessTokenClaims = (accessToken, idToken) =>
   accessToken === idToken ? undefined : claimsOf(accessToken)
 
-const refuseSignIn = (request, h, err) => {
-  logger.error(
-    {
-      err,
-      idmError: request.query.error,
-      idmErrorDescription: request.query.error_description,
-      state: request.query.state
-    },
-    'IDM sign-in failed'
-  )
+const idmErrorOf = (query) => ({
+  idmError: query.error,
+  idmErrorDescription: query.error_description,
+  state: query.state
+})
+
+const refuseSignIn = (h, fields, message) => {
+  logger.error(fields, message)
   return renderUnableToSignIn(h, { signInUrl: idmPaths.signIn })
 }
+
+const signInFailed = 'IDM sign-in failed'
 
 const showSignIn = (_request, h) =>
   h.view('auth/idm-sign-in', {
@@ -102,7 +102,11 @@ const completeSignIn = async (request, h) => {
   recordTokenExchange(request, hiddenIdmSignInProvider)
 
   if (!request.auth.isAuthenticated) {
-    return refuseSignIn(request, h, request.auth.error)
+    return refuseSignIn(
+      h,
+      { err: request.auth.error, ...idmErrorOf(request.query) },
+      signInFailed
+    )
   }
 
   const { token: accessToken, profile } = request.auth.credentials
@@ -110,7 +114,8 @@ const completeSignIn = async (request, h) => {
   try {
     await verifyToken(profile.idToken, hiddenIdmSignInProvider)
   } catch (err) {
-    logger.error(
+    return refuseSignIn(
+      h,
       {
         err,
         state: request.query.state,
@@ -118,7 +123,6 @@ const completeSignIn = async (request, h) => {
       },
       'IDM ID token refused'
     )
-    return renderUnableToSignIn(h, { signInUrl: idmPaths.signIn })
   }
 
   const idTokenClaims = claimsOf(profile.idToken)
@@ -151,7 +155,7 @@ const showSignedIn = (request, h) => {
 
 const showSignedOut = (request, h) => {
   if (request.query.error) {
-    return refuseSignIn(request, h)
+    return refuseSignIn(h, idmErrorOf(request.query), signInFailed)
   }
 
   return h.view('auth/idm-signed-out', base('Signed out'))
