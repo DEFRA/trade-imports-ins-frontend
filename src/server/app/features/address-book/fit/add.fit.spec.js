@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 
 import {
   addValidAddressToFreshOrganisation,
+  addressReturnAfterSaveAndSelect,
   addressTypeListUrl,
   backLink,
   expectEveryCountryOffered,
@@ -47,7 +48,6 @@ import {
   FIELDS_WITHOUT_AUTOCOMPLETE
 } from '../../../../common/test-helpers/address-form-autocomplete.js'
 import {
-  ANIMALS_BASE_URL,
   CONSIGNMENT_CONTACT_HANDSHAKE,
   GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
   JOURNEY_HANDSHAKES_BY_PARTY,
@@ -543,20 +543,12 @@ test.describe('add address reached from a notification journey with JavaScript o
   test('Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer roles', async ({
     page
   }) => {
-    await page.route(`${ANIMALS_BASE_URL}/**`, (route) => route.abort())
-    await openAddFormFromJourney(
-      page,
-      `stub-org-add-journey-ticked-${crypto.randomUUID()}`,
-      JOURNEY_HANDSHAKES_BY_PARTY.consignee
-    )
-    await fillValidAddress(page)
-    await tickRoles(page, ['IMPORTER'])
-    const journeyReturn = page.waitForRequest((request) =>
-      request.url().includes('/address-return')
-    )
-    await page.getByRole('button', { name: copy.add.saveAndSelect }).click()
+    const returnUrl = await addressReturnAfterSaveAndSelect(page, {
+      handshake: JOURNEY_HANDSHAKES_BY_PARTY.consignee,
+      organisationId: `stub-org-add-journey-ticked-${crypto.randomUUID()}`,
+      beforeSave: () => tickRoles(page, ['IMPORTER'])
+    })
 
-    const returnUrl = new URL((await journeyReturn).url())
     expect(returnUrl.searchParams.get('addressId')).toBeTruthy()
     expect(returnUrl.searchParams.get('landing')).toBe(ADDRESS_LANDING.SELECT)
 
@@ -600,19 +592,11 @@ test.describe('add address reached from a germinal products notification journey
   test('Save and select sends the browser to that notification germinal products return carrying the saved address id and the select landing', async ({
     page
   }) => {
-    await page.route(`${ANIMALS_BASE_URL}/**`, (route) => route.abort())
-    await openAddFormFromJourney(
-      page,
-      `stub-org-add-germinal-journey-save-${crypto.randomUUID()}`,
-      handshake
-    )
-    await fillValidAddress(page)
-    const journeyReturn = page.waitForRequest((request) =>
-      request.url().includes('/address-return')
-    )
-    await page.getByRole('button', { name: copy.add.saveAndSelect }).click()
+    const returnUrl = await addressReturnAfterSaveAndSelect(page, {
+      handshake,
+      organisationId: `stub-org-add-germinal-journey-save-${crypto.randomUUID()}`
+    })
 
-    const returnUrl = new URL((await journeyReturn).url())
     expect(returnUrl.pathname).toBe(new URL(returnUrlFor(handshake)).pathname)
     expect(returnUrl.searchParams.get('addressId')).toBeTruthy()
     expect(returnUrl.searchParams.get('landing')).toBe(ADDRESS_LANDING.SELECT)

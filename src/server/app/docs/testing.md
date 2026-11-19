@@ -105,8 +105,8 @@ registered germinal products journey, `ANIMALS_BASE_URL`, the animals
 frontend's base URL every return URL starts with, and
 `returnUrlFor(handshake, { addressId, landing })`, the return URL a test
 expects for a handshake, built from that handshake's own journey type (through
-a table the helper keeps itself) as well as its ids and token; the Vitest
-tests and the fit specs both use these;
+a table keyed by the registry's `JOURNEY_TYPES`) as well as its ids and
+token; the Vitest tests and the fit specs both use these;
 `ROLES_BY_PARTY`, each party's own role and the other roles on its
 side, shared by both journeys since both registered entries hold the one
 party-to-role map, `journeyRolesHintFor(party)`, the roles question's hint
@@ -283,7 +283,11 @@ origin, and lands on that type's list; `emptyBook: true` signs in to an
 organisation the stub seeds no address for), `refuseSaveThenReopenAddForm`
 (saves a form with a malformed email, follows Back and chooses the type again), `malformedEmail` (an email value the form refuses as malformed),
 `validAddressViewLink`, the two
-validation tables.
+validation tables, `addressReturnAfterSaveAndSelect` (aborts every outbound
+animals-frontend request, opens the add form from a journey handshake for a
+per-run organisation, fills a valid address, runs the caller's `beforeSave`
+step if given, clicks Save and select, and resolves to the URL of the
+captured `/address-return` request).
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
 `UNSUPPORTED_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE`
 and the role-backed tabs' `TABLE_HEADINGS` and the Transporter tab's

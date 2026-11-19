@@ -38,7 +38,6 @@ import {
   CONSIGNMENT_CONTACT_HANDSHAKE,
   GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE,
   GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
-  GERMINAL_PRODUCTS_JOURNEY_TYPE,
   INCOMPLETE_HANDSHAKE_WARNING,
   JOURNEY_HANDSHAKES_BY_PARTY,
   journeyRolesHintFor,
@@ -1536,7 +1535,7 @@ describe(
         {
           fields: {
             organisationId: ORGANISATION_ID,
-            journeyType: GERMINAL_PRODUCTS_JOURNEY_TYPE,
+            journeyType: GERMINAL_CONSIGNOR_HANDSHAKE['journey-type'],
             addressId: ADDRESS_ID,
             notificationId: GERMINAL_CONSIGNOR_HANDSHAKE['notification-id'],
             fulfilmentId: GERMINAL_CONSIGNOR_HANDSHAKE['fulfilment-id'],

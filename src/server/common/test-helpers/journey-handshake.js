@@ -1,12 +1,13 @@
 import { copy } from '../../app/features/address-book/copy/copy.en.js'
-import { CONSIGNMENT_CONTACT_FULFILMENT_ID } from '../../app/features/address-book/journey-registry.js'
-
-const GBN_AG_JOURNEY_TYPE = 'gbn-ag'
+import {
+  CONSIGNMENT_CONTACT_FULFILMENT_ID,
+  JOURNEY_TYPES
+} from '../../app/features/address-book/journey-registry.js'
 
 const handshakeForFulfilmentId = (
   fulfilmentId,
   {
-    journeyType = GBN_AG_JOURNEY_TYPE,
+    journeyType = JOURNEY_TYPES.GBN_AG,
     notificationId = 'GBN-AG-26-4F7K2P'
   } = {}
 ) =>
@@ -29,11 +30,9 @@ export const JOURNEY_HANDSHAKES_BY_PARTY = Object.freeze({
   )
 })
 
-export const GERMINAL_PRODUCTS_JOURNEY_TYPE = 'gbn-ag-germinal-products'
-
 const germinalProductsHandshakeForFulfilmentId = (fulfilmentId) =>
   handshakeForFulfilmentId(fulfilmentId, {
-    journeyType: GERMINAL_PRODUCTS_JOURNEY_TYPE,
+    journeyType: JOURNEY_TYPES.GBN_AG_GERMINAL_PRODUCTS,
     notificationId: 'GBN-AG-26-9K3M7Q'
   })
 
@@ -101,8 +100,8 @@ export const GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE =
 export const ANIMALS_BASE_URL = 'http://localhost:3000'
 
 const SET_BASE_BY_JOURNEY_TYPE = Object.freeze({
-  [GBN_AG_JOURNEY_TYPE]: '/live-animals',
-  [GERMINAL_PRODUCTS_JOURNEY_TYPE]: '/germinal-products'
+  [JOURNEY_TYPES.GBN_AG]: '/live-animals',
+  [JOURNEY_TYPES.GBN_AG_GERMINAL_PRODUCTS]: '/germinal-products'
 })
 
 export const returnUrlFor = (handshake, { addressId, landing } = {}) => {

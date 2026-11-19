@@ -14,7 +14,10 @@ import {
   addressTypePath
 } from '../../../shared/paths.js'
 import { signInAndOpen } from '../../../../../../fit/sign-in.js'
-import { JOURNEY_HANDSHAKES_BY_PARTY } from '../../../../common/test-helpers/journey-handshake.js'
+import {
+  ANIMALS_BASE_URL,
+  JOURNEY_HANDSHAKES_BY_PARTY
+} from '../../../../common/test-helpers/journey-handshake.js'
 
 export const fieldLabels = copy.form.fields
 
@@ -274,4 +277,31 @@ export const openAddFormFromJourney = async (
     organisationId,
     `${addressAddPath()}?${new URLSearchParams(handshake)}`
   )
+}
+
+/**
+ * Opens the add form from a journey handshake for a per-run organisation,
+ * fills a valid address and saves it with Save and select, having aborted
+ * every outbound animals-frontend request first.
+ *
+ * @param {object} page - the Playwright page.
+ * @param {object} options
+ * @param {object} options.handshake - the journey handshake to open the form from.
+ * @param {string} options.organisationId - the organisation to sign in as.
+ * @param {Function} [options.beforeSave] - a step run after the address is filled and before Save and select is clicked, for a caller that ticks a role first.
+ * @returns {Promise<URL>} the URL of the captured `/address-return` request.
+ */
+export const addressReturnAfterSaveAndSelect = async (
+  page,
+  { handshake, organisationId, beforeSave }
+) => {
+  await page.route(`${ANIMALS_BASE_URL}/**`, (route) => route.abort())
+  await openAddFormFromJourney(page, organisationId, handshake)
+  await fillValidAddress(page)
+  await beforeSave?.()
+  const addressReturn = page.waitForRequest((request) =>
+    request.url().includes('/address-return')
+  )
+  await page.getByRole('button', { name: copy.add.saveAndSelect }).click()
+  return new URL((await addressReturn).url())
 }
