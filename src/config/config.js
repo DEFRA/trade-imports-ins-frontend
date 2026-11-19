@@ -262,9 +262,10 @@ export const config = convict({
   },
   idm: {
     oidcDiscoveryUrl: {
-      doc: 'Hidden IDM sign-in: OIDC well-known configuration URL of the real Defra ID (IDM). Empty leaves the IDM sign-in pages unserved.',
-      format: String,
-      default: '',
+      doc: 'Hidden IDM sign-in: OIDC well-known configuration URL of the real Defra ID (IDM). Unset leaves the IDM sign-in pages unserved.',
+      format: 'url',
+      nullable: true,
+      default: null,
       env: 'IDM_OIDC_CONFIGURATION_URL'
     },
     clientId: {
@@ -294,7 +295,7 @@ export const config = convict({
     },
     redirectUrl: {
       doc: 'Hidden IDM sign-in: redirect URL IDM returns to after sign-in (OIDC callback)',
-      format: String,
+      format: 'url',
       default: 'http://localhost:3002/auth/callback',
       env: 'IDM_REDIRECT_URL'
     }
