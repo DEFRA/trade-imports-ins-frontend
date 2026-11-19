@@ -3,7 +3,7 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block journeyContent %}
-  <h1 class="govuk-heading-l">Sign in with Defra ID</h1>
+  <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
   <p class="govuk-body">Sign in through the real Defra ID in CP-Dev to see the tokens it returns.</p>
   {{ govukButton({
     text: "Sign in with Defra ID",

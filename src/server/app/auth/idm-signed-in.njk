@@ -3,7 +3,7 @@
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 
 {% block journeyContent %}
-  <h1 class="govuk-heading-l">Signed in</h1>
+  <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
 
   <h2 class="govuk-heading-m">ID token claims</h2>
   {{ govukSummaryList({
