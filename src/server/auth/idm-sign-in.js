@@ -3,6 +3,7 @@ import Jwt from '@hapi/jwt'
 import { idmProvider, providerSetting } from '../../auth/identity-providers.js'
 import { recordTokenExchange } from '../../auth/token-exchange-timer.js'
 import { verifyToken } from '../../auth/verify-token.js'
+import { renderUnableToSignIn } from './controller.js'
 import { getOidcConfigWithRetry } from '../../auth/get-oidc-config-with-retry.js'
 import { IDM_STRATEGY, registerIdmStrategy } from '../../plugins/idm-auth.js'
 import {
@@ -11,7 +12,7 @@ import {
   idmSignedOutPage,
   unauthorisedPage
 } from '../app/auth/page.js'
-import { base, sharedCopy, SURFACES } from '../app/shared/kit.js'
+import { base, SURFACES } from '../app/shared/kit.js'
 import { createLogger } from '../common/helpers/logging/logger.js'
 
 const logger = createLogger()
@@ -58,12 +59,6 @@ const claimsOf = (token) => Jwt.token.decode(token).decoded.payload
 const decodedAccessTokenClaims = (accessToken, idToken) =>
   accessToken === idToken ? undefined : claimsOf(accessToken)
 
-const unableToSignIn = (h) =>
-  h.view('auth/unauthorised', {
-    ...base(sharedCopy.unauthorised.title),
-    signInUrl: idmPaths.signIn
-  })
-
 const refuseSignIn = (request, h, err) => {
   logger.error(
     {
@@ -74,7 +69,7 @@ const refuseSignIn = (request, h, err) => {
     },
     'IDM sign-in failed'
   )
-  return unableToSignIn(h)
+  return renderUnableToSignIn(h, { signInUrl: idmPaths.signIn })
 }
 
 const showSignIn = (_request, h) =>
@@ -98,7 +93,7 @@ const completeSignIn = async (request, h) => {
     await verifyToken(profile.idToken, idmProvider)
   } catch (err) {
     logger.error({ err }, 'IDM ID token refused')
-    return unableToSignIn(h)
+    return renderUnableToSignIn(h, { signInUrl: idmPaths.signIn })
   }
 
   const idTokenClaims = claimsOf(profile.idToken)

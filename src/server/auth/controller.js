@@ -6,7 +6,20 @@ import { getSafeRedirect } from '../../auth/get-safe-redirect.js'
 import { recordTokenExchange } from '../../auth/token-exchange-timer.js'
 import { base, sharedCopy } from '../app/shared/kit.js'
 
-const UNAUTHORISED_VIEW = 'auth/unauthorised'
+export const SIGN_IN_PATH = '/auth/sign-in'
+
+/**
+ * Renders the page saying the service is unable to sign the user in.
+ *
+ * @param {object} h - the Hapi response toolkit
+ * @param {{ signInUrl: string }} options - where the page's try-again link goes
+ * @returns {object} the rendered view
+ */
+export const renderUnableToSignIn = (h, { signInUrl }) =>
+  h.view('auth/unauthorised', {
+    ...base(sharedCopy.unauthorised.title),
+    signInUrl
+  })
 
 export const authController = {
   signin: {
@@ -31,7 +44,7 @@ export const authController = {
           },
           'Bell auth failed for /auth/sign-in-oidc'
         )
-        return h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))
+        return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
       }
 
       const { profile, token, refreshToken } = request.auth.credentials
@@ -41,7 +54,7 @@ export const authController = {
           { crn: profile.crn },
           'Sign-in rejected: missing organisationId in Defra ID token'
         )
-        return h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))
+        return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
       }
 
       // verify token returned from Defra Identity against public key
@@ -52,7 +65,7 @@ export const authController = {
           { err },
           'Token verification failed for /auth/sign-in-oidc'
         )
-        return h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))
+        return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
       }
 
       // Typically permissions for the selected organisation would be available in the `roles` property of the token
@@ -72,7 +85,7 @@ export const authController = {
           { err },
           'Failed to load user permissions at sign-in'
         )
-        return h.view(UNAUTHORISED_VIEW, base(sharedCopy.unauthorised.title))
+        return renderUnableToSignIn(h, { signInUrl: SIGN_IN_PATH })
       }
 
       // Store token and all useful data in the session cache

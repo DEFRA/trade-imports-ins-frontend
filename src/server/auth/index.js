@@ -1,5 +1,5 @@
 import { unauthorisedPage } from '../app/auth/page.js'
-import { authController } from './controller.js'
+import { authController, SIGN_IN_PATH } from './controller.js'
 
 export const authRoutes = {
   plugin: {
@@ -8,7 +8,7 @@ export const authRoutes = {
       server.route([
         {
           method: 'GET',
-          path: '/auth/sign-in',
+          path: SIGN_IN_PATH,
           options: {
             auth: 'defra-id'
           },
