@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach } from 'vitest'
+import { afterAll, beforeAll, beforeEach, vi } from 'vitest'
 
 import { createServer } from '../../server.js'
 import { runInRealMode, serveCountries } from './real-mode.js'
@@ -12,6 +12,26 @@ export async function startTestServer() {
 
 export async function stopTestServer(server) {
   await server.stop({ timeout: 0 })
+}
+
+export const startServerPastDiscoveryRetries = async () => {
+  const fakeStepMs = 10
+  vi.useFakeTimers({ toFake: ['setTimeout'] })
+  try {
+    const start = { settled: false }
+    const starting = startTestServer()
+    starting.then(
+      () => (start.settled = true),
+      () => (start.settled = true)
+    )
+    while (!start.settled) {
+      await new Promise((resolve) => setImmediate(resolve))
+      await vi.advanceTimersByTimeAsync(fakeStepMs)
+    }
+    return await starting
+  } finally {
+    vi.useRealTimers()
+  }
 }
 
 export const startRealModeServer = () => {

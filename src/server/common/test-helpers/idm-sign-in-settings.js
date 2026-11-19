@@ -1,4 +1,5 @@
 import nock from 'nock'
+import { afterAll, beforeAll } from 'vitest'
 
 import {
   hiddenIdmSignInProvider,
@@ -36,4 +37,18 @@ export const applyIdmSettings = () => {
   for (const [setting, value] of Object.entries(idmSettings)) {
     config.set(providerSettingKey(hiddenIdmSignInProvider, setting), value)
   }
+}
+
+export const configureIdm = () => {
+  const originalValues = Object.fromEntries(
+    idmSettingKeys.map((key) => [key, config.get(key)])
+  )
+  beforeAll(() => {
+    applyIdmSettings()
+  })
+  afterAll(() => {
+    for (const [key, value] of Object.entries(originalValues)) {
+      config.set(key, value)
+    }
+  })
 }

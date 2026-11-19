@@ -1,50 +1,78 @@
 import Jwt from '@hapi/jwt'
-import { describe, expect, test, vi, beforeEach } from 'vitest'
-import { serviceSignInProvider } from '../auth/identity-providers.js'
+import nock from 'nock'
 import {
-  authPlugin,
-  getBellOptions,
-  getCookieOptions,
-  SERVICE_SIGN_IN_STRATEGY
-} from './auth.js'
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vitest'
 
-const getOidcConfigWithRetryMock = vi.hoisted(() => vi.fn())
-const configGetMock = vi.hoisted(() => vi.fn())
-const refreshTokensMock = vi.hoisted(() => vi.fn())
-const getSafeRedirectMock = vi.hoisted(() => vi.fn())
-const isStubModeMock = vi.hoisted(() => vi.fn())
+import {
+  hiddenIdmSignInProvider,
+  providerSettingKey,
+  serviceSignInProvider
+} from '../auth/identity-providers.js'
+import { config } from '../config/config.js'
+import { statusCodes } from '../server/common/constants/status-codes.js'
+import {
+  configureIdm,
+  idmDiscoveryDocument
+} from '../server/common/test-helpers/idm-sign-in-settings.js'
+import { mockOidcConfig } from '../server/common/test-helpers/mock-oidc-config.js'
+import {
+  runInRealMode,
+  runInStubMode
+} from '../server/common/test-helpers/real-mode.js'
+import { restoreConfigAfterEach } from '../server/common/test-helpers/restore-config-after-each.js'
+import {
+  discoveryUrlRequest,
+  runAgainstServedOidcDiscovery,
+  serveOidcDiscovery
+} from '../server/common/test-helpers/serve-oidc-discovery.js'
+import {
+  startRealModeServer,
+  startServerPastDiscoveryRetries,
+  startTestServer,
+  stopTestServer
+} from '../server/common/test-helpers/test-server.js'
+import { getBellOptions, getCookieOptions } from './auth.js'
 
-vi.mock('../auth/get-oidc-config-with-retry.js', () => ({
-  getOidcConfigWithRetry: getOidcConfigWithRetryMock
-}))
-
-vi.mock('../config/config.js', () => ({
-  config: {
-    get: configGetMock
-  }
-}))
-
-vi.mock('../auth/refresh-tokens.js', () => ({
-  refreshTokens: refreshTokensMock
-}))
-
-vi.mock('../auth/get-safe-redirect.js', () => ({
-  getSafeRedirect: getSafeRedirectMock
-}))
-
-vi.mock('../server/common/services/mode.js', () => ({
-  isStubMode: isStubModeMock
-}))
-
-vi.mock('../server/common/helpers/logging/logger.js', () => ({
-  createLogger: () => ({
-    warn: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn()
-  })
-}))
+vi.mock('../config/config.js', async (importOriginal) => {
+  const { mockAuthConfig } =
+    await import('../server/common/test-helpers/mock-auth-config.js')
+  return mockAuthConfig(importOriginal)
+})
 
 const AUTH_COOKIE_NAME = 'test-auth-cookie'
+const PROTECTED_PAGE = '/address-book?page=2'
+const SIGN_IN_FOR_PROTECTED_PAGE =
+  '/auth/sign-in?redirect=%2Faddress-book%3Fpage%3D2'
+
+const settingKey = (setting) =>
+  providerSettingKey(serviceSignInProvider, setting)
+
+const testSettings = {
+  [settingKey('clientId')]: 'test-client-id',
+  [settingKey('clientSecret')]: 'test-client-secret',
+  [settingKey('redirectUrl')]: 'http://localhost:3000/auth/sign-in-oidc',
+  [settingKey('serviceId')]: 'service-123',
+  [settingKey('policy')]: 'policy-abc',
+  [settingKey('refreshTokens')]: true,
+  'auth.cookieName': AUTH_COOKIE_NAME
+}
+
+const applyTestSettings = () => {
+  restoreConfigAfterEach(Object.keys(testSettings))
+
+  beforeEach(() => {
+    for (const [key, value] of Object.entries(testSettings)) {
+      config.set(key, value)
+    }
+  })
+}
 
 const tokenExpiringIn = (ttlSec, payload = {}) =>
   Jwt.token.generate(
@@ -57,116 +85,122 @@ const SECONDS_PER_HOUR = 3600
 const unexpiredToken = tokenExpiringIn(SECONDS_PER_HOUR)
 const expiredToken = tokenExpiringIn(-SECONDS_PER_HOUR)
 
-describe('auth plugin', () => {
+const requestHoldingYar = (query) => {
+  const held = new Map()
+  return {
+    held,
+    request: { query, yar: { set: (key, value) => held.set(key, value) } }
+  }
+}
+
+const requestWithSessionCache = (cached) => {
+  const held = new Map(Object.entries(cached))
+  return {
+    held,
+    request: {
+      server: {
+        app: {
+          cache: {
+            get: async (sessionId) =>
+              held.has(sessionId) ? structuredClone(held.get(sessionId)) : null,
+            set: async (sessionId, value) =>
+              held.set(sessionId, structuredClone(value))
+          }
+        }
+      }
+    }
+  }
+}
+
+const refreshRequestForOldRefreshToken = () => {
+  const tokenUrl = new URL(mockOidcConfig.token_endpoint)
+  return nock(tokenUrl.origin).post(
+    tokenUrl.pathname,
+    (body) => body.refresh_token === 'old-refresh'
+  )
+}
+
+describe('#authPlugin, with Defra ID and IDM discovery served', () => {
+  configureIdm()
+  beforeAll(() => {
+    serveOidcDiscovery(idmDiscoveryDocument, {
+      provider: hiddenIdmSignInProvider
+    })
+  })
+  const getServer = startRealModeServer()
+
+  test('Should send /auth/sign-in to the authorize endpoint of the Defra ID discovery document, as the Defra ID client', async () => {
+    const { statusCode, headers } = await getServer().inject({
+      method: 'GET',
+      url: '/auth/sign-in'
+    })
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    const authorizeUrl = new URL(headers.location)
+    expect(`${authorizeUrl.origin}${authorizeUrl.pathname}`).toBe(
+      mockOidcConfig.authorization_endpoint
+    )
+    expect(authorizeUrl.searchParams.get('client_id')).toBe(
+      config.get(settingKey('clientId'))
+    )
+  })
+
+  test('Should send a request with no session to /auth/sign-in with its return path', async () => {
+    const { statusCode, headers } = await getServer().inject({
+      method: 'GET',
+      url: PROTECTED_PAGE
+    })
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe(SIGN_IN_FOR_PROTECTED_PAGE)
+  })
+})
+
+describe('#authPlugin, in stub mode', () => {
+  runInStubMode()
+
+  let server
+
+  afterEach(async () => {
+    await stopTestServer(server)
+  })
+
+  test('Should start with no discovery served and send a request with no session to /auth/sign-in', async () => {
+    server = await startTestServer()
+
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: PROTECTED_PAGE
+    })
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toBe(SIGN_IN_FOR_PROTECTED_PAGE)
+  })
+})
+
+describe('#authPlugin, when Defra ID discovery fails', () => {
+  runInRealMode()
+
+  test('Should refuse to start, naming the discovery URL and the attempts made', async () => {
+    discoveryUrlRequest({ persist: true }).reply(
+      statusCodes.internalServerError
+    )
+
+    await expect(startServerPastDiscoveryRetries()).rejects.toThrow(
+      `OIDC discovery at ${config.get(settingKey('oidcDiscoveryUrl'))} failed after 4 attempts`
+    )
+  })
+})
+
+describe('#getBellOptions', () => {
+  applyTestSettings()
+
   const oidcConfig = {
     authorization_endpoint: 'https://idp.example.com/auth',
     token_endpoint: 'https://idp.example.com/token'
   }
-  const buildServer = () => ({
-    auth: {
-      strategy: vi.fn(),
-      default: vi.fn()
-    },
-    logger: { warn: vi.fn() }
-  })
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-
-    isStubModeMock.mockReturnValue(false)
-    getOidcConfigWithRetryMock.mockResolvedValue(oidcConfig)
-
-    configGetMock.mockImplementation((key) => {
-      const map = {
-        'defraId.clientId': 'test-client-id',
-        'defraId.clientSecret': 'test-client-secret',
-        'session.cookie.password': 'some-password-32-chars-long-000000',
-        'auth.cookieName': AUTH_COOKIE_NAME,
-        isProduction: false,
-        'session.cookie.sameSite': 'Lax',
-        'defraId.redirectUrl': 'http://localhost:3000/auth/sign-in-oidc',
-        'defraId.serviceId': 'service-123',
-        'defraId.policy': 'policy-abc',
-        'defraId.refreshTokens': true
-      }
-
-      return map[key]
-    })
-  })
-
-  test('register registers Bell + cookie strategies and sets default auth to session', async () => {
-    const server = buildServer()
-
-    await authPlugin.plugin.register(server)
-
-    expect(getOidcConfigWithRetryMock).toHaveBeenCalledWith(
-      server.logger,
-      serviceSignInProvider
-    )
-
-    expect(server.auth.strategy).toHaveBeenCalledWith(
-      SERVICE_SIGN_IN_STRATEGY,
-      'bell',
-      expect.objectContaining({
-        provider: expect.objectContaining({
-          auth: oidcConfig.authorization_endpoint,
-          token: expect.any(Function)
-        }),
-        clientId: 'test-client-id',
-        clientSecret: 'test-client-secret',
-        password: expect.any(String)
-      })
-    )
-
-    expect(server.auth.strategy).toHaveBeenCalledWith(
-      'session',
-      'cookie',
-      expect.objectContaining({
-        cookie: expect.objectContaining({
-          password: expect.any(String),
-          path: '/'
-        }),
-        redirectTo: expect.any(Function),
-        validate: expect.any(Function)
-      })
-    )
-
-    expect(server.auth.default).toHaveBeenCalledWith('session')
-    expect(isStubModeMock).toHaveBeenCalled()
-  })
-
-  test('register skips Bell and the OIDC fetch in stub mode, still enforcing session auth', async () => {
-    isStubModeMock.mockReturnValue(true)
-    const server = buildServer()
-
-    await authPlugin.plugin.register(server)
-
-    expect(server.auth.strategy).toHaveBeenCalledTimes(1)
-    expect(server.auth.strategy.mock.calls[0][0]).toBe('session')
-    expect(server.auth.default).toHaveBeenCalledWith('session')
-    expect(getOidcConfigWithRetryMock).not.toHaveBeenCalled()
-  })
-
-  test('register registers no Bell strategy when OIDC discovery fails', async () => {
-    getOidcConfigWithRetryMock.mockRejectedValue(
-      new Error(
-        'OIDC discovery at https://idp.example.com/.well-known/openid-configuration failed after 4 attempts'
-      )
-    )
-    const server = buildServer()
-
-    await expect(authPlugin.plugin.register(server)).rejects.toThrow(
-      'OIDC discovery at'
-    )
-
-    expect(server.auth.strategy).not.toHaveBeenCalledWith(
-      SERVICE_SIGN_IN_STRATEGY,
-      'bell',
-      expect.anything()
-    )
-  })
-
-  test('getBellOptions.provider.token returns the token endpoint and marks when the exchange started', () => {
+  test('Should return the token endpoint from provider.token and mark when the exchange started', () => {
     const request = { app: {} }
 
     const token = getBellOptions(oidcConfig).provider.token(request)
@@ -175,42 +209,35 @@ describe('auth plugin', () => {
     expect(request.app.tokenExchangeStartedAt).toEqual(expect.any(Number))
   })
 
-  test('getBellOptions.location stores safe redirect and returns redirectUrl', () => {
-    const options = getBellOptions(oidcConfig)
+  test('Should hold the requested return path in yar and return the redirect URL from location', () => {
+    const { held, request } = requestHoldingYar({ redirect: '/some/path?x=1' })
 
-    const request = {
-      query: { redirect: '/some/path?x=1' },
-      yar: {
-        set: vi.fn()
-      }
-    }
+    const location = getBellOptions(oidcConfig).location(request)
 
-    getSafeRedirectMock.mockReturnValue('/safe/redirect')
-
-    const location = options.location(request)
-
-    expect(getSafeRedirectMock).toHaveBeenCalledWith('/some/path?x=1')
-    expect(request.yar.set).toHaveBeenCalledWith('redirect', '/safe/redirect')
+    expect(Object.fromEntries(held)).toEqual({ redirect: '/some/path?x=1' })
     expect(location).toBe('http://localhost:3000/auth/sign-in-oidc')
   })
 
-  test('getBellOptions.location stores nothing when no redirect is requested', () => {
-    const options = getBellOptions(oidcConfig)
+  test('Should hold the root in yar when the requested return path is off-site', () => {
+    const { held, request } = requestHoldingYar({
+      redirect: '//evil.example.com/harvest'
+    })
 
-    const request = {
-      query: {},
-      yar: {
-        set: vi.fn()
-      }
-    }
+    getBellOptions(oidcConfig).location(request)
 
-    const location = options.location(request)
+    expect(Object.fromEntries(held)).toEqual({ redirect: '/' })
+  })
 
-    expect(request.yar.set).not.toHaveBeenCalled()
+  test('Should hold nothing in yar when no return path is requested', () => {
+    const { held, request } = requestHoldingYar({})
+
+    const location = getBellOptions(oidcConfig).location(request)
+
+    expect(held.size).toBe(0)
     expect(location).toBe('http://localhost:3000/auth/sign-in-oidc')
   })
 
-  test('getBellOptions.providerParams adds forceReselection for /auth/organisation', () => {
+  test('Should add forceReselection, and the requested relationship, to providerParams for /auth/organisation only', () => {
     const options = getBellOptions(oidcConfig)
 
     const base = options.providerParams({
@@ -250,7 +277,7 @@ describe('auth plugin', () => {
     })
   })
 
-  test('getBellOptions.provider.profile maps decoded JWT payload to credentials.profile', () => {
+  test('Should map the decoded JWT payload to credentials.profile', () => {
     const options = getBellOptions(oidcConfig)
 
     const payload = {
@@ -270,180 +297,151 @@ describe('auth plugin', () => {
       organisationId: 'REL-1'
     })
   })
+})
 
-  describe('getCookieOptions', () => {
-    const buildRequestWithCachedSession = (userSession) => ({
-      server: {
-        app: {
-          cache: {
-            get: vi.fn().mockResolvedValue(userSession),
-            set: vi.fn()
-          }
-        }
+describe('#getCookieOptions', () => {
+  applyTestSettings()
+  runAgainstServedOidcDiscovery(mockOidcConfig, {
+    restoringConfigKeys: ['stubMode']
+  })
+
+  test('Should use the configured auth cookie name', () => {
+    expect(getCookieOptions().cookie.name).toBe(AUTH_COOKIE_NAME)
+  })
+
+  test('Should build the /auth/sign-in redirect from the pathname and search', () => {
+    const redirect = getCookieOptions().redirectTo({
+      url: {
+        pathname: '/origin',
+        search: '?a=1'
       }
     })
 
-    test('uses the configured auth cookie name', () => {
-      expect(getCookieOptions().cookie.name).toBe(AUTH_COOKIE_NAME)
-    })
+    expect(redirect).toBe('/auth/sign-in?redirect=%2Forigin%3Fa%3D1')
+  })
 
-    test('redirectTo builds /auth/sign-in redirect including pathname and search', () => {
-      const options = getCookieOptions()
-
-      const redirect = options.redirectTo({
-        url: {
-          pathname: '/origin',
-          search: '?a=1'
-        }
-      })
-
-      expect(redirect).toBe('/auth/sign-in?redirect=%2Forigin%3Fa%3D1')
-    })
-
-    test('redirectTo encodes the return URL query string', () => {
-      const options = getCookieOptions()
-
-      const redirect = options.redirectTo({
-        url: {
-          pathname: '/address-book',
-          search: '?q=France&page=2'
-        }
-      })
-
-      expect(redirect).toBe(
-        '/auth/sign-in?redirect=%2Faddress-book%3Fq%3DFrance%26page%3D2'
-      )
-    })
-
-    test('redirectTo keeps sending unauthenticated requests to /auth/sign-in in stub mode', () => {
-      isStubModeMock.mockReturnValue(true)
-      const options = getCookieOptions()
-
-      const redirect = options.redirectTo({
-        url: {
-          pathname: '/origin',
-          search: '?a=1'
-        }
-      })
-
-      expect(redirect).toBe('/auth/sign-in?redirect=%2Forigin%3Fa%3D1')
-    })
-
-    test('validate returns isValid:false when session does not exist in cache', async () => {
-      const options = getCookieOptions()
-
-      const request = {
-        server: {
-          app: {
-            cache: {
-              get: vi.fn().mockResolvedValue(null)
-            }
-          }
-        }
+  test('Should encode the return URL query string in the /auth/sign-in redirect', () => {
+    const redirect = getCookieOptions().redirectTo({
+      url: {
+        pathname: '/address-book',
+        search: '?q=France&page=2'
       }
-
-      const res = await options.validate(request, { sessionId: 'missing' })
-      expect(res).toEqual({ isValid: false })
     })
 
-    test('validate returns isValid:true when token verification succeeds', async () => {
-      const options = getCookieOptions()
-      const userSession = {
-        token: unexpiredToken,
-        refreshToken: 'refresh-token'
+    expect(redirect).toBe(
+      '/auth/sign-in?redirect=%2Faddress-book%3Fq%3DFrance%26page%3D2'
+    )
+  })
+
+  test('Should keep sending unauthenticated requests to /auth/sign-in in stub mode', () => {
+    config.set('stubMode', true)
+
+    const redirect = getCookieOptions().redirectTo({
+      url: {
+        pathname: '/origin',
+        search: '?a=1'
       }
-
-      const request = buildRequestWithCachedSession(userSession)
-
-      const res = await options.validate(request, { sessionId: 'session-1' })
-
-      expect(res).toEqual({ isValid: true, credentials: userSession })
-      expect(refreshTokensMock).not.toHaveBeenCalled()
-      expect(request.server.app.cache.set).not.toHaveBeenCalled()
     })
 
-    test('validate refreshes tokens when verification fails and refreshTokens enabled', async () => {
-      const options = getCookieOptions()
-      const userSession = {
-        token: expiredToken,
-        refreshToken: 'old-refresh'
-      }
+    expect(redirect).toBe('/auth/sign-in?redirect=%2Forigin%3Fa%3D1')
+  })
 
-      const request = buildRequestWithCachedSession(userSession)
+  test('Should find a session invalid when the cache does not hold it', async () => {
+    const { request } = requestWithSessionCache({})
 
-      refreshTokensMock.mockResolvedValue({
-        access_token: 'new-access-token',
-        refresh_token: 'new-refresh-token'
-      })
-
-      const res = await options.validate(request, { sessionId: 'session-1' })
-
-      expect(refreshTokensMock).toHaveBeenCalledWith('old-refresh')
-      expect(request.server.app.cache.set).toHaveBeenCalledWith('session-1', {
-        ...userSession,
-        token: 'new-access-token',
-        refreshToken: 'new-refresh-token'
-      })
-
-      expect(res).toEqual({
-        isValid: true,
-        credentials: {
-          ...userSession,
-          token: 'new-access-token',
-          refreshToken: 'new-refresh-token'
-        }
-      })
+    const res = await getCookieOptions().validate(request, {
+      sessionId: 'missing'
     })
 
-    test('validate returns isValid:false when verification fails and refreshTokens disabled', async () => {
-      configGetMock.mockImplementation((key) => {
-        if (key === 'defraId.refreshTokens') return false
+    expect(res).toEqual({ isValid: false })
+  })
 
-        const map = {
-          'defraId.clientId': 'test-client-id',
-          'defraId.clientSecret': 'test-client-secret',
-          'session.cookie.password': 'some-password-32-chars-long-000000',
-          isProduction: false,
-          'session.cookie.sameSite': 'Lax',
-          'defraId.redirectUrl': 'http://localhost:3000/auth/sign-in-oidc',
-          'defraId.serviceId': 'service-123',
-          'defraId.policy': 'policy-abc',
-          'defraId.refreshTokens': false
-        }
+  test('Should find a session with an unexpired token valid, without a refresh, and leave the cache as it was', async () => {
+    const userSession = {
+      token: unexpiredToken,
+      refreshToken: 'old-refresh'
+    }
+    const { held, request } = requestWithSessionCache({
+      'session-1': userSession
+    })
+    const refreshRequest = refreshRequestForOldRefreshToken().reply(
+      statusCodes.ok,
+      { access_token: 'new-access-token', refresh_token: 'new-refresh-token' }
+    )
 
-        return map[key]
-      })
-
-      const options = getCookieOptions()
-      const userSession = {
-        token: expiredToken,
-        refreshToken: 'old-refresh'
-      }
-
-      const request = buildRequestWithCachedSession(userSession)
-
-      const res = await options.validate(request, { sessionId: 'session-1' })
-
-      expect(res).toEqual({ isValid: false })
-      expect(refreshTokensMock).not.toHaveBeenCalled()
-      expect(request.server.app.cache.set).not.toHaveBeenCalled()
+    const res = await getCookieOptions().validate(request, {
+      sessionId: 'session-1'
     })
 
-    test('validate returns isValid:false when refreshTokens rejects', async () => {
-      const options = getCookieOptions()
-      const userSession = {
-        token: expiredToken,
-        refreshToken: 'old-refresh'
-      }
+    expect(res).toEqual({ isValid: true, credentials: userSession })
+    expect(refreshRequest.isDone()).toBe(false)
+    expect(held.get('session-1')).toEqual(userSession)
+  })
 
-      const request = buildRequestWithCachedSession(userSession)
-
-      refreshTokensMock.mockRejectedValue(new Error('refresh failed'))
-
-      const res = await options.validate(request, { sessionId: 'session-1' })
-
-      expect(res).toEqual({ isValid: false })
-      expect(request.server.app.cache.set).not.toHaveBeenCalled()
+  test('Should refresh an expired token at the Defra ID token endpoint and cache the new tokens', async () => {
+    const { held, request } = requestWithSessionCache({
+      'session-1': { token: expiredToken, refreshToken: 'old-refresh' }
     })
+    const refreshedSession = {
+      token: 'new-access-token',
+      refreshToken: 'new-refresh-token'
+    }
+    const refreshRequest = refreshRequestForOldRefreshToken().reply(
+      statusCodes.ok,
+      { access_token: 'new-access-token', refresh_token: 'new-refresh-token' }
+    )
+
+    const res = await getCookieOptions().validate(request, {
+      sessionId: 'session-1'
+    })
+
+    expect(refreshRequest.isDone()).toBe(true)
+    expect(held.get('session-1')).toEqual(refreshedSession)
+    expect(res).toEqual({ isValid: true, credentials: refreshedSession })
+  })
+
+  test('Should find a session with an expired token invalid, without a refresh, when token refresh is off', async () => {
+    config.set(settingKey('refreshTokens'), false)
+    const userSession = {
+      token: expiredToken,
+      refreshToken: 'old-refresh'
+    }
+    const { held, request } = requestWithSessionCache({
+      'session-1': userSession
+    })
+    const refreshRequest = refreshRequestForOldRefreshToken().reply(
+      statusCodes.ok,
+      { access_token: 'new-access-token', refresh_token: 'new-refresh-token' }
+    )
+
+    const res = await getCookieOptions().validate(request, {
+      sessionId: 'session-1'
+    })
+
+    expect(res).toEqual({ isValid: false })
+    expect(refreshRequest.isDone()).toBe(false)
+    expect(held.get('session-1')).toEqual(userSession)
+  })
+
+  test('Should find a session invalid, and leave the cache as it was, when the token endpoint refuses the refresh', async () => {
+    const userSession = {
+      token: expiredToken,
+      refreshToken: 'old-refresh'
+    }
+    const { held, request } = requestWithSessionCache({
+      'session-1': userSession
+    })
+    const refreshRequest = refreshRequestForOldRefreshToken().reply(
+      statusCodes.badRequest,
+      { error: 'invalid_grant' }
+    )
+
+    const res = await getCookieOptions().validate(request, {
+      sessionId: 'session-1'
+    })
+
+    expect(res).toEqual({ isValid: false })
+    expect(refreshRequest.isDone()).toBe(true)
+    expect(held.get('session-1')).toEqual(userSession)
   })
 })

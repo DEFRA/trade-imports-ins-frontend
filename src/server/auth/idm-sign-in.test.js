@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import Jwt from '@hapi/jwt'
 import * as cheerio from 'cheerio'
 import nock from 'nock'
-import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, vi } from 'vitest'
 
 import {
   hiddenIdmSignInProvider,
@@ -22,10 +22,9 @@ import { statusCodes } from '../common/constants/status-codes.js'
 import { cookieHeaderOf } from '../common/test-helpers/address-book-requests.js'
 import { awaitEmfDocumentForOperation } from '../common/test-helpers/emf-documents.js'
 import {
-  applyIdmSettings,
+  configureIdm,
   idmDiscoveryDocument,
   idmKeysRequest,
-  idmSettingKeys,
   idmSettings
 } from '../common/test-helpers/idm-sign-in-settings.js'
 import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
@@ -47,6 +46,7 @@ import {
 } from '../common/test-helpers/signing-key.js'
 import {
   startRealModeServer,
+  startServerPastDiscoveryRetries,
   startTestServer,
   stopTestServer
 } from '../common/test-helpers/test-server.js'
@@ -57,40 +57,6 @@ const IDM_STATE = 'idm-state'
 const IDM_REQUESTED_SCOPE = `openid offline_access ${idmSettings.clientId}`
 const IDM_ERROR_DESCRIPTION = 'AADB2C90091'
 const IDM_ERROR_QUERY = `error=access_denied&error_description=${IDM_ERROR_DESCRIPTION}&state=${IDM_STATE}`
-
-const configureIdm = () => {
-  const originalValues = Object.fromEntries(
-    idmSettingKeys.map((key) => [key, config.get(key)])
-  )
-  beforeAll(() => {
-    applyIdmSettings()
-  })
-  afterAll(() => {
-    for (const [key, value] of Object.entries(originalValues)) {
-      config.set(key, value)
-    }
-  })
-}
-
-const startServerPastDiscoveryRetries = async () => {
-  const fakeStepMs = 10
-  vi.useFakeTimers({ toFake: ['setTimeout'] })
-  try {
-    const start = { settled: false }
-    const starting = startTestServer()
-    starting.then(
-      () => (start.settled = true),
-      () => (start.settled = true)
-    )
-    while (!start.settled) {
-      await new Promise((resolve) => setImmediate(resolve))
-      await vi.advanceTimersByTimeAsync(fakeStepMs)
-    }
-    return await starting
-  } finally {
-    vi.useRealTimers()
-  }
-}
 
 const authCookieName = () => config.get('auth.cookieName')
 
