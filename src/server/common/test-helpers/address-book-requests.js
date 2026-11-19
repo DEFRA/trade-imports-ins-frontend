@@ -4,14 +4,15 @@ import { ADDRESS_TYPES } from '../../app/services/address-book/index.js'
 import { TRANSPORTER_TYPES } from '../../app/services/transporters/index.js'
 import { addressTypePath, transporterTypePath } from '../../app/shared/paths.js'
 import { statusCodes } from '../constants/status-codes.js'
+import { ORGANISATION_ID_HEADER } from '../helpers/organisation-scoped-headers.js'
 import { addressBookApi } from './real-mode.js'
 import { ORGANISATION_ID, sessionAuth } from './session-auth.js'
+
+export { ORGANISATION_ID_HEADER }
 
 export const ADDRESS_ID = '665f1c2ab3e4d51a2c9d0e77'
 
 export const MALFORMED_ADDRESS_ID = 'not-a-valid-id'
-
-export const ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id'
 
 export const OTHER_ORGANISATION_ID = '0c4e7a92-3b1d-4f58-a6e2-9d8b5c1f7a34'
 

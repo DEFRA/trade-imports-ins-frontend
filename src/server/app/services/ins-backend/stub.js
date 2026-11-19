@@ -53,14 +53,14 @@ const sortComparator = (sort) => {
     multiplier * (new Date(left[sortField]) - new Date(right[sortField]))
 }
 
-const seedNotificationsFor = (stubSeedOrganisationId) =>
-  isEmptySeedOrganisation(stubSeedOrganisationId) ? [] : NOTIFICATIONS
+const seedNotificationsFor = (organisationId) =>
+  isEmptySeedOrganisation(organisationId) ? [] : NOTIFICATIONS
 
 export const listNotifications = async (
-  stubSeedOrganisationId,
+  organisationId,
   { page = 1, sort, referenceNumber } = {}
 ) => {
-  const visible = seedNotificationsFor(stubSeedOrganisationId).filter(
+  const visible = seedNotificationsFor(organisationId).filter(
     (notification) => notification.status !== DELETED_STATUS
   )
 

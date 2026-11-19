@@ -96,17 +96,22 @@ autocomplete hints, read from `address-form-autocomplete.js`'s
 specs import too),
 `journey-handshake.js` (`handshakeContextOf(handshake)`, the handshake
 context the app builds from a handshake's query or form fields,
-`JOURNEY_HANDSHAKES_BY_PARTY`, one complete journey
+`JOURNEY_HANDSHAKES_BY_PARTY`, one complete live animals journey
 handshake for each of the place of origin, consignor, consignee, importer and
 place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's
-handshake, `ANIMALS_BASE_URL`, the animals frontend's base URL the return
-URLs start with, and `returnUrlFor(handshake, { addressId, landing })`, the
-return URL a test expects for a handshake, built from that handshake's own
-ids and token; the Vitest tests and the fit specs both use these;
+live animals handshake, `GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY` and
+`GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE`, the same shapes for the
+registered germinal products journey, `ANIMALS_BASE_URL`, the animals
+frontend's base URL every return URL starts with, and
+`returnUrlFor(handshake, { addressId, landing })`, the return URL a test
+expects for a handshake, built from that handshake's own journey type (through
+a table keyed by the registry's `JOURNEY_TYPES`) as well as its ids and
+token; the Vitest tests and the fit specs both use these;
 `ROLES_BY_PARTY`, each party's own role and the other roles on its
-side, `journeyRolesHintFor(party)`, the roles question's hint naming that
-party's own role, and `UNREGISTERED_JOURNEY_TYPE`, a journey type the
-registry does not list, `RECEIVING_PARTIES`, the consignee, importer and
+side, shared by both journeys since both registered entries hold the one
+party-to-role map, `journeyRolesHintFor(party)`, the roles question's hint
+naming that party's own role, and `UNREGISTERED_JOURNEY_TYPE`, a journey type
+the registry does not list, `RECEIVING_PARTIES`, the consignee, importer and
 place of destination, and `SENDING_PARTIES`, the place of origin and
 consignor),
 `expect-draft-journey-strip.js` (`expectDraftJourneyStrip($,
@@ -287,7 +292,11 @@ origin, and lands on that type's list; `emptyBook: true` signs in to an
 organisation the stub seeds no address for), `refuseSaveThenReopenAddForm`
 (saves a form with a malformed email, follows Back and chooses the type again), `malformedEmail` (an email value the form refuses as malformed),
 `validAddressViewLink`, the two
-validation tables.
+validation tables, `addressReturnAfterSaveAndSelect` (aborts every outbound
+animals-frontend request, opens the add form from a journey handshake for a
+per-run organisation, fills a valid address, runs the caller's `beforeSave`
+step if given, clicks Save and select, and resolves to the URL of the
+captured `/address-return` request).
 [`address-book-list.js`](../features/address-book/fit/address-book-list.js) —
 `UNSUPPORTED_ADDRESS_TYPE` (an address type no tab offers), `NO_RESULTS_LINE`
 and the role-backed tabs' `TABLE_HEADINGS` and the Transporter tab's

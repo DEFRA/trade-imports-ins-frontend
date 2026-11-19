@@ -12,7 +12,8 @@ import {
 } from '../../services/address-book/index.js'
 
 export const JOURNEY_TYPES = Object.freeze({
-  GBN_AG: 'gbn-ag'
+  GBN_AG: 'gbn-ag',
+  GBN_AG_GERMINAL_PRODUCTS: 'gbn-ag-germinal-products'
 })
 
 export const ADDRESS_LANDING = Object.freeze({
@@ -27,26 +28,38 @@ export const CONSIGNMENT_CONTACT_FULFILMENT_ID =
 const RETURN_PATH_TEMPLATE =
   '/notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}'
 
+const ROLE_BY_PARTY_FULFILMENT_ID = Object.freeze({
+  '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c': ROLES.PLACE_OF_ORIGIN,
+  '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d': ROLES.CONSIGNOR,
+  'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e': ROLES.CONSIGNEE,
+  'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f': ROLES.IMPORTER,
+  'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': ROLES.PLACE_OF_DESTINATION,
+  [CONSIGNMENT_CONTACT_FULFILMENT_ID]: ROLES.BRANCH_ADDRESS
+})
+
 const registry = Object.freeze({
   [JOURNEY_TYPES.GBN_AG]: {
     baseUrlConfigKey: SET_FRONTEND_BASE_URL_KEYS[SET_BASES.LIVE_ANIMALS],
     setBase: SET_BASES.LIVE_ANIMALS,
     returnPathTemplate: RETURN_PATH_TEMPLATE,
     consignmentContactFulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID,
-    roleByPartyFulfilmentId: Object.freeze({
-      '89c0d1e2-f3a4-4b5f-8c0b-8d9e0f1a2b3c': ROLES.PLACE_OF_ORIGIN,
-      '9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d': ROLES.CONSIGNOR,
-      'abe2f3a4-b5c6-4d71-8e2d-af0a1b2c3d4e': ROLES.CONSIGNEE,
-      'bcf3a4b5-c6d7-4e82-8f3e-ba1b2c3d4e5f': ROLES.IMPORTER,
-      'cd04b5c6-d7e8-4f93-8a4f-cb2c3d4e5f60': ROLES.PLACE_OF_DESTINATION,
-      [CONSIGNMENT_CONTACT_FULFILMENT_ID]: ROLES.BRANCH_ADDRESS
-    })
+    roleByPartyFulfilmentId: ROLE_BY_PARTY_FULFILMENT_ID
+  },
+  [JOURNEY_TYPES.GBN_AG_GERMINAL_PRODUCTS]: {
+    baseUrlConfigKey: SET_FRONTEND_BASE_URL_KEYS[SET_BASES.GERMINAL_PRODUCTS],
+    setBase: SET_BASES.GERMINAL_PRODUCTS,
+    returnPathTemplate: RETURN_PATH_TEMPLATE,
+    consignmentContactFulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID,
+    roleByPartyFulfilmentId: ROLE_BY_PARTY_FULFILMENT_ID
   }
 })
 
+const registryEntryFor = (journeyType) => registry[journeyType]
+
 export const roleOfParty = (context) => {
-  const roleByFulfilmentId =
-    registry[context?.journeyType]?.roleByPartyFulfilmentId
+  const roleByFulfilmentId = registryEntryFor(
+    context?.journeyType
+  )?.roleByPartyFulfilmentId
   return roleByFulfilmentId &&
     Object.hasOwn(roleByFulfilmentId, context.fulfilmentId)
     ? roleByFulfilmentId[context.fulfilmentId]
@@ -57,8 +70,9 @@ export const isResolvableHandshake = (context) =>
   roleOfParty(context) !== undefined
 
 export const isConsignmentContact = (context) => {
-  const contactFulfilmentId =
-    registry[context?.journeyType]?.consignmentContactFulfilmentId
+  const contactFulfilmentId = registryEntryFor(
+    context?.journeyType
+  )?.consignmentContactFulfilmentId
   return (
     contactFulfilmentId !== undefined &&
     contactFulfilmentId === context?.fulfilmentId
@@ -99,7 +113,7 @@ const assertHandshakeIds = (context) => {
 }
 
 export const buildReturnUrl = (context, { addressId, landing } = {}) => {
-  const entry = registry[context.journeyType]
+  const entry = registryEntryFor(context.journeyType)
   if (!entry) {
     throw new Error(`Unknown journey type "${context.journeyType}"`)
   }
