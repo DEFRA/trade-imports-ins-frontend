@@ -1,4 +1,6 @@
+import Jwt from '@hapi/jwt'
 import * as cheerio from 'cheerio'
+import nock from 'nock'
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
 
 import {
@@ -6,9 +8,15 @@ import {
   providerSettingKey
 } from '../../auth/identity-providers.js'
 import { config } from '../../config/config.js'
+import {
+  idmSignInPage,
+  idmSignedInPage,
+  idmSignedOutPage
+} from '../app/auth/page.js'
 import { copy as sharedEn } from '../app/shared/copy.en.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { cookieHeaderOf } from '../common/test-helpers/address-book-requests.js'
+import { awaitEmfDocumentForOperation } from '../common/test-helpers/emf-documents.js'
 import {
   applyIdmSettings,
   idmDiscoveryDocument,
@@ -24,6 +32,7 @@ import {
 import { restoreConfigAfterEach } from '../common/test-helpers/restore-config-after-each.js'
 import { textOf, textsOf } from '../common/test-helpers/rendered-text.js'
 import { runInRealMode } from '../common/test-helpers/real-mode.js'
+import { serviceSessionCookieFor } from '../common/test-helpers/session-auth.js'
 import {
   discoveryUrlRequest,
   serveOidcDiscovery
@@ -83,6 +92,38 @@ const setCookieNames = (headers) =>
     .filter(Boolean)
     .map((cookie) => cookie.split('=')[0])
 
+const sendsServiceSignInToDefraId = (getServer) =>
+  test('Should send /auth/sign-in to the Defra ID authorize endpoint', async () => {
+    const { statusCode, headers } = await getServer().inject({
+      method: 'GET',
+      url: '/auth/sign-in'
+    })
+
+    expect(statusCode).toBe(statusCodes.redirectFound)
+    expect(headers.location).toMatch(
+      new RegExp(`^${mockOidcConfig.authorization_endpoint}\\?`)
+    )
+  })
+
+const summaryListOf = ($, testId) =>
+  Object.fromEntries(
+    $(`[data-testid="${testId}"] .govuk-summary-list__row`)
+      .map((_, row) => [
+        [
+          textOf($, $(row).find('dt')),
+          textOf($, $(row).find('dd.govuk-summary-list__value'))
+        ]
+      ])
+      .get()
+  )
+
+const claimsShownFor = (token) =>
+  Object.fromEntries(
+    Object.entries(Jwt.token.decode(token).decoded.payload).map(
+      ([name, value]) => [name, String(value)]
+    )
+  )
+
 describe('IDM sign-in, without an IDM discovery URL', () => {
   const getServer = startRealModeServer()
 
@@ -95,17 +136,7 @@ describe('IDM sign-in, without an IDM discovery URL', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  test('Should still send /auth/sign-in to the Defra ID authorize endpoint', async () => {
-    const { statusCode, headers } = await getServer().inject({
-      method: 'GET',
-      url: '/auth/sign-in'
-    })
-
-    expect(statusCode).toBe(statusCodes.redirectFound)
-    expect(headers.location).toMatch(
-      new RegExp(`^${mockOidcConfig.authorization_endpoint}\\?`)
-    )
-  })
+  sendsServiceSignInToDefraId(getServer)
 })
 
 describe('IDM sign-in, when IDM discovery fails', () => {
@@ -261,6 +292,20 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
     })
   })
 
+  sendsServiceSignInToDefraId(getServer)
+
+  test.each([
+    [idmPaths.signIn, idmSignInPage],
+    [idmPaths.signedIn, idmSignedInPage],
+    [idmPaths.signedOut, idmSignedOutPage]
+  ])('Should carry the page from auth/page.js on %s', (path, page) => {
+    const route = getServer()
+      .table()
+      .find((candidate) => candidate.path === path)
+
+    expect(route.settings.app.page).toEqual(page)
+  })
+
   test('Should show a start page whose button links to the route that goes to IDM', async () => {
     const { statusCode, payload } = await getServer().inject({
       method: 'GET',
@@ -288,7 +333,62 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
       serviceId: 'idm-service-id',
       p: 'b2c_1a_cui_cpdev_signupsignin',
       response_mode: 'query',
-      redirect_uri: 'http://localhost:3002/auth/callback'
+      redirect_uri: 'http://localhost:3002/auth/callback',
+      scope: 'openid offline_access idm-client-id'
+    })
+  })
+
+  describe('through the IDM Bell strategy', () => {
+    let logSpy
+
+    beforeEach(() => {
+      logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+      logSpy.mockRestore()
+    })
+
+    test('Should exchange the code at IDM, show the token response IDM returned and measure the exchange as idm token-exchange', async () => {
+      const idToken = idTokenSignedWith(signingKey)
+      const tokenEndpoint = new URL(idmDiscoveryDocument.token_endpoint)
+      nock(tokenEndpoint.origin)
+        .post(tokenEndpoint.pathname)
+        .reply(statusCodes.ok, {
+          id_token: idToken,
+          access_token: idToken,
+          token_type: 'Bearer',
+          expires_in: 1800,
+          scope: 'openid offline_access idm-client-id',
+          refresh_token: 'idm-refresh-token'
+        })
+      const goToIdm = await getServer().inject({
+        method: 'GET',
+        url: idmPaths.goToIdm
+      })
+      const state = new URL(goToIdm.headers.location).searchParams.get('state')
+
+      const callback = await getServer().inject({
+        method: 'GET',
+        url: `${idmPaths.callback}?code=idm-code&state=${state}`,
+        headers: { cookie: cookieHeaderOf(goToIdm.headers) }
+      })
+      const page = await openSignedInPage(cookieHeaderOf(callback.headers))
+
+      expect(callback.headers.location).toBe(idmPaths.signedIn)
+      expect(
+        summaryListOf(cheerio.load(page.payload), 'token-response')
+      ).toEqual({
+        expires_in: '1800',
+        scope: 'openid offline_access idm-client-id',
+        'refresh token returned': 'Yes'
+      })
+      const exchange = await awaitEmfDocumentForOperation(
+        logSpy,
+        'token-exchange'
+      )
+      expect(exchange.Dependency).toBe('idm')
+      expect(exchange.ExternalCallFailure).toBe(0)
     })
   })
 
@@ -301,37 +401,37 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
     expect(headers.location).toBe(idmPaths.signedIn)
   })
 
-  test('Should show the ID token claims and token response, and say the access token is the ID token', async () => {
-    const $ = await signInAndOpenSignedInPage({
-      idToken: idTokenSignedWith(signingKey)
-    })
+  test('Should list every ID token claim with its value and the token response, and say the access token is the ID token', async () => {
+    const idToken = idTokenSignedWith(signingKey)
 
-    expect(textsOf($, '[data-testid="id-token-claims"] dt')).toEqual(
-      expect.arrayContaining(['aud', 'iss', 'sub', 'contactId'])
-    )
+    const $ = await signInAndOpenSignedInPage({ idToken })
+
+    expect(summaryListOf($, 'id-token-claims')).toEqual(claimsShownFor(idToken))
     expect($('[data-testid="access-token-claims"]')).toHaveLength(0)
     expect(textsOf($, 'main p.govuk-body')).toContain(
       'The access token is the ID token.'
     )
-    expect(textsOf($, '[data-testid="token-response"] dd')).toEqual([
-      '3600',
-      'openid offline_access',
-      'Yes'
-    ])
+    expect(summaryListOf($, 'token-response')).toEqual({
+      expires_in: '3600',
+      scope: 'openid offline_access',
+      'refresh token returned': 'Yes'
+    })
   })
 
-  test('Should show the access token claims when the access token is not the ID token', async () => {
+  test('Should list every access token claim with its value when the access token is not the ID token', async () => {
+    const accessToken = signToken(signingKey, { scp: 'access-scope' })
+
     const $ = await signInAndOpenSignedInPage({
       idToken: idTokenSignedWith(signingKey),
-      accessToken: signToken(signingKey, { scp: 'access-scope' })
+      accessToken
     })
 
-    expect(textsOf($, '[data-testid="access-token-claims"] dt')).toContain(
-      'scp'
+    expect(summaryListOf($, 'access-token-claims')).toEqual(
+      claimsShownFor(accessToken)
     )
   })
 
-  test('Should leave an existing service session in the cache and set or clear no service session cookie', async () => {
+  test("Should leave the caller's service session in the cache and set or clear no service session cookie", async () => {
     const serviceSessionId = 'stub-signed-in-session'
     const serviceSession = {
       sessionId: serviceSessionId,
@@ -340,8 +440,13 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
     }
     await getServer().app.cache.set(serviceSessionId, serviceSession)
 
-    const { headers } = await completeSignIn({
-      idToken: idTokenSignedWith(signingKey)
+    const { headers } = await getServer().inject({
+      method: 'GET',
+      url: idmPaths.callback,
+      auth: idmAuth({ idToken: idTokenSignedWith(signingKey) }),
+      headers: {
+        cookie: await serviceSessionCookieFor(getServer(), serviceSessionId)
+      }
     })
 
     expect(setCookieNames(headers)).not.toContain(authCookieName())
