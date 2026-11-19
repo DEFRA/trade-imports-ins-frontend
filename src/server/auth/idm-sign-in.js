@@ -24,7 +24,7 @@ export const idmPaths = Object.freeze({
   signedOut: '/auth/signed-out'
 })
 
-const SIGN_IN_SESSION_KEY = 'idmSignIn'
+const signInSessionKey = 'idmSignIn'
 
 const claimRows = (claims) =>
   Object.entries(claims).map(([name, value]) => ({
@@ -32,7 +32,7 @@ const claimRows = (claims) =>
     value: { text: typeof value === 'string' ? value : JSON.stringify(value) }
   }))
 
-function signInSummaryRows({
+function describeSignIn({
   idTokenClaims,
   accessTokenClaims,
   expiresIn,
@@ -55,7 +55,7 @@ function signInSummaryRows({
 
 const claimsOf = (token) => Jwt.token.decode(token).decoded.payload
 
-const accessTokenClaimsOf = (accessToken, idToken) =>
+const decodedAccessTokenClaims = (accessToken, idToken) =>
   accessToken === idToken ? undefined : claimsOf(accessToken)
 
 const unableToSignIn = (h) =>
@@ -102,9 +102,9 @@ const completeSignIn = async (request, h) => {
   }
 
   const idTokenClaims = claimsOf(profile.idToken)
-  request.yar.set(SIGN_IN_SESSION_KEY, {
+  request.yar.set(signInSessionKey, {
     idTokenClaims,
-    accessTokenClaims: accessTokenClaimsOf(accessToken, profile.idToken),
+    accessTokenClaims: decodedAccessTokenClaims(accessToken, profile.idToken),
     expiresIn: profile.expiresIn,
     scope: profile.scope,
     refreshTokenReturned: profile.refreshTokenReturned
@@ -122,7 +122,7 @@ const completeSignIn = async (request, h) => {
 }
 
 const showSignedIn = (request, h) => {
-  const signIn = request.yar.get(SIGN_IN_SESSION_KEY)
+  const signIn = request.yar.get(signInSessionKey)
 
   if (!signIn) {
     logger.info('No IDM sign-in in the session, starting one')
@@ -132,7 +132,7 @@ const showSignedIn = (request, h) => {
   return h.view('auth/idm-signed-in', {
     ...base('Signed in'),
     contentColumnClass: SURFACES.display,
-    signIn: signInSummaryRows(signIn)
+    signIn: describeSignIn(signIn)
   })
 }
 
