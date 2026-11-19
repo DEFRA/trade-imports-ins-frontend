@@ -15,11 +15,17 @@ beside it, one routes plugin: the Defra ID `/auth/*` routes in
 [`src/server/auth/index.js`](../../auth/index.js), or the stub routes in
 [`stub-sign-in.js`](../../auth/stub-sign-in.js) when `isStubMode()` — the
 same `/auth/sign-in` and `/auth/sign-out` paths, with no identity provider
-involved. Whatever the mode, it then registers the hidden IDM sign-in
-([`idm-sign-in.js`](../../auth/idm-sign-in.js)), which serves its routes
-and its own Bell strategy ([`src/plugins/idm-auth.js`](../../../plugins/idm-auth.js))
-only when `IDM_OIDC_CONFIGURATION_URL` is set. It keeps what IDM returned
-in the yar session for its own signed-in page, and never writes the auth
+involved.
+
+Whether or not `auth.enabled` is set, and whatever the stub or Defra ID
+mode, it then registers the hidden IDM sign-in
+([`idm-sign-in.js`](../../auth/idm-sign-in.js)). It serves its routes and
+its own Bell strategy ([`src/plugins/idm-auth.js`](../../../plugins/idm-auth.js))
+only when `IDM_OIDC_CONFIGURATION_URL` is set, the IDM client ID, client
+secret and service ID are set, and IDM discovery succeeds at start-up.
+Otherwise it logs why and the service starts without it, so an IDM outage
+never stops the service starting. It keeps what IDM returned in the yar
+session for its own signed-in page, and never writes the auth
 cache or the session cookie, so the rest of the service keeps the stub or
 Defra ID identity. Last comes [`router.js`](../../router.js), which registers
 `health`, then — only when `auth.enabled` — the application plugin, then
@@ -82,12 +88,15 @@ the same one second.
 status-keyed message from `sharedCopy.errorPage`.
 
 **The auth pages**: [`app/auth/`](../auth/) holds the views outside
-`features/`. The chassis's auth controller renders `unauthorised.njk` with
-`base(sharedCopy.unauthorised.title)`. Its try-again link goes to
-`/auth/sign-in` unless the view model gives a `signInUrl`, as the IDM
-sign-in does. The IDM sign-in's own pages (`idm-sign-in.njk`,
-`idm-signed-in.njk`, `idm-signed-out.njk`) are internal test pages, in
-English only, with their text in the templates.
+`features/`. The chassis's auth controller owns `renderUnableToSignIn(h, {
+signInUrl })`, which renders `unauthorised.njk` with
+`base(sharedCopy.unauthorised.title)` and a try-again link to the
+`signInUrl` it is given: `/auth/sign-in` from the auth controller,
+`/auth/idm/sign-in` from the IDM sign-in. The IDM sign-in's own pages
+(`idm-sign-in.njk`, `idm-signed-in.njk`, `idm-signed-out.njk`) are internal
+test pages, in English only, with their text in the templates and in
+`idm-sign-in.js` (the page titles, which are also the headings, and the
+token-response row labels), not in `copy.en.js`/`copy.cy.js`.
 
 ## The application
 

@@ -128,8 +128,10 @@ through),
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
 opens the address book list with the cookies a POST set so a test can
 read the banner),
-`session-auth.js` (`sessionAuth(sessionId, overrides)` and
-`ORGANISATION_ID`, the one test organisation id),
+`session-auth.js` (`sessionAuth(sessionId, overrides)`,
+`ORGANISATION_ID`, the one test organisation id, and
+`serviceSessionCookieFor(server, sessionId)`, a sealed service session
+cookie for a request that must carry one),
 `address-book-stub.js` (`STUB_SEED_ADDRESS_NAME`, the name of the address the
 stub seeds for an ordinary organisation, `STUB_LIST_PAGE_SIZE`, the page size
 the list asks the stub for, and `listedStubNames(organisationId, query)`, the
@@ -141,11 +143,18 @@ names the stub lists at that page size),
 for the started server), `restore-config-after-each.js`
 (`restoreConfigAfterEach(keys)`, which restores the named config keys after
 each test) and `serve-oidc-discovery.js`. That file exports
-`serveOidcDiscovery()`, which serves the OIDC discovery document at the
-network boundary, and `startRealModeServer()` calls it. It also exports
-`discoveryUrlRequest({ persist, ...scopeOptions })`, the nock interceptor at
-the configured discovery URL, for a test that matches a header, delays the
-reply or fails it. It also exports
+`serveOidcDiscovery(document, { provider })`, which serves an OIDC discovery
+document at the network boundary, and `startRealModeServer()` calls it.
+`provider` is one of the two in `src/auth/identity-providers.js`, as
+production picks it: the service sign-in by default, or
+`hiddenIdmSignInProvider` to serve the hidden IDM sign-in's document at its
+own URL. It also exports `discoveryUrlRequest({ persist, provider,
+...scopeOptions })`, the nock interceptor at that provider's configured
+discovery URL, for a test that matches a header, delays the reply or fails
+it. `idm-sign-in-settings.js` holds the IDM test settings once:
+`applyIdmSettings()` sets them, `idmSettingKeys` names them for restoring,
+`idmDiscoveryDocument` is IDM's discovery document and `idmKeysRequest()`
+the nock interceptor at its keys URL. `serve-oidc-discovery.js` also exports
 `runAgainstMockOidcDiscoveryUrl({ restoringConfigKeys })`, which refuses
 outbound HTTP, restores the discovery URL and the named config keys after each
 test, and sets the discovery URL to a mock host before each test, and
