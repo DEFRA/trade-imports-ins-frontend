@@ -61,7 +61,8 @@ root:
   blank option only when the country it shows is not one the list offers) and
   `countryCodesMatching` (every country code whose name contains the search term).
 - [`journey-registry.js`](../features/address-book/journey-registry.js) —
-  `JOURNEY_TYPES` (the registered journey types), `ADDRESS_LANDING` (select,
+  `JOURNEY_TYPES` (the registered journey types: `gbn-ag` for live animals and
+  `gbn-ag-germinal-products` for germinal products), `ADDRESS_LANDING` (select,
   return and cancel, the page the journey opens on return),
   `isResolvableHandshake` (whether a handshake's journey type and fulfilment id
   resolve to a party's role: the one check the query, payload and session
@@ -77,13 +78,20 @@ root:
   the address book's `keepRolesOfferedBy`), `isConsignmentContact` (whether a
   handshake is the consignment contact's, so the add page offers the contact's
   controls rather than a role's), `buildReturnUrl` (the journey's address-return
-  URL, with an optional address id and `landing`) and
+  URL, with an optional address id and `landing`, built under whichever
+  registered journey's own set base the handshake names) and
   `CONSIGNMENT_CONTACT_FULFILMENT_ID` (the consignment contact's fulfilment id).
-  The `gbn-ag` registry entry's `roleByPartyFulfilmentId` map is the one map
+  Both registered entries reference one shared `roleByPartyFulfilmentId` map
   from each party's fulfilment id, the five roles and the consignment contact,
   to the party's own role, which its address is always saved with alongside any
-  ticked roles its side offers; `ownAndOtherRolesOfParty`,
-  `rolesToSaveForParty` and `isReceivingParty` read it.
+  ticked roles its side offers, so the same party implies the same role
+  whichever journey the handshake names; `ownAndOtherRolesOfParty`,
+  `rolesToSaveForParty` and `isReceivingParty` read it. One module-scope lookup
+  answers whether the service serves a handshake's journey type at all;
+  `roleOfParty`, `isConsignmentContact` and `buildReturnUrl` each read the
+  registered entry through it, and it resolves to no entry, so to no role, no
+  consignment contact and a thrown error from `buildReturnUrl`, for a journey
+  type neither entry is registered under.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
   `ADDRESS_BOOK_TABS` (the list's four tabs in order, each saying what it
   lists and carrying the Type filter it offers — its query-parameter name and
@@ -278,8 +286,8 @@ adds to that shape for a journey:
   ticked roles stay ticked when the page is shown again with errors, and the
   save carries `rolesToSaveForParty`: the party's own role and the
   ticked roles the party's page offers (logging any it discards at info, with
-  the notification and fulfilment ids). The consignment contact's form has no
-  roles question.
+  the journey type, the notification and the fulfilment ids). The
+  consignment contact's form has no roles question.
 - `cancelUrlFor(addMode, handshakeContext)` is the one owner of where Cancel
   goes: the address book, a role's journey with the `cancel` landing, or the
   consignment contact's journey with no landing.
