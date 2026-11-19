@@ -244,11 +244,12 @@ const startIdmSignInServer = () => {
     })
   })
 
-  const completeSignIn = (tokens) =>
+  const completeSignIn = (tokens, { state, cookie = '' } = {}) =>
     getServer().inject({
       method: 'GET',
-      url: idmPaths.callback,
-      auth: idmAuth(tokens)
+      url: state ? `${idmPaths.callback}?state=${state}` : idmPaths.callback,
+      auth: idmAuth(tokens),
+      headers: { cookie }
     })
 
   const openSignedInPage = (cookie) =>
@@ -429,14 +430,10 @@ describe('IDM sign-in, once IDM returns a sign-in', () => {
     }
     await getServer().app.cache.set(serviceSessionId, serviceSession)
 
-    const { headers } = await getServer().inject({
-      method: 'GET',
-      url: idmPaths.callback,
-      auth: idmAuth({ idToken: idTokenSignedWith(signingKey) }),
-      headers: {
-        cookie: await serviceSessionCookieFor(getServer(), serviceSessionId)
-      }
-    })
+    const { headers } = await completeSignIn(
+      { idToken: idTokenSignedWith(signingKey) },
+      { cookie: await serviceSessionCookieFor(getServer(), serviceSessionId) }
+    )
 
     expect(setCookieNames(headers)).not.toContain(authCookieName())
     expect(await getServer().app.cache.get(serviceSessionId)).toEqual(
@@ -446,7 +443,7 @@ describe('IDM sign-in, once IDM returns a sign-in', () => {
 })
 
 describe('IDM sign-in, when the sign-in fails or ends', () => {
-  const { getServer, openSignedInPage } = startIdmSignInServer()
+  const { getServer, completeSignIn, openSignedInPage } = startIdmSignInServer()
   const { entriesWith: errorLogs } = recordModuleLoggerError()
 
   test('Should show the unable to sign in page, linking back to the start page, and log the error in full, when IDM returns an error', async () => {
@@ -495,11 +492,10 @@ describe('IDM sign-in, when the sign-in fails or ends', () => {
   test('Should show the unable to sign in page, and log the refusal with the state and the IDM ids, when the ID token is signed by a key IDM does not serve', async () => {
     const tokenRefused = 'IDM ID token refused'
 
-    const { payload } = await getServer().inject({
-      method: 'GET',
-      url: `${idmPaths.callback}?state=${IDM_STATE}`,
-      auth: idmAuth({ idToken: idTokenSignedWith(otherKey) })
-    })
+    const { payload } = await completeSignIn(
+      { idToken: idTokenSignedWith(otherKey) },
+      { state: IDM_STATE }
+    )
 
     expectUnableToSignInPage(payload)
     expect(errorLogs(tokenRefused)).toEqual([
