@@ -157,10 +157,11 @@ production picks it: the service sign-in by default, or
 own URL. It also exports `discoveryUrlRequest({ persist, provider,
 ...scopeOptions })`, the nock interceptor at that provider's configured
 discovery URL, for a test that matches a header, delays the reply or fails
-it. `idm-sign-in-settings.js` holds the IDM test settings once:
+it, and `keysRequest(document, { persist, ...scopeOptions })`, the nock
+interceptor at a discovery document's `jwks_uri`. `idm-sign-in-settings.js` holds the IDM test settings once:
 `applyIdmSettings()` sets them, `idmSettingKeys` names them for restoring,
-`idmDiscoveryDocument` is IDM's discovery document and `idmKeysRequest()`
-the nock interceptor at its keys URL. `serve-oidc-discovery.js` also exports
+and `idmDiscoveryDocument` is IDM's discovery document.
+`serve-oidc-discovery.js` also exports
 `runAgainstMockOidcDiscoveryUrl({ restoringConfigKeys })`, which refuses
 outbound HTTP, restores the discovery URL and the named config keys after each
 test, and sets the discovery URL to a mock host before each test, and

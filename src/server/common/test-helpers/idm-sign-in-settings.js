@@ -1,4 +1,3 @@
-import nock from 'nock'
 import { afterAll, beforeAll } from 'vitest'
 
 import {
@@ -22,12 +21,6 @@ export const idmDiscoveryDocument = Object.freeze({
   token_endpoint: `${IDM_ORIGIN}/token`,
   jwks_uri: `${IDM_ORIGIN}/keys`
 })
-
-export const idmKeysRequest = ({ persist = false, ...scopeOptions } = {}) => {
-  const keysUrl = new URL(idmDiscoveryDocument.jwks_uri)
-  const scope = nock(keysUrl.origin, scopeOptions)
-  return (persist ? scope.persist() : scope).get(keysUrl.pathname)
-}
 
 export const idmSettingKeys = Object.keys(idmSettings).map((setting) =>
   providerSettingKey(hiddenIdmSignInProvider, setting)

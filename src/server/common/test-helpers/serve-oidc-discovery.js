@@ -17,15 +17,20 @@ const serviceDiscoveryUrlKey = providerSettingKey(
   'oidcDiscoveryUrl'
 )
 
-export const discoveryUrlRequest = ({
-  persist = false,
-  provider = serviceSignInProvider,
-  ...scopeOptions
-} = {}) => {
-  const discoveryUrl = new URL(providerSetting(provider, 'oidcDiscoveryUrl'))
-  const scope = nock(discoveryUrl.origin, scopeOptions)
-  return (persist ? scope.persist() : scope).get(discoveryUrl.pathname)
+const getRequestTo = (url, { persist = false, ...scopeOptions }) => {
+  const { origin, pathname } = new URL(url)
+  const scope = nock(origin, scopeOptions)
+  return (persist ? scope.persist() : scope).get(pathname)
 }
+
+export const discoveryUrlRequest = ({
+  provider = serviceSignInProvider,
+  ...requestOptions
+} = {}) =>
+  getRequestTo(providerSetting(provider, 'oidcDiscoveryUrl'), requestOptions)
+
+export const keysRequest = (document, requestOptions = {}) =>
+  getRequestTo(document.jwks_uri, requestOptions)
 
 export const serveOidcDiscovery = (
   document = mockOidcConfig,

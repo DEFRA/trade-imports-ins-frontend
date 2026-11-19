@@ -1,5 +1,4 @@
 import * as cheerio from 'cheerio'
-import nock from 'nock'
 import { vi } from 'vitest'
 
 import { config } from '../../config/config.js'
@@ -13,7 +12,10 @@ import {
 import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
 import { recordRequestLoggerError } from '../common/test-helpers/module-logger-lines.js'
 import { textOf } from '../common/test-helpers/rendered-text.js'
-import { runAgainstServedOidcDiscovery } from '../common/test-helpers/serve-oidc-discovery.js'
+import {
+  keysRequest,
+  runAgainstServedOidcDiscovery
+} from '../common/test-helpers/serve-oidc-discovery.js'
 import { sessionAuth } from '../common/test-helpers/session-auth.js'
 import {
   generateSigningKey,
@@ -47,13 +49,10 @@ const defraIdAuth = ({ token, sessionId, ...profileOverrides }) => ({
   }
 })
 
-const keysRequest = () => {
-  const keysUrl = new URL(mockOidcConfig.jwks_uri)
-  return nock(keysUrl.origin).get(keysUrl.pathname)
-}
-
 const serveSigningKey = () =>
-  keysRequest().reply(statusCodes.ok, { keys: [signingKey.publicJwk] })
+  keysRequest(mockOidcConfig).reply(statusCodes.ok, {
+    keys: [signingKey.publicJwk]
+  })
 
 const expectSessionCookieCleared = (headers) => {
   const setCookie = headers['set-cookie'] ?? []

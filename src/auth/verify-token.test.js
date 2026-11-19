@@ -1,5 +1,4 @@
 import { vi } from 'vitest'
-import nock from 'nock'
 import { config } from '../config/config.js'
 import {
   generateSigningKey,
@@ -16,11 +15,11 @@ import { awaitEmfDocumentForOperation } from '../server/common/test-helpers/emf-
 import {
   applyIdmSettings,
   idmDiscoveryDocument,
-  idmKeysRequest,
   idmSettingKeys,
   idmSettings
 } from '../server/common/test-helpers/idm-sign-in-settings.js'
 import {
+  keysRequest,
   runAgainstServedOidcDiscovery,
   serveOidcDiscovery
 } from '../server/common/test-helpers/serve-oidc-discovery.js'
@@ -33,28 +32,30 @@ vi.mock('@defra/hapi-tracing', () => ({
 
 describe('#verifyToken', () => {
   const traceId = 'test-trace-id'
-  const keysOrigin = 'https://mock-auth-server'
-  const keysPath = '/jwks'
-  const issuer = 'https://mock-auth-server'
+  const serviceDiscoveryDocument = {
+    jwks_uri: 'https://mock-auth-server/jwks',
+    issuer: 'https://mock-auth-server'
+  }
   const signingKey = generateSigningKey('signing-key')
   const otherKey = generateSigningKey('other-key')
 
   let logSpy
 
-  runAgainstServedOidcDiscovery(
-    { jwks_uri: `${keysOrigin}${keysPath}`, issuer },
-    { restoringConfigKeys: ['defraId.clientId', ...idmSettingKeys] }
-  )
+  runAgainstServedOidcDiscovery(serviceDiscoveryDocument, {
+    restoringConfigKeys: ['defraId.clientId', ...idmSettingKeys]
+  })
 
   const tokenSignedWith = (
     signingKeyToUse,
-    { headerKid, aud = config.get('defraId.clientId'), iss = issuer } = {}
+    {
+      headerKid,
+      aud = config.get('defraId.clientId'),
+      iss = serviceDiscoveryDocument.issuer
+    } = {}
   ) => signToken(signingKeyToUse, { aud, iss, sub: 'user-1' }, { headerKid })
 
-  const keysRequest = (scopeOptions) =>
-    nock(keysOrigin, scopeOptions).get(keysPath)
-
-  const serveKeys = (keys) => keysRequest().reply(statusCodes.ok, { keys })
+  const serveKeys = (keys) =>
+    keysRequest(serviceDiscoveryDocument).reply(statusCodes.ok, { keys })
 
   const idmTokenSignedWith = (
     signingKeyToUse,
@@ -62,7 +63,7 @@ describe('#verifyToken', () => {
   ) => signToken(signingKeyToUse, { aud, iss, sub: 'user-1' })
 
   const serveIdmKeys = (keys) =>
-    idmKeysRequest().reply(statusCodes.ok, { keys })
+    keysRequest(idmDiscoveryDocument).reply(statusCodes.ok, { keys })
 
   beforeEach(() => {
     getTraceIdMock.mockReset()
@@ -122,7 +123,7 @@ describe('#verifyToken', () => {
     })
 
     test('Should send the trace id in the tracing header of the key request', async () => {
-      const scope = keysRequest({
+      const scope = keysRequest(serviceDiscoveryDocument, {
         reqheaders: { [config.get('tracing.header')]: traceId }
       }).reply(statusCodes.ok, { keys: [signingKey.publicJwk] })
 
@@ -133,7 +134,7 @@ describe('#verifyToken', () => {
 
     test('Should send an empty tracing header when the request has no trace id', async () => {
       getTraceIdMock.mockReturnValue(undefined)
-      const scope = keysRequest({
+      const scope = keysRequest(serviceDiscoveryDocument, {
         reqheaders: { [config.get('tracing.header')]: (value) => value === '' }
       }).reply(statusCodes.ok, { keys: [signingKey.publicJwk] })
 
@@ -205,7 +206,7 @@ describe('#verifyToken', () => {
     })
 
     test('Should reject and measure a failure when the key fetch fails', async () => {
-      keysRequest().replyWithError('jwks fetch failed')
+      keysRequest(serviceDiscoveryDocument).replyWithError('jwks fetch failed')
 
       await expect(
         verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)
@@ -218,7 +219,7 @@ describe('#verifyToken', () => {
     })
 
     test('Should give up when the key reply comes later than the timeout', async () => {
-      keysRequest()
+      keysRequest(serviceDiscoveryDocument)
         .delay(OIDC_DOCUMENT_TIMEOUT_MS + 500)
         .reply(statusCodes.ok, { keys: [signingKey.publicJwk] })
 

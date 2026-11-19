@@ -24,7 +24,6 @@ import { awaitEmfDocumentForOperation } from '../common/test-helpers/emf-documen
 import {
   configureIdm,
   idmDiscoveryDocument,
-  idmKeysRequest,
   idmSettings
 } from '../common/test-helpers/idm-sign-in-settings.js'
 import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
@@ -38,6 +37,7 @@ import { runInRealMode } from '../common/test-helpers/real-mode.js'
 import { sessionCookieFor } from '../common/test-helpers/session-auth.js'
 import {
   discoveryUrlRequest,
+  keysRequest,
   serveOidcDiscovery
 } from '../common/test-helpers/serve-oidc-discovery.js'
 import {
@@ -239,7 +239,7 @@ const startIdmSignInServer = () => {
     serveOidcDiscovery(idmDiscoveryDocument, {
       provider: hiddenIdmSignInProvider
     })
-    idmKeysRequest({ persist: true }).reply(statusCodes.ok, {
+    keysRequest(idmDiscoveryDocument, { persist: true }).reply(statusCodes.ok, {
       keys: [signingKey.publicJwk]
     })
   })
