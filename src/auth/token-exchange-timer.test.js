@@ -7,14 +7,6 @@ import {
 import { serviceSignInProvider } from './identity-providers.js'
 import { readEmfDocuments } from '../server/common/test-helpers/emf-documents.js'
 
-vi.mock('../server/common/helpers/logging/logger.js', () => ({
-  createLogger: () => ({
-    warn: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn()
-  })
-}))
-
 describe('token exchange timer', () => {
   let logSpy
 
