@@ -9,7 +9,7 @@ import { recordTokenExchange } from '../../auth/token-exchange-timer.js'
 import { verifyToken } from '../../auth/verify-token.js'
 import { renderUnableToSignIn } from './controller.js'
 import { getOidcConfigWithRetry } from '../../auth/get-oidc-config-with-retry.js'
-import { IDM_STRATEGY, registerIdmStrategy } from '../../plugins/idm-auth.js'
+import { IDM_STRATEGY, registerIdmStrategy } from './idm-strategy.js'
 import {
   idmSignInPage,
   idmSignedInPage,

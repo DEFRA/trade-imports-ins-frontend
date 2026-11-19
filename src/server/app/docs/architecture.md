@@ -20,7 +20,7 @@ involved.
 Whether or not `auth.enabled` is set, and whatever the stub or Defra ID
 mode, it then registers the hidden IDM sign-in
 ([`idm-sign-in.js`](../../auth/idm-sign-in.js)). It serves its routes and
-its own Bell strategy ([`src/plugins/idm-auth.js`](../../../plugins/idm-auth.js))
+its own Bell strategy ([`idm-strategy.js`](../../auth/idm-strategy.js))
 only when `IDM_OIDC_CONFIGURATION_URL` is set, the IDM client ID, client
 secret and service ID are set, and IDM discovery succeeds at start-up.
 Otherwise it logs why and the service starts without it, so an IDM outage

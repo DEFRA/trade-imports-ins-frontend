@@ -1,5 +1,5 @@
-import { bellOptionsFor } from '../auth/bell-options.js'
-import { hiddenIdmSignInProvider } from '../auth/identity-providers.js'
+import { bellOptionsFor } from '../../auth/bell-options.js'
+import { hiddenIdmSignInProvider } from '../../auth/identity-providers.js'
 
 export const IDM_STRATEGY = 'idm'
 
