@@ -35,7 +35,7 @@ import {
 import { restoreConfigAfterEach } from '../common/test-helpers/restore-config-after-each.js'
 import { textOf, textsOf } from '../common/test-helpers/rendered-text.js'
 import { runInRealMode } from '../common/test-helpers/real-mode.js'
-import { serviceSessionCookieFor } from '../common/test-helpers/session-auth.js'
+import { sessionCookieFor } from '../common/test-helpers/session-auth.js'
 import {
   discoveryUrlRequest,
   serveOidcDiscovery
@@ -421,24 +421,22 @@ describe('IDM sign-in, once IDM returns a sign-in', () => {
     )
   })
 
-  test("Should leave the caller's service session in the cache and set or clear no service session cookie", async () => {
-    const serviceSessionId = 'stub-signed-in-session'
-    const serviceSession = {
-      sessionId: serviceSessionId,
+  test("Should leave the caller's session in the cache and set or clear no session cookie", async () => {
+    const sessionId = 'stub-signed-in-session'
+    const session = {
+      sessionId,
       organisationId: 'stub-org-1',
       token: 'stub-token'
     }
-    await getServer().app.cache.set(serviceSessionId, serviceSession)
+    await getServer().app.cache.set(sessionId, session)
 
     const { headers } = await completeSignIn(
       { idToken: idTokenSignedWith(signingKey) },
-      { cookie: await serviceSessionCookieFor(getServer(), serviceSessionId) }
+      { cookie: await sessionCookieFor(getServer(), sessionId) }
     )
 
     expect(setCookieNames(headers)).not.toContain(authCookieName())
-    expect(await getServer().app.cache.get(serviceSessionId)).toEqual(
-      serviceSession
-    )
+    expect(await getServer().app.cache.get(sessionId)).toEqual(session)
   })
 })
 

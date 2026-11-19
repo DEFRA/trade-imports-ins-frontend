@@ -136,7 +136,7 @@ opens the address book list with the cookies a POST set so a test can
 read the banner),
 `session-auth.js` (`sessionAuth(sessionId, overrides)`,
 `ORGANISATION_ID`, the one test organisation id, and
-`serviceSessionCookieFor(server, sessionId)`, a sealed service session
+`sessionCookieFor(server, sessionId)`, a sealed session
 cookie for a request that must carry one),
 `address-book-stub.js` (`STUB_SEED_ADDRESS_NAME`, the name of the address the
 stub seeds for an ordinary organisation, `STUB_LIST_PAGE_SIZE`, the page size

@@ -16,7 +16,7 @@ export function sessionAuth(sessionId, overrides = {}) {
   }
 }
 
-export const serviceSessionCookieFor = async (server, sessionId) => {
+export const sessionCookieFor = async (server, sessionId) => {
   const [setCookie] = await server.states.format([
     { name: config.get('auth.cookieName'), value: { sessionId } }
   ])
