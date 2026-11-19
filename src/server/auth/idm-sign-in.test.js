@@ -7,6 +7,7 @@ import { copy as sharedEn } from '../app/shared/copy.en.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { cookieHeaderOf } from '../common/test-helpers/address-book-requests.js'
 import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
+import { recordModuleLoggerError } from '../common/test-helpers/module-logger-lines.js'
 import { textOf, textsOf } from '../common/test-helpers/rendered-text.js'
 import {
   idmOidcDiscoveryUrlKey,
@@ -26,6 +27,8 @@ const IDM_SETTINGS = {
   'idm.serviceId': 'idm-service-id',
   'idm.clientSecret': 'idm-client-secret'
 }
+
+const SIGN_IN_FAILED = 'IDM sign-in failed'
 
 const IDM_ORIGIN = 'https://idm.example.test'
 const IDM_DOCUMENT = {
@@ -90,6 +93,8 @@ describe('IDM sign-in, without an IDM discovery URL', () => {
 describe('IDM sign-in, with an IDM discovery URL', () => {
   configureIdmBeforeServerStarts()
   const getServer = startRealModeServer()
+
+  const { entriesWith: errorLogs } = recordModuleLoggerError()
 
   const signingKey = generateSigningKey('idm-key')
   const otherKey = generateSigningKey('other-key')
@@ -242,15 +247,47 @@ describe('IDM sign-in, with an IDM discovery URL', () => {
     )
   })
 
-  test('Should show the unable to sign in page, linking back to the start page, when IDM returns an error', async () => {
+  test('Should show the unable to sign in page, linking back to the start page, and log the error in full, when IDM returns an error', async () => {
     const { statusCode, payload } = await getServer().inject({
       method: 'GET',
-      url: `${idmPaths.callback}?error=access_denied&error_description=AADB2C90091`
+      url: `${idmPaths.callback}?error=access_denied&error_description=AADB2C90091&state=idm-state`
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     expectUnableToSignInPage(payload)
     expect(payload).not.toContain('AADB2C90091')
+    expect(errorLogs(SIGN_IN_FAILED)).toEqual([
+      {
+        fields: {
+          err: expect.any(Error),
+          idmError: 'access_denied',
+          idmErrorDescription: 'AADB2C90091',
+          state: 'idm-state'
+        },
+        message: SIGN_IN_FAILED
+      }
+    ])
+  })
+
+  test('Should show the unable to sign in page, not the signed-out page, and log the error in full, when IDM returns an error to the signed-out page', async () => {
+    const { statusCode, payload } = await getServer().inject({
+      method: 'GET',
+      url: `${idmPaths.signedOut}?error=access_denied&error_description=AADB2C90091&state=idm-state`
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expectUnableToSignInPage(payload)
+    expect(payload).not.toContain('AADB2C90091')
+    expect(errorLogs(SIGN_IN_FAILED)).toEqual([
+      {
+        fields: {
+          idmError: 'access_denied',
+          idmErrorDescription: 'AADB2C90091',
+          state: 'idm-state'
+        },
+        message: SIGN_IN_FAILED
+      }
+    ])
   })
 
   test('Should show the unable to sign in page when the ID token is signed by a key IDM does not serve', async () => {

@@ -11,6 +11,9 @@ import {
   unauthorisedPage
 } from '../app/auth/page.js'
 import { base, sharedCopy, SURFACES } from '../app/shared/kit.js'
+import { createLogger } from '../common/helpers/logging/logger.js'
+
+const logger = createLogger()
 
 export const idmPaths = Object.freeze({
   signIn: '/auth/idm/sign-in',
@@ -60,6 +63,19 @@ const unableToSignIn = (h) =>
     signInUrl: idmPaths.signIn
   })
 
+const refuseSignIn = (request, h, err) => {
+  logger.error(
+    {
+      err,
+      idmError: request.query.error,
+      idmErrorDescription: request.query.error_description,
+      state: request.query.state
+    },
+    'IDM sign-in failed'
+  )
+  return unableToSignIn(h)
+}
+
 const showSignIn = (_request, h) =>
   h.view('auth/idm-sign-in', {
     ...base('Sign in with Defra ID'),
@@ -72,16 +88,7 @@ const completeSignIn = async (request, h) => {
   recordTokenExchange(request, idmProvider)
 
   if (!request.auth.isAuthenticated) {
-    request.logger.error(
-      {
-        err: request.auth.error,
-        idmError: request.query.error,
-        idmErrorDescription: request.query.error_description,
-        state: request.query.state
-      },
-      'IDM sign-in failed'
-    )
-    return unableToSignIn(h)
+    return refuseSignIn(request, h, request.auth.error)
   }
 
   const { token: accessToken, profile } = request.auth.credentials
@@ -89,7 +96,7 @@ const completeSignIn = async (request, h) => {
   try {
     await verifyToken(profile.idToken, idmProvider)
   } catch (err) {
-    request.logger.error({ err }, 'IDM ID token refused')
+    logger.error({ err }, 'IDM ID token refused')
     return unableToSignIn(h)
   }
 
@@ -101,7 +108,7 @@ const completeSignIn = async (request, h) => {
     scope: profile.scope,
     refreshTokenReturned: profile.refreshTokenReturned
   })
-  request.logger.info(
+  logger.info(
     {
       contactId: idTokenClaims.contactId,
       sessionId: idTokenClaims.sessionId,
@@ -117,7 +124,7 @@ const showSignedIn = (request, h) => {
   const signIn = request.yar.get(SIGN_IN_SESSION_KEY)
 
   if (!signIn) {
-    request.logger.info('No IDM sign-in in the session, starting one')
+    logger.info('No IDM sign-in in the session, starting one')
     return h.redirect(idmPaths.signIn)
   }
 
@@ -128,8 +135,13 @@ const showSignedIn = (request, h) => {
   })
 }
 
-const showSignedOut = (_request, h) =>
-  h.view('auth/idm-signed-out', base('Signed out'))
+const showSignedOut = (request, h) => {
+  if (request.query.error) {
+    return refuseSignIn(request, h)
+  }
+
+  return h.view('auth/idm-signed-out', base('Signed out'))
+}
 
 const routes = [
   {
