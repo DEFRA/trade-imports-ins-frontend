@@ -98,6 +98,21 @@ test pages, in English only, with their text in the templates and in
 `idm-sign-in.js` (the page titles, which are also the headings, and the
 token-response row labels), not in `copy.en.js`/`copy.cy.js`.
 
+**The Defra ID sign-in and sign-out callbacks**: the sign-in callback
+(`/auth/sign-in-oidc`) runs Bell in `try` mode, so a callback Bell cannot
+authenticate (a state or nonce mismatch, a failed token exchange, a cookie
+it cannot read) reaches the handler unauthenticated, with the reason in
+`request.auth.error`, and renders the unable-to-sign-in page. The token's
+`roles` carry the role name, not its permissions, for a user signed in with
+RPA credentials, so the callback asks `getPermissions`
+([`src/auth/get-permissions.js`](../../../auth/get-permissions.js)) for the
+scope; those calls go to the RPS and Siti Agri APIs with the Defra ID token.
+The sign-out callback (`/auth/sign-out-oidc`) checks `state` only when the
+query carries one: Defra ID sends it, but a local sign-out returns without
+it. The sign-in callback and `/auth/organisation` pass the stored return
+path through `getSafeRedirect`, so the redirect after sign-in is always a
+path on this service.
+
 ## The application
 
 [`routes.js`](../routes.js) is the composition point: a Hapi plugin named
