@@ -1,5 +1,6 @@
 import Jwt from '@hapi/jwt'
 import { describe, expect, test, vi, beforeEach } from 'vitest'
+import { serviceSignInProvider } from '../auth/identity-providers.js'
 import { authPlugin, getBellOptions, getCookieOptions } from './auth.js'
 
 const getOidcConfigWithRetryMock = vi.hoisted(() => vi.fn())
@@ -93,7 +94,10 @@ describe('auth plugin', () => {
 
     await authPlugin.plugin.register(server)
 
-    expect(getOidcConfigWithRetryMock).toHaveBeenCalledWith(server.logger)
+    expect(getOidcConfigWithRetryMock).toHaveBeenCalledWith(
+      server.logger,
+      serviceSignInProvider
+    )
 
     expect(server.auth.strategy).toHaveBeenCalledWith(
       'defra-id',
@@ -163,9 +167,7 @@ describe('auth plugin', () => {
     const token = getBellOptions(oidcConfig).provider.token(request)
 
     expect(token).toBe(oidcConfig.token_endpoint)
-    expect(request.app.defraIdTokenExchangeStartedAt).toEqual(
-      expect.any(Number)
-    )
+    expect(request.app.tokenExchangeStartedAt).toEqual(expect.any(Number))
   })
 
   test('getBellOptions.location stores safe redirect and returns redirectUrl', () => {

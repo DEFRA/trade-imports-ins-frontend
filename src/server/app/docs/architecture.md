@@ -31,11 +31,16 @@ static files.
 - [`src/plugins/csrf.js`](../../../plugins/csrf.js) — CSRF protection via
   `@hapi/crumb`, disabled during test runs.
 - [`src/auth/identity-providers.js`](../../../auth/identity-providers.js) —
-  the two identity providers, Defra ID (the stub outside production) and
-  IDM: each one's config group, metric call names, and whether its tokens'
-  audience and issuer are checked. The stub issues a random audience, so
-  Defra ID's are not. Discovery, token verification and the token-exchange
-  timing take a provider and default to Defra ID.
+  the two identity providers, named by role: `serviceSignInProvider`, the
+  service's own sign-in (config group `defraId`, the Defra ID stub outside
+  production), and `hiddenIdmSignInProvider`, the hidden test sign-in
+  through the real Defra ID (config group `idm`). It holds each one's config
+  group, metric call names, and whether its tokens' audience and issuer are
+  checked. The stub issues a random audience, so the service sign-in's are
+  not. The metric dependency `defra-id` is the service's own client, whether
+  it points at the stub or the real Defra ID; `idm` is the hidden test
+  client. Discovery, token verification and the token-exchange timing each
+  take the provider they act for, with no default.
 - [`src/auth/`](../../../auth/) — token verification, permissions lookup,
   safe-redirect checking and the one Defra ID hostname rewrite
   ([`defra-id-hostnames.js`](../../../auth/defra-id-hostnames.js)), shared by

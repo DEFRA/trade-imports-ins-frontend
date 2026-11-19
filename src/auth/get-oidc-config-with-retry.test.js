@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { getOidcConfigWithRetry } from './get-oidc-config-with-retry.js'
+import { serviceSignInProvider } from './identity-providers.js'
 
 const wreckGetMock = vi.hoisted(() => vi.fn())
 const configGetMock = vi.hoisted(() => vi.fn())
@@ -64,7 +65,9 @@ describe('getOidcConfigWithRetry', () => {
   test('returns the discovery document without retrying when the first call succeeds', async () => {
     wreckGetMock.mockResolvedValue({ payload })
 
-    await expect(getOidcConfigWithRetry(logger)).resolves.toEqual(payload)
+    await expect(
+      getOidcConfigWithRetry(logger, serviceSignInProvider)
+    ).resolves.toEqual(payload)
 
     expect(wreckGetMock).toHaveBeenCalledTimes(1)
     expect(logger.warn).not.toHaveBeenCalled()
@@ -75,7 +78,7 @@ describe('getOidcConfigWithRetry', () => {
       .mockRejectedValueOnce(timedOut())
       .mockResolvedValueOnce({ payload })
 
-    const result = getOidcConfigWithRetry(logger)
+    const result = getOidcConfigWithRetry(logger, serviceSignInProvider)
     let settled = false
     const tracked = result.then((value) => {
       settled = true
@@ -95,7 +98,7 @@ describe('getOidcConfigWithRetry', () => {
   test('gives up only after the full 1s, 2s and 4s backoff and throws an error naming the discovery URL', async () => {
     wreckGetMock.mockRejectedValue(timedOut())
 
-    const result = getOidcConfigWithRetry(logger)
+    const result = getOidcConfigWithRetry(logger, serviceSignInProvider)
     let settled = false
     const tracked = result.catch((error) => {
       settled = true

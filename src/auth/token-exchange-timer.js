@@ -1,7 +1,6 @@
 import { recordExternalCallInBackground } from '../server/common/helpers/external-call-metrics.js'
-import { defraIdProvider } from './identity-providers.js'
 
-const STARTED_AT = 'defraIdTokenExchangeStartedAt'
+const STARTED_AT = 'tokenExchangeStartedAt'
 
 /**
  * Stamps the start of the token exchange when Bell looks up the token endpoint.
@@ -18,9 +17,9 @@ export const timeTokenExchange = (tokenEndpoint) => (request) => {
  * Records the token exchange Bell made for this request.
  *
  * @param {object} request - the sign-in callback request
- * @param {{ calls: { tokenExchange: object } }} [provider] - the identity provider Bell exchanged the code with, `defraIdProvider` by default
+ * @param {{ calls: { tokenExchange: object } }} provider - the identity provider Bell exchanged the code with
  */
-export const recordTokenExchange = (request, provider = defraIdProvider) => {
+export const recordTokenExchange = (request, provider) => {
   const startedAt = request.app?.[STARTED_AT]
   if (startedAt === undefined) {
     return

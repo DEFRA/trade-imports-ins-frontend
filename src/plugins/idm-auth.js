@@ -1,11 +1,14 @@
-import { idmProvider, providerSetting } from '../auth/identity-providers.js'
+import {
+  hiddenIdmSignInProvider,
+  providerSetting
+} from '../auth/identity-providers.js'
 import { timeTokenExchange } from '../auth/token-exchange-timer.js'
 import { config } from '../config/config.js'
 
 export const IDM_STRATEGY = 'idm'
 
 function getIdmBellOptions(oidcConfig) {
-  const clientId = providerSetting(idmProvider, 'clientId')
+  const clientId = providerSetting(hiddenIdmSignInProvider, 'clientId')
 
   return {
     provider: {
@@ -25,14 +28,14 @@ function getIdmBellOptions(oidcConfig) {
       }
     },
     clientId,
-    clientSecret: providerSetting(idmProvider, 'clientSecret'),
+    clientSecret: providerSetting(hiddenIdmSignInProvider, 'clientSecret'),
     password: config.get('session.cookie.password'),
     isSecure: config.get('isProduction'),
     isSameSite: config.get('session.cookie.sameSite'),
-    location: () => providerSetting(idmProvider, 'redirectUrl'),
+    location: () => providerSetting(hiddenIdmSignInProvider, 'redirectUrl'),
     providerParams: {
-      serviceId: providerSetting(idmProvider, 'serviceId'),
-      p: providerSetting(idmProvider, 'policy'),
+      serviceId: providerSetting(hiddenIdmSignInProvider, 'serviceId'),
+      p: providerSetting(hiddenIdmSignInProvider, 'policy'),
       response_mode: 'query'
     }
   }

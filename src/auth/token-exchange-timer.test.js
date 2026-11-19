@@ -5,6 +5,7 @@ import {
   recordTokenExchange,
   timeTokenExchange
 } from './token-exchange-timer.js'
+import { serviceSignInProvider } from './identity-providers.js'
 import { readEmfDocuments } from '../server/common/test-helpers/emf-documents.js'
 
 vi.mock('../server/common/helpers/logging/logger.js', () => ({
@@ -35,9 +36,7 @@ describe('token exchange timer', () => {
     const endpoint = timeTokenExchange('https://idp.example.com/token')(request)
 
     expect(endpoint).toBe('https://idp.example.com/token')
-    expect(request.app.defraIdTokenExchangeStartedAt).toEqual(
-      expect.any(Number)
-    )
+    expect(request.app.tokenExchangeStartedAt).toEqual(expect.any(Number))
   })
 
   test.each([
@@ -47,11 +46,11 @@ describe('token exchange timer', () => {
     'recordTokenExchange emits the exchange with failure $expectedFailure when isAuthenticated is $isAuthenticated',
     async ({ isAuthenticated, expectedFailure }) => {
       const request = {
-        app: { defraIdTokenExchangeStartedAt: performance.now() },
+        app: { tokenExchangeStartedAt: performance.now() },
         auth: { isAuthenticated }
       }
 
-      recordTokenExchange(request)
+      recordTokenExchange(request, serviceSignInProvider)
 
       await vi.waitFor(() => expect(readEmfDocuments(logSpy)).toHaveLength(1))
       const [document] = readEmfDocuments(logSpy)
@@ -63,7 +62,10 @@ describe('token exchange timer', () => {
   )
 
   test('recordTokenExchange emits nothing when Bell never reached the token call', () => {
-    recordTokenExchange({ app: {}, auth: { isAuthenticated: false } })
+    recordTokenExchange(
+      { app: {}, auth: { isAuthenticated: false } },
+      serviceSignInProvider
+    )
 
     expect(getMetricsLoggerSpy).not.toHaveBeenCalled()
     expect(readEmfDocuments(logSpy)).toHaveLength(0)

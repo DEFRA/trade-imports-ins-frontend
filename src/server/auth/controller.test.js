@@ -8,6 +8,7 @@ import { startRealModeServer } from '../common/test-helpers/test-server.js'
 import { readEmfDocuments } from '../common/test-helpers/emf-documents.js'
 import { verifyToken } from '../../auth/verify-token.js'
 import { getPermissions } from '../../auth/get-permissions.js'
+import { serviceSignInProvider } from '../../auth/identity-providers.js'
 import { copy as sharedEn } from '../app/shared/copy.en.js'
 
 vi.mock('../../config/config.js', async (importOriginal) => {
@@ -178,7 +179,7 @@ describe('#authController', () => {
     expect(headers['set-cookie'] ?? []).not.toContainEqual(
       expect.stringContaining('sid=')
     )
-    expect(verifyToken).toHaveBeenCalledWith(MOCK_TOKEN)
+    expect(verifyToken).toHaveBeenCalledWith(MOCK_TOKEN, serviceSignInProvider)
     expect(getPermissions).toHaveBeenCalledWith('CRN123', 'org-1', MOCK_TOKEN)
   })
 
@@ -201,7 +202,7 @@ describe('#authController', () => {
         method: 'GET',
         url: SIGN_IN_OIDC_URL,
         auth: defraIdAuth(),
-        app: { defraIdTokenExchangeStartedAt: performance.now() }
+        app: { tokenExchangeStartedAt: performance.now() }
       })
 
       expect(statusCode).toBe(HTTP_STATUS_FOUND)
@@ -220,7 +221,7 @@ describe('#authController', () => {
       const { statusCode, payload } = await getServer().inject({
         method: 'GET',
         url: `${SIGN_IN_OIDC_URL}?code=unused&state=unmatched&refresh=1`,
-        app: { defraIdTokenExchangeStartedAt: performance.now() }
+        app: { tokenExchangeStartedAt: performance.now() }
       })
 
       expect(statusCode).toBe(statusCodes.ok)

@@ -1,6 +1,7 @@
 import Jwt from '@hapi/jwt'
 
 import { getOidcConfigWithRetry } from '../auth/get-oidc-config-with-retry.js'
+import { serviceSignInProvider } from '../auth/identity-providers.js'
 import { refreshTokens } from '../auth/refresh-tokens.js'
 import { getSafeRedirect } from '../auth/get-safe-redirect.js'
 import { timeTokenExchange } from '../auth/token-exchange-timer.js'
@@ -18,7 +19,10 @@ export const authPlugin = {
         return
       }
 
-      const oidcConfig = await getOidcConfigWithRetry(server.logger)
+      const oidcConfig = await getOidcConfigWithRetry(
+        server.logger,
+        serviceSignInProvider
+      )
 
       server.auth.strategy('defra-id', 'bell', getBellOptions(oidcConfig))
     }

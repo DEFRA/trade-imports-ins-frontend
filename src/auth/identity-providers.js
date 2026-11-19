@@ -1,22 +1,38 @@
 import { config } from '../config/config.js'
-import { DEFRA_ID_CALLS, IDM_CALLS } from './defra-id-calls.js'
 
-export const defraIdProvider = Object.freeze({
+const callsFor = (dependency) => ({
+  openidConfiguration: { dependency, operation: 'openid-configuration' },
+  jwks: { dependency, operation: 'jwks', interfaceId: 'SYN-12' },
+  tokenExchange: {
+    dependency,
+    operation: 'token-exchange',
+    interfaceId: 'SYN-11'
+  }
+})
+
+export const serviceSignInProvider = Object.freeze({
   configKey: 'defraId',
-  calls: DEFRA_ID_CALLS,
+  calls: Object.freeze({
+    ...callsFor('defra-id'),
+    tokenRefresh: {
+      dependency: 'defra-id',
+      operation: 'token-refresh',
+      interfaceId: 'SYN-13'
+    }
+  }),
   verifiesAudienceAndIssuer: false
 })
 
-export const idmProvider = Object.freeze({
+export const hiddenIdmSignInProvider = Object.freeze({
   configKey: 'idm',
-  calls: IDM_CALLS,
+  calls: Object.freeze(callsFor('idm')),
   verifiesAudienceAndIssuer: true
 })
 
 /**
  * Reads one of an identity provider's settings from its config group.
  *
- * @param {{ configKey: string }} provider - `defraIdProvider` or `idmProvider`
+ * @param {{ configKey: string }} provider - `serviceSignInProvider` or `hiddenIdmSignInProvider`
  * @param {string} setting - a key within the provider's config group, such as `clientId`
  * @returns {*} the configured value
  */

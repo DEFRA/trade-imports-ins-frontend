@@ -6,7 +6,10 @@ import {
   signToken
 } from '../server/common/test-helpers/signing-key.js'
 import { verifyToken } from './verify-token.js'
-import { idmProvider } from './identity-providers.js'
+import {
+  hiddenIdmSignInProvider,
+  serviceSignInProvider
+} from './identity-providers.js'
 import { OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
 import { statusCodes } from '../server/common/constants/status-codes.js'
 import { awaitEmfDocumentForOperation } from '../server/common/test-helpers/emf-documents.js'
@@ -69,7 +72,7 @@ describe('#verifyToken', () => {
       serveKeys([signingKey.publicJwk])
 
       await expect(
-        verifyToken(tokenSignedWith(signingKey))
+        verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)
       ).resolves.toBeUndefined()
     })
 
@@ -77,7 +80,7 @@ describe('#verifyToken', () => {
       serveKeys([otherKey.publicJwk, signingKey.publicJwk])
 
       await expect(
-        verifyToken(tokenSignedWith(signingKey))
+        verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)
       ).resolves.toBeUndefined()
     })
 
@@ -87,7 +90,7 @@ describe('#verifyToken', () => {
       await expect(
         verifyToken(
           tokenSignedWith(signingKey, { aud: IDM_CLIENT_ID }),
-          idmProvider
+          hiddenIdmSignInProvider
         )
       ).resolves.toBeUndefined()
 
@@ -103,7 +106,8 @@ describe('#verifyToken', () => {
           tokenSignedWith(signingKey, {
             aud: 'another-client',
             iss: 'https://another-issuer'
-          })
+          }),
+          serviceSignInProvider
         )
       ).resolves.toBeUndefined()
     })
@@ -113,7 +117,7 @@ describe('#verifyToken', () => {
         reqheaders: { [config.get('tracing.header')]: traceId }
       }).reply(statusCodes.ok, { keys: [signingKey.publicJwk] })
 
-      await verifyToken(tokenSignedWith(signingKey))
+      await verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)
 
       expect(scope.isDone()).toBe(true)
     })
@@ -124,7 +128,7 @@ describe('#verifyToken', () => {
         reqheaders: { [config.get('tracing.header')]: (value) => value === '' }
       }).reply(statusCodes.ok, { keys: [signingKey.publicJwk] })
 
-      await verifyToken(tokenSignedWith(signingKey))
+      await verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)
 
       expect(scope.isDone()).toBe(true)
     })
@@ -132,7 +136,7 @@ describe('#verifyToken', () => {
     test('Should measure the key fetch as defra-id jwks', async () => {
       serveKeys([signingKey.publicJwk])
 
-      await verifyToken(tokenSignedWith(signingKey))
+      await verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)
 
       const document = await awaitEmfDocumentForOperation(logSpy, 'jwks')
       expect(document.Dependency).toBe('defra-id')
@@ -146,24 +150,27 @@ describe('#verifyToken', () => {
       serveKeys([signingKey.publicJwk])
 
       await expect(
-        verifyToken(tokenSignedWith(otherKey, { headerKid: signingKey.kid }))
+        verifyToken(
+          tokenSignedWith(otherKey, { headerKid: signingKey.kid }),
+          serviceSignInProvider
+        )
       ).rejects.toThrow('Invalid token signature')
     })
 
     test('Should reject a token whose header names a key that is not served', async () => {
       serveKeys([signingKey.publicJwk])
 
-      await expect(verifyToken(tokenSignedWith(otherKey))).rejects.toThrow(
-        'No signing key other-key served'
-      )
+      await expect(
+        verifyToken(tokenSignedWith(otherKey), serviceSignInProvider)
+      ).rejects.toThrow('No signing key other-key served')
     })
 
     test('Should reject when the served key set is empty', async () => {
       serveKeys([])
 
-      await expect(verifyToken(tokenSignedWith(signingKey))).rejects.toThrow(
-        'No signing key signing-key served'
-      )
+      await expect(
+        verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)
+      ).rejects.toThrow('No signing key signing-key served')
     })
 
     test('Should reject a token issued to another client when checked against IDM', async () => {
@@ -172,7 +179,7 @@ describe('#verifyToken', () => {
       await expect(
         verifyToken(
           tokenSignedWith(signingKey, { aud: 'another-client' }),
-          idmProvider
+          hiddenIdmSignInProvider
         )
       ).rejects.toThrow('Token audience is not allowed')
     })
@@ -186,7 +193,7 @@ describe('#verifyToken', () => {
             aud: IDM_CLIENT_ID,
             iss: 'https://another-issuer'
           }),
-          idmProvider
+          hiddenIdmSignInProvider
         )
       ).rejects.toThrow('Token payload iss value not allowed')
     })
@@ -194,9 +201,9 @@ describe('#verifyToken', () => {
     test('Should reject and measure a failure when the key fetch fails', async () => {
       keysRequest().replyWithError('jwks fetch failed')
 
-      await expect(verifyToken(tokenSignedWith(signingKey))).rejects.toThrow(
-        'jwks fetch failed'
-      )
+      await expect(
+        verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)
+      ).rejects.toThrow('jwks fetch failed')
 
       const document = await awaitEmfDocumentForOperation(logSpy, 'jwks')
       expect(document.Interface).toBe('SYN-12')
@@ -210,7 +217,7 @@ describe('#verifyToken', () => {
         .reply(statusCodes.ok, { keys: [signingKey.publicJwk] })
 
       await expect(
-        verifyToken(tokenSignedWith(signingKey))
+        verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)
       ).rejects.toMatchObject({
         output: { statusCode: statusCodes.gatewayTimeout }
       })

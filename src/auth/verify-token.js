@@ -5,9 +5,9 @@ import { getTraceId } from '@defra/hapi-tracing'
 import { getOidcConfig, OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
 import { config } from '../config/config.js'
 import { measureExternalCall } from '../server/common/helpers/external-call-metrics.js'
-import { defraIdProvider, providerSetting } from './identity-providers.js'
+import { providerSetting } from './identity-providers.js'
 
-async function verifyToken(token, provider = defraIdProvider) {
+async function verifyToken(token, provider) {
   const oidcConfig = await getOidcConfig(provider)
   const { jwks_uri: uri, issuer } = oidcConfig
 

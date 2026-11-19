@@ -1,6 +1,9 @@
 import Jwt from '@hapi/jwt'
 
-import { idmProvider, providerSetting } from '../../auth/identity-providers.js'
+import {
+  hiddenIdmSignInProvider,
+  providerSetting
+} from '../../auth/identity-providers.js'
 import { recordTokenExchange } from '../../auth/token-exchange-timer.js'
 import { verifyToken } from '../../auth/verify-token.js'
 import { renderUnableToSignIn } from './controller.js'
@@ -81,7 +84,7 @@ const showSignIn = (_request, h) =>
 const goToSignedIn = (_request, h) => h.redirect(idmPaths.signedIn)
 
 const completeSignIn = async (request, h) => {
-  recordTokenExchange(request, idmProvider)
+  recordTokenExchange(request, hiddenIdmSignInProvider)
 
   if (!request.auth.isAuthenticated) {
     return refuseSignIn(request, h, request.auth.error)
@@ -90,7 +93,7 @@ const completeSignIn = async (request, h) => {
   const { token: accessToken, profile } = request.auth.credentials
 
   try {
-    await verifyToken(profile.idToken, idmProvider)
+    await verifyToken(profile.idToken, hiddenIdmSignInProvider)
   } catch (err) {
     logger.error({ err }, 'IDM ID token refused')
     return renderUnableToSignIn(h, { signInUrl: idmPaths.signIn })
@@ -176,7 +179,7 @@ const routes = [
 ]
 
 const discoverIdm = (discoveryUrl) =>
-  getOidcConfigWithRetry(logger, idmProvider).catch((err) => {
+  getOidcConfigWithRetry(logger, hiddenIdmSignInProvider).catch((err) => {
     logger.error(
       { err, discoveryUrl },
       'IDM discovery failed, IDM sign-in not served'
@@ -188,7 +191,10 @@ export const idmSignInRoutes = {
   plugin: {
     name: 'idm-sign-in-routes',
     async register(server) {
-      const discoveryUrl = providerSetting(idmProvider, 'oidcDiscoveryUrl')
+      const discoveryUrl = providerSetting(
+        hiddenIdmSignInProvider,
+        'oidcDiscoveryUrl'
+      )
       if (!discoveryUrl) {
         logger.info('No IDM discovery URL set, IDM sign-in not served')
         return

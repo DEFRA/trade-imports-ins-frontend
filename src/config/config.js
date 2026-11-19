@@ -190,46 +190,46 @@ export const config = convict({
   },
   defraId: {
     oidcDiscoveryUrl: {
-      doc: 'Defra ID OIDC well-known configuration URL',
+      doc: 'Service sign-in: Defra ID OIDC well-known configuration URL',
       format: String,
       default:
         'http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/openid-configuration',
       env: 'DEFRA_ID_OIDC_CONFIGURATION_URL'
     },
     clientId: {
-      doc: 'Defra ID client ID',
+      doc: 'Service sign-in: Defra ID client ID',
       format: String,
       default: 'test-client-id',
       env: 'DEFRA_ID_CLIENT_ID',
       nullable: false
     },
     clientSecret: {
-      doc: 'Defra ID client secret',
+      doc: 'Service sign-in: Defra ID client secret',
       format: String,
       default: 'test-secret',
       env: 'DEFRA_ID_CLIENT_SECRET',
       sensitive: true
     },
     serviceId: {
-      doc: 'Defra ID service ID',
+      doc: 'Service sign-in: Defra ID service ID',
       format: String,
       default: 'trade-imports-ins-frontend',
       env: 'DEFRA_ID_SERVICE_ID'
     },
     policy: {
-      doc: 'Defra ID B2C policy name',
+      doc: 'Service sign-in: Defra ID B2C policy name',
       format: String,
       default: 'b2c_1a_cui_cpdev_signupsigninsfi',
       env: 'DEFRA_ID_POLICY'
     },
     redirectUrl: {
-      doc: 'Redirect URL after Defra ID sign-in (OIDC callback)',
+      doc: 'Service sign-in: redirect URL after Defra ID sign-in (OIDC callback)',
       format: String,
       default: 'http://localhost:3002/auth/sign-in-oidc',
       env: 'DEFRA_ID_REDIRECT_URL'
     },
     signOutRedirectUrl: {
-      doc: 'Redirect URL after Defra ID sign-out',
+      doc: 'Service sign-in: redirect URL after Defra ID sign-out',
       format: String,
       default: 'http://localhost:3002/auth/sign-out-oidc',
       env: 'DEFRA_ID_SIGN_OUT_REDIRECT_URL'
@@ -262,38 +262,38 @@ export const config = convict({
   },
   idm: {
     oidcDiscoveryUrl: {
-      doc: 'OIDC well-known configuration URL of the real Defra ID (IDM). Empty leaves the IDM sign-in pages unserved.',
+      doc: 'Hidden IDM sign-in: OIDC well-known configuration URL of the real Defra ID (IDM). Empty leaves the IDM sign-in pages unserved.',
       format: String,
       default: '',
       env: 'IDM_OIDC_CONFIGURATION_URL'
     },
     clientId: {
-      doc: 'IDM client ID',
+      doc: 'Hidden IDM sign-in: client ID',
       format: String,
       default: '',
       env: 'IDM_CLIENT_ID'
     },
     clientSecret: {
-      doc: 'IDM client secret',
+      doc: 'Hidden IDM sign-in: client secret',
       format: String,
       default: '',
       env: 'IDM_CLIENT_SECRET',
       sensitive: true
     },
     serviceId: {
-      doc: 'IDM service ID',
+      doc: 'Hidden IDM sign-in: service ID',
       format: String,
       default: '',
       env: 'IDM_SERVICE_ID'
     },
     policy: {
-      doc: 'IDM B2C policy name',
+      doc: 'Hidden IDM sign-in: B2C policy name',
       format: String,
       default: 'b2c_1a_cui_cpdev_signupsignin',
       env: 'IDM_POLICY'
     },
     redirectUrl: {
-      doc: 'Redirect URL IDM returns to after sign-in (OIDC callback)',
+      doc: 'Hidden IDM sign-in: redirect URL IDM returns to after sign-in (OIDC callback)',
       format: String,
       default: 'http://localhost:3002/auth/callback',
       env: 'IDM_REDIRECT_URL'

@@ -1,6 +1,7 @@
 import { getSignOutUrl } from '../../auth/get-sign-out-url.js'
 import { validateState } from '../../auth/state.js'
 import { verifyToken } from '../../auth/verify-token.js'
+import { serviceSignInProvider } from '../../auth/identity-providers.js'
 import { getPermissions } from '../../auth/get-permissions.js'
 import { getSafeRedirect } from '../../auth/get-safe-redirect.js'
 import { recordTokenExchange } from '../../auth/token-exchange-timer.js'
@@ -29,7 +30,7 @@ export const authController = {
   },
   signinOidc: {
     handler: async function (request, h) {
-      recordTokenExchange(request)
+      recordTokenExchange(request, serviceSignInProvider)
 
       // If the user is not authenticated, redirect to the home page
       // This should only occur if the user tries to access the sign-in page directly and not part of the sign-in flow
@@ -59,7 +60,7 @@ export const authController = {
 
       // verify token returned from Defra Identity against public key
       try {
-        await verifyToken(token)
+        await verifyToken(token, serviceSignInProvider)
       } catch (err) {
         request.logger?.error(
           { err },
