@@ -11,6 +11,7 @@ import {
 } from './identity-providers.js'
 import { OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
 import { statusCodes } from '../server/common/constants/status-codes.js'
+import { replyAfter } from './reply-after.test-support.js'
 import { awaitEmfDocumentForOperation } from '../server/common/test-helpers/emf-documents.js'
 import {
   applyIdmSettings,
@@ -219,9 +220,11 @@ describe('#verifyToken', () => {
     })
 
     test('Should give up when the key reply comes later than the timeout', async () => {
-      keysRequest(serviceDiscoveryDocument)
-        .delay(OIDC_DOCUMENT_TIMEOUT_MS + 500)
-        .reply(statusCodes.ok, { keys: [signingKey.publicJwk] })
+      keysRequest(serviceDiscoveryDocument).reply(
+        replyAfter(OIDC_DOCUMENT_TIMEOUT_MS + 500, statusCodes.ok, {
+          keys: [signingKey.publicJwk]
+        })
+      )
 
       await expect(
         verifyToken(tokenSignedWith(signingKey), serviceSignInProvider)

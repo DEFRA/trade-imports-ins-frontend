@@ -12,6 +12,7 @@ import {
   getPage,
   getPageAsOtherOrganisation,
   MALFORMED_ADDRESS_ID,
+  OTHER_ORGANISATION_ID,
   serveAddressBookServerError,
   serveStoredTransporter,
   serveTransporterNotFound,
@@ -261,7 +262,7 @@ describe('GET /address-book/transporter/{id} — leaving it, and ids it cannot s
   })
 
   test("Should redirect to the Transporter tab for another organisation's transporter", async () => {
-    serveTransporterNotFound(STORED_TRANSPORTER.id)
+    serveTransporterNotFound(STORED_TRANSPORTER.id, OTHER_ORGANISATION_ID)
 
     expectRedirectTo(
       await getPageAsOtherOrganisation(

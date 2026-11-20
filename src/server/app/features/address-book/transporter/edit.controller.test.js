@@ -11,6 +11,7 @@ import {
   getPageAsOtherOrganisation,
   interceptAddressBookRequest,
   MALFORMED_ADDRESS_ID,
+  OTHER_ORGANISATION_ID,
   postPage,
   serveAddressBookServerError,
   serveStoredTransporter,
@@ -163,7 +164,7 @@ describe('GET /address-book/transporter/{id}/edit', () => {
   })
 
   test("Should redirect to the Transporter tab for another organisation's transporter", async () => {
-    serveTransporterNotFound(TRANSPORTER_ID)
+    serveTransporterNotFound(TRANSPORTER_ID, OTHER_ORGANISATION_ID)
 
     expectRedirectTo(
       await getPageAsOtherOrganisation(

@@ -183,11 +183,12 @@ govuk-frontend's assets to `/public/assets`, and writes the manifest
 `getAssetPath()` reads. Run `npm run build:frontend` once; `npm run dev`
 watches. A missing webpack entry is a silent 404 — the template renders,
 the bundle does not. `_govuk-frontend.scss` configures GOV.UK Frontend
-through the vendored module of `@ministryofjustice/frontend`
-(`moj/vendor/govuk-frontend`), with this service's asset path and global
-styles, so GOV.UK Frontend is configured once. `application.scss` then
-`@use`s the package's own sub navigation component
-(`moj/components/sub-navigation/sub-navigation`).
+directly, with this service's asset path, global styles and no default
+font face, so GOV.UK Frontend is configured once. `application.scss`
+loads it first, then `@use`s the sub navigation component of
+`@ministryofjustice/frontend`
+(`moj/components/sub-navigation/sub-navigation`), which inherits that
+configuration.
 
 ## Enforced boundaries
 

@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { config } from '../config/config.js'
+import { replyAfter } from './reply-after.test-support.js'
 import { getOidcConfig, OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
 import {
   hiddenIdmSignInProvider,
@@ -134,9 +135,9 @@ describe('#getOidcConfig', () => {
   })
 
   test('Should give up when the discovery reply comes later than the timeout', async () => {
-    discoveryUrlRequest()
-      .delay(OIDC_DOCUMENT_TIMEOUT_MS + 500)
-      .reply(statusCodes.ok, servedDocument)
+    discoveryUrlRequest().reply(
+      replyAfter(OIDC_DOCUMENT_TIMEOUT_MS + 500, statusCodes.ok, servedDocument)
+    )
 
     await expect(getOidcConfig(serviceSignInProvider)).rejects.toMatchObject({
       output: { statusCode: statusCodes.gatewayTimeout }
