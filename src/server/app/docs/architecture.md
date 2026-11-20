@@ -24,7 +24,14 @@ its own Bell strategy ([`idm-strategy.js`](../../auth/idm-strategy.js))
 only when `IDM_OIDC_CONFIGURATION_URL` is set, the IDM client ID, client
 secret and service ID are set, and IDM discovery succeeds at start-up.
 Otherwise it logs why and the service starts without it, so an IDM outage
-never stops the service starting. It keeps what IDM returned in the yar
+never stops the service starting. When `HTTP_PROXY` is set, as CDP sets it,
+it sends its HTTPS Wreck calls to IDM through that proxy, Bell's token
+exchange included: to the discovery host before discovery, and to the
+discovery, token and keys hosts after it
+([`wreck-agent.js`](../../../auth/wreck-agent.js)). CDP lets a service
+reach the internet only through its squid proxy, and only to the domains on
+the service's allowlist in `cdp-tenant-config`. Calls to every other host,
+the Defra ID stub's included, go direct as before. It keeps what IDM returned in the yar
 session for its own signed-in page, and never writes the auth
 cache or the session cookie, so the rest of the service keeps the stub or
 Defra ID identity. Last comes [`router.js`](../../router.js), which registers
