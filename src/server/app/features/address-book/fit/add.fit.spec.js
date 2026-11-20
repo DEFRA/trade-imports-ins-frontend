@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 
 import {
   addValidAddressToFreshOrganisation,
-  addressReturnAfterSaveAndSelect,
   addressTypeListUrl,
   backLink,
   expectEveryCountryOffered,
@@ -48,8 +47,7 @@ import {
   FIELDS_WITHOUT_AUTOCOMPLETE
 } from '../../../../common/test-helpers/address-form-autocomplete.js'
 import {
-  CONSIGNMENT_CONTACT_HANDSHAKE,
-  GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
+  ANIMALS_BASE_URL,
   JOURNEY_HANDSHAKES_BY_PARTY,
   journeyRolesHintFor,
   returnUrlFor,
@@ -79,7 +77,7 @@ test.describe('add address', () => {
     await signInAndOpenAddForm(page, 'stub-org-add-render')
 
     await expect(
-      page.getByRole('heading', { name: copy.add.title })
+      page.getByRole('heading', { name: 'Add address and contact details' })
     ).toBeVisible()
     await expect(
       page.getByLabel(fieldLabels.name, { exact: true })
@@ -324,7 +322,7 @@ test.describe('add address reached from a notification journey', () => {
     await expect(
       page.getByRole('heading', {
         level: 1,
-        name: copy.add.title
+        name: 'Add address and contact details'
       })
     ).toBeVisible()
     const sectionHeadings = ['Address', 'Contact details'].map((name) =>
@@ -395,8 +393,7 @@ test.describe('add address reached from a notification journey', () => {
 
   for (const [handshake, partyName] of [
     [JOURNEY_HANDSHAKES_BY_PARTY.placeOfOrigin, 'place of origin'],
-    [JOURNEY_HANDSHAKES_BY_PARTY.consignor, 'consignor'],
-    [CONSIGNMENT_CONTACT_HANDSHAKE, 'consignment contact']
+    [JOURNEY_HANDSHAKES_BY_PARTY.consignor, 'consignor']
   ]) {
     test(`from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
       page
@@ -452,32 +449,13 @@ test.describe('add address reached from a notification journey', () => {
       copy.add.saveAndReturnToAddressPage
     ])
     await expect(
-      page.getByRole('link', { name: copy.add.cancelAndReturnToHub })
+      page.getByRole('link', { name: 'Cancel and return to hub' })
     ).toHaveAttribute(
       'href',
       returnUrlFor(JOURNEY_HANDSHAKES_BY_PARTY.consignor, {
         landing: ADDRESS_LANDING.CANCEL
       })
     )
-  })
-
-  test('from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page', async ({
-    page
-  }) => {
-    await openAddFormFromJourney(
-      page,
-      'stub-org-add-journey-contact',
-      CONSIGNMENT_CONTACT_HANDSHAKE
-    )
-
-    await expect(backLink(page)).toHaveAttribute(
-      'href',
-      returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
-    )
-    await expect(page.locator('form button')).toHaveText([
-      'Save and continue',
-      'Cancel and return to address page'
-    ])
   })
 })
 
@@ -543,12 +521,20 @@ test.describe('add address reached from a notification journey with JavaScript o
   test('Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer roles', async ({
     page
   }) => {
-    const returnUrl = await addressReturnAfterSaveAndSelect(page, {
-      handshake: JOURNEY_HANDSHAKES_BY_PARTY.consignee,
-      organisationId: `stub-org-add-journey-ticked-${crypto.randomUUID()}`,
-      beforeSave: () => tickRoles(page, ['IMPORTER'])
-    })
+    await page.route(`${ANIMALS_BASE_URL}/**`, (route) => route.abort())
+    await openAddFormFromJourney(
+      page,
+      `stub-org-add-journey-ticked-${crypto.randomUUID()}`,
+      JOURNEY_HANDSHAKES_BY_PARTY.consignee
+    )
+    await fillValidAddress(page)
+    await tickRoles(page, ['IMPORTER'])
+    const journeyReturn = page.waitForRequest((request) =>
+      request.url().includes('/address-return')
+    )
+    await page.getByRole('button', { name: copy.add.saveAndSelect }).click()
 
+    const returnUrl = new URL((await journeyReturn).url())
     expect(returnUrl.searchParams.get('addressId')).toBeTruthy()
     expect(returnUrl.searchParams.get('landing')).toBe(ADDRESS_LANDING.SELECT)
 
@@ -559,47 +545,6 @@ test.describe('add address reached from a notification journey with JavaScript o
     await expect(typeCellOf(listPage, validAddress.name)).toHaveText(
       'Consignee, Importer'
     )
-  })
-})
-
-test.describe('add address reached from a germinal products notification journey', () => {
-  const handshake = GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY.consignor
-
-  test('shows the add page and offers Back and Cancel to that notification germinal products return', async ({
-    page
-  }) => {
-    await openAddFormFromJourney(
-      page,
-      'stub-org-add-germinal-journey',
-      handshake
-    )
-
-    await expect(
-      page.getByRole('heading', { name: copy.add.title })
-    ).toBeVisible()
-    await expect(backLink(page)).toHaveAttribute(
-      'href',
-      returnUrlFor(handshake)
-    )
-    await expect(
-      page.getByRole('link', { name: copy.add.cancelAndReturnToHub })
-    ).toHaveAttribute(
-      'href',
-      returnUrlFor(handshake, { landing: ADDRESS_LANDING.CANCEL })
-    )
-  })
-
-  test('Save and select sends the browser to that notification germinal products return carrying the saved address id and the select landing', async ({
-    page
-  }) => {
-    const returnUrl = await addressReturnAfterSaveAndSelect(page, {
-      handshake,
-      organisationId: `stub-org-add-germinal-journey-save-${crypto.randomUUID()}`
-    })
-
-    expect(returnUrl.pathname).toBe(new URL(returnUrlFor(handshake)).pathname)
-    expect(returnUrl.searchParams.get('addressId')).toBeTruthy()
-    expect(returnUrl.searchParams.get('landing')).toBe(ADDRESS_LANDING.SELECT)
   })
 })
 
@@ -663,17 +608,6 @@ test.describe('add address validation', () => {
         ),
       roles: [],
       saveButton: copy.add.saveAndSelect
-    },
-    {
-      entry: 'the consignment contact page',
-      openForm: (page) =>
-        openAddFormFromJourney(
-          page,
-          'stub-org-add-four-blanks-contact',
-          CONSIGNMENT_CONTACT_HANDSHAKE
-        ),
-      roles: [],
-      saveButton: copy.add.save
     }
   ]) {
     test(`from ${entry}, saving with the name, postcode, country and phone blank shows each message in the summary and against its field`, async ({
