@@ -56,7 +56,8 @@ for the pattern, and the helpers in
 `recordModuleLoggerWarn()` and `recordModuleLoggerError()`, which record the
 info, warn or error lines the module-level logger writes during each test of
 the enclosing `describe`, and return `entriesWith(message)`, the lines logged
-with that message),
+with that message, and `recordRequestLoggerError(getServer)`, which does the
+same for the error lines a request's `request.logger` writes),
 `address-book-requests.js`, the one owner of the address book tests'
 set-up: page paths (`addressBookPath()`, `addressAddPath()`,
 `addressTypePath()`, `addressTypeStartPath()`, `addressPath(id)`,
@@ -133,8 +134,10 @@ through),
 (`openEmptyAddressBookWithCookiesFrom(server, sessionId, postHeaders)`, which
 opens the address book list with the cookies a POST set so a test can
 read the banner),
-`session-auth.js` (`sessionAuth(sessionId, overrides)` and
-`ORGANISATION_ID`, the one test organisation id),
+`session-auth.js` (`sessionAuth(sessionId, overrides)`,
+`ORGANISATION_ID`, the one test organisation id, and
+`sessionCookieFor(server, sessionId)`, a sealed session
+cookie for a request that must carry one),
 `address-book-stub.js` (`STUB_SEED_ADDRESS_NAME`, the name of the address the
 stub seeds for an ordinary organisation, `STUB_LIST_PAGE_SIZE`, the page size
 the list asks the stub for, and `listedStubNames(organisationId, query)`, the
@@ -145,12 +148,22 @@ names the stub lists at that page size),
 `startRealModeServerServingCountries(countries)`, which returns a getter
 for the started server), `restore-config-after-each.js`
 (`restoreConfigAfterEach(keys)`, which restores the named config keys after
-each test) and `serve-oidc-discovery.js`. That file exports
-`serveOidcDiscovery()`, which serves the OIDC discovery document at the
-network boundary, and `startRealModeServer()` calls it. It also exports
-`discoveryUrlRequest({ persist, ...scopeOptions })`, the nock interceptor at
-the configured discovery URL, for a test that matches a header, delays the
-reply or fails it. It also exports
+each test, and is how every test restores config it changes) and `serve-oidc-discovery.js`. That file exports
+`serveOidcDiscovery(document, { provider })`, which serves an OIDC discovery
+document at the network boundary, and `startRealModeServer()` calls it.
+`provider` is one of the two in `src/auth/identity-providers.js`, as
+production picks it: the service sign-in by default, or
+`hiddenIdmSignInProvider` to serve the hidden IDM sign-in's document at its
+own URL. It also exports `discoveryUrlRequest({ persist, provider,
+...scopeOptions })`, the nock interceptor at that provider's configured
+discovery URL, for a test that matches a header, delays the reply or fails
+it, and `keysRequest(document, { persist, ...scopeOptions })`, the nock
+interceptor at a discovery document's `jwks_uri`. `idm-sign-in-settings.js` holds the IDM test settings once:
+`applyIdmSettings()` sets them, `idmSettingKeys` names them for restoring,
+`configureIdm()` sets them for every test of the enclosing `describe` and
+restores them after each, and `idmDiscoveryDocument` is IDM's discovery
+document.
+`serve-oidc-discovery.js` also exports
 `runAgainstMockOidcDiscoveryUrl({ restoringConfigKeys })`, which refuses
 outbound HTTP, restores the discovery URL and the named config keys after each
 test, and sets the discovery URL to a mock host before each test, and

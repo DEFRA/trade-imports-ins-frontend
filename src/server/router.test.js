@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { createServer } from './server.js'
 import { config } from '../config/config.js'
 import { statusCodes } from './common/constants/status-codes.js'
+import { restoreConfigAfterEach } from './common/test-helpers/restore-config-after-each.js'
 
 describe('#router auth gating', () => {
   let server
@@ -13,8 +14,9 @@ describe('#router auth gating', () => {
     await server.initialize()
   })
 
+  restoreConfigAfterEach(['auth.enabled'])
+
   afterAll(async () => {
-    config.set('auth.enabled', true)
     await server.stop({ timeout: 0 })
   })
 
@@ -47,9 +49,7 @@ describe('#router auth gating', () => {
 })
 
 describe('#router address lookup spike gating', () => {
-  afterAll(() => {
-    config.set('cdpEnvironment', 'local')
-  })
+  restoreConfigAfterEach(['cdpEnvironment'])
 
   test.each(['dev', 'local'])(
     'the spike page is registered when cdpEnvironment is %s',
