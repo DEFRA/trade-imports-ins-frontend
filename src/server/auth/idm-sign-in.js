@@ -6,6 +6,8 @@ import {
   providerSettingKey
 } from '../../auth/identity-providers.js'
 import { recordTokenExchange } from '../../auth/token-exchange-timer.js'
+import { sendWreckHttpsCallsThroughProxy } from '../../auth/wreck-agent.js'
+import { config } from '../../config/config.js'
 import { verifyToken } from '../../auth/verify-token.js'
 import { renderUnableToSignIn } from './controller.js'
 import { getOidcConfigWithRetry } from '../../auth/get-oidc-config-with-retry.js'
@@ -202,6 +204,16 @@ const missingIdmClientSettings = () =>
     .filter((setting) => !providerSetting(hiddenIdmSignInProvider, setting))
     .map((setting) => providerSettingKey(hiddenIdmSignInProvider, setting))
 
+const sendIdmCallsThroughProxy = (idmUrls) => {
+  const proxyUrl = config.get('httpProxy')
+  if (!proxyUrl) {
+    return
+  }
+  const hostnames = [...new Set(idmUrls.map((url) => new URL(url).hostname))]
+  sendWreckHttpsCallsThroughProxy(proxyUrl, hostnames)
+  logger.info({ hostnames }, 'IDM calls go through the HTTP proxy')
+}
+
 const discoverIdm = (discoveryUrl) =>
   getOidcConfigWithRetry(logger, hiddenIdmSignInProvider).catch((err) => {
     logger.error(
@@ -233,10 +245,16 @@ export const idmSignInRoutes = {
         return
       }
 
+      sendIdmCallsThroughProxy([discoveryUrl])
       const oidcConfig = await discoverIdm(discoveryUrl)
       if (!oidcConfig) {
         return
       }
+      sendIdmCallsThroughProxy([
+        discoveryUrl,
+        oidcConfig.token_endpoint,
+        oidcConfig.jwks_uri
+      ])
 
       registerIdmStrategy(server, oidcConfig)
       server.route(routes)
