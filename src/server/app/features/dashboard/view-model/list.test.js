@@ -64,7 +64,7 @@ describe('#dashboardPageHref', () => {
 })
 
 describe('#buildNotificationLink', () => {
-  test('SUBMITTED notifications link to the read-only notification-view page', () => {
+  test('Should link a SUBMITTED notification to its notification view', () => {
     expect(buildNotificationLink('SUBMITTED', REFERENCE_NUMBER)).toBe(
       `${ANIMALS_BASE_URL}/live-animals/notifications/${REFERENCE_NUMBER}/notification-view`
     )
