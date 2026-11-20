@@ -4,7 +4,7 @@ import {
 } from 'node:net'
 import Wreck from '@hapi/wreck'
 
-import { beforeAll, afterAll, afterEach, describe, expect, test } from 'vitest'
+import { beforeAll, afterAll, describe, expect, test } from 'vitest'
 
 import { config } from '../../../config/config.js'
 import { expectHealthy } from '../test-helpers/expect-healthy.js'
@@ -22,13 +22,8 @@ const listenOnFreePort = (host) =>
   })
 
 describe('#startServer', () => {
-  const originalPort = config.get('port')
-
   refuseOutboundHttp()
-
-  afterEach(() => {
-    config.set('port', originalPort)
-  })
+  restoreConfigAfterEach(['port'])
 
   describe('When server starts', () => {
     let server

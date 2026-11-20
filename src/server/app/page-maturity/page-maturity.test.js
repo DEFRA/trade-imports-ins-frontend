@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { config } from '../../../config/config.js'
+import { restoreConfigAfterEach } from '../../common/test-helpers/restore-config-after-each.js'
 import { startRealModeServer } from '../../common/test-helpers/test-server.js'
 import { unauthorisedPage } from '../auth/page.js'
 import { addressEditPage } from '../features/address-book/edit/page.js'
@@ -36,11 +37,7 @@ describe('#pageLevelFor', () => {
 })
 
 describe('#pageMaturityContext', () => {
-  const initial = config.get(FLAG)
-
-  afterEach(() => {
-    config.set(FLAG, initial)
-  })
+  restoreConfigAfterEach([FLAG])
 
   it('Should default the switch to on', () => {
     expect(config.default(FLAG)).toBe(true)

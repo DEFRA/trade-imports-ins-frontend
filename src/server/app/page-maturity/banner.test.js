@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { config } from '../../../config/config.js'
 import { nunjucksConfig } from '../../../config/nunjucks/nunjucks.js'
@@ -8,6 +8,7 @@ import {
   normalisedText,
   textsOf
 } from '../../common/test-helpers/rendered-text.js'
+import { restoreConfigAfterEach } from '../../common/test-helpers/restore-config-after-each.js'
 import { sessionAuth } from '../../common/test-helpers/session-auth.js'
 import {
   insBackendApi,
@@ -128,9 +129,7 @@ describe('page maturity banner', () => {
     const FLAG = 'pageMaturityBanner.enabled'
     const getServer = startRealModeServer()
 
-    afterEach(() => {
-      config.set(FLAG, true)
-    })
+    restoreConfigAfterEach([FLAG])
 
     const getBannerTags = async (user) => {
       serveCountries([{ code: 'GB', name: 'United Kingdom' }])

@@ -1,11 +1,27 @@
+import * as cheerio from 'cheerio'
 import { vi } from 'vitest'
-import { statusCodes } from '../common/constants/status-codes.js'
-import { sessionAuth } from '../common/test-helpers/session-auth.js'
-import { startRealModeServer } from '../common/test-helpers/test-server.js'
-import { readEmfDocuments } from '../common/test-helpers/emf-documents.js'
-import { verifyToken } from '../../auth/verify-token.js'
-import { getPermissions } from '../../auth/get-permissions.js'
+
+import { config } from '../../config/config.js'
+import { SERVICE_SIGN_IN_STRATEGY } from '../../plugins/auth.js'
 import { copy as sharedEn } from '../app/shared/copy.en.js'
+import { statusCodes } from '../common/constants/status-codes.js'
+import {
+  awaitEmfDocumentForOperation,
+  readEmfDocuments
+} from '../common/test-helpers/emf-documents.js'
+import { mockOidcConfig } from '../common/test-helpers/mock-oidc-config.js'
+import { recordRequestLoggerError } from '../common/test-helpers/module-logger-lines.js'
+import { textOf } from '../common/test-helpers/rendered-text.js'
+import {
+  keysRequest,
+  runAgainstServedOidcDiscovery
+} from '../common/test-helpers/serve-oidc-discovery.js'
+import { sessionAuth } from '../common/test-helpers/session-auth.js'
+import {
+  generateSigningKey,
+  signToken
+} from '../common/test-helpers/signing-key.js'
+import { startRealModeServer } from '../common/test-helpers/test-server.js'
 
 vi.mock('../../config/config.js', async (importOriginal) => {
   const { mockAuthConfig } =
@@ -13,36 +29,30 @@ vi.mock('../../config/config.js', async (importOriginal) => {
   return mockAuthConfig(importOriginal)
 })
 
-vi.mock('../../auth/get-sign-out-url.js', () => ({
-  getSignOutUrl: vi.fn().mockResolvedValue('/signed-out')
-}))
-
-vi.mock('../../auth/verify-token.js', () => ({
-  verifyToken: vi.fn()
-}))
-
-vi.mock('../../auth/get-permissions.js', () => ({
-  getPermissions: vi.fn()
-}))
-
 const HTTP_STATUS_FOUND = 302
-const MOCK_TOKEN = 'mock-token'
-const SIGNED_OUT_URL = '/signed-out'
 const SIGN_IN_OIDC_URL = '/auth/sign-in-oidc'
 
-const defraIdAuth = (profileOverrides = {}) => ({
-  strategy: 'defra-id',
+const signingKey = generateSigningKey('defra-id-key')
+const otherKey = generateSigningKey('other-key')
+
+const defraIdAuth = ({ token, sessionId, ...profileOverrides }) => ({
+  strategy: SERVICE_SIGN_IN_STRATEGY,
   credentials: {
     profile: {
-      sessionId: 'signin-oidc-session',
+      sessionId,
       crn: 'CRN123',
       organisationId: 'org-1',
       ...profileOverrides
     },
-    token: MOCK_TOKEN,
+    token,
     refreshToken: 'mock-refresh-token'
   }
 })
+
+const serveSigningKey = () =>
+  keysRequest(mockOidcConfig).reply(statusCodes.ok, {
+    keys: [signingKey.publicJwk]
+  })
 
 const expectSessionCookieCleared = (headers) => {
   const setCookie = headers['set-cookie'] ?? []
@@ -50,14 +60,25 @@ const expectSessionCookieCleared = (headers) => {
   expect(cookies.join('\n')).toContain('sid=')
 }
 
+const expectDefraIdSignOut = (location) => {
+  const signOutUrl = new URL(location)
+  expect(signOutUrl.pathname).toMatch(/\/signout$/)
+  expect(signOutUrl.searchParams.get('post_logout_redirect_uri')).toBe(
+    config.get('defraId.signOutRedirectUrl')
+  )
+}
+
 describe('#authController', () => {
   const getServer = startRealModeServer()
 
-  const signInOidc = (profileOverrides) =>
+  runAgainstServedOidcDiscovery(mockOidcConfig)
+  const { entriesWith: errorLogs } = recordRequestLoggerError(getServer)
+
+  const signInOidc = (profile) =>
     getServer().inject({
       method: 'GET',
       url: SIGN_IN_OIDC_URL,
-      auth: defraIdAuth(profileOverrides)
+      auth: defraIdAuth(profile)
     })
 
   test('GET /auth/sign-in redirects to home', async () => {
@@ -65,7 +86,7 @@ describe('#authController', () => {
       method: 'GET',
       url: '/auth/sign-in',
       auth: {
-        strategy: 'defra-id',
+        strategy: SERVICE_SIGN_IN_STRATEGY,
         credentials: {}
       }
     })
@@ -84,9 +105,9 @@ describe('#authController', () => {
     expect(headers.location).toBe('/')
   })
 
-  test('GET /auth/sign-out drops the session and redirects authenticated users to the sign-out URL', async () => {
+  test('GET /auth/sign-out drops the session and redirects authenticated users to the Defra ID sign-out URL', async () => {
     const sessionId = 'signout-authenticated'
-    await getServer().app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
+    await getServer().app.cache.set(sessionId, { sessionId, token: 'token' })
 
     const { statusCode, headers } = await getServer().inject({
       method: 'GET',
@@ -95,7 +116,7 @@ describe('#authController', () => {
     })
 
     expect(statusCode).toBe(HTTP_STATUS_FOUND)
-    expect(headers.location).toBe(SIGNED_OUT_URL)
+    expectDefraIdSignOut(headers.location)
     expect(await getServer().app.cache.get(sessionId)).toBeNull()
     expectSessionCookieCleared(headers)
   })
@@ -110,9 +131,9 @@ describe('#authController', () => {
     expect(headers.location).toBe('/')
   })
 
-  test('GET /auth/sign-out-oidc clears authenticated session and redirects', async () => {
+  test('GET /auth/sign-out-oidc clears authenticated session and redirects to the Defra ID sign-out URL', async () => {
     const sessionId = 'signout-oidc-authenticated'
-    await getServer().app.cache.set(sessionId, { sessionId, token: MOCK_TOKEN })
+    await getServer().app.cache.set(sessionId, { sessionId, token: 'token' })
 
     const { statusCode, headers } = await getServer().inject({
       method: 'GET',
@@ -121,29 +142,55 @@ describe('#authController', () => {
     })
 
     expect(statusCode).toBe(HTTP_STATUS_FOUND)
-    expect(headers.location).toBe(SIGNED_OUT_URL)
+    expectDefraIdSignOut(headers.location)
     expect(await getServer().app.cache.get(sessionId)).toBeNull()
     expectSessionCookieCleared(headers)
   })
 
-  test('GET /auth/sign-in-oidc renders unauthorised when organisationId is missing', async () => {
+  test("GET /auth/sign-in-oidc renders unauthorised, linking to /auth/sign-in, without checking the token, and logs the refusal with the user's ids, when organisationId is missing", async () => {
+    const sessionId = 'signin-oidc-no-organisation'
+    const missingOrganisation =
+      'Sign-in rejected: missing organisationId in Defra ID token'
+    const keys = serveSigningKey()
+
     const { statusCode, payload, headers } = await signInOidc({
+      sessionId,
+      token: signToken(signingKey, { sub: 'user-1' }),
       organisationId: null
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(payload).toContain(sharedEn.unauthorised.heading)
+    const $ = cheerio.load(payload)
+    expect(textOf($, 'h1')).toBe(sharedEn.unauthorised.heading)
+    expect(
+      $('main a.govuk-link')
+        .filter(
+          (_, link) => $(link).text() === sharedEn.unauthorised.signInLinkText
+        )
+        .attr('href')
+    ).toBe('/auth/sign-in')
     expect(headers['set-cookie'] ?? []).not.toContainEqual(
       expect.stringContaining('sid=')
     )
-    expect(verifyToken).not.toHaveBeenCalled()
-    expect(getPermissions).not.toHaveBeenCalled()
+    expect(keys.isDone()).toBe(false)
+    expect(await getServer().app.cache.get(sessionId)).toBeNull()
+    expect(errorLogs(missingOrganisation)).toEqual([
+      {
+        fields: { crn: 'CRN123', organisationId: null },
+        message: missingOrganisation
+      }
+    ])
   })
 
-  test('GET /auth/sign-in-oidc renders unauthorised when token verification fails', async () => {
-    verifyToken.mockRejectedValue(new Error('Client request timeout'))
+  test("GET /auth/sign-in-oidc renders unauthorised, stores no session, and logs the refusal in full with the user's ids, when the token is signed by a key Defra ID does not serve", async () => {
+    const sessionId = 'signin-oidc-unverified'
+    const tokenRefused = 'Token verification failed for /auth/sign-in-oidc'
+    serveSigningKey()
 
-    const { statusCode, payload, headers } = await signInOidc()
+    const { statusCode, payload, headers } = await signInOidc({
+      sessionId,
+      token: signToken(otherKey, { sub: 'user-1' })
+    })
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(payload).toContain(sharedEn.unauthorised.heading)
@@ -153,22 +200,35 @@ describe('#authController', () => {
     expect(headers['set-cookie'] ?? []).not.toContainEqual(
       expect.stringContaining('sid=')
     )
-    expect(getPermissions).not.toHaveBeenCalled()
+    expect(await getServer().app.cache.get(sessionId)).toBeNull()
+    expect(errorLogs(tokenRefused)).toEqual([
+      {
+        fields: {
+          err: expect.any(Error),
+          crn: 'CRN123',
+          organisationId: 'org-1'
+        },
+        message: tokenRefused
+      }
+    ])
   })
 
-  test('GET /auth/sign-in-oidc renders unauthorised when getPermissions fails', async () => {
-    verifyToken.mockResolvedValue(undefined)
-    getPermissions.mockRejectedValue(new Error('Permissions API unavailable'))
+  test('GET /auth/sign-in-oidc renders unauthorised and logs the Bell error in full, with the state, when Bell cannot authenticate the callback', async () => {
+    const bellFailed = 'Bell auth failed for /auth/sign-in-oidc'
 
-    const { statusCode, payload, headers } = await signInOidc()
+    const { statusCode, payload } = await getServer().inject({
+      method: 'GET',
+      url: `${SIGN_IN_OIDC_URL}?code=unused&state=unmatched&refresh=1`
+    })
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(payload).toContain(sharedEn.unauthorised.heading)
-    expect(headers['set-cookie'] ?? []).not.toContainEqual(
-      expect.stringContaining('sid=')
-    )
-    expect(verifyToken).toHaveBeenCalledWith(MOCK_TOKEN)
-    expect(getPermissions).toHaveBeenCalledWith('CRN123', 'org-1', MOCK_TOKEN)
+    expect(errorLogs(bellFailed)).toEqual([
+      {
+        fields: { err: expect.any(Error), state: 'unmatched' },
+        message: bellFailed
+      }
+    ])
   })
 
   describe('Defra ID token exchange metrics', () => {
@@ -183,33 +243,34 @@ describe('#authController', () => {
     })
 
     test('GET /auth/sign-in-oidc records the Defra ID token exchange it completed', async () => {
-      verifyToken.mockResolvedValue(undefined)
-      getPermissions.mockResolvedValue({ role: 'role', scope: [] })
+      serveSigningKey()
 
       const { statusCode, headers } = await getServer().inject({
         method: 'GET',
         url: SIGN_IN_OIDC_URL,
-        auth: defraIdAuth(),
-        app: { defraIdTokenExchangeStartedAt: performance.now() }
+        auth: defraIdAuth({
+          sessionId: 'signin-oidc-session',
+          token: signToken(signingKey, { sub: 'user-1' })
+        }),
+        app: { tokenExchangeStartedAt: performance.now() }
       })
 
       expect(statusCode).toBe(HTTP_STATUS_FOUND)
       expect(headers.location).toBe('/')
-      await vi.waitFor(() => {
-        const [document] = readEmfDocuments(logSpy)
-        expect(readEmfDocuments(logSpy)).toHaveLength(1)
-        expect(document.Dependency).toBe('defra-id')
-        expect(document.Operation).toBe('token-exchange')
-        expect(document.Interface).toBe('SYN-11')
-        expect(document.ExternalCallFailure).toBe(0)
-      })
+      const document = await awaitEmfDocumentForOperation(
+        logSpy,
+        'token-exchange'
+      )
+      expect(document.Dependency).toBe('defra-id')
+      expect(document.Interface).toBe('SYN-11')
+      expect(document.ExternalCallFailure).toBe(0)
     })
 
     test('GET /auth/sign-in-oidc records the Defra ID token exchange as failed when sign-in is not authenticated', async () => {
       const { statusCode, payload } = await getServer().inject({
         method: 'GET',
         url: `${SIGN_IN_OIDC_URL}?code=unused&state=unmatched&refresh=1`,
-        app: { defraIdTokenExchangeStartedAt: performance.now() }
+        app: { tokenExchangeStartedAt: performance.now() }
       })
 
       expect(statusCode).toBe(statusCodes.ok)

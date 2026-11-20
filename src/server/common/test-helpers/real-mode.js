@@ -1,8 +1,9 @@
 import nock from 'nock'
-import { afterAll, afterEach, beforeAll } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest'
 
 import { config } from '../../../config/config.js'
 import { statusCodes } from '../constants/status-codes.js'
+import { restoreConfigAfterEach } from './restore-config-after-each.js'
 
 export const refuseOutboundHttp = () => {
   beforeAll(() => {
@@ -18,33 +19,20 @@ export const refuseOutboundHttp = () => {
   })
 }
 
-export const runInRealMode = () => {
-  const originalStubMode = config.get('stubMode')
-
+const runWithStubMode = (stubMode) => {
   refuseOutboundHttp()
+  restoreConfigAfterEach(['stubMode'])
 
-  beforeAll(() => {
-    config.set('stubMode', false)
-  })
-
-  afterAll(() => {
-    config.set('stubMode', originalStubMode)
-  })
+  const setStubMode = () => {
+    config.set('stubMode', stubMode)
+  }
+  beforeAll(setStubMode)
+  beforeEach(setStubMode)
 }
 
-export const runInStubMode = () => {
-  const originalStubMode = config.get('stubMode')
+export const runInRealMode = () => runWithStubMode(false)
 
-  refuseOutboundHttp()
-
-  beforeAll(() => {
-    config.set('stubMode', true)
-  })
-
-  afterAll(() => {
-    config.set('stubMode', originalStubMode)
-  })
-}
+export const runInStubMode = () => runWithStubMode(true)
 
 export const addressBookApi = () =>
   nock(config.get('tradeImportsAddressBookApi.baseUrl'))

@@ -1,6 +1,7 @@
 import { Agent } from 'node:http'
 import { connect } from 'node:net'
 import Wreck from '@hapi/wreck'
+import { HttpsProxyAgent } from 'https-proxy-agent'
 
 const connectWithOneRetry = (options, logger, oncreate) => {
   const neverOpenedCodes = new Set(['ETIMEDOUT', 'ECONNREFUSED'])
@@ -58,4 +59,31 @@ export const createRetryingKeepAliveAgent = (logger) =>
  */
 export const useRetryingKeepAliveAgentForWreck = (logger) => {
   Wreck.agents.http = createRetryingKeepAliveAgent(logger)
+}
+
+const directHttpsAgent = Wreck.agents.https
+
+class HostScopedProxyAgent extends HttpsProxyAgent {
+  constructor(proxyUrl, hostnames) {
+    super(proxyUrl)
+    this.hostnames = new Set(hostnames)
+  }
+
+  connect(request, options) {
+    return this.hostnames.has(options.host)
+      ? super.connect(request, options)
+      : directHttpsAgent
+  }
+}
+
+/**
+ * Sends every HTTPS Wreck call in the process to the given hostnames, Bell's
+ * included, through the given HTTP proxy. HTTPS calls to every other host go
+ * direct. Each call replaces the hostnames the last call set.
+ *
+ * @param {string} proxyUrl - the proxy's URL
+ * @param {string[]} hostnames - the hostnames whose calls go through the proxy
+ */
+export const sendWreckHttpsCallsThroughProxy = (proxyUrl, hostnames) => {
+  Wreck.agents.https = new HostScopedProxyAgent(proxyUrl, hostnames)
 }

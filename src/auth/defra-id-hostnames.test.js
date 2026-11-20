@@ -9,10 +9,11 @@ import {
   withServerSideEndpointsAtDiscoveryHostname
 } from './defra-id-hostnames.js'
 
-const DISCOVERY_PATH = '/idphub/b2c/.well-known/openid-configuration'
+const discoveryUrlAt = (origin) =>
+  `${origin}/idphub/b2c/.well-known/openid-configuration`
 
 const configureDiscovery = (origin) =>
-  config.set('defraId.oidcDiscoveryUrl', `${origin}${DISCOVERY_PATH}`)
+  config.set('defraId.oidcDiscoveryUrl', discoveryUrlAt(origin))
 
 describe('#defraIdHostnames', () => {
   restoreConfigAfterEach([
@@ -26,7 +27,7 @@ describe('#defraIdHostnames', () => {
       configureDiscovery('http://host.docker.internal:3007')
 
       expect(getBrowserFacingDiscoveryUrl().toString()).toBe(
-        `http://localhost:3007${DISCOVERY_PATH}`
+        discoveryUrlAt('http://localhost:3007')
       )
     })
 
@@ -36,7 +37,7 @@ describe('#defraIdHostnames', () => {
       configureDiscovery('http://host.docker.internal:3007')
 
       expect(getBrowserFacingDiscoveryUrl().toString()).toBe(
-        `http://host.docker.internal:3007${DISCOVERY_PATH}`
+        discoveryUrlAt('http://host.docker.internal:3007')
       )
     })
 
@@ -45,7 +46,7 @@ describe('#defraIdHostnames', () => {
       configureDiscovery('https://defra-id.example.test')
 
       expect(getBrowserFacingDiscoveryUrl().toString()).toBe(
-        `https://defra-id.example.test${DISCOVERY_PATH}`
+        discoveryUrlAt('https://defra-id.example.test')
       )
     })
   })
@@ -59,9 +60,11 @@ describe('#defraIdHostnames', () => {
 
     test('Should put token_endpoint and jwks_uri at the stack discovery hostname, keeping ports and paths', () => {
       setStackDefraIdRewrite()
-      configureDiscovery('http://host.docker.internal:3007')
 
-      const result = withServerSideEndpointsAtDiscoveryHostname(servedDocument)
+      const result = withServerSideEndpointsAtDiscoveryHostname(
+        servedDocument,
+        discoveryUrlAt('http://host.docker.internal:3007')
+      )
 
       expect(result).toEqual({
         authorization_endpoint: 'http://localhost:3007/idphub/authorize',
@@ -72,13 +75,15 @@ describe('#defraIdHostnames', () => {
 
     test('Should put token_endpoint and jwks_uri at localhost when discovery is at the rewrite target', () => {
       setStackDefraIdRewrite()
-      configureDiscovery('http://localhost:3007')
 
-      const result = withServerSideEndpointsAtDiscoveryHostname({
-        ...servedDocument,
-        token_endpoint: 'http://host.docker.internal:3008/idphub/token',
-        jwks_uri: 'http://host.docker.internal:3009/idphub/keys'
-      })
+      const result = withServerSideEndpointsAtDiscoveryHostname(
+        {
+          ...servedDocument,
+          token_endpoint: 'http://host.docker.internal:3008/idphub/token',
+          jwks_uri: 'http://host.docker.internal:3009/idphub/keys'
+        },
+        discoveryUrlAt('http://localhost:3007')
+      )
 
       expect(result).toEqual({
         authorization_endpoint: 'http://localhost:3007/idphub/authorize',
@@ -90,50 +95,72 @@ describe('#defraIdHostnames', () => {
     test('Should return the document exactly as served when the rewrite is disabled', () => {
       setStackDefraIdRewrite()
       config.set('defraId.browserFacingHostnameRewrite.enabled', false)
-      configureDiscovery('http://host.docker.internal:3007')
 
       expect(
-        withServerSideEndpointsAtDiscoveryHostname(servedDocument)
+        withServerSideEndpointsAtDiscoveryHostname(
+          servedDocument,
+          discoveryUrlAt('http://host.docker.internal:3007')
+        )
       ).toEqual(servedDocument)
     })
 
     test('Should return the document exactly as served when the discovery hostname is unlisted', () => {
       setStackDefraIdRewrite()
-      configureDiscovery('https://defra-id.example.test')
 
       expect(
-        withServerSideEndpointsAtDiscoveryHostname(servedDocument)
+        withServerSideEndpointsAtDiscoveryHostname(
+          servedDocument,
+          discoveryUrlAt('https://defra-id.example.test')
+        )
+      ).toEqual(servedDocument)
+    })
+
+    test('Should return the document exactly as served when fetched from an unlisted hostname while the configured Defra ID discovery hostname is listed', () => {
+      setStackDefraIdRewrite()
+      configureDiscovery('http://host.docker.internal:3007')
+
+      expect(
+        withServerSideEndpointsAtDiscoveryHostname(
+          servedDocument,
+          discoveryUrlAt('https://defra-id.example.test')
+        )
       ).toEqual(servedDocument)
     })
 
     test('Should return a document without the endpoint keys exactly as served', () => {
       setStackDefraIdRewrite()
-      configureDiscovery('http://host.docker.internal:3007')
       const withoutEndpoints = {
         authorization_endpoint: 'http://localhost:3007/idphub/authorize'
       }
 
       expect(
-        withServerSideEndpointsAtDiscoveryHostname(withoutEndpoints)
+        withServerSideEndpointsAtDiscoveryHostname(
+          withoutEndpoints,
+          discoveryUrlAt('http://host.docker.internal:3007')
+        )
       ).toEqual(withoutEndpoints)
     })
 
     test('Should keep endpoint values that are not strings exactly as served', () => {
       setStackDefraIdRewrite()
-      configureDiscovery('http://host.docker.internal:3007')
       const notStrings = { token_endpoint: null, jwks_uri: 12345 }
 
-      expect(withServerSideEndpointsAtDiscoveryHostname(notStrings)).toEqual(
-        notStrings
-      )
+      expect(
+        withServerSideEndpointsAtDiscoveryHostname(
+          notStrings,
+          discoveryUrlAt('http://host.docker.internal:3007')
+        )
+      ).toEqual(notStrings)
     })
 
     test('Should leave the document it was given unchanged', () => {
       setStackDefraIdRewrite()
-      configureDiscovery('http://host.docker.internal:3007')
       const given = { ...servedDocument }
 
-      withServerSideEndpointsAtDiscoveryHostname(given)
+      withServerSideEndpointsAtDiscoveryHostname(
+        given,
+        discoveryUrlAt('http://host.docker.internal:3007')
+      )
 
       expect(given).toEqual(servedDocument)
     })
