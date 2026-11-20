@@ -49,7 +49,7 @@ describe('#addressTypeController', { concurrent: false }, () => {
   const getServer = startRealModeServer()
   const { entriesWith: loggedWith } = recordModuleLoggerInfo()
 
-  test('GET shows the caption, the heading, a visually hidden legend, the four address types with their hints in order and none chosen, Continue and Back to the address book', async () => {
+  test('GET shows the caption, the heading, a visually hidden legend, the three address types with their hints in order and none chosen, Continue and Back to the address book', async () => {
     const { result, statusCode, headers } = await getPage(
       getServer(),
       addressTypePath(),
@@ -66,16 +66,14 @@ describe('#addressTypeController', { concurrent: false }, () => {
     expect(textsOf($, RADIO_LABELS)).toEqual([
       'Origin or Consignor',
       'Destination, Consignee or Importer',
-      'Transporter',
-      'Branch'
+      'Transporter'
     ])
     expect(textsOf($, RADIO_HINTS)).toEqual([
       'Place of origin, Consignor',
       'Place of destination, Consignee, Importer',
-      'Private, Commercial',
-      'Branch address'
+      'Private, Commercial'
     ])
-    expect($(RADIOS)).toHaveLength(4)
+    expect($(RADIOS)).toHaveLength(3)
     expect(checkedValuesOf($)).toEqual([])
     expect(textsOf($, 'form button')).toEqual(['Continue'])
     expect($(BACK_LINK).attr('href')).toBe(addressBookPath())

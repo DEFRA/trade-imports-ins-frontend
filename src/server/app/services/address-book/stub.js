@@ -40,12 +40,7 @@ const rolesPagedSeedAddresses = () => {
     { namePrefix: 'Stub Hill Pasture', count: 10, details: originOnly },
     { namePrefix: 'Stub Hill Yard', count: 2 },
     { namePrefix: 'Stub Brook Yard', count: 9 },
-    { namePrefix: 'Stub Brook Pasture', count: 1, details: originOnly },
-    {
-      namePrefix: 'Stub Hill Depot',
-      count: 9,
-      details: { roles: [ROLES.BRANCH_ADDRESS] }
-    }
+    { namePrefix: 'Stub Brook Pasture', count: 1, details: originOnly }
   ]
     .flatMap(numberedSeedDetails)
     .map((details, index) => buildSeedAddress(index + 1, details))

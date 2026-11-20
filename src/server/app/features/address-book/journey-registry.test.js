@@ -236,7 +236,7 @@ describe('rolesToSaveForParty', () => {
       ['IMPORTER', 'IMPORTER', 'CONSIGNEE'],
       ['CONSIGNEE', 'IMPORTER']
     ],
-    ['consignee', ['BRANCH_ADDRESS', 'CONSIGNOR'], ['CONSIGNEE']]
+    ['consignee', ['PLACE_OF_ORIGIN', 'CONSIGNOR'], ['CONSIGNEE']]
   ])(
     'gives the %s handshake its own role and the posted %j its side offers, in the type order',
     (party, postedRoles, roles) => {

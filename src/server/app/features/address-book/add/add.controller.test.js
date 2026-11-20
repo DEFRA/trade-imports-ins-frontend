@@ -509,12 +509,6 @@ describe(
         ADDRESS_TYPE_LEGEND,
         ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
         [PLACE_OF_DESTINATION_LABEL, 'Consignee', 'Importer']
-      ],
-      [
-        ADDRESS_TYPES.BRANCH,
-        ADDRESS_TYPE_LEGEND,
-        ['BRANCH_ADDRESS'],
-        ['Branch address']
       ]
     ])(
       'GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the roles that type holds, the place roles first',
@@ -780,8 +774,7 @@ describe(
 
     test.each([
       [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, 'PLACE_OF_ORIGIN'],
-      [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, 'CONSIGNEE'],
-      [ADDRESS_TYPES.BRANCH, 'BRANCH_ADDRESS']
+      [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, 'CONSIGNEE']
     ])(
       'GET after a refused save of %s and choosing it again shows every field entered and the ticked role %s',
       async (addressType, role) => {
@@ -812,7 +805,7 @@ describe(
       )
 
       const { result } = await getAddWithTypeChosen(getServer(), sessionId, {
-        addressType: ADDRESS_TYPES.BRANCH,
+        addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
         cookie
       })
 
@@ -894,7 +887,7 @@ describe(
         await postAdd(getServer(), `add-post-handshake-type-${party}`, {
           ...JOURNEY_HANDSHAKES_BY_PARTY[party],
           ...VALID_ADDRESS_FIELDS,
-          roles: ['BRANCH_ADDRESS']
+          roles: ['IMPORTER']
         })
 
         expect(scope.isDone()).toBe(true)

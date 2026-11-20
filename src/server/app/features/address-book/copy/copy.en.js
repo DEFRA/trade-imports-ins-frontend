@@ -47,10 +47,6 @@ export const copy = {
       TRANSPORTER: {
         label: 'Transporter',
         heading: 'Transporter addresses'
-      },
-      BRANCH: {
-        label: 'Branch',
-        heading: 'Branch addresses'
       }
     },
     transporterTypes: {
@@ -68,10 +64,6 @@ export const copy = {
       PLACE_OF_DESTINATION: {
         columnLabel: 'Place of destination',
         optionLabel: 'Place of Destination'
-      },
-      BRANCH_ADDRESS: {
-        columnLabel: 'Branch',
-        optionLabel: 'Branch Address'
       }
     },
     table: {
@@ -125,8 +117,7 @@ export const copy = {
         label: 'Destination, Consignee or Importer',
         hint: 'Place of destination, Consignee, Importer'
       },
-      TRANSPORTER: { label: 'Transporter', hint: 'Private, Commercial' },
-      BRANCH: { label: 'Branch', hint: 'Branch address' }
+      TRANSPORTER: { label: 'Transporter', hint: 'Private, Commercial' }
     },
     continue: 'Continue'
   },
@@ -193,8 +184,7 @@ export const copy = {
       `This address is being added as ${/^[AEIOU]/.test(roleLabel) ? 'an' : 'a'} ${roleLabel} address. Select any other roles or addresses this address should be used for.`,
     legendByAddressType: {
       ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
-      DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE,
-      BRANCH: ADDRESS_TYPE
+      DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE
     },
     hint: 'Select where this address can be used',
     options: {
@@ -202,8 +192,7 @@ export const copy = {
       CONSIGNOR: { label: 'Consignor' },
       CONSIGNEE: { label: 'Consignee' },
       IMPORTER: { label: 'Importer' },
-      PLACE_OF_DESTINATION: { label: 'Place of destination' },
-      BRANCH_ADDRESS: { label: 'Branch address' }
+      PLACE_OF_DESTINATION: { label: 'Place of destination' }
     }
   },
   add: {

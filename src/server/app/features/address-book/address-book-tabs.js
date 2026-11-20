@@ -25,8 +25,7 @@ const transporterTab = Object.freeze({
 export const ADDRESS_BOOK_TABS = Object.freeze([
   roleBackedTab(ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR),
   roleBackedTab(ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER),
-  transporterTab,
-  roleBackedTab(ADDRESS_TYPES.BRANCH)
+  transporterTab
 ])
 
 export const ROLE_BACKED_ADDRESS_BOOK_TABS = Object.freeze(

@@ -242,22 +242,15 @@ const TABS = [
     addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
     heading: 'Destination, Consignee and Importer addresses',
     names: [TYPED_SEED.consigneeAndDestination.name, TYPED_SEED.importer.name]
-  },
-  {
-    label: 'Branch',
-    addressType: ADDRESS_TYPES.BRANCH,
-    heading: 'Branch addresses',
-    names: [TYPED_SEED.branch.name, TYPED_SEED.branchDepot.name]
   }
 ]
 
-const [ORIGIN_TAB, DESTINATION_TAB, BRANCH_TAB] = TABS
+const [ORIGIN_TAB, DESTINATION_TAB] = TABS
 
 const ADDRESS_BOOK_TAB_LABELS = [
   ORIGIN_TAB.label,
   DESTINATION_TAB.label,
-  'Transporter',
-  BRANCH_TAB.label
+  'Transporter'
 ]
 
 const expectTabsInOrderWithSelected = async (page, selectedLabel) => {
@@ -274,7 +267,7 @@ const expectAddressColumnsWithHiddenAction = async (page) => {
 }
 
 test.describe('address type tabs', () => {
-  test('shows the four tabs in order with Origin and Consignor selected when no tab is chosen', async ({
+  test('shows the three tabs in order with Origin and Consignor selected when no tab is chosen', async ({
     page
   }) => {
     await openAddressBookList(page, { organisationId: ORG_TYPED })
@@ -330,7 +323,7 @@ test.describe('address type tabs', () => {
     await expectAddressColumnsWithHiddenAction(page)
   })
 
-  test('labels each of the six roles held alone in the Type column', async ({
+  test('labels each of the five roles held alone in the Type column', async ({
     page
   }) => {
     const organisationId = `stub-org-list-role-labels-${crypto.randomUUID()}-typed`
@@ -385,11 +378,6 @@ test.describe('address type tabs', () => {
         addressType: DESTINATION_TAB.addressType,
         name: 'Stub Destination Yard',
         typeLabel: 'Place of destination'
-      },
-      {
-        addressType: BRANCH_TAB.addressType,
-        name: TYPED_SEED.branch.name,
-        typeLabel: 'Branch'
       }
     ]) {
       await openAddressBookList(page, { organisationId, addressType })
@@ -407,10 +395,7 @@ test.describe('address type tabs', () => {
       page.getByRole('cell', { name: seedAddress.name, exact: true })
     ).toBeVisible()
 
-    for (const addressType of [
-      ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      ADDRESS_TYPES.BRANCH
-    ]) {
+    for (const addressType of [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]) {
       await openAddressBookList(page, {
         organisationId,
         addressType
@@ -420,57 +405,18 @@ test.describe('address type tabs', () => {
     }
   })
 
-  test('keeps the Branch tab, its heading and only its matches when a search is submitted', async ({
+  test('has no serious or critical axe violations on the Destination tab', async ({
     page
   }) => {
     await openAddressBookList(page, {
       organisationId: ORG_TYPED,
-      addressType: ADDRESS_TYPES.BRANCH
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
     })
 
-    await searchAndExpectSingleMatch(page, 'depot', {
-      addressType: ADDRESS_TYPES.BRANCH,
-      matchedCellText: TYPED_SEED.branchDepot.name
-    })
-
-    await expectTabsInOrderWithSelected(page, BRANCH_TAB.label)
-    await expect(tabPanelHeadingOf(page)).toHaveText(BRANCH_TAB.heading)
-  })
-
-  test('keeps the Branch tab and lists only its matches for a search that also matches another tab, and its page links keep the tab and the search', async ({
-    page
-  }) => {
-    await openAddressBookList(page, {
-      organisationId: rolesPagedOrganisation('tab-search'),
-      addressType: ADDRESS_TYPES.BRANCH
-    })
-
-    await searchAndExpectMatches(page, 'hill', {
-      submitWith: 'button',
-      addressType: ADDRESS_TYPES.BRANCH,
-      resultsLine: 'Showing 1-8 of 9'
-    })
-    await expectTabsInOrderWithSelected(page, BRANCH_TAB.label)
-    await expectNamesListed(page, numberedNames('Stub Hill Depot', 8))
-
-    await page.getByRole('link', { name: 'Page 2' }).click()
-
-    await expect(page).toHaveURL(
-      `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}&q=hill&page=2`
+    await expectNoSeriousOrCriticalViolations(
+      page,
+      'Address book Destination tab'
     )
-    await expect(resultsLineOf(page)).toHaveText('Showing 9-9 of 9')
-    await expectTabsInOrderWithSelected(page, BRANCH_TAB.label)
-  })
-
-  test('has no serious or critical axe violations on the Branch tab', async ({
-    page
-  }) => {
-    await openAddressBookList(page, {
-      organisationId: ORG_TYPED,
-      addressType: ADDRESS_TYPES.BRANCH
-    })
-
-    await expectNoSeriousOrCriticalViolations(page, 'Address book Branch tab')
   })
 })
 
@@ -843,21 +789,22 @@ test.describe('type filter', () => {
     await expectNamesListed(page, ORIGIN_TAB.names)
   })
 
-  test('finds an address holding the Branch address role by searching the Branch tab for branch address, with Branch as its Type', async ({
+  test('finds an address holding the Importer role by searching the Destination tab for importer', async ({
     page
   }) => {
     await addValidAddressToFreshOrganisation(page, {
-      organisationPrefix: 'stub-org-list-branch-option-label',
-      addressType: ADDRESS_TYPES.BRANCH,
+      organisationPrefix: 'stub-org-list-importer-option-label',
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      roles: ['IMPORTER'],
       emptyBook: true
     })
 
-    await searchAndExpectSingleMatch(page, 'branch address', {
-      addressType: ADDRESS_TYPES.BRANCH,
+    await searchAndExpectSingleMatch(page, 'importer', {
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       matchedCellText: validAddress.name
     })
     await expect(typeCellOf(page, validAddress.name)).toHaveText(
-      copy.list.roles.BRANCH_ADDRESS.columnLabel
+      copy.list.roles.IMPORTER.columnLabel
     )
   })
 

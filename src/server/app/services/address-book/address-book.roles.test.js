@@ -15,14 +15,7 @@ describe('in stub mode, listing by role', () => {
 
   const TYPED_ORGANISATION_ID = 'stub-org-typed'
   const DEFAULT_ORGANISATION_ID = 'stub-org-default-roles'
-  const {
-    originAndConsignor,
-    placeOfOrigin,
-    consigneeAndDestination,
-    importer,
-    branch,
-    branchDepot
-  } = TYPED_SEED
+  const { originAndConsignor, placeOfOrigin, consigneeAndDestination, importer } = TYPED_SEED
 
   test('Should seed each typed address with its roles and no address type', async () => {
     const { items } = await addressBook.listAddresses(TYPED_ORGANISATION_ID, {
@@ -35,9 +28,7 @@ describe('in stub mode, listing by role', () => {
       ['Stub Origin Farm', undefined, ['PLACE_OF_ORIGIN', 'CONSIGNOR']],
       ['Stub Pasture Farm', undefined, ['PLACE_OF_ORIGIN']],
       ['Stub Consignee Farm', undefined, ['CONSIGNEE', 'PLACE_OF_DESTINATION']],
-      ['Stub Importer Farm', undefined, ['IMPORTER']],
-      ['Stub Branch Farm', undefined, ['BRANCH_ADDRESS']],
-      ['Stub Branch Depot', undefined, ['BRANCH_ADDRESS']]
+      ['Stub Importer Farm', undefined, ['IMPORTER']]
     ])
   })
 
@@ -68,32 +59,16 @@ describe('in stub mode, listing by role', () => {
     ).toEqual([consigneeAndDestination.name, importer.name])
   })
 
-  test('Should list exactly the addresses holding the branch address role', async () => {
-    expect(
-      await listedStubNames(TYPED_ORGANISATION_ID, {
-        roles: ['BRANCH_ADDRESS']
-      })
-    ).toEqual([branch.name, branchDepot.name])
-  })
-
   test('Should list every live address when no role is given', async () => {
     expect(await listedStubNames(TYPED_ORGANISATION_ID, {})).toEqual([
       originAndConsignor.name,
       placeOfOrigin.name,
       consigneeAndDestination.name,
-      importer.name,
-      branch.name,
-      branchDepot.name
+      importer.name
     ])
   })
 
   test('Should apply the search term within the roles', async () => {
-    expect(
-      await listedStubNames(TYPED_ORGANISATION_ID, {
-        roles: ['BRANCH_ADDRESS'],
-        searchTerm: 'depot'
-      })
-    ).toEqual([branchDepot.name])
     expect(
       await listedStubNames(TYPED_ORGANISATION_ID, {
         roles: ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR],
@@ -150,13 +125,6 @@ describe('in stub mode, listing by role', () => {
 
     expect(await totalHolding(['PLACE_OF_ORIGIN'])).toBe(22)
     expect(await totalHolding(['CONSIGNOR'])).toBe(11)
-    expect(await totalHolding(['BRANCH_ADDRESS'])).toBe(9)
-    expect(
-      await listedStubNames(rolesPagedOrganisationId, {
-        roles: ['BRANCH_ADDRESS'],
-        searchTerm: 'depot 9'
-      })
-    ).toEqual(['Stub Hill Depot 9'])
   })
 
   test('Should match a search role as it matches a search term, within the roles', async () => {
@@ -167,13 +135,6 @@ describe('in stub mode, listing by role', () => {
         searchRoles: ['CONSIGNOR']
       })
     ).toEqual([originAndConsignor.name])
-    expect(
-      await listedStubNames(TYPED_ORGANISATION_ID, {
-        roles: ['BRANCH_ADDRESS'],
-        searchTerm: 'consignor',
-        searchRoles: ['CONSIGNOR']
-      })
-    ).toEqual([])
   })
 })
 
@@ -204,7 +165,7 @@ describe('in stub mode, saving roles', () => {
     }
   )
 
-  test.each([['BRANCH_ADDRESS'], ['CONSIGNEE'], ['PLACE_OF_ORIGIN']])(
+  test.each([['CONSIGNEE'], ['PLACE_OF_ORIGIN']])(
     'Should save a %s address outside the United Kingdom',
     async (role) => {
       const created = await addressBook.createAddress(ORGANISATION_ID, {

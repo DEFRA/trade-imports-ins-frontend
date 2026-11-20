@@ -172,12 +172,6 @@ test.describe('add address of each type', () => {
       tab: copy.list.tabs[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
         .label,
       typeText: 'Consignee, Importer, Place of destination'
-    },
-    {
-      addressType: ADDRESS_TYPES.BRANCH,
-      offeredRoles: ['BRANCH_ADDRESS'],
-      tab: copy.list.tabs[ADDRESS_TYPES.BRANCH].label,
-      typeText: 'Branch'
     }
   ]) {
     const typeLabel = copy.addressType.options[addressType].label
@@ -597,7 +591,6 @@ test.describe('add address validation', () => {
     fromTheAddressBook(ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, [
       'CONSIGNEE'
     ]),
-    fromTheAddressBook(ADDRESS_TYPES.BRANCH, ['BRANCH_ADDRESS']),
     {
       entry: 'the consignor picker',
       openForm: (page) =>

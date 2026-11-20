@@ -65,11 +65,11 @@ describe('#buildAddressBookQueryString', () => {
   test('Should carry the address type before q and the page param', () => {
     expect(
       buildAddressBookQueryString({
-        addressType: ADDRESS_TYPES.BRANCH,
+        addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
         searchTerm: 'green',
         page: 2
       })
-    ).toBe('?addressType=BRANCH&q=green&page=2')
+    ).toBe('?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&page=2')
   })
 
   test('Should carry the chosen filter value after q and before the page param', () => {
@@ -99,19 +99,19 @@ describe('#buildAddressBookQueryString', () => {
   test('Should write no filter pair when no filter value is chosen', () => {
     expect(
       buildAddressBookQueryString({
-        addressType: ADDRESS_TYPES.BRANCH,
+        addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
         filterParam: 'role'
       })
-    ).toBe('?addressType=BRANCH')
+    ).toBe('?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER')
   })
 
   test('Should carry the address type alone on the first page with no search', () => {
     expect(
       buildAddressBookQueryString({
-        addressType: ADDRESS_TYPES.BRANCH,
+        addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
         page: 1
       })
-    ).toBe('?addressType=BRANCH')
+    ).toBe('?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER')
   })
 })
 
@@ -128,13 +128,16 @@ describe('#addressBookPageHref', () => {
   })
 
   test('Should link to the address type carrying q and the page', () => {
-    const search = { addressType: ADDRESS_TYPES.BRANCH, searchTerm: 'green' }
+    const search = {
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      searchTerm: 'green'
+    }
 
     expect(addressBookPageHref(1, search)).toBe(
-      '/address-book?addressType=BRANCH&q=green'
+      '/address-book?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green'
     )
     expect(addressBookPageHref(3, search)).toBe(
-      '/address-book?addressType=BRANCH&q=green&page=3'
+      '/address-book?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&page=3'
     )
   })
 
@@ -161,8 +164,7 @@ describe('#roleLabelsTextOf', () => {
     ['CONSIGNOR', 'Consignor'],
     ['CONSIGNEE', 'Consignee'],
     ['IMPORTER', 'Importer'],
-    ['PLACE_OF_DESTINATION', 'Place of destination'],
-    ['BRANCH_ADDRESS', 'Branch']
+    ['PLACE_OF_DESTINATION', 'Place of destination']
   ])('Should label the %s role alone as %s', (role, label) => {
     expect(roleLabelsTextOf([role], copy.list.roles)).toBe(label)
   })
@@ -189,8 +191,8 @@ describe('#rolesWhoseLabelContains', () => {
     ['consignor', ['CONSIGNOR']],
     ['consign', ['CONSIGNOR', 'CONSIGNEE']],
     ['PLACE OF', ['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION']],
-    ['branch', ['BRANCH_ADDRESS']],
-    ['branch address', ['BRANCH_ADDRESS']],
+    ['branch', []],
+    ['branch address', []],
     ['farm', []]
   ])(
     'Should give the roles whose Type column label or Type option label contains %j, ignoring case',

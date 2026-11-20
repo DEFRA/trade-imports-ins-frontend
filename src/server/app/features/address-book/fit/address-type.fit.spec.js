@@ -56,7 +56,7 @@ const expectNoTypeChosen = async (page) => {
 }
 
 test.describe('choose an address type', () => {
-  test('opens from Add a new address with the caption, heading, the four types and their hints in order, and Back to the address book', async ({
+  test('opens from Add a new address with the caption, heading, the three types and their hints in order, and Back to the address book', async ({
     page
   }) => {
     await openTypePageFromList(page, 'stub-org-type-render')
@@ -146,10 +146,7 @@ test.describe('choose an address type', () => {
     )
   })
 
-  for (const addressType of [
-    ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-    ADDRESS_TYPES.BRANCH
-  ]) {
+  for (const addressType of [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]) {
     test(`${typeCopy.options[addressType].label} opens the address form and Back shows it chosen`, async ({
       page
     }) => {
@@ -199,8 +196,7 @@ test.describe('choose an address type', () => {
 
 const ROLE_TO_TICK_BY_ADDRESS_TYPE = {
   [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]: 'PLACE_OF_ORIGIN',
-  [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: 'CONSIGNEE',
-  [ADDRESS_TYPES.BRANCH]: 'BRANCH_ADDRESS'
+  [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]: 'CONSIGNEE'
 }
 
 const expectEnteredAddressKept = async (page, role) => {
@@ -231,10 +227,10 @@ test.describe('going back from the address form to choose an address type', () =
 test.describe('choose an address type without JavaScript', () => {
   test.use({ javaScriptEnabled: false })
 
-  test('after a refused save of Branch, choosing it again shows the address, the contact details and the ticked role entered', async ({
+  test('after a refused save of Destination, Consignee or Importer, choosing it again shows the address, the contact details and the ticked role entered', async ({
     page
   }) => {
-    const addressType = ADDRESS_TYPES.BRANCH
+    const addressType = ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
     const role = ROLE_TO_TICK_BY_ADDRESS_TYPE[addressType]
     await signIn(page, { organisationId: 'stub-org-type-kept-no-js' })
 
@@ -254,11 +250,13 @@ test.describe('choose an address type without JavaScript', () => {
       errors.addressType.required
     )
 
-    await openAddForm(page, ADDRESS_TYPES.BRANCH)
+    await openAddForm(page, ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER)
     await expect(addFormHeading(page)).toBeVisible()
 
     await backLink(page).click()
 
-    await expect(addressTypeRadio(page, ADDRESS_TYPES.BRANCH)).toBeChecked()
+    await expect(
+      addressTypeRadio(page, ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER)
+    ).toBeChecked()
   })
 })

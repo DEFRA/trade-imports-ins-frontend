@@ -16,13 +16,5 @@ export const TYPED_SEED = Object.freeze({
   importer: {
     name: 'Stub Importer Farm',
     roles: [ROLES.IMPORTER]
-  },
-  branch: {
-    name: 'Stub Branch Farm',
-    roles: [ROLES.BRANCH_ADDRESS]
-  },
-  branchDepot: {
-    name: 'Stub Branch Depot',
-    roles: [ROLES.BRANCH_ADDRESS]
   }
 })
