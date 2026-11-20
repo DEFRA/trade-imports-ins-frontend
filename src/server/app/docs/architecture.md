@@ -31,9 +31,9 @@ discovery, token and keys hosts after it
 ([`wreck-agent.js`](../../../auth/wreck-agent.js)). CDP lets a service
 reach the internet only through its squid proxy, and only to the domains on
 the service's allowlist in `cdp-tenant-config`. Calls to every other host,
-the Defra ID stub's included, go direct as before. It keeps what IDM returned in the yar
-session for its own signed-in page, and never writes the auth
-cache or the session cookie, so the rest of the service keeps the stub or
+the Defra ID stub's included, go direct. It keeps what IDM returned in the
+yar session for its own signed-in page, and never writes the auth cache or
+the session cookie, so the rest of the service keeps the stub or
 Defra ID identity. Last comes [`router.js`](../../router.js), which registers
 `health`, then — only when `auth.enabled` — the application plugin, then
 static files.

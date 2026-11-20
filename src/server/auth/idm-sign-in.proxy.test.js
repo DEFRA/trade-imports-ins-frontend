@@ -1,5 +1,4 @@
 import { createServer as createHttpServer } from 'node:http'
-import { createServer as createNetServer } from 'node:net'
 
 import Wreck from '@hapi/wreck'
 import { afterAll, afterEach, beforeAll } from 'vitest'
@@ -15,16 +14,18 @@ import {
   idmDiscoveryDocument
 } from '../common/test-helpers/idm-sign-in-settings.js'
 import { recordModuleLoggerInfo } from '../common/test-helpers/module-logger-lines.js'
+import { listenAsRefusingProxy } from '../common/test-helpers/refusing-proxy.js'
 import { restoreConfigAfterEach } from '../common/test-helpers/restore-config-after-each.js'
 import {
   startServerPastDiscoveryRetries,
   stopTestServer
-} from '../common/test-helpers/start-test-server.js'
+} from '../common/test-helpers/test-server.js'
 import { idmPaths } from './idm-sign-in.js'
 
-const PROXIED = 'IDM calls go through the HTTP proxy'
+const PROXIED = 'Wreck HTTPS calls to these hostnames go through the HTTP proxy'
 const IDM_TOKEN_HOST = 'idm-token.example.test'
 const IDM_KEYS_HOST = 'idm-keys.example.test'
+const DISCOVERY_ATTEMPTS = 4
 
 const listenOnLocalPort = (server) =>
   new Promise((resolve) => {
@@ -32,18 +33,6 @@ const listenOnLocalPort = (server) =>
   })
 
 const close = (server) => new Promise((resolve) => server.close(resolve))
-
-const listenAsRefusingProxy = async () => {
-  const requestLines = []
-  const proxy = createNetServer((socket) => {
-    socket.once('data', (chunk) => {
-      requestLines.push(chunk.toString().split('\r\n')[0])
-      socket.end('HTTP/1.1 502 Bad Gateway\r\n\r\n')
-    })
-  })
-  const port = await listenOnLocalPort(proxy)
-  return { proxy, proxyUrl: `http://127.0.0.1:${port}`, requestLines }
-}
 
 const listenAsIdmDiscovery = async () => {
   const discovery = createHttpServer((_request, response) => {
@@ -101,7 +90,7 @@ describe('IDM sign-in, behind an HTTP proxy', () => {
     server = await startServerPastDiscoveryRetries()
 
     expect(requestLines).toEqual(
-      Array(4).fill('CONNECT idm.example.test:443 HTTP/1.1')
+      Array(DISCOVERY_ATTEMPTS).fill('CONNECT idm.example.test:443 HTTP/1.1')
     )
     expect(infoLogs(PROXIED)).toEqual([
       { fields: { hostnames: ['idm.example.test'] }, message: PROXIED }
@@ -113,12 +102,18 @@ describe('IDM sign-in, behind an HTTP proxy', () => {
     expect(idmSignIn.statusCode).toBe(statusCodes.notFound)
   })
 
-  test('Should add the hosts of the IDM token and keys endpoints to the proxied hosts once discovery succeeds', async () => {
+  test('Should send HTTPS calls to the IDM token and keys hosts to the proxy once discovery succeeds', async () => {
     config.set('httpProxy', proxyUrl)
     config.set(idmDiscoveryUrlKey, discoveryUrl)
 
     server = await startServerPastDiscoveryRetries()
 
+    await expect(Wreck.get(`https://${IDM_TOKEN_HOST}/token`)).rejects.toThrow()
+    await expect(Wreck.get(`https://${IDM_KEYS_HOST}/keys`)).rejects.toThrow()
+    expect(requestLines).toEqual([
+      `CONNECT ${IDM_TOKEN_HOST}:443 HTTP/1.1`,
+      `CONNECT ${IDM_KEYS_HOST}:443 HTTP/1.1`
+    ])
     expect(infoLogs(PROXIED)).toEqual([
       { fields: { hostnames: ['127.0.0.1'] }, message: PROXIED },
       {

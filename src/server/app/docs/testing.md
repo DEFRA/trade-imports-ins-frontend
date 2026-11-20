@@ -58,6 +58,8 @@ info, warn or error lines the module-level logger writes during each test of
 the enclosing `describe`, and return `entriesWith(message)`, the lines logged
 with that message, and `recordRequestLoggerError(getServer)`, which does the
 same for the error lines a request's `request.logger` writes),
+`refusing-proxy.js` (`listenAsRefusingProxy()`, a local HTTP proxy that
+records the first line of each request it receives and answers 502),
 `address-book-requests.js`, the one owner of the address book tests'
 set-up: page paths (`addressBookPath()`, `addressAddPath()`,
 `addressTypePath()`, `addressTypeStartPath()`, `addressPath(id)`,
@@ -144,7 +146,9 @@ the list asks the stub for, and `listedStubNames(organisationId, query)`, the
 names the stub lists at that page size),
 `mock-oidc-config.js` (`mockOidcConfig`), `mock-auth-config.js`
 (`mockAuthConfig(importOriginal)`), `test-server.js`
-(`startTestServer()`, `stopTestServer(server)`, `startRealModeServer()`,
+(`startTestServer()`, `stopTestServer(server)`,
+`startServerPastDiscoveryRetries()`, which starts the server on fake timers
+so start-up runs through every OIDC discovery retry, `startRealModeServer()`,
 `startRealModeServerServingCountries(countries)`, which returns a getter
 for the started server), `restore-config-after-each.js`
 (`restoreConfigAfterEach(keys)`, which restores the named config keys after
