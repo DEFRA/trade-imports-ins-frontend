@@ -65,7 +65,7 @@ test.describe('dashboard', () => {
     await expectNoSeriousOrCriticalViolations(page, 'dashboard')
   })
 
-  test('opening a submitted notification links into the read-only notification-view page', async ({
+  test('Should link a submitted notification to its notification view', async ({
     page
   }) => {
     await signInAndOpen(
@@ -83,7 +83,7 @@ test.describe('dashboard', () => {
     )
   })
 
-  test('opening a draft notification links back to the journey hub, not notification-view', async ({
+  test('Should link a draft notification to its journey hub', async ({
     page
   }) => {
     await signInAndOpen(page, 'stub-org-dashboard-draft-link', dashboardPath())
