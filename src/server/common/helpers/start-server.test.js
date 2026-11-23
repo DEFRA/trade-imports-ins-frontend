@@ -85,7 +85,7 @@ describe('#startServer', () => {
     const infoLines = recordModuleLoggerInfo()
     restoreConfigAfterEach(['httpProxy', 'port'])
 
-    test('logs once that Wreck keeps its own agent, without the proxy URL', async () => {
+    test("logs once that Wreck plain-HTTP calls keep Wreck's own agent, without the proxy URL", async () => {
       config.set('httpProxy', 'http://proxy.test:3128')
       config.set('port', 0)
       serveOidcDiscovery()
@@ -94,13 +94,11 @@ describe('#startServer', () => {
       await server.stop({ timeout: 0 })
 
       expect(
-        infoLines.entriesWith(
-          'HTTP proxy configured; Wreck keeps its own agent'
-        )
+        infoLines.entriesWith("Wreck plain-HTTP calls keep Wreck's own agent")
       ).toEqual([
         {
           fields: { keepAliveAgent: false, reason: 'httpProxy' },
-          message: 'HTTP proxy configured; Wreck keeps its own agent'
+          message: "Wreck plain-HTTP calls keep Wreck's own agent"
         }
       ])
     })

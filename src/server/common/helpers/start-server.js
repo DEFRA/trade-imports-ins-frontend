@@ -10,7 +10,7 @@ async function startServer() {
   if (config.get('httpProxy')) {
     logger.info(
       { keepAliveAgent: false, reason: 'httpProxy' },
-      'HTTP proxy configured; Wreck keeps its own agent'
+      "Wreck plain-HTTP calls keep Wreck's own agent"
     )
   } else {
     useRetryingKeepAliveAgentForWreck(logger)
