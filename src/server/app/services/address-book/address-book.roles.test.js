@@ -15,7 +15,12 @@ describe('in stub mode, listing by role', () => {
 
   const TYPED_ORGANISATION_ID = 'stub-org-typed'
   const DEFAULT_ORGANISATION_ID = 'stub-org-default-roles'
-  const { originAndConsignor, placeOfOrigin, consigneeAndDestination, importer } = TYPED_SEED
+  const {
+    originAndConsignor,
+    placeOfOrigin,
+    consigneeAndDestination,
+    importer
+  } = TYPED_SEED
 
   test('Should seed each typed address with its roles and no address type', async () => {
     const { items } = await addressBook.listAddresses(TYPED_ORGANISATION_ID, {

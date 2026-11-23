@@ -40,7 +40,9 @@ describe('the roles an address type offers', () => {
     expect(
       keepRolesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'IMPORTER'])
     ).toEqual(['CONSIGNOR'])
-    expect(keepRolesOfferedBy('ORIGIN_OR_CONSIGNOR', ['BRANCH_ADDRESS'])).toEqual([])
+    expect(
+      keepRolesOfferedBy('ORIGIN_OR_CONSIGNOR', ['BRANCH_ADDRESS'])
+    ).toEqual([])
   })
 })
 

@@ -5,6 +5,7 @@ import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.j
 import {
   ANIMALS_BASE_URL,
   SENDING_PARTIES,
+  GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
   handshakeContextOf,
   JOURNEY_HANDSHAKES_BY_PARTY,
   returnUrlFor,
@@ -20,7 +21,8 @@ import {
   isResolvableHandshake,
   JOURNEY_TYPES,
   isReceivingParty,
-  ownAndOtherRolesOfParty
+  ownAndOtherRolesOfParty,
+  roleOfParty
 } from './journey-registry.js'
 
 const CONSIGNOR_HANDSHAKE = JOURNEY_HANDSHAKES_BY_PARTY.consignor
@@ -183,6 +185,49 @@ describe('journey-registry', () => {
         missingIdsError
       )
     })
+  })
+
+  describe('germinal products journey', () => {
+    test.each(Object.entries(GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY))(
+      'resolves the %s handshake to the same party as the live animals handshake',
+      (party, handshake) => {
+        const germinalContext = handshakeContextOf(handshake)
+
+        expect(isResolvableHandshake(germinalContext)).toBe(true)
+        expect(roleOfParty(germinalContext)).toBe(
+          roleOfParty(handshakeContextOf(JOURNEY_HANDSHAKES_BY_PARTY[party]))
+        )
+      }
+    )
+
+    test.each(Object.entries(GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY))(
+      "builds the %s handshake's return address under the germinal products set base",
+      (_party, handshake) => {
+        const url = buildReturnUrl(handshakeContextOf(handshake), {
+          addressId: ADDRESS_ID
+        })
+
+        expect(url).toBe(returnUrlFor(handshake, { addressId: ADDRESS_ID }))
+        expect(new URL(url).pathname.startsWith('/germinal-products/')).toBe(
+          true
+        )
+      }
+    )
+
+    test.each(Object.entries(ROLES_BY_PARTY))(
+      'gives the %s handshake the same own role, other roles and saved roles as the live animals handshake',
+      (party, { ownRole, otherRoles }) => {
+        const germinalContext = handshakeContextOf(
+          GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY[party]
+        )
+
+        expect(ownAndOtherRolesOfParty(germinalContext)).toEqual({
+          ownRole,
+          otherRoles
+        })
+        expect(rolesToSaveForParty(germinalContext, [])).toEqual([ownRole])
+      }
+    )
   })
 })
 

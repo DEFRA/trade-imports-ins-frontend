@@ -61,12 +61,8 @@ const ADD_MODES = Object.freeze({
   ROLE_HANDSHAKE: 'role-handshake'
 })
 
-const addModeFor = (handshakeContext) => {
-  if (!handshakeContext) {
-    return ADD_MODES.ADDRESS_BOOK
-  }
-  return ADD_MODES.ROLE_HANDSHAKE
-}
+const addModeFor = (handshakeContext) =>
+  handshakeContext ? ADD_MODES.ROLE_HANDSHAKE : ADD_MODES.ADDRESS_BOOK
 
 const backHrefFor = (addMode, handshakeContext) =>
   addMode === ADD_MODES.ADDRESS_BOOK
@@ -102,16 +98,10 @@ const addLogContextOf = ({ organisationId, handshakeContext, addressType }) =>
       }
     : { organisationId, addressType }
 
-const cancelUrlFor = (addMode, handshakeContext) => {
-  switch (addMode) {
-    case ADD_MODES.ROLE_HANDSHAKE:
-      return buildReturnUrl(handshakeContext, {
-        landing: ADDRESS_LANDING.CANCEL
-      })
-    default:
-      return addressBookPath()
-  }
-}
+const cancelUrlFor = (addMode, handshakeContext) =>
+  addMode === ADD_MODES.ADDRESS_BOOK
+    ? addressBookPath()
+    : buildReturnUrl(handshakeContext, { landing: ADDRESS_LANDING.CANCEL })
 
 const landingChosenBy = (payload) =>
   payload.action === ADDRESS_LANDING.RETURN

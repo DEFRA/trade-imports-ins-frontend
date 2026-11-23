@@ -11,7 +11,7 @@
 
   <form method="post" novalidate>
     <input type="hidden" name="crumb" value="{{ crumb }}" />
-    {% if addMode != addModes.ADDRESS_BOOK %}
+    {% if addMode == addModes.ROLE_HANDSHAKE %}
       <input type="hidden" name="journey-type" value="{{ handshakeContext.journeyType }}" />
       <input type="hidden" name="notification-id" value="{{ handshakeContext.notificationId }}" />
       <input type="hidden" name="fulfilment-id" value="{{ handshakeContext.fulfilmentId }}" />

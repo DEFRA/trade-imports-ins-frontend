@@ -209,7 +209,12 @@ describe('#addressBookListTypeFilter', () => {
     expect(scope.isDone()).toBe(true)
     expect(typeSelectStateOf($)).toEqual({
       label: 'Type',
-      optionTexts: [SELECT_ONE, 'Consignee', IMPORTER_OPTION, 'Place of Destination'],
+      optionTexts: [
+        SELECT_ONE,
+        'Consignee',
+        IMPORTER_OPTION,
+        'Place of Destination'
+      ],
       emptyValueTexts: [SELECT_ONE],
       selectedTexts: [IMPORTER_OPTION]
     })

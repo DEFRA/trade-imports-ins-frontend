@@ -202,7 +202,6 @@ export const copy = {
     saveAndSelect: 'Save and select',
     saveAndReturnToAddressPage: 'Save and return to address page',
     cancelAndReturnToAddressBook: CANCEL_AND_RETURN_TO_ADDRESS_BOOK,
-    cancelAndReturnToAddressPage: 'Cancel and return to address page',
     cancelAndReturnToHub: 'Cancel and return to hub'
   },
   edit: {

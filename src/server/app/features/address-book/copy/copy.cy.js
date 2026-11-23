@@ -209,7 +209,6 @@ export const copy = {
     saveAndSelect: 'Cadw a dewis',
     saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
     cancelAndReturnToAddressBook: CANSLO_A_DYCHWELYD_I_R_LLYFR_CYFEIRIADAU,
-    cancelAndReturnToAddressPage: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
     cancelAndReturnToHub: 'Canslo a dychwelyd i’r hyb'
   },
   edit: {

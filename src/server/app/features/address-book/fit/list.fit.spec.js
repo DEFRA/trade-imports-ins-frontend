@@ -395,7 +395,9 @@ test.describe('address type tabs', () => {
       page.getByRole('cell', { name: seedAddress.name, exact: true })
     ).toBeVisible()
 
-    for (const addressType of [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]) {
+    for (const addressType of [
+      ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+    ]) {
       await openAddressBookList(page, {
         organisationId,
         addressType

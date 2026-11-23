@@ -35,6 +35,7 @@ import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-
 import {
   ANIMALS_BASE_URL,
   SENDING_PARTIES,
+  GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
   INCOMPLETE_HANDSHAKE_WARNING,
   JOURNEY_HANDSHAKES_BY_PARTY,
   journeyRolesHintFor,
@@ -887,7 +888,7 @@ describe(
         await postAdd(getServer(), `add-post-handshake-type-${party}`, {
           ...JOURNEY_HANDSHAKES_BY_PARTY[party],
           ...VALID_ADDRESS_FIELDS,
-          roles: ['IMPORTER']
+          roles: [SENDING_PARTIES.includes(party) ? 'IMPORTER' : 'CONSIGNOR']
         })
 
         expect(scope.isDone()).toBe(true)
@@ -1183,8 +1184,8 @@ describe(
         {
           fields: {
             organisationId: ORGANISATION_ID,
-            addressId: ADDRESS_ID,
             journeyType: CONSIGNOR_HANDSHAKE['journey-type'],
+            addressId: ADDRESS_ID,
             notificationId: CONSIGNOR_HANDSHAKE['notification-id'],
             fulfilmentId: CONSIGNOR_HANDSHAKE['fulfilment-id'],
             landing: ADDRESS_LANDING.SELECT
@@ -1305,6 +1306,179 @@ describe(
         }),
         returnUrlFor(CONSIGNOR_HANDSHAKE, { landing: ADDRESS_LANDING.CANCEL })
       )
+    })
+  }
+)
+
+describe(
+  '#addressBookAddController — germinal products journey handshake',
+  { concurrent: false },
+  () => {
+    const getServer = startRealModeServerServingCountries(COUNTRIES)
+    const { entriesWith: loggedWith } = recordModuleLoggerInfo()
+    const GERMINAL_CONSIGNOR_HANDSHAKE =
+      GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY.consignor
+    const HANDSHAKE_OWN_RETURN = '/live-animals/dashboard'
+
+    test('GET from the germinal products consignor handshake renders the same add page as the live animals handshake and links Back to the germinal products return', async () => {
+      const { result, statusCode } = await getAdd(
+        getServer(),
+        'add-get-germinal-handshake',
+        GERMINAL_CONSIGNOR_HANDSHAKE
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect(textsOf($, 'h1')).toEqual([ADD_TITLE])
+      expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual([
+        ...ADDRESS_FORM_LABELS,
+        ...otherRolesQuestionOf('consignor').labels
+      ])
+      expect($(BACK_LINK).attr('href')).toBe(
+        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE)
+      )
+    })
+
+    test('GET from a germinal products handshake that also carries a return of its own still links Back and Cancel to the registered germinal products return', async () => {
+      const { result, statusCode } = await getAdd(
+        getServer(),
+        'add-get-germinal-handshake-with-return',
+        { ...GERMINAL_CONSIGNOR_HANDSHAKE, return: HANDSHAKE_OWN_RETURN }
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($(BACK_LINK).attr('href')).toBe(
+        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE)
+      )
+      expect($(FORM_LINK).attr('href')).toBe(
+        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
+          landing: ADDRESS_LANDING.CANCEL
+        })
+      )
+    })
+
+    test('POST of Save and select from a germinal products handshake that also carries a return of its own returns to the registered germinal products return', async () => {
+      const scope = serveAddressCreated()
+
+      const response = await postAdd(
+        getServer(),
+        'add-post-germinal-handshake-own-return',
+        {
+          ...GERMINAL_CONSIGNOR_HANDSHAKE,
+          ...VALID_ADDRESS_PAYLOAD,
+          action: ADDRESS_LANDING.SELECT,
+          return: HANDSHAKE_OWN_RETURN
+        }
+      )
+
+      expectRedirectTo(
+        response,
+        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
+          addressId: ADDRESS_ID,
+          landing: ADDRESS_LANDING.SELECT
+        })
+      )
+      expect(scope.isDone()).toBe(true)
+    })
+
+    test('Cancel from a germinal products handshake that also carries a return of its own returns to the registered germinal products return', async () => {
+      const creation = interceptAddressBookRequest('POST', addressesApiPath())
+
+      const response = await postAdd(
+        getServer(),
+        'add-post-germinal-handshake-own-return-cancel',
+        {
+          cancel: 'true',
+          ...GERMINAL_CONSIGNOR_HANDSHAKE,
+          return: HANDSHAKE_OWN_RETURN
+        }
+      )
+
+      expectRedirectTo(
+        response,
+        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
+          landing: ADDRESS_LANDING.CANCEL
+        })
+      )
+      creation.expectNotSent()
+    })
+
+    test('POST of Save and select from the germinal products consignor handshake returns to that notification germinal products return with the new address id and the select landing, and logs the hand-back with the germinal products journey type', async () => {
+      const scope = serveAddressCreated()
+
+      const response = await postAdd(
+        getServer(),
+        'add-post-germinal-handshake',
+        {
+          ...GERMINAL_CONSIGNOR_HANDSHAKE,
+          ...VALID_ADDRESS_PAYLOAD,
+          action: ADDRESS_LANDING.SELECT
+        }
+      )
+
+      expectRedirectTo(
+        response,
+        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
+          addressId: ADDRESS_ID,
+          landing: ADDRESS_LANDING.SELECT
+        })
+      )
+      expect(scope.isDone()).toBe(true)
+      expect(loggedWith(HAND_BACK_MESSAGE)).toEqual([
+        {
+          fields: {
+            organisationId: ORGANISATION_ID,
+            journeyType: GERMINAL_CONSIGNOR_HANDSHAKE['journey-type'],
+            addressId: ADDRESS_ID,
+            notificationId: GERMINAL_CONSIGNOR_HANDSHAKE['notification-id'],
+            fulfilmentId: GERMINAL_CONSIGNOR_HANDSHAKE['fulfilment-id'],
+            landing: ADDRESS_LANDING.SELECT
+          },
+          message: HAND_BACK_MESSAGE
+        }
+      ])
+    })
+
+    test('POST of Save and return to address page from the germinal products consignor handshake returns to that notification germinal products return with the return landing', async () => {
+      const scope = serveAddressCreated()
+
+      const response = await postAdd(
+        getServer(),
+        'add-post-germinal-handshake-return',
+        {
+          ...GERMINAL_CONSIGNOR_HANDSHAKE,
+          ...VALID_ADDRESS_PAYLOAD,
+          action: ADDRESS_LANDING.RETURN
+        }
+      )
+
+      expectRedirectTo(
+        response,
+        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
+          addressId: ADDRESS_ID,
+          landing: ADDRESS_LANDING.RETURN
+        })
+      )
+      expect(scope.isDone()).toBe(true)
+    })
+
+    test('Cancel from the germinal products consignor handshake returns to that notification germinal products return with the cancel landing and creates nothing', async () => {
+      const creation = interceptAddressBookRequest('POST', addressesApiPath())
+
+      const response = await postAdd(
+        getServer(),
+        'add-post-germinal-handshake-cancel',
+        { cancel: 'true', ...GERMINAL_CONSIGNOR_HANDSHAKE }
+      )
+
+      expectRedirectTo(
+        response,
+        returnUrlFor(GERMINAL_CONSIGNOR_HANDSHAKE, {
+          landing: ADDRESS_LANDING.CANCEL
+        })
+      )
+      creation.expectNotSent()
     })
   }
 )
