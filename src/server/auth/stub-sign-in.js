@@ -3,6 +3,7 @@ import crypto from 'node:crypto'
 import Jwt from '@hapi/jwt'
 
 import { getSafeRedirect } from '../../auth/get-safe-redirect.js'
+import { authPaths } from './controller.js'
 
 // Generated once per process rather than hardcoded - this token is only ever
 // decoded (never verified against a known key) by the session validator, so
@@ -69,9 +70,6 @@ const signOut = async (request, h) => {
   return h.redirect('/')
 }
 
-const SIGN_IN_PATHS = ['/auth/stub-sign-in', '/auth/sign-in']
-const SIGN_OUT_PATH = '/auth/sign-out'
-
 /**
  * Replaces the real Defra ID OIDC round-trip when stub mode is on
  * (see mode.js / plugins/auth.js). Auth is still enforced everywhere else -
@@ -84,7 +82,7 @@ export const stubSignInRoutes = {
     name: 'stub-sign-in-routes',
     register(server) {
       server.route([
-        ...SIGN_IN_PATHS.map((path) => ({
+        ...[authPaths.stubSignIn, authPaths.signIn].map((path) => ({
           method: 'GET',
           path,
           options: { auth: false },
@@ -92,7 +90,7 @@ export const stubSignInRoutes = {
         })),
         {
           method: 'GET',
-          path: SIGN_OUT_PATH,
+          path: authPaths.signOut,
           options: { auth: { mode: 'try' } },
           handler: signOut
         }

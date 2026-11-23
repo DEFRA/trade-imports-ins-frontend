@@ -1,0 +1,29 @@
+{% extends 'shared/layout.njk' %}
+
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+
+{% block journeyContent %}
+  <h1 class="govuk-heading-l">{{ pageTitle }}</h1>
+
+  <h2 class="govuk-heading-m">ID token claims</h2>
+  {{ govukSummaryList({
+    attributes: { "data-testid": "id-token-claims" },
+    rows: signIn.idTokenClaims
+  }) }}
+
+  {% if signIn.accessTokenClaims %}
+    <h2 class="govuk-heading-m">Access token claims</h2>
+    {{ govukSummaryList({
+      attributes: { "data-testid": "access-token-claims" },
+      rows: signIn.accessTokenClaims
+    }) }}
+  {% else %}
+    <p class="govuk-body">The access token is the ID token.</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m">Token response</h2>
+  {{ govukSummaryList({
+    attributes: { "data-testid": "token-response" },
+    rows: signIn.tokenResponse
+  }) }}
+{% endblock %}

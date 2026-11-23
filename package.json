@@ -6,7 +6,7 @@
   "main": "src/index.js",
   "type": "module",
   "engines": {
-    "node": ">=24.22.1",
+    "node": ">=26.13.1",
     "npm": ">=11.6.2"
   },
   "packageManager": "npm@11.19.0",
@@ -79,6 +79,7 @@
     "govuk-frontend": "6.5.1",
     "hapi-pino": "13.0.0",
     "hapi-pulse": "4.0.0",
+    "https-proxy-agent": "9.1.0",
     "ioredis": "6.0.0",
     "joi": "18.3.2",
     "lodash": "4.18.1",

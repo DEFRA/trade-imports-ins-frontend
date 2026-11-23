@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import {
@@ -9,6 +9,7 @@ import {
   addressEditPath,
   MALFORMED_ADDRESS_ID
 } from '../../../common/test-helpers/address-book-requests.js'
+import { restoreConfigAfterEach } from '../../../common/test-helpers/restore-config-after-each.js'
 import {
   deadLinkDestination,
   editLeaveDestinationOf,
@@ -42,15 +43,11 @@ const BACKSLASH_PATH = '/\\evil.example'
 
 const requestWithReturn = (returnQuery) => ({ query: { return: returnQuery } })
 
-const originalStubMode = config.get('stubMode')
+restoreConfigAfterEach(['stubMode'])
 
 beforeEach(() => {
   config.set('stubMode', false)
   mockLoggerInfo.mockClear()
-})
-
-afterEach(() => {
-  config.set('stubMode', originalStubMode)
 })
 
 describe('#honouredReturnOf', () => {

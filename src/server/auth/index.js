@@ -1,5 +1,6 @@
 import { unauthorisedPage } from '../app/auth/page.js'
-import { authController } from './controller.js'
+import { SERVICE_SIGN_IN_STRATEGY } from '../../plugins/auth.js'
+import { authController, authPaths } from './controller.js'
 
 export const authRoutes = {
   plugin: {
@@ -8,24 +9,24 @@ export const authRoutes = {
       server.route([
         {
           method: 'GET',
-          path: '/auth/sign-in',
+          path: authPaths.signIn,
           options: {
-            auth: 'defra-id'
+            auth: SERVICE_SIGN_IN_STRATEGY
           },
           ...authController.signin
         },
         {
           method: 'GET',
-          path: '/auth/sign-in-oidc',
+          path: authPaths.signInOidc,
           options: {
-            auth: { strategy: 'defra-id', mode: 'try' },
+            auth: { strategy: SERVICE_SIGN_IN_STRATEGY, mode: 'try' },
             app: { page: unauthorisedPage }
           },
           ...authController.signinOidc
         },
         {
           method: 'GET',
-          path: '/auth/sign-out',
+          path: authPaths.signOut,
           options: {
             auth: { mode: 'try' }
           },
@@ -33,7 +34,7 @@ export const authRoutes = {
         },
         {
           method: 'GET',
-          path: '/auth/sign-out-oidc',
+          path: authPaths.signOutOidc,
           options: {
             auth: { mode: 'try' }
           },
@@ -41,9 +42,9 @@ export const authRoutes = {
         },
         {
           method: 'GET',
-          path: '/auth/organisation',
+          path: authPaths.organisation,
           options: {
-            auth: 'defra-id'
+            auth: SERVICE_SIGN_IN_STRATEGY
           },
           ...authController.organisation
         }

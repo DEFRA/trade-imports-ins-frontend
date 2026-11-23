@@ -11,6 +11,7 @@ import {
   addressBookApi,
   runInRealMode
 } from '../../../common/test-helpers/real-mode.js'
+import { restoreConfigAfterEach } from '../../../common/test-helpers/restore-config-after-each.js'
 import { ORGANISATION_ID } from '../../../common/test-helpers/session-auth.js'
 import * as transporters from './index.js'
 import {
@@ -320,14 +321,13 @@ describe('the real transporters service', () => {
 })
 
 describe('choosing between the stub and the real address book', () => {
-  const originalStubMode = config.get('stubMode')
+  restoreConfigAfterEach(['stubMode'])
 
   beforeAll(() => {
     nock.disableNetConnect()
   })
 
   afterAll(() => {
-    config.set('stubMode', originalStubMode)
     nock.enableNetConnect()
   })
 

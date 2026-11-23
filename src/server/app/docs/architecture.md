@@ -15,15 +15,52 @@ beside it, one routes plugin: the Defra ID `/auth/*` routes in
 [`src/server/auth/index.js`](../../auth/index.js), or the stub routes in
 [`stub-sign-in.js`](../../auth/stub-sign-in.js) when `isStubMode()` — the
 same `/auth/sign-in` and `/auth/sign-out` paths, with no identity provider
-involved. Last comes [`router.js`](../../router.js), which registers
+involved.
+
+Whether or not `auth.enabled` is set, and whatever the stub or Defra ID
+mode, it then registers the hidden IDM sign-in
+([`idm-sign-in.js`](../../auth/idm-sign-in.js)). It serves its routes and
+its own Bell strategy ([`idm-strategy.js`](../../auth/idm-strategy.js))
+only when `IDM_OIDC_CONFIGURATION_URL` is set, the IDM client ID, client
+secret and service ID are set, and IDM discovery succeeds at start-up.
+Otherwise it logs why and the service starts without it, so an IDM outage
+never stops the service starting. When `HTTP_PROXY` is set, as CDP sets it,
+it sends its HTTPS Wreck calls to IDM through that proxy, Bell's token
+exchange included: to the discovery host before discovery, and to the
+discovery, token and keys hosts after it
+([`wreck-agent.js`](../../../auth/wreck-agent.js)). CDP lets a service
+reach the internet only through its squid proxy, and only to the domains on
+the service's allowlist in `cdp-tenant-config`. Calls to every other host,
+the Defra ID stub's included, go direct as before. It keeps what IDM returned in the yar
+session for its own signed-in page, and never writes the auth
+cache or the session cookie, so the rest of the service keeps the stub or
+Defra ID identity. Last comes [`router.js`](../../router.js), which registers
 `health`, then — only when `auth.enabled` — the application plugin, then
 static files.
 
 - [`src/plugins/auth.js`](../../../plugins/auth.js) — the session strategy,
   the Bell/Defra ID strategy, and the stub-mode short circuit that skips
   Bell entirely.
+- [`src/auth/bell-options.js`](../../../auth/bell-options.js) — the Bell
+  OAuth options both sign-ins share; the service sign-in adds its profile
+  decoding, redirect capture and organisation reselection, the hidden IDM
+  sign-in its profile from the token response. Bell's cookie takes
+  `session.cookie.sameSite`: the return from the identity provider is a
+  top-level navigation, and `SameSite=Strict` can keep the cookie off the
+  callback, so Bell silently answers `isAuthenticated: false`.
 - [`src/plugins/csrf.js`](../../../plugins/csrf.js) — CSRF protection via
   `@hapi/crumb`, disabled during test runs.
+- [`src/auth/identity-providers.js`](../../../auth/identity-providers.js) —
+  the two identity providers, named by role: `serviceSignInProvider`, the
+  service's own sign-in (config group `defraId`, the Defra ID stub outside
+  production), and `hiddenIdmSignInProvider`, the hidden test sign-in
+  through the real Defra ID (config group `idm`). It holds each one's config
+  group, metric call names, and whether its tokens' audience and issuer are
+  checked. The stub issues a random audience, so the service sign-in's are
+  not. The metric dependency `defra-id` is the service's own client, whether
+  it points at the stub or the real Defra ID; `idm` is the hidden test
+  client. Discovery, token verification and the token-exchange timing each
+  take the provider they act for, with no default.
 - [`src/auth/`](../../../auth/) — token verification, permissions lookup,
   safe-redirect checking and the one Defra ID hostname rewrite
   ([`defra-id-hostnames.js`](../../../auth/defra-id-hostnames.js)), shared by
@@ -57,9 +94,31 @@ the same one second.
 `catchAll` renders `shared/error` through `kit.base()` with the
 status-keyed message from `sharedCopy.errorPage`.
 
-**The unauthorised page**: [`app/auth/unauthorised.njk`](../auth/unauthorised.njk)
-is the one view outside `features/`. The chassis's auth controller renders
-it with `base(sharedCopy.unauthorised.title)`.
+**The auth pages**: [`app/auth/`](../auth/) holds the views outside
+`features/`. The chassis's auth controller owns `renderUnableToSignIn(h, {
+signInUrl })`, which renders `unauthorised.njk` with
+`base(sharedCopy.unauthorised.title)` and a try-again link to the
+`signInUrl` it is given: `/auth/sign-in` from the auth controller,
+`/auth/idm/sign-in` from the IDM sign-in. The IDM sign-in's own pages
+(`idm-sign-in.njk`, `idm-signed-in.njk`, `idm-signed-out.njk`) are internal
+test pages, in English only, with their text in the templates and in
+`idm-sign-in.js` (the page titles, which are also the headings, and the
+token-response row labels), not in `copy.en.js`/`copy.cy.js`.
+
+**The Defra ID sign-in and sign-out callbacks**: the sign-in callback
+(`/auth/sign-in-oidc`) runs Bell in `try` mode, so a callback Bell cannot
+authenticate (a state or nonce mismatch, a failed token exchange, a cookie
+it cannot read) reaches the handler unauthenticated, with the reason in
+`request.auth.error`, and renders the unable-to-sign-in page. The token's
+`roles` carry the role name, not its permissions, for a user signed in with
+RPA credentials, so the callback asks `getPermissions`
+([`src/auth/get-permissions.js`](../../../auth/get-permissions.js)) for the
+scope; those calls go to the RPS and Siti Agri APIs with the Defra ID token.
+The sign-out callback (`/auth/sign-out-oidc`) checks `state` only when the
+query carries one: Defra ID sends it, but a local sign-out returns without
+it. The sign-in callback and `/auth/organisation` pass the stored return
+path through `getSafeRedirect`, so the redirect after sign-in is always a
+path on this service.
 
 ## The application
 
