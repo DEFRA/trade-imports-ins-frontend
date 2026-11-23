@@ -8,6 +8,7 @@ import { router } from './router.js'
 import { authPlugin } from '../plugins/auth.js'
 import { authRoutes } from './auth/index.js'
 import { stubSignInRoutes } from './auth/stub-sign-in.js'
+import { idmSignInRoutes } from './auth/idm-sign-in.js'
 import { config } from '../config/config.js'
 import { isStubMode } from './common/services/mode.js'
 import { pulse } from './common/helpers/pulse.js'
@@ -76,6 +77,7 @@ export async function createServer() {
     ...(authEnabled
       ? [authPlugin, isStubMode() ? stubSignInRoutes : authRoutes]
       : []),
+    idmSignInRoutes,
     router
   ])
 

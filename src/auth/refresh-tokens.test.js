@@ -5,6 +5,7 @@ import { refreshTokens, TOKEN_ENDPOINT_TIMEOUT_MS } from './refresh-tokens.js'
 import { awaitEmfDocumentForOperation } from '../server/common/test-helpers/emf-documents.js'
 import { runAgainstServedOidcDiscovery } from '../server/common/test-helpers/serve-oidc-discovery.js'
 import { statusCodes } from '../server/common/constants/status-codes.js'
+import { replyAfter } from './reply-after.test-support.js'
 
 const getTraceIdMock = vi.hoisted(() => vi.fn())
 
@@ -113,9 +114,13 @@ describe('#refreshTokens', () => {
     'Should give up when the token endpoint reply comes later than the timeout',
     { timeout: TOKEN_ENDPOINT_TIMEOUT_MS * 5 },
     async () => {
-      tokenEndpointRequest()
-        .delay(TOKEN_ENDPOINT_TIMEOUT_MS + 500)
-        .reply(statusCodes.ok, issuedTokens)
+      tokenEndpointRequest().reply(
+        replyAfter(
+          TOKEN_ENDPOINT_TIMEOUT_MS + 500,
+          statusCodes.ok,
+          issuedTokens
+        )
+      )
 
       await expect(refreshTokens(refreshToken)).rejects.toMatchObject({
         output: { statusCode: statusCodes.gatewayTimeout }

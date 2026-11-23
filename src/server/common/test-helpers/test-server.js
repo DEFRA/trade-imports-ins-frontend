@@ -1,18 +1,14 @@
 import { afterAll, beforeAll, beforeEach } from 'vitest'
 
-import { createServer } from '../../server.js'
 import { runInRealMode, serveCountries } from './real-mode.js'
 import { serveOidcDiscovery } from './serve-oidc-discovery.js'
+import { startTestServer, stopTestServer } from './start-test-server.js'
 
-export async function startTestServer() {
-  const server = await createServer()
-  await server.initialize()
-  return server
-}
-
-export async function stopTestServer(server) {
-  await server.stop({ timeout: 0 })
-}
+export {
+  startServerPastDiscoveryRetries,
+  startTestServer,
+  stopTestServer
+} from './start-test-server.js'
 
 export const startRealModeServer = () => {
   let startedServer

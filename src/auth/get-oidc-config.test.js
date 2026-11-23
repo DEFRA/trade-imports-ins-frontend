@@ -1,6 +1,16 @@
 import { vi } from 'vitest'
 import { config } from '../config/config.js'
+import { replyAfter } from './reply-after.test-support.js'
 import { getOidcConfig, OIDC_DOCUMENT_TIMEOUT_MS } from './get-oidc-config.js'
+import {
+  hiddenIdmSignInProvider,
+  serviceSignInProvider
+} from './identity-providers.js'
+import {
+  applyIdmSettings,
+  idmDiscoveryDocument,
+  idmSettingKeys
+} from '../server/common/test-helpers/idm-sign-in-settings.js'
 import { readEmfDocuments } from '../server/common/test-helpers/emf-documents.js'
 import {
   discoveryUrlRequest,
@@ -30,7 +40,7 @@ describe('#getOidcConfig', () => {
   let logSpy
 
   runAgainstMockOidcDiscoveryUrl({
-    restoringConfigKeys: STACK_DEFRA_ID_REWRITE_KEYS
+    restoringConfigKeys: [...STACK_DEFRA_ID_REWRITE_KEYS, ...idmSettingKeys]
   })
 
   beforeEach(() => {
@@ -46,7 +56,7 @@ describe('#getOidcConfig', () => {
   test('Should return the served discovery document', async () => {
     serveOidcDiscovery(servedDocument)
 
-    expect(await getOidcConfig()).toEqual(servedDocument)
+    expect(await getOidcConfig(serviceSignInProvider)).toEqual(servedDocument)
   })
 
   test('Should put the token and key endpoints at the discovery hostname the stack rewrite covers', async () => {
@@ -61,7 +71,7 @@ describe('#getOidcConfig', () => {
       jwks_uri: 'http://localhost:3007/jwks'
     })
 
-    const result = await getOidcConfig()
+    const result = await getOidcConfig(serviceSignInProvider)
 
     expect(result).toEqual({
       authorization_endpoint: 'https://external-host/auth',
@@ -73,7 +83,7 @@ describe('#getOidcConfig', () => {
   test('Should measure the discovery call as defra-id openid-configuration', async () => {
     serveOidcDiscovery(servedDocument)
 
-    await getOidcConfig()
+    await getOidcConfig(serviceSignInProvider)
 
     await vi.waitFor(() => expect(readEmfDocuments(logSpy)).toHaveLength(1))
     const [document] = readEmfDocuments(logSpy)
@@ -84,13 +94,30 @@ describe('#getOidcConfig', () => {
     expect(document).not.toHaveProperty('Interface')
   })
 
+  test('Should return the hidden IDM sign-in discovery document from its own URL, measured as idm openid-configuration', async () => {
+    applyIdmSettings()
+    serveOidcDiscovery(servedDocument)
+    serveOidcDiscovery(idmDiscoveryDocument, {
+      provider: hiddenIdmSignInProvider
+    })
+
+    expect(await getOidcConfig(hiddenIdmSignInProvider)).toEqual(
+      idmDiscoveryDocument
+    )
+
+    await vi.waitFor(() => expect(readEmfDocuments(logSpy)).toHaveLength(1))
+    const [document] = readEmfDocuments(logSpy)
+    expect(document.Dependency).toBe('idm')
+    expect(document.Operation).toBe('openid-configuration')
+  })
+
   test('Should send the trace id in the tracing header', async () => {
     const tracingHeader = config.get('tracing.header')
     const scope = discoveryUrlRequest({
       reqheaders: { [tracingHeader]: traceId }
     }).reply(statusCodes.ok, servedDocument)
 
-    await getOidcConfig()
+    await getOidcConfig(serviceSignInProvider)
 
     expect(scope.isDone()).toBe(true)
   })
@@ -102,17 +129,17 @@ describe('#getOidcConfig', () => {
       reqheaders: { [tracingHeader]: (value) => value === '' }
     }).reply(statusCodes.ok, servedDocument)
 
-    await getOidcConfig()
+    await getOidcConfig(serviceSignInProvider)
 
     expect(scope.isDone()).toBe(true)
   })
 
   test('Should give up when the discovery reply comes later than the timeout', async () => {
-    discoveryUrlRequest()
-      .delay(OIDC_DOCUMENT_TIMEOUT_MS + 500)
-      .reply(statusCodes.ok, servedDocument)
+    discoveryUrlRequest().reply(
+      replyAfter(OIDC_DOCUMENT_TIMEOUT_MS + 500, statusCodes.ok, servedDocument)
+    )
 
-    await expect(getOidcConfig()).rejects.toMatchObject({
+    await expect(getOidcConfig(serviceSignInProvider)).rejects.toMatchObject({
       output: { statusCode: statusCodes.gatewayTimeout }
     })
   })
@@ -120,7 +147,9 @@ describe('#getOidcConfig', () => {
   test('Should reject and measure a failure when the discovery fetch fails', async () => {
     discoveryUrlRequest().replyWithError('discovery failed')
 
-    await expect(getOidcConfig()).rejects.toThrow('discovery failed')
+    await expect(getOidcConfig(serviceSignInProvider)).rejects.toThrow(
+      'discovery failed'
+    )
 
     await vi.waitFor(() => expect(readEmfDocuments(logSpy)).toHaveLength(1))
     const [document] = readEmfDocuments(logSpy)

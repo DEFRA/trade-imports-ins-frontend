@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 
 import { config } from '../../../../config/config.js'
 import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.js'
@@ -12,6 +12,7 @@ import {
   UNREGISTERED_JOURNEY_TYPE,
   ROLES_BY_PARTY
 } from '../../../common/test-helpers/journey-handshake.js'
+import { restoreConfigAfterEach } from '../../../common/test-helpers/restore-config-after-each.js'
 import {
   ADDRESS_LANDING,
   rolesToSaveForParty,
@@ -41,11 +42,9 @@ const UNRESOLVABLE_PARTY_CASES = Object.freeze([
 const BASE_URL_CONFIG_KEY = 'tradeImportsAnimalsFrontend.baseUrl'
 
 describe('journey-registry', () => {
-  beforeEach(() => {
-    config.set(BASE_URL_CONFIG_KEY, ANIMALS_BASE_URL)
-  })
+  restoreConfigAfterEach([BASE_URL_CONFIG_KEY])
 
-  afterAll(() => {
+  beforeEach(() => {
     config.set(BASE_URL_CONFIG_KEY, ANIMALS_BASE_URL)
   })
 
