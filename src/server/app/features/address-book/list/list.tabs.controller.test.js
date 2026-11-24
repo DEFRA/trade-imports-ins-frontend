@@ -50,7 +50,7 @@ describe('#addressBookListTabs', () => {
       ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
     ],
     [
-      'a removed branch address type',
+      'an address type no tab offers',
       `${addressBookPath()}?addressType=BRANCH`,
       DEFAULT_ADDRESS_BOOK_TAB.addressType
     ]

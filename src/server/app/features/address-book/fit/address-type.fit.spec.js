@@ -146,26 +146,22 @@ test.describe('choose an address type', () => {
     )
   })
 
-  for (const addressType of [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]) {
-    test(`${typeCopy.options[addressType].label} opens the address form and Back shows it chosen`, async ({
-      page
-    }) => {
-      await signInAndOpen(
-        page,
-        `stub-org-type-${addressType}`,
-        addressTypePath()
-      )
+  test(`${typeCopy.options[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER].label} opens the address form and Back shows it chosen`, async ({
+    page
+  }) => {
+    const addressType = ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
 
-      await chooseAddressType(page, addressType)
+    await signInAndOpen(page, `stub-org-type-${addressType}`, addressTypePath())
 
-      await expect(page).toHaveURL(addressAddPath())
-      await expect(addFormHeading(page)).toBeVisible()
+    await chooseAddressType(page, addressType)
 
-      await backLink(page).click()
+    await expect(page).toHaveURL(addressAddPath())
+    await expect(addFormHeading(page)).toBeVisible()
 
-      await expect(addressTypeRadio(page, addressType)).toBeChecked()
-    })
-  }
+    await backLink(page).click()
+
+    await expect(addressTypeRadio(page, addressType)).toBeChecked()
+  })
 
   test('opening the address form with no type chosen lands on Choose an address type', async ({
     page

@@ -31,7 +31,7 @@ describe('address-book-tabs', () => {
     ['no address type', undefined],
     ['an empty address type', ''],
     ['an unknown address type', 'UNSUPPORTED_ADDRESS_TYPE'],
-    ['a removed branch tab', 'BRANCH'],
+    ['an address type no tab has', 'BRANCH'],
     ['an address type in the wrong case', 'branch']
   ])('resolves %s to no tab', (_description, requested) => {
     expect(resolveTab(requested)).toBeUndefined()
@@ -77,7 +77,8 @@ describe('address-book-tabs', () => {
     ['an empty value', ORIGIN_TAB, ''],
     ['an unknown value', ORIGIN_TAB, 'UNSUPPORTED_ROLE'],
     ['a role another tab offers', ORIGIN_TAB, 'IMPORTER'],
-    ['a removed branch role', ORIGIN_TAB, 'BRANCH_ADDRESS'],
+    ['a role no tab offers', ORIGIN_TAB, 'BRANCH_ADDRESS'],
+    ['a role in the wrong case', ORIGIN_TAB, 'consignor'],
     ['a transporter type on a role-backed tab', ORIGIN_TAB, 'COMMERCIAL'],
     ['a role on the Transporter tab', TRANSPORTER_TAB, 'CONSIGNOR']
   ])('honours no value for %s', (_description, tab, requested) => {

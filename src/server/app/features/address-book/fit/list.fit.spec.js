@@ -797,7 +797,7 @@ test.describe('type filter', () => {
     await addValidAddressToFreshOrganisation(page, {
       organisationPrefix: 'stub-org-list-importer-option-label',
       addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
-      roles: ['IMPORTER'],
+      roles: [ROLES.IMPORTER],
       emptyBook: true
     })
 
