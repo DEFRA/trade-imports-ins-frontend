@@ -193,7 +193,7 @@ describe('#rolesWhoseLabelContains', () => {
     ['PLACE OF', ['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION']],
     ['farm', []]
   ])(
-    'Should give the roles whose Type column label or Type option label contains %j, ignoring case',
+    'Should give the roles whose Type column label contains %j, ignoring case',
     (searchTerm, roles) => {
       expect(rolesWhoseLabelContains(searchTerm, copy.list.roles)).toEqual(
         roles
