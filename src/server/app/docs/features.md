@@ -111,8 +111,8 @@ root:
   (`ROLES_BY_ADDRESS_TYPE`) belong to `services/address-book`, imported
   through its barrel; the transporter type values belong to
   `services/transporters`, imported the same way.
-- [`address-id-params.js`](../features/address-book/address-id-params.js) —
-  `addressIdParams`, `redirectingAddressIdRouteOptions`.
+- [`record-id-params.js`](../features/address-book/record-id-params.js) —
+  `recordIdParams`, `redirectingRecordIdRouteOptions`.
 - [`return-to.js`](../features/address-book/return-to.js) — `honouredReturnOf`
   gives the honoured return, else null: an INS path as given; outside stub
   mode, a path under `/live-animals` resolved against the configured animals
@@ -218,7 +218,7 @@ test; [`routes.test.js`](../routes.test.js) pins the exact route list.
 - **`pageRoutes(path, { get, post }, options = routeOptions)`** emits the
   GET and, when `post` is given, the POST. `routeOptions` is `{ auth:
 'session' }`; the view, edit and delete pages pass
-  `redirectingAddressIdRouteOptions(deadLinkDestination)`, so a dead link
+  `redirectingRecordIdRouteOptions(deadLinkDestination)`, so a dead link
   returns to an honoured `return`, or to the list.
 - **`errorSummary(errors)`** turns a `{ field: message }` map into the
   govukErrorSummary model, or `null` when there are no errors.
@@ -373,7 +373,7 @@ nine address fields reach the API, together with the
 roles kept for it (the kept roles on an add, the party's own role
 plus the ticked roles its page offers on a journey add, and the
 stored address's roles on an edit). No address type is sent.
-[`address-id-params.js`](../features/address-book/address-id-params.js)
+[`record-id-params.js`](../features/address-book/record-id-params.js)
 stays on Joi directly because Hapi's `validate.params` takes a Joi schema.
 
 ## Client JavaScript

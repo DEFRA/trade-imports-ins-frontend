@@ -86,7 +86,7 @@ Follow the shape at [features.md](features.md#controllers):
 
 Use explicit Hapi route objects only when the page needs more than a
 GET/POST pair. A page whose dead link should go back to the list passes
-`redirectingAddressIdRouteOptions(addressBookPath)`, or `redirectingAddressIdRouteOptions(deadLinkDestination)`
+`redirectingRecordIdRouteOptions(addressBookPath)`, or `redirectingRecordIdRouteOptions(deadLinkDestination)`
 from `return-to.js` to honour a `return`, and loads through `findLiveAddress` (or `findLiveAddressWithCountryLabel`),
 as the view, edit and delete pages do.
 
