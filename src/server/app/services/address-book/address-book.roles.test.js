@@ -74,12 +74,20 @@ describe('in stub mode, listing by role', () => {
   })
 
   test('Should apply the search term within the roles', async () => {
+    const roles = ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR]
+
     expect(
       await listedStubNames(TYPED_ORGANISATION_ID, {
-        roles: ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR],
-        searchTerm: 'depot'
+        roles,
+        searchTerm: 'importer'
       })
     ).toEqual([])
+    expect(
+      await listedStubNames(TYPED_ORGANISATION_ID, {
+        roles,
+        searchTerm: 'pasture'
+      })
+    ).toEqual([placeOfOrigin.name])
   })
 
   test('Should list exactly the addresses holding the one role', async () => {
@@ -140,6 +148,13 @@ describe('in stub mode, listing by role', () => {
         searchRoles: ['CONSIGNOR']
       })
     ).toEqual([originAndConsignor.name])
+    expect(
+      await listedStubNames(TYPED_ORGANISATION_ID, {
+        roles: ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER],
+        searchTerm: 'consignor',
+        searchRoles: ['CONSIGNOR']
+      })
+    ).toEqual([])
   })
 })
 
