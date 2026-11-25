@@ -18,8 +18,11 @@ Hapi + Nunjucks application: one `src/server/app/` with the pages under
 The service serves `/`, the dashboard. It lists, searches by reference and
 sorts the signed-in organisation's aggregated notifications.
 Each row links to the animals frontend, which owns the notification. It
-also serves `/address-book` with `add`, `add/address-type`, `{id}`, `{id}/edit` and
-`{id}/delete`, plus `/auth/*` and `/health`. See
+also serves `/notification-type`, which sends the user to the animals or
+plants frontend to start a notification, and `/address-book` with `add`,
+`add/address-type`, `{id}`, `{id}/edit` and `{id}/delete`, the transporter
+pages under `add/transporter` and `transporter/{id}`, plus `/auth/*` and
+`/health`. See
 [The served surface](src/server/app/docs/README.md#the-served-surface).
 
 Deployed end-to-end tests for this service live in the shared tests
@@ -42,7 +45,7 @@ repository `trade-imports-ins-tests`, as its `ins` domain (`tests/ins/`)
 
 ### Node.js
 
-Node 24 or later, and npm 11.6.2 or later — the floor in `engines`.
+Node 26.13.1 or later, and npm 11.6.2 or later — the floor in `engines`.
 
 To use the correct version of Node.js for this application, via nvm:
 
@@ -222,8 +225,7 @@ secrets. These must be set in `cdp-app-config` for each environment:
 
 ## Docker
 
-The image's `ARG PORT` defaults to 3000; pass `PORT` to serve on the
-service's port.
+The image's `ARG PORT` defaults to 3002, the service's port.
 
 ### Development image
 

@@ -34,7 +34,7 @@ answer.
 Convention checks:
 
 - [`routes.test.js`](../routes.test.js) — the exact route list, session
-  auth on every route, `addressIdParams` on every `{id}` route.
+  auth on every route, `recordIdParams` on every `{id}` route.
 - [`copy-convention.test.js`](../copy-convention.test.js)
 - [`copy-parity.test.js`](../copy-parity.test.js)
 - [`shared/paths.test.js`](../shared/paths.test.js)
