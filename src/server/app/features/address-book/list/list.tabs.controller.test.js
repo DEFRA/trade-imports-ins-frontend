@@ -51,7 +51,7 @@ describe('#addressBookListTabs', () => {
     ],
     [
       'an address type no tab offers',
-      `${addressBookPath()}?addressType=BRANCH`,
+      `${addressBookPath()}?addressType=UNSUPPORTED_ADDRESS_TYPE`,
       DEFAULT_ADDRESS_BOOK_TAB.addressType
     ]
   ])(
