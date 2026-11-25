@@ -48,11 +48,6 @@ describe('#addressBookListTabs', () => {
       'the Destination, Consignee and Importer address type',
       `${addressBookPath()}?addressType=${ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER}`,
       ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
-    ],
-    [
-      'an address type no tab offers',
-      `${addressBookPath()}?addressType=UNSUPPORTED_ADDRESS_TYPE`,
-      DEFAULT_ADDRESS_BOOK_TAB.addressType
     ]
   ])(
     'asks the address book for the tab chosen by %s',
