@@ -7,7 +7,7 @@ and `routes.js` registers what `features/index.js` exports.
 
 ## The served surface
 
-The application registers thirteen routes, exactly as
+The application registers these routes, exactly as
 [`routes.test.js`](../routes.test.js) pins them:
 
 - `GET /`
@@ -18,9 +18,18 @@ The application registers thirteen routes, exactly as
 - `GET /address-book/{id}`
 - `GET /address-book/{id}/edit`, `POST /address-book/{id}/edit`
 - `GET /address-book/{id}/delete`, `POST /address-book/{id}/delete`
+- `GET /address-book/add/transporter`, `POST /address-book/add/transporter`
+- `GET /address-book/add/transporter/private`, `POST /address-book/add/transporter/private`
+- `GET /address-book/add/transporter/commercial`, `POST /address-book/add/transporter/commercial`
+- `GET /address-book/transporter/{id}`
+- `GET /address-book/transporter/{id}/edit`, `POST /address-book/transporter/{id}/edit`
+- `GET /address-book/transporter/{id}/delete`, `POST /address-book/transporter/{id}/delete`
+
+In the `dev` and `local` CDP environments only,
+[`routes.js`](../routes.js) also registers `/address-lookup-spike`.
 
 Every one of them sits behind the `session` auth strategy, and every `{id}`
-is validated by [`address-id-params.js`](../features/address-book/address-id-params.js)
+is validated by [`record-id-params.js`](../features/address-book/record-id-params.js)
 as a 24-character hex Mongo ObjectId. On the view, edit and delete pages any dead link (malformed,
 unknown, another organisation's or deleted) returns to the page named by an
 honoured `return` query, or to the address book when there is none or it
