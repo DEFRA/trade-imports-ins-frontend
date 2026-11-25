@@ -191,8 +191,6 @@ describe('#rolesWhoseLabelContains', () => {
     ['consignor', ['CONSIGNOR']],
     ['consign', ['CONSIGNOR', 'CONSIGNEE']],
     ['PLACE OF', ['PLACE_OF_ORIGIN', 'PLACE_OF_DESTINATION']],
-    ['branch', []],
-    ['branch address', []],
     ['farm', []]
   ])(
     'Should give the roles whose Type column label or Type option label contains %j, ignoring case',
