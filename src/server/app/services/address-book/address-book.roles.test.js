@@ -150,7 +150,10 @@ describe('in stub mode, listing by role', () => {
     ).toEqual([originAndConsignor.name])
     expect(
       await listedStubNames(TYPED_ORGANISATION_ID, {
-        roles: ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER],
+        roles:
+          ROLES_BY_ADDRESS_TYPE[
+            ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+          ],
         searchTerm: 'consignor',
         searchRoles: ['CONSIGNOR']
       })
