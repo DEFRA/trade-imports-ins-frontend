@@ -48,11 +48,6 @@ describe('#addressBookListTabs', () => {
       'the Destination, Consignee and Importer address type',
       `${addressBookPath()}?addressType=${ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER}`,
       ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
-    ],
-    [
-      'the Branch address type',
-      `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}`,
-      ADDRESS_TYPES.BRANCH
     ]
   ])(
     'asks the address book for the tab chosen by %s',
@@ -105,8 +100,8 @@ describe('#addressBookListTabs', () => {
       ],
       [
         'an address type it offers',
-        `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}`,
-        ADDRESS_TYPES.BRANCH
+        `${addressBookPath()}?addressType=${ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER}`,
+        ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
       ]
     ])('logs nothing for %s', async (_description, url, servedAddressType) => {
       const scope = stubAddressPage(
@@ -127,7 +122,6 @@ describe('#addressBookListTabs', () => {
       ['PLACE_OF_ORIGIN', 'CONSIGNOR'],
       'Place of origin, Consignor'
     ],
-    ['a branch address role', ['BRANCH_ADDRESS'], 'Branch'],
     ['no roles', null, '']
   ])(
     'shows the labels of the roles of an address holding %s in its Type cell',
@@ -140,7 +134,7 @@ describe('#addressBookListTabs', () => {
     }
   )
 
-  test('names the four tabs in order as links to the list on each tab, marking the Origin and Consignor tab as current', async () => {
+  test('names the three tabs in order as links to the list on each tab, marking the Origin and Consignor tab as current', async () => {
     stubAddressPage({ page: '1' }, pageOf([highlandAddress]))
 
     const { $ } = await readPage(addressBookPath(), 'list-tabs')
@@ -159,11 +153,6 @@ describe('#addressBookListTabs', () => {
       {
         text: 'Transporter',
         href: `${addressBookPath()}?addressType=TRANSPORTER`,
-        current: null
-      },
-      {
-        text: 'Branch',
-        href: `${addressBookPath()}?addressType=BRANCH`,
         current: null
       }
     ])
@@ -263,19 +252,24 @@ describe('#addressBookListTabs — the selected tab', () => {
 
   test('holds the selected tab as a hidden addressType input in the filter form', async () => {
     stubAddressPage(
-      { page: '1', tabAddressType: ADDRESS_TYPES.BRANCH },
+      {
+        page: '1',
+        tabAddressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+      },
       pageOf([highlandAddress])
     )
 
     const { $ } = await readPage(
-      `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}`,
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER}`,
       'list-form-tab'
     )
 
     const hiddenInput = contentOf($).children('form').children('input')
     expect(hiddenInput.attr('type')).toBe('hidden')
     expect(hiddenInput.attr('name')).toBe('addressType')
-    expect(hiddenInput.attr('value')).toBe(ADDRESS_TYPES.BRANCH)
+    expect(hiddenInput.attr('value')).toBe(
+      ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+    )
   })
 
   test('links each tab, from a page after the first, with the current search and no role or page', async () => {
@@ -292,8 +286,7 @@ describe('#addressBookListTabs — the selected tab', () => {
     expect(subNavigationLinksOf($).map(({ href }) => href)).toEqual([
       `${addressBookPath()}?addressType=ORIGIN_OR_CONSIGNOR&q=farm`,
       `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=farm`,
-      `${addressBookPath()}?addressType=TRANSPORTER&q=farm`,
-      `${addressBookPath()}?addressType=BRANCH&q=farm`
+      `${addressBookPath()}?addressType=TRANSPORTER&q=farm`
     ])
   })
 })

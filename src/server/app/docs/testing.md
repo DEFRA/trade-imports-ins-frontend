@@ -101,10 +101,8 @@ specs import too),
 context the app builds from a handshake's query or form fields,
 `JOURNEY_HANDSHAKES_BY_PARTY`, one complete live animals journey
 handshake for each of the place of origin, consignor, consignee, importer and
-place of destination, `CONSIGNMENT_CONTACT_HANDSHAKE`, the consignment contact's
-live animals handshake, `GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY` and
-`GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE`, the same shapes for the
-registered germinal products journey, `ANIMALS_BASE_URL`, the animals
+place of destination, `GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY`, the same
+shapes for the registered germinal products journey, `ANIMALS_BASE_URL`, the animals
 frontend's base URL every return URL starts with, and
 `returnUrlFor(handshake, { addressId, landing })`, the return URL a test
 expects for a handshake, built from that handshake's own journey type (through

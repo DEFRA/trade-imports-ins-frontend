@@ -5,8 +5,6 @@ import { ADDRESS_ID } from '../../../common/test-helpers/address-book-requests.j
 import {
   ANIMALS_BASE_URL,
   SENDING_PARTIES,
-  CONSIGNMENT_CONTACT_HANDSHAKE,
-  GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE,
   GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
   handshakeContextOf,
   JOURNEY_HANDSHAKES_BY_PARTY,
@@ -18,10 +16,8 @@ import {
 import { restoreConfigAfterEach } from '../../../common/test-helpers/restore-config-after-each.js'
 import {
   ADDRESS_LANDING,
-  CONSIGNMENT_CONTACT_FULFILMENT_ID,
   rolesToSaveForParty,
   buildReturnUrl,
-  isConsignmentContact,
   isResolvableHandshake,
   JOURNEY_TYPES,
   isReceivingParty,
@@ -85,15 +81,6 @@ describe('journey-registry', () => {
       ).toBe(false)
     })
 
-    test('is false for the consignment contact', () => {
-      expect(
-        isReceivingParty({
-          journeyType: JOURNEY_TYPES.GBN_AG,
-          fulfilmentId: CONSIGNMENT_CONTACT_FULFILMENT_ID
-        })
-      ).toBe(false)
-    })
-
     test.each(UNRESOLVABLE_PARTY_CASES)(
       'is false for %s',
       (_name, overrides) => {
@@ -105,31 +92,6 @@ describe('journey-registry', () => {
         expect(isReceivingParty(context)).toBe(false)
       }
     )
-  })
-
-  describe('isConsignmentContact', () => {
-    test('is true for the consignment contact handshake', () => {
-      expect(
-        isConsignmentContact(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE))
-      ).toBe(true)
-    })
-
-    test.each(Object.entries(JOURNEY_HANDSHAKES_BY_PARTY))(
-      'is false for the %s handshake',
-      (_party, handshake) => {
-        expect(isConsignmentContact(handshakeContextOf(handshake))).toBe(false)
-      }
-    )
-
-    test('is false for no context and for the contact fulfilment id under an unregistered journey type', () => {
-      expect(isConsignmentContact(null)).toBe(false)
-      expect(
-        isConsignmentContact({
-          journeyType: UNREGISTERED_JOURNEY_TYPE,
-          fulfilmentId: CONSIGNMENT_CONTACT_HANDSHAKE['fulfilment-id']
-        })
-      ).toBe(false)
-    })
   })
 
   describe('buildReturnUrl', () => {
@@ -238,14 +200,6 @@ describe('journey-registry', () => {
       }
     )
 
-    test('resolves the consignment contact handshake to the contact', () => {
-      expect(
-        isConsignmentContact(
-          handshakeContextOf(GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE)
-        )
-      ).toBe(true)
-    })
-
     test.each(Object.entries(GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY))(
       "builds the %s handshake's return address under the germinal products set base",
       (_party, handshake) => {
@@ -289,12 +243,6 @@ describe('ownAndOtherRolesOfParty', () => {
     }
   )
 
-  test('gives the consignment contact its own role and no other roles', () => {
-    expect(
-      ownAndOtherRolesOfParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE))
-    ).toEqual({ ownRole: 'BRANCH_ADDRESS', otherRoles: [] })
-  })
-
   test.each(UNRESOLVABLE_PARTY_CASES)(
     'gives no own role and no other roles for %s',
     (_name, overrides) => {
@@ -332,7 +280,7 @@ describe('rolesToSaveForParty', () => {
       ['IMPORTER', 'IMPORTER', 'CONSIGNEE'],
       ['CONSIGNEE', 'IMPORTER']
     ],
-    ['consignee', ['BRANCH_ADDRESS', 'CONSIGNOR'], ['CONSIGNEE']]
+    ['consignee', ['PLACE_OF_ORIGIN', 'CONSIGNOR'], ['CONSIGNEE']]
   ])(
     'gives the %s handshake its own role and the posted %j its side offers, in the type order',
     (party, postedRoles, roles) => {
@@ -344,12 +292,4 @@ describe('rolesToSaveForParty', () => {
       ).toEqual(roles)
     }
   )
-
-  test('gives the consignment contact only its own role whatever is posted', () => {
-    expect(
-      rolesToSaveForParty(handshakeContextOf(CONSIGNMENT_CONTACT_HANDSHAKE), [
-        'CONSIGNOR'
-      ])
-    ).toEqual(['BRANCH_ADDRESS'])
-  })
 })

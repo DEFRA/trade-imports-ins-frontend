@@ -68,32 +68,28 @@ root:
   resolve to a party's role: the one check the query, payload and session
   handshakes all pass), `isReceivingParty` (whether the add form opens on
   United Kingdom: true when the party's role is consignee, importer or place
-  of destination, false for the consignment contact and a handshake that does
-  not resolve to a role), `ownAndOtherRolesOfParty` (the party's own role and the
+  of destination, false for a handshake that does not resolve to a role),
+  `ownAndOtherRolesOfParty` (the party's own role and the
   other roles on its side, in `ROLES_BY_ADDRESS_TYPE` order, which feeds the add
   page's checkboxes; no own role and no other roles for a fulfilment id the map
   does not list), `rolesToSaveForParty`
   (the roles a journey-mode save carries: the party's own
   role (`roleOfParty`) plus the posted roles its address type offers, through
-  the address book's `keepRolesOfferedBy`), `isConsignmentContact` (whether a
-  handshake is the consignment contact's, so the add page offers the contact's
-  controls rather than a role's), `buildReturnUrl` (the journey's address-return
-  URL, with an optional address id and `landing`, built under whichever
-  registered journey's own set base the handshake names) and
-  `CONSIGNMENT_CONTACT_FULFILMENT_ID` (the consignment contact's fulfilment id).
-  Both registered entries reference one shared `roleByPartyFulfilmentId` map
-  from each party's fulfilment id, the five roles and the consignment contact,
-  to the party's own role, which its address is always saved with alongside any
-  ticked roles its side offers, so the same party implies the same role
-  whichever journey the handshake names; `ownAndOtherRolesOfParty`,
-  `rolesToSaveForParty` and `isReceivingParty` read it. One module-scope lookup
-  answers whether the service serves a handshake's journey type at all;
-  `roleOfParty`, `isConsignmentContact` and `buildReturnUrl` each read the
-  registered entry through it, and it resolves to no entry, so to no role, no
-  consignment contact and a thrown error from `buildReturnUrl`, for a journey
-  type neither entry is registered under.
+  the address book's `keepRolesOfferedBy`) and `buildReturnUrl` (the journey's
+  address-return URL, with an optional address id and `landing`, built under
+  whichever registered journey's own set base the handshake names). Both
+  registered entries reference one shared `roleByPartyFulfilmentId` map from
+  each party's fulfilment id to the party's own role, which its address is
+  always saved with alongside any ticked roles its side offers, so the same
+  party implies the same role whichever journey the handshake names;
+  `ownAndOtherRolesOfParty`, `rolesToSaveForParty` and `isReceivingParty` read
+  it. One module-scope lookup answers whether the service serves a handshake's
+  journey type at all; `roleOfParty` and `buildReturnUrl` each read the
+  registered entry through it, and it resolves to no entry, so to no role and a
+  thrown error from `buildReturnUrl`, for a journey type neither entry is
+  registered under.
 - [`address-book-tabs.js`](../features/address-book/address-book-tabs.js) —
-  `ADDRESS_BOOK_TABS` (the list's four tabs in order, each saying what it
+  `ADDRESS_BOOK_TABS` (the list's three tabs in order, each saying what it
   lists and carrying the Type filter it offers — its query-parameter name and
   its ordered values: `role` and the tab's roles for a role-backed tab,
   `type` and the two transporter types, Commercial before Private, for the
@@ -252,8 +248,8 @@ The add page, [`add/add.controller.js`](../features/address-book/add/add.control
 adds to that shape for a journey:
 
 - `addModeFor(handshakeContext)` decides the page's mode once, as one of
-  `ADD_MODES`: `ADDRESS_BOOK` (no handshake), `ROLE_HANDSHAKE` (a role's
-  journey) or `CONSIGNMENT_CONTACT` (the consignment contact's journey).
+  `ADD_MODES`: `ADDRESS_BOOK` (no handshake) or `ROLE_HANDSHAKE` (a role's
+  journey).
   `backHrefFor` gives the Back link and the journey strip shows for both
   handshake modes.
 - From the address book (`ADDRESS_BOOK` mode) the GET and the POST need an
@@ -286,21 +282,17 @@ adds to that shape for a journey:
   ticked roles stay ticked when the page is shown again with errors, and the
   save carries `rolesToSaveForParty`: the party's own role and the
   ticked roles the party's page offers (logging any it discards at info, with
-  the journey type, the notification and the fulfilment ids). The
-  consignment contact's form has no roles question.
+  the journey type, the notification and the fulfilment ids).
 - `cancelUrlFor(addMode, handshakeContext)` is the one owner of where Cancel
-  goes: the address book, a role's journey with the `cancel` landing, or the
-  consignment contact's journey with no landing.
+  goes: the address book or a role's journey with the `cancel` landing.
 - `add.njk` renders Cancel by `addMode` and picks each label: from the address
   book, a link labelled `copy.add.cancelAndReturnToAddressBook`; from a role's
-  journey, a link labelled `copy.add.cancelAndReturnToHub`; from the
-  consignment contact's journey, a `cancel` button labelled
-  `copy.add.cancelAndReturnToAddressPage`. Both links go to `cancelHref`.
+  journey, a link labelled `copy.add.cancelAndReturnToHub`. Both go to `cancelHref`.
 - The POST honours `cancel` for every mode, redirecting to `cancelUrlFor`, and
   logs the hand-back at info when the page came from a journey.
 - From a role's journey, the chosen `action` (Save and select, or Save and
   return to the address page) names the landing the address is handed back
-  with; the consignment contact's Save hands it back with the select landing.
+  with.
 
 The view and delete GETs load through `findLiveAddressWithCountryLabel`, and
 the edit GET through `findLiveAddress`. When either finds nothing, the GET

@@ -15,8 +15,7 @@ describe('the roles each address type lists', () => {
         'CONSIGNEE',
         'IMPORTER',
         'PLACE_OF_DESTINATION'
-      ],
-      BRANCH: ['BRANCH_ADDRESS']
+      ]
     })
   })
 })
@@ -41,7 +40,7 @@ describe('the roles an address type offers', () => {
     expect(
       keepRolesOfferedBy('ORIGIN_OR_CONSIGNOR', ['CONSIGNOR', 'IMPORTER'])
     ).toEqual(['CONSIGNOR'])
-    expect(keepRolesOfferedBy('BRANCH', ['CONSIGNOR'])).toEqual([])
+    expect(keepRolesOfferedBy('ORIGIN_OR_CONSIGNOR', ['IMPORTER'])).toEqual([])
   })
 })
 

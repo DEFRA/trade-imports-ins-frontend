@@ -26,7 +26,7 @@ import {
 } from './list.test-support.js'
 
 const SELECT_ONE = 'Select one'
-const BRANCH_ADDRESS_OPTION = 'Branch Address'
+const IMPORTER_OPTION = 'Importer'
 const ONE_MATCH_LINE = 'Showing 1-1 of 1'
 const IGNORED_FILTER_VALUE_MESSAGE =
   'Address book list ignored a filter value the tab does not offer'
@@ -45,8 +45,7 @@ describe('#addressBookListTypeFilter', () => {
     [
       ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
       [SELECT_ONE, 'Consignee', 'Importer', 'Place of Destination']
-    ],
-    [ADDRESS_TYPES.BRANCH, [SELECT_ONE, BRANCH_ADDRESS_OPTION]]
+    ]
   ])(
     'offers the Type select the options of the %s tab only, led by Select one with no value',
     async (addressType, optionTexts) => {
@@ -104,19 +103,19 @@ describe('#addressBookListTypeFilter', () => {
     const scope = stubAddressPage(
       {
         page: '1',
-        tabAddressType: ADDRESS_TYPES.BRANCH,
-        role: 'BRANCH_ADDRESS'
+        tabAddressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+        role: 'IMPORTER'
       },
       pageOf([highlandAddress])
     )
 
     const { $ } = await readPage(
-      `${addressBookPath()}?addressType=${ADDRESS_TYPES.BRANCH}&role=BRANCH_ADDRESS`,
+      `${addressBookPath()}?addressType=${ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER}&role=IMPORTER`,
       'list-role-honoured'
     )
 
     expect(scope.isDone()).toBe(true)
-    expect(typeSelectStateOf($).selectedTexts).toEqual([BRANCH_ADDRESS_OPTION])
+    expect(typeSelectStateOf($).selectedTexts).toEqual([IMPORTER_OPTION])
   })
 
   test.each([
@@ -138,14 +137,17 @@ describe('#addressBookListTypeFilter', () => {
     }
   )
 
-  test('lists the whole Branch tab with no Type selected for a role the Branch tab does not offer, and logs the ignored role once', async () => {
+  test('lists the whole Destination tab with no Type selected for a role the Destination tab does not offer, and logs the ignored role once', async () => {
     const scope = stubAddressPage(
-      { page: '1', tabAddressType: ADDRESS_TYPES.BRANCH },
+      {
+        page: '1',
+        tabAddressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+      },
       pageOf([highlandAddress])
     )
 
     const { $ } = await readPage(
-      `${addressBookPath()}?addressType=BRANCH&role=CONSIGNOR`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&role=CONSIGNOR`,
       'list-role-of-another-tab'
     )
 
@@ -156,7 +158,7 @@ describe('#addressBookListTypeFilter', () => {
       {
         fields: {
           organisationId: ORGANISATION_ID,
-          addressType: ADDRESS_TYPES.BRANCH,
+          addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
           typeFilterParam: 'role',
           requestedTypeFilterValue: 'CONSIGNOR'
         },
@@ -194,12 +196,12 @@ describe('#addressBookListTypeFilter', () => {
 
   test('offers the Type select of the tab, with the chosen Type selected, on the page shown when the address book cannot be reached', async () => {
     const scope = stubAddressBookUnavailable({
-      tabAddressType: ADDRESS_TYPES.BRANCH,
-      role: 'BRANCH_ADDRESS'
+      tabAddressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+      role: 'IMPORTER'
     })
 
     const { $, statusCode } = await readPage(
-      `${addressBookPath()}?addressType=BRANCH&role=BRANCH_ADDRESS`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&role=IMPORTER`,
       'list-role-address-book-unavailable'
     )
 
@@ -207,9 +209,14 @@ describe('#addressBookListTypeFilter', () => {
     expect(scope.isDone()).toBe(true)
     expect(typeSelectStateOf($)).toEqual({
       label: 'Type',
-      optionTexts: [SELECT_ONE, BRANCH_ADDRESS_OPTION],
+      optionTexts: [
+        SELECT_ONE,
+        'Consignee',
+        IMPORTER_OPTION,
+        'Place of Destination'
+      ],
       emptyValueTexts: [SELECT_ONE],
-      selectedTexts: [BRANCH_ADDRESS_OPTION]
+      selectedTexts: [IMPORTER_OPTION]
     })
   })
 
@@ -254,8 +261,8 @@ describe('#addressBookListTypeFilter links', () => {
       {
         page: '2',
         q: 'green',
-        tabAddressType: ADDRESS_TYPES.BRANCH,
-        role: 'BRANCH_ADDRESS'
+        tabAddressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+        role: 'IMPORTER'
       },
       pageOf([greenFarmAddress], {
         page: 2,
@@ -265,7 +272,7 @@ describe('#addressBookListTypeFilter links', () => {
     )
 
     const { $ } = await readPage(
-      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=2`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&role=IMPORTER&page=2`,
       'list-role-page-2'
     )
 
@@ -275,10 +282,10 @@ describe('#addressBookListTypeFilter links', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS`,
-      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=2`,
-      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=3`,
-      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS&page=4`
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&role=IMPORTER`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&role=IMPORTER&page=2`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&role=IMPORTER&page=3`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&role=IMPORTER&page=4`
     ])
   })
 
@@ -347,26 +354,26 @@ describe('#addressBookListTypeFilter links', () => {
       {
         page: '1',
         q: 'green',
-        tabAddressType: ADDRESS_TYPES.BRANCH,
-        role: 'BRANCH_ADDRESS'
+        tabAddressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+        role: 'IMPORTER'
       },
       pageOf([greenFarmAddress])
     )
 
     const { $ } = await readPage(
-      `${addressBookPath()}?addressType=BRANCH&q=green&role=BRANCH_ADDRESS`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&role=IMPORTER`,
       'list-clear-search-role'
     )
 
     expect($('[data-testid="address-book-clear-search"]').attr('href')).toBe(
-      `${addressBookPath()}?addressType=BRANCH&role=BRANCH_ADDRESS`
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&role=IMPORTER`
     )
   })
 
   test.each([
     ['consignor', 'CONSIGNOR'],
     ['place of origin', 'PLACE_OF_ORIGIN'],
-    ['  BRANCH ', 'BRANCH_ADDRESS']
+    [' importer ', 'IMPORTER']
   ])(
     'asks the address book to match the role whose label contains %j beside the search term',
     async (term, searchRole) => {
@@ -385,24 +392,24 @@ describe('#addressBookListTypeFilter links', () => {
     }
   )
 
-  test('lists the address holding a Branch Address role when the Branch tab is searched for branch address', async () => {
+  test('lists the address holding an Importer role when the Destination tab is searched for importer', async () => {
     const scope = stubAddressPage(
       {
         page: '1',
-        q: 'branch address',
-        tabAddressType: ADDRESS_TYPES.BRANCH,
-        searchRole: 'BRANCH_ADDRESS'
+        q: 'importer',
+        tabAddressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
+        searchRole: 'IMPORTER'
       },
-      pageOf([{ ...parisDepotAddress, roles: ['BRANCH_ADDRESS'] }])
+      pageOf([{ ...parisDepotAddress, roles: ['IMPORTER'] }])
     )
 
     const { $ } = await readPage(
-      `${addressBookPath()}?addressType=BRANCH&q=${encodeURIComponent('branch address')}`,
-      'list-search-branch-address'
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=${encodeURIComponent('importer')}`,
+      'list-search-importer'
     )
 
     expect(scope.isDone()).toBe(true)
-    expect(rowCellsOf($, 0).eq(1).text().trim()).toBe('Branch')
+    expect(rowCellsOf($, 0).eq(1).text().trim()).toBe('Importer')
     expect(resultsLineOf($)).toBe(ONE_MATCH_LINE)
   })
 

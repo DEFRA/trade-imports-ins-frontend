@@ -35,8 +35,6 @@ import { expectAddressFormWidths } from '../../../../common/test-helpers/expect-
 import {
   ANIMALS_BASE_URL,
   SENDING_PARTIES,
-  CONSIGNMENT_CONTACT_HANDSHAKE,
-  GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE,
   GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
   INCOMPLETE_HANDSHAKE_WARNING,
   JOURNEY_HANDSHAKES_BY_PARTY,
@@ -87,7 +85,6 @@ const EMAIL_FORMAT_ERROR = 'Enter an email address in the correct format'
 const { consignor: CONSIGNOR_HANDSHAKE, consignee: CONSIGNEE_HANDSHAKE } =
   JOURNEY_HANDSHAKES_BY_PARTY
 const HAND_BACK_MESSAGE = 'Address handed back to the journey'
-const CANCEL_HAND_BACK_MESSAGE = 'Cancel handed back to the journey'
 const CAPTION_SELECTOR = '.govuk-caption-l'
 const FORM_LABEL_SELECTOR = 'form label'
 const FORM_LINK = 'form a.govuk-link'
@@ -513,12 +510,6 @@ describe(
         ADDRESS_TYPE_LEGEND,
         ['PLACE_OF_DESTINATION', 'CONSIGNEE', 'IMPORTER'],
         [PLACE_OF_DESTINATION_LABEL, 'Consignee', 'Importer']
-      ],
-      [
-        ADDRESS_TYPES.BRANCH,
-        ADDRESS_TYPE_LEGEND,
-        ['BRANCH_ADDRESS'],
-        ['Branch address']
       ]
     ])(
       'GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the roles that type holds, the place roles first',
@@ -784,8 +775,7 @@ describe(
 
     test.each([
       [ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR, 'PLACE_OF_ORIGIN'],
-      [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, 'CONSIGNEE'],
-      [ADDRESS_TYPES.BRANCH, 'BRANCH_ADDRESS']
+      [ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, 'CONSIGNEE']
     ])(
       'GET after a refused save of %s and choosing it again shows every field entered and the ticked role %s',
       async (addressType, role) => {
@@ -816,7 +806,7 @@ describe(
       )
 
       const { result } = await getAddWithTypeChosen(getServer(), sessionId, {
-        addressType: ADDRESS_TYPES.BRANCH,
+        addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER,
         cookie
       })
 
@@ -898,7 +888,7 @@ describe(
         await postAdd(getServer(), `add-post-handshake-type-${party}`, {
           ...JOURNEY_HANDSHAKES_BY_PARTY[party],
           ...VALID_ADDRESS_FIELDS,
-          roles: ['BRANCH_ADDRESS']
+          roles: [SENDING_PARTIES.includes(party) ? 'IMPORTER' : 'CONSIGNOR']
         })
 
         expect(scope.isDone()).toBe(true)
@@ -1026,18 +1016,6 @@ describe(
       }
     )
 
-    test('POST from the consignment contact handshake saves the address as a Branch address', async () => {
-      const { scope, captured } = serveAddressCreationCapturingBody()
-
-      await postAdd(getServer(), 'add-post-handshake-type-contact', {
-        ...CONSIGNMENT_CONTACT_HANDSHAKE,
-        ...VALID_ADDRESS_FIELDS
-      })
-
-      expect(scope.isDone()).toBe(true)
-      expect(captured.body).toMatchObject({ roles: ['BRANCH_ADDRESS'] })
-    })
-
     test.each(Object.keys(ROLES_BY_PARTY))(
       'GET from the %s handshake asks what else the address should be used for after a section break, naming the role and offering only the other roles on its side, unticked',
       async (party) => {
@@ -1057,19 +1035,6 @@ describe(
         expect(tickedRolesOf($)).toEqual([])
       }
     )
-
-    test('GET from the consignment contact handshake shows the address fields and no roles question', async () => {
-      const { result } = await getAdd(
-        getServer(),
-        'add-get-handshake-no-roles',
-        CONSIGNMENT_CONTACT_HANDSHAKE
-      )
-
-      const $ = load(result)
-      expect(textsOf($, 'form legend')).toEqual([])
-      expect(textsOf($, FORM_LABEL_SELECTOR)).toEqual(ADDRESS_FORM_LABELS)
-      expect($('input[name="roles"]')).toHaveLength(0)
-    })
   }
 )
 
@@ -1121,35 +1086,6 @@ describe(
           .map((_, input) => [[$(input).attr('name'), $(input).attr('value')]])
           .get()
       ).toEqual([['crumb', ''], ...Object.entries(CONSIGNOR_HANDSHAKE)])
-    })
-
-    test('GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the journey return with no address and no landing', async () => {
-      const { result, statusCode } = await getAdd(
-        getServer(),
-        'add-get-handshake-contact',
-        CONSIGNMENT_CONTACT_HANDSHAKE
-      )
-
-      expect(statusCode).toBe(statusCodes.ok)
-      const $ = load(result)
-      expect(buttonsOf($)).toEqual([
-        {
-          text: 'Save and continue',
-          name: null,
-          value: null,
-          secondary: false
-        },
-        {
-          text: 'Cancel and return to address page',
-          name: 'cancel',
-          value: 'true',
-          secondary: true
-        }
-      ])
-      expect($(FORM_LINK)).toHaveLength(0)
-      expect($(BACK_LINK).attr('href')).toBe(
-        returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
-      )
     })
 
     test('GET arriving through a journey handshake shows the page title, the blue Draft status and notification id above the caption and heading, then the section headings and every field label', async () => {
@@ -1330,27 +1266,6 @@ describe(
       expect(scope.isDone()).toBe(true)
     })
 
-    test('POST of the consignment contact Save and continue, which carries no action, returns to the journey with the select landing', async () => {
-      serveAddressCreated()
-
-      const response = await postAdd(
-        getServer(),
-        'add-post-handshake-contact',
-        {
-          ...CONSIGNMENT_CONTACT_HANDSHAKE,
-          ...VALID_ADDRESS_PAYLOAD
-        }
-      )
-
-      expectRedirectTo(
-        response,
-        returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE, {
-          addressId: ADDRESS_ID,
-          landing: ADDRESS_LANDING.SELECT
-        })
-      )
-    })
-
     test('POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom selected on the form when the API rejects the address', async () => {
       addressBookApi()
         .post(addressesApiPath())
@@ -1391,27 +1306,6 @@ describe(
         }),
         returnUrlFor(CONSIGNOR_HANDSHAKE, { landing: ADDRESS_LANDING.CANCEL })
       )
-    })
-
-    test('Cancel from the consignment contact handshake returns to the journey with no address and no landing, and logs the hand-back once', async () => {
-      expectRedirectTo(
-        await postAdd(getServer(), 'add-post-handshake-cancel', {
-          cancel: 'true',
-          ...CONSIGNMENT_CONTACT_HANDSHAKE
-        }),
-        returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
-      )
-      expect(loggedWith(CANCEL_HAND_BACK_MESSAGE)).toEqual([
-        {
-          fields: {
-            organisationId: ORGANISATION_ID,
-            journeyType: CONSIGNMENT_CONTACT_HANDSHAKE['journey-type'],
-            notificationId: CONSIGNMENT_CONTACT_HANDSHAKE['notification-id'],
-            fulfilmentId: CONSIGNMENT_CONTACT_HANDSHAKE['fulfilment-id']
-          },
-          message: CANCEL_HAND_BACK_MESSAGE
-        }
-      ])
     })
   }
 )
@@ -1586,18 +1480,6 @@ describe(
       )
       creation.expectNotSent()
     })
-
-    test('POST from the germinal products consignment contact handshake saves the address as a Branch address', async () => {
-      const { scope, captured } = serveAddressCreationCapturingBody()
-
-      await postAdd(getServer(), 'add-post-germinal-handshake-contact', {
-        ...GERMINAL_PRODUCTS_CONSIGNMENT_CONTACT_HANDSHAKE,
-        ...VALID_ADDRESS_FIELDS
-      })
-
-      expect(scope.isDone()).toBe(true)
-      expect(captured.body).toMatchObject({ roles: ['BRANCH_ADDRESS'] })
-    })
   }
 )
 
@@ -1710,8 +1592,7 @@ describe(
     test.each(
       [
         ['consignee', CONSIGNEE_HANDSHAKE],
-        ['consignor', CONSIGNOR_HANDSHAKE],
-        ['consignment contact', CONSIGNMENT_CONTACT_HANDSHAKE]
+        ['consignor', CONSIGNOR_HANDSHAKE]
       ].flatMap(([entry, handshake]) => [
         [entry, 'no country', handshake, ''],
         [entry, 'a country the list does not offer', handshake, 'ZZ']

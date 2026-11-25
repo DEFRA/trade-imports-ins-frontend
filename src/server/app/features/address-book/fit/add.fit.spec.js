@@ -48,7 +48,6 @@ import {
   FIELDS_WITHOUT_AUTOCOMPLETE
 } from '../../../../common/test-helpers/address-form-autocomplete.js'
 import {
-  CONSIGNMENT_CONTACT_HANDSHAKE,
   GERMINAL_PRODUCTS_JOURNEY_HANDSHAKES_BY_PARTY,
   JOURNEY_HANDSHAKES_BY_PARTY,
   journeyRolesHintFor,
@@ -174,12 +173,6 @@ test.describe('add address of each type', () => {
       tab: copy.list.tabs[ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER]
         .label,
       typeText: 'Consignee, Importer, Place of destination'
-    },
-    {
-      addressType: ADDRESS_TYPES.BRANCH,
-      offeredRoles: ['BRANCH_ADDRESS'],
-      tab: copy.list.tabs[ADDRESS_TYPES.BRANCH].label,
-      typeText: 'Branch'
     }
   ]) {
     const typeLabel = copy.addressType.options[addressType].label
@@ -395,8 +388,7 @@ test.describe('add address reached from a notification journey', () => {
 
   for (const [handshake, partyName] of [
     [JOURNEY_HANDSHAKES_BY_PARTY.placeOfOrigin, 'place of origin'],
-    [JOURNEY_HANDSHAKES_BY_PARTY.consignor, 'consignor'],
-    [CONSIGNMENT_CONTACT_HANDSHAKE, 'consignment contact']
+    [JOURNEY_HANDSHAKES_BY_PARTY.consignor, 'consignor']
   ]) {
     test(`from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select`, async ({
       page
@@ -459,25 +451,6 @@ test.describe('add address reached from a notification journey', () => {
         landing: ADDRESS_LANDING.CANCEL
       })
     )
-  })
-
-  test('from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page', async ({
-    page
-  }) => {
-    await openAddFormFromJourney(
-      page,
-      'stub-org-add-journey-contact',
-      CONSIGNMENT_CONTACT_HANDSHAKE
-    )
-
-    await expect(backLink(page)).toHaveAttribute(
-      'href',
-      returnUrlFor(CONSIGNMENT_CONTACT_HANDSHAKE)
-    )
-    await expect(page.locator('form button')).toHaveText([
-      'Save and continue',
-      'Cancel and return to address page'
-    ])
   })
 })
 
@@ -652,7 +625,6 @@ test.describe('add address validation', () => {
     fromTheAddressBook(ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER, [
       'CONSIGNEE'
     ]),
-    fromTheAddressBook(ADDRESS_TYPES.BRANCH, ['BRANCH_ADDRESS']),
     {
       entry: 'the consignor picker',
       openForm: (page) =>
@@ -663,17 +635,6 @@ test.describe('add address validation', () => {
         ),
       roles: [],
       saveButton: copy.add.saveAndSelect
-    },
-    {
-      entry: 'the consignment contact page',
-      openForm: (page) =>
-        openAddFormFromJourney(
-          page,
-          'stub-org-add-four-blanks-contact',
-          CONSIGNMENT_CONTACT_HANDSHAKE
-        ),
-      roles: [],
-      saveButton: copy.add.save
     }
   ]) {
     test(`from ${entry}, saving with the name, postcode, country and phone blank shows each message in the summary and against its field`, async ({

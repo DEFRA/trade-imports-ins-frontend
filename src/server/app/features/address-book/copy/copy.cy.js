@@ -50,10 +50,6 @@ export const copy = {
       TRANSPORTER: {
         label: 'Cludydd',
         heading: 'Cyfeiriadau cludwyr'
-      },
-      BRANCH: {
-        label: 'Cangen',
-        heading: 'Cyfeiriadau cangen'
       }
     },
     transporterTypes: {
@@ -71,10 +67,6 @@ export const copy = {
       PLACE_OF_DESTINATION: {
         columnLabel: 'Man cyrchfan',
         optionLabel: 'Man Cyrchfan'
-      },
-      BRANCH_ADDRESS: {
-        columnLabel: 'Cangen',
-        optionLabel: 'Cyfeiriad Cangen'
       }
     },
     table: {
@@ -132,8 +124,7 @@ export const copy = {
         label: 'Cyrchfan, Derbynnydd neu Fewnforiwr',
         hint: 'Man cyrchfan, Derbynnydd, Mewnforiwr'
       },
-      TRANSPORTER: { label: 'Cludydd', hint: 'Preifat, Masnachol' },
-      BRANCH: { label: 'Cangen', hint: 'Cyfeiriad cangen' }
+      TRANSPORTER: { label: 'Cludydd', hint: 'Preifat, Masnachol' }
     },
     continue: 'Parhau'
   },
@@ -200,8 +191,7 @@ export const copy = {
       `Mae’r cyfeiriad hwn yn cael ei ychwanegu fel cyfeiriad ${roleLabel}. Dewiswch unrhyw rolau neu gyfeiriadau eraill y dylid defnyddio’r cyfeiriad hwn ar eu cyfer.`,
     legendByAddressType: {
       ORIGIN_OR_CONSIGNOR: 'Ar gyfer beth y gellir defnyddio’r cyfeiriad hwn?',
-      DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE,
-      BRANCH: ADDRESS_TYPE
+      DESTINATION_CONSIGNEE_OR_IMPORTER: ADDRESS_TYPE
     },
     hint: 'Dewiswch ble y gellir defnyddio’r cyfeiriad hwn',
     options: {
@@ -209,8 +199,7 @@ export const copy = {
       CONSIGNOR: { label: 'Anfonwr' },
       CONSIGNEE: { label: 'Derbynnydd' },
       IMPORTER: { label: 'Mewnforiwr' },
-      PLACE_OF_DESTINATION: { label: 'Man cyrchfan' },
-      BRANCH_ADDRESS: { label: 'Cyfeiriad cangen' }
+      PLACE_OF_DESTINATION: { label: 'Man cyrchfan' }
     }
   },
   add: {
@@ -220,7 +209,6 @@ export const copy = {
     saveAndSelect: 'Cadw a dewis',
     saveAndReturnToAddressPage: 'Cadw a dychwelyd i’r dudalen gyfeiriad',
     cancelAndReturnToAddressBook: CANSLO_A_DYCHWELYD_I_R_LLYFR_CYFEIRIADAU,
-    cancelAndReturnToAddressPage: 'Canslo a dychwelyd i’r dudalen gyfeiriad',
     cancelAndReturnToHub: 'Canslo a dychwelyd i’r hyb'
   },
   edit: {

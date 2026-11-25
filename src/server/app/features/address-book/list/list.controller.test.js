@@ -192,19 +192,23 @@ describe('#addressBookListController', () => {
     'Should link Clear search to the whole list of the selected tab under the results line when a search has %s',
     async (_, addressPage) => {
       stubAddressPage(
-        { page: '1', q: 'green', tabAddressType: ADDRESS_TYPES.BRANCH },
+        {
+          page: '1',
+          q: 'green',
+          tabAddressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+        },
         addressPage
       )
 
       const { $ } = await readPage(
-        `${addressBookPath()}?addressType=BRANCH&q=green`,
+        `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green`,
         'list-clear-search'
       )
 
       const clearSearch = $('[data-testid="address-book-clear-search"]')
       expect(textOf($, clearSearch)).toBe('Clear search')
       expect(clearSearch.attr('href')).toBe(
-        `${addressBookPath()}?addressType=BRANCH`
+        `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER`
       )
       expect(
         $('[data-testid="address-book-results-label"]')
@@ -216,7 +220,11 @@ describe('#addressBookListController', () => {
 
   test('links each page shown with the selected tab, the search term and the page number only', async () => {
     const scope = stubAddressPage(
-      { page: '2', q: 'green', tabAddressType: ADDRESS_TYPES.BRANCH },
+      {
+        page: '2',
+        q: 'green',
+        tabAddressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+      },
       pageOf([greenFarmAddress], {
         page: 2,
         totalItems: 30,
@@ -225,7 +233,7 @@ describe('#addressBookListController', () => {
     )
 
     const { $, statusCode } = await readPage(
-      `${addressBookPath()}?addressType=BRANCH&q=green&countryCode=GB&page=2`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&countryCode=GB&page=2`,
       'list-search-page-2'
     )
 
@@ -236,10 +244,10 @@ describe('#addressBookListController', () => {
         .map((_, link) => $(link).attr('href'))
         .get()
     ).toEqual([
-      `${addressBookPath()}?addressType=BRANCH&q=green`,
-      `${addressBookPath()}?addressType=BRANCH&q=green&page=2`,
-      `${addressBookPath()}?addressType=BRANCH&q=green&page=3`,
-      `${addressBookPath()}?addressType=BRANCH&q=green&page=4`
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&page=2`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&page=3`,
+      `${addressBookPath()}?addressType=DESTINATION_CONSIGNEE_OR_IMPORTER&q=green&page=4`
     ])
   })
 })

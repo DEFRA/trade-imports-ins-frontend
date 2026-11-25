@@ -45,7 +45,6 @@ import {
   ADDRESS_LANDING,
   rolesToSaveForParty,
   buildReturnUrl,
-  isConsignmentContact,
   isReceivingParty,
   ownAndOtherRolesOfParty
 } from '../journey-registry.js'
@@ -59,18 +58,11 @@ const copy = copyFor({ en, cy })
 
 const ADD_MODES = Object.freeze({
   ADDRESS_BOOK: 'address-book',
-  ROLE_HANDSHAKE: 'role-handshake',
-  CONSIGNMENT_CONTACT: 'consignment-contact'
+  ROLE_HANDSHAKE: 'role-handshake'
 })
 
-const addModeFor = (handshakeContext) => {
-  if (!handshakeContext) {
-    return ADD_MODES.ADDRESS_BOOK
-  }
-  return isConsignmentContact(handshakeContext)
-    ? ADD_MODES.CONSIGNMENT_CONTACT
-    : ADD_MODES.ROLE_HANDSHAKE
-}
+const addModeFor = (handshakeContext) =>
+  handshakeContext ? ADD_MODES.ROLE_HANDSHAKE : ADD_MODES.ADDRESS_BOOK
 
 const backHrefFor = (addMode, handshakeContext) =>
   addMode === ADD_MODES.ADDRESS_BOOK
@@ -106,18 +98,10 @@ const addLogContextOf = ({ organisationId, handshakeContext, addressType }) =>
       }
     : { organisationId, addressType }
 
-const cancelUrlFor = (addMode, handshakeContext) => {
-  switch (addMode) {
-    case ADD_MODES.ROLE_HANDSHAKE:
-      return buildReturnUrl(handshakeContext, {
-        landing: ADDRESS_LANDING.CANCEL
-      })
-    case ADD_MODES.CONSIGNMENT_CONTACT:
-      return buildReturnUrl(handshakeContext)
-    default:
-      return addressBookPath()
-  }
-}
+const cancelUrlFor = (addMode, handshakeContext) =>
+  addMode === ADD_MODES.ADDRESS_BOOK
+    ? addressBookPath()
+    : buildReturnUrl(handshakeContext, { landing: ADDRESS_LANDING.CANCEL })
 
 const landingChosenBy = (payload) =>
   payload.action === ADDRESS_LANDING.RETURN

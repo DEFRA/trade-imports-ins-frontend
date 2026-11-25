@@ -36,8 +36,7 @@ describe('#copy', () => {
   it('Should word the roles question with its legend per address type, hint, one label per role and error', () => {
     expect(copy.roles.legendByAddressType).toEqual({
       ORIGIN_OR_CONSIGNOR: 'What can this address be used for?',
-      DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type',
-      BRANCH: 'Address type'
+      DESTINATION_CONSIGNEE_OR_IMPORTER: 'Address type'
     })
     expect(copy.roles.hint).toBe('Select where this address can be used')
     expect(copy.roles.options).toEqual({
@@ -45,8 +44,7 @@ describe('#copy', () => {
       CONSIGNOR: { label: 'Consignor' },
       CONSIGNEE: { label: 'Consignee' },
       IMPORTER: { label: 'Importer' },
-      PLACE_OF_DESTINATION: { label: 'Place of destination' },
-      BRANCH_ADDRESS: { label: 'Branch address' }
+      PLACE_OF_DESTINATION: { label: 'Place of destination' }
     })
     expect(copy.errors.roles.required).toBe(
       'Select what this address can be used for'
@@ -240,8 +238,6 @@ describe('#copy of the list page', () => {
       ],
       ['tabs.TRANSPORTER.label', 'Cludydd'],
       ['tabs.TRANSPORTER.heading', 'Cyfeiriadau cludwyr'],
-      ['tabs.BRANCH.label', 'Cangen'],
-      ['tabs.BRANCH.heading', 'Cyfeiriadau cangen'],
       ['transporterTypes.PRIVATE', 'Preifat'],
       ['transporterTypes.COMMERCIAL', 'Masnachol'],
       ['roles.PLACE_OF_ORIGIN.columnLabel', 'Man tarddiad'],
@@ -254,8 +250,6 @@ describe('#copy of the list page', () => {
       ['roles.IMPORTER.optionLabel', 'Mewnforiwr'],
       ['roles.PLACE_OF_DESTINATION.columnLabel', 'Man cyrchfan'],
       ['roles.PLACE_OF_DESTINATION.optionLabel', 'Man Cyrchfan'],
-      ['roles.BRANCH_ADDRESS.columnLabel', 'Cangen'],
-      ['roles.BRANCH_ADDRESS.optionLabel', 'Cyfeiriad Cangen'],
       ['table.name', 'Enw'],
       ['table.type', 'Math'],
       ['table.address', 'Cyfeiriad'],
@@ -276,8 +270,7 @@ describe('#copy of the list page', () => {
         label: 'Destination, Consignee and Importer',
         heading: 'Destination, Consignee and Importer addresses'
       },
-      TRANSPORTER: { label: 'Transporter', heading: 'Transporter addresses' },
-      BRANCH: { label: 'Branch', heading: 'Branch addresses' }
+      TRANSPORTER: { label: 'Transporter', heading: 'Transporter addresses' }
     })
     expect(copy.list.table.type).toBe('Type')
     expect(copy.list.table.approvalNumber).toBe('Approval number')
@@ -296,10 +289,6 @@ describe('#copy of the list page', () => {
       PLACE_OF_DESTINATION: {
         columnLabel: 'Place of destination',
         optionLabel: 'Place of Destination'
-      },
-      BRANCH_ADDRESS: {
-        columnLabel: 'Branch',
-        optionLabel: 'Branch Address'
       }
     })
   })
@@ -319,8 +308,7 @@ describe('#copy of the address type page', () => {
           label: 'Destination, Consignee or Importer',
           hint: 'Place of destination, Consignee, Importer'
         },
-        TRANSPORTER: { label: 'Transporter', hint: 'Private, Commercial' },
-        BRANCH: { label: 'Branch', hint: 'Branch address' }
+        TRANSPORTER: { label: 'Transporter', hint: 'Private, Commercial' }
       },
       continue: 'Continue'
     })

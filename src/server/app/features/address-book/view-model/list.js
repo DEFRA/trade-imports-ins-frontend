@@ -56,11 +56,7 @@ export const rolesWhoseLabelContains = (searchTerm, copyByRole) => {
     return []
   }
   return Object.entries(copyByRole)
-    .filter(([, { columnLabel, optionLabel }]) =>
-      [columnLabel, optionLabel].some((label) =>
-        label.toLowerCase().includes(term)
-      )
-    )
+    .filter(([, { columnLabel }]) => columnLabel.toLowerCase().includes(term))
     .map(([role]) => role)
 }
 
