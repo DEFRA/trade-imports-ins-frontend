@@ -1,6 +1,9 @@
 import { Agent } from 'node:http'
 import { connect } from 'node:net'
 import Wreck from '@hapi/wreck'
+import { HttpsProxyAgent } from 'https-proxy-agent'
+
+import { config } from '../config/config.js'
 
 const connectWithOneRetry = (options, logger, oncreate) => {
   const neverOpenedCodes = new Set(['ETIMEDOUT', 'ECONNREFUSED'])
@@ -58,4 +61,41 @@ export const createRetryingKeepAliveAgent = (logger) =>
  */
 export const useRetryingKeepAliveAgentForWreck = (logger) => {
   Wreck.agents.http = createRetryingKeepAliveAgent(logger)
+}
+
+const directHttpsAgent = Wreck.agents.https
+
+class HostScopedProxyAgent extends HttpsProxyAgent {
+  constructor(proxyUrl, hostnames) {
+    super(proxyUrl)
+    this.hostnames = new Set(hostnames)
+  }
+
+  connect(request, options) {
+    return this.hostnames.has(options.host)
+      ? super.connect(request, options)
+      : directHttpsAgent
+  }
+}
+
+/**
+ * When an HTTP proxy is configured (`httpProxy`), sends every HTTPS Wreck call
+ * in the process to the given hostnames, Bell's included, through that proxy,
+ * and logs the hostnames at info. HTTPS calls to every other host go direct.
+ * Each call replaces the hostnames the last call set. With no proxy configured
+ * it changes nothing.
+ *
+ * @param {string[]} hostnames - the hostnames whose calls go through the proxy
+ * @param {import('pino').Logger} logger - where the proxied hostnames are written
+ */
+export const proxyWreckHttpsCallsTo = (hostnames, logger) => {
+  const proxyUrl = config.get('httpProxy')
+  if (!proxyUrl) {
+    return
+  }
+  Wreck.agents.https = new HostScopedProxyAgent(proxyUrl, hostnames)
+  logger.info(
+    { hostnames },
+    'Wreck HTTPS calls to these hostnames go through the HTTP proxy'
+  )
 }
