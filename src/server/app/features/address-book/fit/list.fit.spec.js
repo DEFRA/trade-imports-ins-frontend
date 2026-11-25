@@ -395,16 +395,12 @@ test.describe('address type tabs', () => {
       page.getByRole('cell', { name: seedAddress.name, exact: true })
     ).toBeVisible()
 
-    for (const addressType of [
-      ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
-    ]) {
-      await openAddressBookList(page, {
-        organisationId,
-        addressType
-      })
+    await openAddressBookList(page, {
+      organisationId,
+      addressType: ADDRESS_TYPES.DESTINATION_CONSIGNEE_OR_IMPORTER
+    })
 
-      await expect(resultsLineOf(page)).toHaveText(NO_RESULTS_LINE)
-    }
+    await expect(resultsLineOf(page)).toHaveText(NO_RESULTS_LINE)
   })
 
   test('has no serious or critical axe violations on the Destination tab', async ({
